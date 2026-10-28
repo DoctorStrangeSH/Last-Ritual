@@ -859,19 +859,6 @@ func _draw() -> void:
         draw_texture_rect(preload("res://assets/backgrounds/first_kings_tomb.svg"), Rect2(0, 0, W, H), false)
     for i in range(11):
         draw_circle(Vector2(55 + i * 111, 85 + (i * 37) % 80), 2.0, Color("77779a"))
-    if phase == "night" and current_day < 1:
-        # Legacy fallback for invalid night indices: separated from interactive level geometry.
-        draw_circle(Vector2(858, 160), 96.0, Color(0.48, 0.61, 0.82, 0.09))
-        for spire in range(8):
-            var far_x: float = 60.0 + float(spire) * 154.0
-            var far_h: float = 110.0 + float((spire * 7) % 4) * 35.0
-            box(Rect2(far_x, FLOOR - far_h, 44.0, far_h), Color("161728"))
-            draw_colored_polygon(PackedVector2Array([Vector2(far_x - 9.0, FLOOR - far_h), Vector2(far_x + 22.0, FLOOR - far_h - 70.0), Vector2(far_x + 53.0, FLOOR - far_h)]), Color("202039"))
-            box(Rect2(far_x + 17.0, FLOOR - far_h + 40.0, 11.0, 25.0), Color(0.39, 0.51, 0.67, 0.24))
-        for star in range(18):
-            var star_x: float = 27.0 + float(star) * 67.0
-            var star_y: float = 36.0 + float((star * 29) % 132)
-            draw_circle(Vector2(star_x, star_y), 1.2 + float(star % 3) * 0.5, Color(0.72, 0.77, 0.95, 0.25))
     if phase == "day" or phase == "night" or phase == "final_siege":
         # Layered silhouettes create depth without requiring external textures.
         for i in range(9):
