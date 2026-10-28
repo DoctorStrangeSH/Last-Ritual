@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.0-rc35: five distinct night locations, Godot 4.2+
+## Last Ritual v2.0-rc36: standalone night background artwork, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -847,9 +847,13 @@ func draw_dark_lord(pos: Vector2) -> void:
 
 func _draw() -> void:
     box(Rect2(0, 0, W, H), Color("10101e"))
+    if phase == "night" and current_day == 1:
+        draw_texture_rect(preload("res://assets/backgrounds/catacombs.svg"), Rect2(0, 0, W, H), false)
+    elif phase == "night" and current_day == 3:
+        draw_texture_rect(preload("res://assets/backgrounds/light_cathedral.svg"), Rect2(0, 0, W, H), false)
     for i in range(11):
         draw_circle(Vector2(55 + i * 111, 85 + (i * 37) % 80), 2.0, Color("77779a"))
-    if phase == "night":
+    if phase == "night" and current_day != 1 and current_day != 3:
         # Distant cathedral silhouette: separated from interactive level geometry.
         draw_circle(Vector2(858, 160), 96.0, Color(0.48, 0.61, 0.82, 0.09))
         for spire in range(8):
@@ -898,7 +902,7 @@ func _draw() -> void:
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
         label("M — атмосфера: %d/4  |  N — эффекты: %d/4" % [music_volume, effects_volume], 375, 463, 19, Color("d5bfda"))
-        label("Версия 2.0 RC35: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
+        label("Версия 2.0 RC36: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         if phase == "win":
