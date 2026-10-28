@@ -1240,6 +1240,10 @@ func _draw() -> void:
         draw_line(Vector2(194, 511), Vector2(958, 511), Color("866487"), 2.0)
         for ornament in [192.0, 960.0]:
             draw_colored_polygon(PackedVector2Array([Vector2(ornament, 208), Vector2(ornament + 10, 221), Vector2(ornament, 234), Vector2(ornament - 10, 221)]), Color("bb86b4"))
+        for menu_i in range(4):
+            var menu_y: float = 300.0 + float(menu_i) * 50.0
+            box(Rect2(340.0, menu_y, 475.0, 43.0), Color(0.22, 0.15, 0.30, 0.94))
+            draw_rect(Rect2(340.0, menu_y, 475.0, 43.0), Color("997da6"), false, 2.0)
         label("ПОСЛЕДНИЙ РИТУАЛ", 224, 245, 46, Color("e4b9ed"))
         if menu_page == "main":
             label("НОВАЯ ИГРА", 422, 330, 23, Color("ffdcae"))
