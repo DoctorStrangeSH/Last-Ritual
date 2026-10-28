@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v0.6: single-scene prototype, Godot 4.2+
+## Last Ritual v0.7: single-scene prototype, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -43,6 +43,8 @@ var font: Font
 var paused := false
 var kills_today := 0
 var repairs_today := 0
+var selected_build := "bone"
+var day_elapsed := 0.0
 
 func _ready() -> void:
     font = ThemeDB.fallback_font
@@ -53,6 +55,8 @@ func reset_all() -> void:
     paused = false
     kills_today = 0
     repairs_today = 0
+    selected_build = "bone"
+    day_elapsed = 0.0
     time_left = DAY_LENGTH
     wall_hp = MAX_WALL
     mana = 70
@@ -121,9 +125,11 @@ func _unhandled_input(event: InputEvent) -> void:
             if event.keycode == KEY_R:
                 repair_wall()
             elif event.keycode == KEY_1:
-                build_tower("bone", get_global_mouse_position().x)
+                selected_build = "bone"
+                show_notice("Выбрана костяная башня: щёлкни мышью, чтобы построить")
             elif event.keycode == KEY_2:
-                build_tower("fire", get_global_mouse_position().x)
+                selected_build = "fire"
+                show_notice("Выбрана адская баллиста: щёлкни мышью, чтобы построить")
         elif phase == "night":
             if event.keycode == KEY_J:
                 attack()
@@ -138,6 +144,10 @@ func _unhandled_input(event: InputEvent) -> void:
                 show_notice("Алтарь преобразовал ману в душу")
             else:
                 show_notice("Не хватает маны для преобразования")
+
+func _input(event: InputEvent) -> void:
+    if phase == "day" and not paused and event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+        build_tower(selected_build, get_global_mouse_position().x)
 
 func show_notice(message: String) -> void:
     notice = message
@@ -172,12 +182,21 @@ func repair_wall() -> void:
     show_notice("Стены восстановлены на 25 прочности")
 
 func update_day(delta: float) -> void:
+    day_elapsed += delta
     time_left -= delta
     spawn_timer -= delta
     if spawn_timer <= 0.0:
         wave_count += 1
         spawn_timer = maxf(1.05, 3.5 - wave_count * 0.065)
-        enemies.append({"x": W + 32.0, "hp": 46.0 if wave_count % 5 != 0 else 100.0, "max_hp": 46.0 if wave_count % 5 != 0 else 100.0, "speed": 43.0 if wave_count % 5 != 0 else 25.0, "damage": 9.0 if wave_count % 5 != 0 else 19.0, "hit_cd": 0.0})
+        var kind := "raider"
+        if wave_count % 7 == 0:
+            kind = "runner"
+        elif wave_count % 5 == 0:
+            kind = "brute"
+        var health := 27.0 if kind == "runner" else (100.0 if kind == "brute" else 46.0)
+        var speed := 84.0 if kind == "runner" else (25.0 if kind == "brute" else 43.0)
+        var damage := 6.0 if kind == "runner" else (19.0 if kind == "brute" else 9.0)
+        enemies.append({"x": W + 32.0, "hp": health, "max_hp": health, "speed": speed, "damage": damage, "hit_cd": 0.0, "kind": kind})
     for tower in towers:
         tower["cooldown"] -= delta
         if tower["cooldown"] <= 0.0:
@@ -370,7 +389,7 @@ func _draw() -> void:
         label("ПОСЛЕДНИЙ РИТУАЛ", 225, 255, 52, Color("e3b3e9"))
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать пролог", 432, 415, 26, Color("f5cf84"))
-        label("Версия 0.6: один день, одна ночь, один ритуал", 325, 474, 18, Color("aaaaaa"))
+        label("Версия 0.7: один день, одна ночь, один ритуал", 325, 474, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         label("РИТУАЛ ЗАВЕРШЁН" if phase == "win" else "КРЕПОСТЬ ПАЛА", 300, 275, 48, Color("a9e4bc") if phase == "win" else Color("ff7777"))
@@ -402,11 +421,20 @@ func _draw() -> void:
                 draw_circle(Vector2(tx, FLOOR - 82), 20, Color("8ad0d1") if tower["type"] == "bone" else Color("ff965d"))
             for e in enemies:
                 var ex: float = e["x"]
-                box(Rect2(ex - 13, FLOOR - 43, 26, 43), Color("b0af9b") if e["max_hp"] < 90 else Color("d66c69"))
+                var enemy_color := Color("edc265") if e["kind"] == "runner" else (Color("d66c69") if e["kind"] == "brute" else Color("b0af9b"))
+                box(Rect2(ex - 13, FLOOR - 43, 26, 43), enemy_color)
                 box(Rect2(ex - 17, FLOOR - 53, 34 * e["hp"] / e["max_hp"], 4), Color("f57c79"))
+            var cursor_x := get_global_mouse_position().x
+            if cursor_x >= 245.0 and cursor_x <= 1020.0:
+                var range_radius := 260.0 if selected_build == "bone" else 375.0
+                draw_arc(Vector2(cursor_x, FLOOR - 72), range_radius, PI, TAU, 28, Color("72aa9a", 0.28), 2.0)
+                box(Rect2(cursor_x - 17.0, FLOOR - 74.0, 34, 74), Color("619d9c", 0.46) if selected_build == "bone" else Color("ba7954", 0.46))
             label("ДЕНЬ 1 / 5  •  ОСАДА", 25, 35, 27, Color("f8c59e"))
             label("До ночи: %02d c    Стены: %d / 100    Мана: %d    Души: %d" % [ceili(maxf(time_left, 0.0)), maxi(0, ceili(wall_hp)), mana, souls], 25, 71, 22)
-            label("1: башня (30)  |  2: баллиста (55)  |  R: ремонт стен (20)  |  P: пауза", 24, 625, 18)
+            box(Rect2(25, 82, 260, 13), Color("553840"))
+            box(Rect2(25, 82, 260.0 * clampf(wall_hp / MAX_WALL, 0.0, 1.0), 13), Color("8cbe88") if wall_hp > 30.0 else Color("ed6b73"))
+            label("Убийств: %d  |  Врагов: %d  |  Выбрано: %s" % [kills_today, enemies.size(), "Костяная" if selected_build == "bone" else "Баллиста"], 25, 126, 18)
+            label("1/2: выбор башни  |  ЛКМ: строить  |  R: ремонт стен (20)  |  P: пауза", 24, 625, 18)
         elif phase == "night":
             draw_circle(Vector2(940, 115), 53, Color("bbb6d6"))
             for p in platforms:
