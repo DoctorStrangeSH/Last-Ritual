@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.0-rc34: cathedral backdrop and checkpoint fix, Godot 4.2+
+## Last Ritual v2.0-rc35: five distinct night locations, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -898,7 +898,7 @@ func _draw() -> void:
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
         label("M — атмосфера: %d/4  |  N — эффекты: %d/4" % [music_volume, effects_volume], 375, 463, 19, Color("d5bfda"))
-        label("Версия 2.0 RC34: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
+        label("Версия 2.0 RC35: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         if phase == "win":
@@ -1130,6 +1130,38 @@ func _draw() -> void:
                     var cx := 195.0 + float(column) * 315.0
                     box(Rect2(cx, 320, 18, FLOOR - 320), Color("30293d"))
                     box(Rect2(cx - 8, 313, 34, 9), Color("554760"))
+            # Five location identities: cold catacombs, cursed crypt, light cathedral,
+            # blood mines and the first king's tomb. All elements are decorative.
+            if current_day == 1:
+                for niche in range(5):
+                    var nx: float = 105.0 + float(niche) * 224.0
+                    draw_arc(Vector2(nx, 365.0), 35.0, PI, TAU, 18, Color("6a617d"), 5.0)
+                    box(Rect2(nx - 16.0, 365.0, 32.0, 83.0), Color("25243a"))
+                    draw_circle(Vector2(nx, 390.0), 8.0, Color(0.52, 0.83, 0.95, 0.22))
+            elif current_day == 2:
+                for coffin in range(4):
+                    var cx_crypt: float = 160.0 + float(coffin) * 285.0
+                    box(Rect2(cx_crypt - 28.0, FLOOR - 73.0, 56.0, 73.0), Color("4e3b54"))
+                    draw_colored_polygon(PackedVector2Array([Vector2(cx_crypt - 32.0, FLOOR - 73.0), Vector2(cx_crypt, FLOOR - 101.0), Vector2(cx_crypt + 32.0, FLOOR - 73.0)]), Color("765773"))
+                    draw_line(Vector2(cx_crypt, FLOOR - 65.0), Vector2(cx_crypt, FLOOR - 15.0), Color("a77c98"), 3.0)
+            elif current_day == 3:
+                for window in range(4):
+                    var wx: float = 198.0 + float(window) * 255.0
+                    draw_arc(Vector2(wx, 304.0), 21.0, PI, TAU, 16, Color("b5d9e7"), 4.0)
+                    box(Rect2(wx - 18.0, 304.0, 36.0, 76.0), Color(0.44, 0.76, 0.94, 0.24))
+                    draw_line(Vector2(wx, 284.0), Vector2(wx, 378.0), Color("8caebd"), 2.0)
+                    draw_line(Vector2(wx - 18.0, 337.0), Vector2(wx + 18.0, 337.0), Color("8caebd"), 2.0)
+            elif current_day == 4:
+                for crystal in range(8):
+                    var bx: float = 75.0 + float(crystal) * 150.0
+                    var crystal_height: float = 30.0 + float(crystal % 3) * 16.0
+                    draw_colored_polygon(PackedVector2Array([Vector2(bx - 17.0, FLOOR), Vector2(bx, FLOOR - crystal_height), Vector2(bx + 17.0, FLOOR)]), Color(0.85, 0.22, 0.37, 0.64))
+                    draw_line(Vector2(bx, FLOOR - crystal_height), Vector2(bx, FLOOR - 3.0), Color("f08b9e"), 2.0)
+            elif current_day == 5:
+                for seal in range(4):
+                    var king_x: float = 125.0 + float(seal) * 285.0
+                    draw_arc(Vector2(king_x, 336.0), 24.0, 0.0, TAU, 28, Color("9acddd"), 3.0)
+                    draw_colored_polygon(PackedVector2Array([Vector2(king_x, 322.0), Vector2(king_x + 12.0, 336.0), Vector2(king_x, 350.0), Vector2(king_x - 12.0, 336.0)]), Color(0.56, 0.87, 0.94, 0.50))
             # Hanging chains and masonry seams give the ruins a stronger silhouette.
             for chain in range(5):
                 var chain_x: float = 145.0 + float(chain) * 208.0
