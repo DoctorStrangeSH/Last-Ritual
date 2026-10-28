@@ -373,3 +373,8 @@
 - Dungeon HUD and pause prompts simplified; verify current CI and manually check level 2 layout.
 
 - Follow-up RC52: altar upgrades and continuation are mouse-clickable; numeric prompts removed. Tower hit-testing covers the full sprite height.
+
+## RC53 combat readability
+- Floating damage popups for tower shots, splash hits, hero melee and boss hits; critical ballista hits use a gold `CRIT!` label.
+- Brief tower flash and lane tracer on shot, plus a purple pulse when necromancer towers summon skeletons. These are visual-only and don't alter damage timing.
+- Smoke tests cover damage popups, critical popups, and tower firing flash.
