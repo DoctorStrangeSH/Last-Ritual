@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v1.0: two-cycle prototype prototype, Godot 4.2+
+## Last Ritual v1.1: two-night prototype, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -50,6 +50,7 @@ var stones_collected := 0
 var trap_clock := 0.0
 var trap_positions := [375.0, 775.0]
 var chest_taken := false
+var relic_taken := false
 
 func _ready() -> void:
     font = ThemeDB.fallback_font
@@ -66,6 +67,7 @@ func reset_all() -> void:
     stones_collected = 0
     trap_clock = 0.0
     chest_taken = false
+    relic_taken = false
     time_left = DAY_LENGTH
     wall_hp = MAX_WALL
     mana = 70
@@ -216,7 +218,17 @@ func begin_night() -> void:
     night_enemies = [{"x": 350.0, "hp": 44.0, "dir": -1.0}, {"x": 700.0, "hp": 44.0 if current_day == 1 else 70.0, "dir": 1.0}]
     gems = [Vector2(250, 442), Vector2(460, 380), Vector2(689, 429), Vector2(879, 363), Vector2(535, 520)]
     chest_taken = false
+    relic_taken = false
     trap_clock = 0.0
+    if current_day == 2:
+        platforms = [Rect2(165, 440, 150, 16), Rect2(360, 375, 130, 16), Rect2(575, 430, 145, 16), Rect2(770, 345, 145, 16)]
+        trap_positions = [315.0, 645.0, 930.0]
+        gems = [Vector2(230, 405), Vector2(415, 340), Vector2(650, 396), Vector2(845, 310), Vector2(1025, 519)]
+        mage["x"] = 715.0
+        night_enemies = [{"x": 250.0, "hp": 70.0, "dir": 1.0}, {"x": 845.0, "hp": 80.0, "dir": -1.0}]
+    else:
+        platforms = [Rect2(205, 473, 135, 16), Rect2(415, 413, 145, 16), Rect2(640, 462, 130, 16), Rect2(830, 396, 135, 16)]
+        trap_positions = [375.0, 775.0]
     show_notice("Ночь %d: найди Камень Бездны!" % current_day)
 
 func update_day(delta: float) -> void:
@@ -336,11 +348,17 @@ func update_night(delta: float) -> void:
                 player.y = p.position.y - 22.0
                 vel.y = 0.0
                 grounded = true
-    if not chest_taken and player.distance_to(Vector2(899, 365)) < 37.0:
+    var chest_pos := Vector2(850, 314) if current_day == 2 else Vector2(899, 365)
+    if not chest_taken and player.distance_to(chest_pos) < 42.0:
         chest_taken = true
         mana += 35
         souls += 2
         show_notice("Тайник некроманта: +35 маны, +2 души")
+    if current_day == 2 and not relic_taken and player.distance_to(Vector2(424, 342)) < 39.0:
+        relic_taken = true
+        mana += 20
+        souls += 3
+        show_notice("Реликвия усыпальницы: +20 маны, +3 души")
     var spike_phase := fmod(trap_clock, 3.1)
     if spike_phase >= 2.1 and player.y + 21.0 >= FLOOR - 13.0:
         for tx in trap_positions:
@@ -457,7 +475,7 @@ func _draw() -> void:
         label("ПОСЛЕДНИЙ РИТУАЛ", 225, 255, 52, Color("e3b3e9"))
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать пролог", 432, 415, 26, Color("f5cf84"))
-        label("Версия 1.0: два дня, две ночи, два камня", 325, 474, 18, Color("aaaaaa"))
+        label("Версия 1.1: два дня, две ночи, два камня", 325, 474, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         label("РИТУАЛ ЗАВЕРШЁН" if phase == "win" else "КРЕПОСТЬ ПАЛА", 300, 275, 48, Color("a9e4bc") if phase == "win" else Color("ff7777"))
@@ -512,7 +530,11 @@ func _draw() -> void:
         elif phase == "night":
             draw_circle(Vector2(940, 115), 53, Color("bbb6d6"))
             for p in platforms:
-                box(p, Color("6c5c77"))
+                box(p, Color("826479") if current_day == 2 else Color("6c5c77"))
+            if current_day == 2:
+                for pillar in range(5):
+                    box(Rect2(100 + pillar * 220, 215, 29, 335), Color("3c344d"))
+                    box(Rect2(91 + pillar * 220, 213, 47, 12), Color("554562"))
             var spike_phase := fmod(trap_clock, 3.1)
             for tx in trap_positions:
                 var trap_color := Color("5c566a") if spike_phase < 1.4 else (Color("efa857") if spike_phase < 2.1 else Color("f05268"))
@@ -520,10 +542,14 @@ func _draw() -> void:
                 if spike_phase >= 2.1:
                     for spike in range(4):
                         draw_colored_polygon(PackedVector2Array([Vector2(tx - 28 + spike * 16, FLOOR), Vector2(tx - 20 + spike * 16, FLOOR - 24), Vector2(tx - 12 + spike * 16, FLOOR)]), trap_color)
+            var chest_at := Vector2(850, 314) if current_day == 2 else Vector2(899, 365)
             if not chest_taken:
-                box(Rect2(874, 345, 46, 26), Color("a67c47"))
-                box(Rect2(874, 342, 46, 6), Color("f1d085"))
-                label("ТАЙНИК", 863, 332, 15, Color("f1d085"))
+                box(Rect2(chest_at.x - 23, chest_at.y - 20, 46, 26), Color("a67c47"))
+                box(Rect2(chest_at.x - 23, chest_at.y - 23, 46, 6), Color("f1d085"))
+                label("ТАЙНИК", chest_at.x - 35, chest_at.y - 32, 15, Color("f1d085"))
+            if current_day == 2 and not relic_taken:
+                draw_circle(Vector2(424, 342), 13, Color("d9a2e7"))
+                label("РЕЛИКВИЯ", 383, 311, 16, Color("e7b4f3"))
             for gem in gems:
                 draw_colored_polygon(PackedVector2Array([gem + Vector2(0, -16), gem + Vector2(13, 0), gem + Vector2(0, 16), gem + Vector2(-13, 0)]), Color("5de0e9"))
             for e in night_enemies:
