@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.0-rc37: all five night backgrounds, Godot 4.2+
+## Last Ritual v2.0-rc38: gothic tower sprites, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -895,7 +895,7 @@ func _draw() -> void:
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
         label("M — атмосфера: %d/4  |  N — эффекты: %d/4" % [music_volume, effects_volume], 375, 463, 19, Color("d5bfda"))
-        label("Версия 2.0 RC37: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
+        label("Версия 2.0 RC38: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         if phase == "win":
@@ -1004,21 +1004,8 @@ func _draw() -> void:
                 draw_circle(Vector2(fx, 394), 4.0, Color("ffe0a0"))
             for tower in towers:
                 var tx: float = tower["x"]
-                box(Rect2(tx - 17, FLOOR - 74, 34, 74), Color("9a8a9e") if tower["type"] == "bone" else Color("a65542"))
-                draw_circle(Vector2(tx, FLOOR - 82), 20, Color("8a8190") if float(tower.get("disabled", 0.0)) > 0.0 else (Color("8ad0d1") if tower["type"] == "bone" else Color("ff965d")))
-                # Stone seams and a distinct weapon silhouette for each tower.
-                for seam in range(3):
-                    draw_line(Vector2(tx - 14.0, FLOOR - 22.0 - float(seam) * 17.0), Vector2(tx + 14.0, FLOOR - 22.0 - float(seam) * 17.0), Color("635968"), 1.0)
-                if tower["type"] == "bone":
-                    draw_line(Vector2(tx - 22.0, FLOOR - 91.0), Vector2(tx + 22.0, FLOOR - 91.0), Color("d3d2d6"), 4.0)
-                    draw_line(Vector2(tx, FLOOR - 105.0), Vector2(tx, FLOOR - 80.0), Color("bdced3"), 4.0)
-                    draw_circle(Vector2(tx, FLOOR - 100.0), 7.0, Color("8ad0d1"))
-                else:
-                    draw_colored_polygon(PackedVector2Array([Vector2(tx - 19, FLOOR - 86), Vector2(tx + 19, FLOOR - 86), Vector2(tx, FLOOR - 113)]), Color("6a2a2f"))
-                    draw_circle(Vector2(tx, FLOOR - 101.0), 8.0 + sin(atmosphere_clock * 8.0) * 2.0, Color("ffae63"))
-                box(Rect2(tx - 21.0, FLOOR - 77.0, 42, 7), Color("4c4459"))
-                for crenel in range(3):
-                    box(Rect2(tx - 18.0 + float(crenel) * 13.0, FLOOR - 89.0, 9, 13), Color("85728b") if tower["type"] == "bone" else Color("904739"))
+                var tower_art: Texture2D = preload("res://assets/towers/bone_tower.svg") if tower["type"] == "bone" else preload("res://assets/towers/infernal_ballista.svg")
+                draw_texture_rect(tower_art, Rect2(tx - 30.0, FLOOR - 106.0, 60.0, 106.0), false)
                 if float(tower.get("disabled", 0.0)) > 0.0:
                     draw_line(Vector2(tx - 12, FLOOR - 96), Vector2(tx + 12, FLOOR - 72), Color("e1bac3"), 3.0)
             for e in enemies:
