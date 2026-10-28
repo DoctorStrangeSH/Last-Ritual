@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v1.9: interday save checkpoints, Godot 4.2+
+## Last Ritual v2.0-rc1: checkpoint hardening, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -243,14 +243,20 @@ func load_campaign() -> bool:
         return false
     var day := int(data["day"])
     var stones := int(data["stones"])
+    if float(day) != data["day"] or float(stones) != data["stones"]:
+        return false
     if day < 1 or day > 5 or stones != day:
         return false
     for key in ["mana", "souls", "wall_hp", "tower_power", "wall_ward"]:
         if not data[key] is float:
             return false
-    if data["mana"] < 0 or data["souls"] < 0 or data["wall_hp"] <= 0 or data["wall_hp"] > MAX_WALL:
+    if not is_finite(float(data["mana"])) or not is_finite(float(data["souls"])) or not is_finite(float(data["wall_hp"])):
         return false
-    if data["tower_power"] < 0 or data["tower_power"] > 1 or data["wall_ward"] < 0 or data["wall_ward"] > 1:
+    if data["mana"] != floorf(float(data["mana"])) or data["souls"] != floorf(float(data["souls"])):
+        return false
+    if data["mana"] < 0 or data["mana"] > 100000 or data["souls"] < 0 or data["souls"] > 100000 or data["wall_hp"] <= 0 or data["wall_hp"] > MAX_WALL:
+        return false
+    if data["tower_power"] not in [0.0, 1.0] or data["wall_ward"] not in [0.0, 1.0]:
         return false
     if not data["towers"] is Array or data["towers"].size() > 12:
         return false
@@ -258,10 +264,13 @@ func load_campaign() -> bool:
     for item in data["towers"]:
         if not item is Dictionary or not item.has("x") or not item.has("type"):
             return false
-        if not item["x"] is float or item["x"] < 245.0 or item["x"] > 1020.0:
+        if not item["x"] is float or not is_finite(float(item["x"])) or item["x"] < 245.0 or item["x"] > 1020.0:
             return false
         if item["type"] != "bone" and item["type"] != "fire":
             return false
+        for placed in checked_towers:
+            if absf(float(placed["x"]) - float(item["x"])) < 65.0:
+                return false
         checked_towers.append({"x": float(item["x"]), "type": item["type"], "cooldown": 0.0})
     reset_all()
     current_day = day
@@ -651,7 +660,7 @@ func _draw() -> void:
         label("ПОСЛЕДНИЙ РИТУАЛ", 225, 255, 52, Color("e3b3e9"))
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
-        label("Версия 1.9: пять дней, пять ночей, пять камней", 325, 474, 18, Color("aaaaaa"))
+        label("Версия 2.0 RC1: пять дней, пять ночей, пять камней", 325, 474, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         label("РИТУАЛ ЗАВЕРШЁН" if phase == "win" else "КРЕПОСТЬ ПАЛА", 300, 275, 48, Color("a9e4bc") if phase == "win" else Color("ff7777"))
