@@ -69,7 +69,21 @@ func run_tests() -> void:
     check(float(game.enemies[2]["hp"]) == other_lane_before, "ballista splash does not cross lanes")
     game.apply_tower_shot({"type": "fire", "lane": 2, "level": 1, "damage": 65.0, "critical": true}, 2)
     check(float(game.enemies[2]["hp"]) <= other_lane_before - 117.0, "critical ballista hit deals 1.8x damage")
+    game.reset_all()
+    game.phase = "day"
+    game.mana = 500
+    game.build_tower("necro", 425.0, 1)
+    check(game.towers.size() == 1 and game.towers[0]["type"] == "necro", "necromancer tower builds in chosen lane")
+    game.spawn_timer = 100.0
+    game.update_day(0.0)
+    check(game.skeletons.size() == 1 and int(game.skeletons[0]["lane"]) == 1, "necromancer summons skeleton on same lane")
+    var skeleton_hp: float = float(game.skeletons[0]["hp"])
+    game.enemies.clear()
+    game.enemies.append({"x": 480.0, "hp": 300.0, "max_hp": 300.0, "speed": 40.0, "damage": 20.0, "hit_cd": 2.0, "kind": "raider", "lane": 1, "sabotaged": false})
+    game.update_day(0.2)
+    check(float(game.skeletons[0]["hp"]) < skeleton_hp, "skeleton absorbs enemy attack")
     game.begin_night()
+    check(game.skeletons.is_empty(), "skeletons expire at nightfall")
     check(game.towers.is_empty(), "towers cleared at nightfall")
     game.reset_all()
     game.phase = "night"
