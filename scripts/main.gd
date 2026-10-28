@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v0.9: single-scene prototype, Godot 4.2+
+## Last Ritual v1.0: two-cycle prototype prototype, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -45,6 +45,8 @@ var kills_today := 0
 var repairs_today := 0
 var selected_build := "bone"
 var day_elapsed := 0.0
+var current_day := 1
+var stones_collected := 0
 var trap_clock := 0.0
 var trap_positions := [375.0, 775.0]
 var chest_taken := false
@@ -60,6 +62,8 @@ func reset_all() -> void:
     repairs_today = 0
     selected_build = "bone"
     day_elapsed = 0.0
+    current_day = 1
+    stones_collected = 0
     trap_clock = 0.0
     chest_taken = false
     time_left = DAY_LENGTH
@@ -120,12 +124,22 @@ func _unhandled_input(event: InputEvent) -> void:
                 reset_all()
                 phase = "day"
             elif phase == "ritual":
-                if stone_taken and mana >= 50 and souls >= 8:
+                if stones_collected < 2:
+                    phase = "day"
+                    current_day = 2
+                    time_left = DAY_LENGTH
+                    spawn_timer = 1.0
+                    wave_count = 0
+                    enemies.clear()
+                    shots.clear()
+                    player_hp = 100.0
+                    show_notice("День 2: армия Света усилилась! Башни сохранены.")
+                elif mana >= 50 and souls >= 8:
                     mana -= 50
                     souls -= 8
                     phase = "win"
                 else:
-                    show_notice("Нужно 50 маны и 8 душ. Нажми C: 25 маны → 1 душ.")
+                    show_notice("Для ритуала нужно 50 маны и 8 душ. C — обмен.")
         if phase == "day":
             if event.keycode == KEY_R:
                 repair_wall()
@@ -186,6 +200,25 @@ func repair_wall() -> void:
     wall_hp = minf(MAX_WALL, wall_hp + 25.0)
     show_notice("Стены восстановлены на 25 прочности")
 
+func begin_night() -> void:
+    phase = "night"
+    stone_taken = false
+    player = Vector2(95, FLOOR - 25)
+    vel = Vector2.ZERO
+    grounded = true
+    jump_was_down = false
+    player_hp = 100.0
+    boss_hp = 140.0 if current_day == 1 else 190.0
+    boss_strike_timer = 2.0
+    boss_windup = 0.0
+    mage = {"x": 570.0, "hp": 60.0 if current_day == 1 else 85.0, "cooldown": 1.4}
+    mage_bolts.clear()
+    night_enemies = [{"x": 350.0, "hp": 44.0, "dir": -1.0}, {"x": 700.0, "hp": 44.0 if current_day == 1 else 70.0, "dir": 1.0}]
+    gems = [Vector2(250, 442), Vector2(460, 380), Vector2(689, 429), Vector2(879, 363), Vector2(535, 520)]
+    chest_taken = false
+    trap_clock = 0.0
+    show_notice("Ночь %d: найди Камень Бездны!" % current_day)
+
 func update_day(delta: float) -> void:
     day_elapsed += delta
     time_left -= delta
@@ -198,9 +231,9 @@ func update_day(delta: float) -> void:
             kind = "runner"
         elif wave_count % 5 == 0:
             kind = "brute"
-        var health := 27.0 if kind == "runner" else (100.0 if kind == "brute" else 46.0)
+        var health := (27.0 if kind == "runner" else (100.0 if kind == "brute" else 46.0)) * (1.0 if current_day == 1 else 1.45)
         var speed := 84.0 if kind == "runner" else (25.0 if kind == "brute" else 43.0)
-        var damage := 6.0 if kind == "runner" else (19.0 if kind == "brute" else 9.0)
+        var damage := (6.0 if kind == "runner" else (19.0 if kind == "brute" else 9.0)) * (1.0 if current_day == 1 else 1.3)
         enemies.append({"x": W + 32.0, "hp": health, "max_hp": health, "speed": speed, "damage": damage, "hit_cd": 0.0, "kind": kind})
     for tower in towers:
         tower["cooldown"] -= delta
@@ -241,8 +274,7 @@ func update_day(delta: float) -> void:
     if wall_hp <= 0.0:
         phase = "lose"
     elif time_left <= 0.0:
-        phase = "night"
-        show_notice("Ночь! Уничтожено врагов: %d. Найди Камень Бездны!" % kills_today)
+        begin_night()
 
 func heal_player() -> void:
     if player_hp >= 100.0:
@@ -356,7 +388,8 @@ func update_night(delta: float) -> void:
                 hurt(24.0)
     if boss_hp <= 0.0 and not stone_taken and player.distance_to(Vector2(1010, 465)) < 43.0:
         stone_taken = true
-        show_notice("Камень Бездны получен! Вернись к порталу слева.")
+        stones_collected += 1
+        show_notice("Камень %d/2 получен! Вернись к порталу слева." % stones_collected)
     if stone_taken and player.x < 85.0:
         phase = "ritual"
 
@@ -424,7 +457,7 @@ func _draw() -> void:
         label("ПОСЛЕДНИЙ РИТУАЛ", 225, 255, 52, Color("e3b3e9"))
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать пролог", 432, 415, 26, Color("f5cf84"))
-        label("Версия 0.9: один день, одна ночь, один ритуал", 325, 474, 18, Color("aaaaaa"))
+        label("Версия 1.0: два дня, две ночи, два камня", 325, 474, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         label("РИТУАЛ ЗАВЕРШЁН" if phase == "win" else "КРЕПОСТЬ ПАЛА", 300, 275, 48, Color("a9e4bc") if phase == "win" else Color("ff7777"))
@@ -435,9 +468,9 @@ func _draw() -> void:
         draw_circle(Vector2(575, 340), 140, Color("382347"))
         draw_colored_polygon(PackedVector2Array([Vector2(575, 215), Vector2(640, 340), Vector2(575, 465), Vector2(510, 340)]), Color("a950d1"))
         label("АЛТАРЬ БЕЗДНЫ", 398, 145, 39, Color("e9b5fb"))
-        label("Камень найден. Для ритуала требуется 50 маны и 8 душ.", 240, 515, 23)
+        label("Камней: %d / 2. %s" % [stones_collected, "ENTER — продолжить осаду" if stones_collected < 2 else "Для ритуала нужно 50 маны и 8 душ"], 230, 515, 23)
         label("Мана: %d  |  Души: %d" % [mana, souls], 435, 554, 24, Color("edc477"))
-        label("ENTER — ритуал  |  C — обмен 25 маны на 1 душ", 333, 600, 20)
+        label("ENTER — продолжить / ритуал  |  C — 25 маны на 1 душ", 310, 600, 20)
     else:
         box(Rect2(0, FLOOR, W, H - FLOOR), Color("32313b"))
         for i in range(23):
@@ -470,7 +503,7 @@ func _draw() -> void:
                 var range_radius := 260.0 if selected_build == "bone" else 375.0
                 draw_arc(Vector2(cursor_x, FLOOR - 72), range_radius, PI, TAU, 28, Color("72aa9a", 0.28), 2.0)
                 box(Rect2(cursor_x - 17.0, FLOOR - 74.0, 34, 74), Color("619d9c", 0.46) if selected_build == "bone" else Color("ba7954", 0.46))
-            label("ДЕНЬ 1 / 5  •  ОСАДА", 25, 35, 27, Color("f8c59e"))
+            label("ДЕНЬ %d / 2  •  ОСАДА" % current_day, 25, 35, 27, Color("f8c59e"))
             label("До ночи: %02d c    Стены: %d / 100    Мана: %d    Души: %d" % [ceili(maxf(time_left, 0.0)), maxi(0, ceili(wall_hp)), mana, souls], 25, 71, 22)
             box(Rect2(25, 82, 260, 13), Color("553840"))
             box(Rect2(25, 82, 260.0 * clampf(wall_hp / MAX_WALL, 0.0, 1.0), 13), Color("8cbe88") if wall_hp > 30.0 else Color("ed6b73"))
@@ -506,7 +539,7 @@ func _draw() -> void:
                     box(Rect2(boss_pos.x - 85, FLOOR - 10, 170, 10), Color("eb5c60"))
                     label("УДАР!", boss_pos.x - 30, 405, 20, Color("f4a2a2"))
                 box(Rect2(boss_pos.x - 31, boss_pos.y - 47, 62, 91), Color("a24e71"))
-                box(Rect2(boss_pos.x - 45, boss_pos.y - 65, 90 * boss_hp / 140.0, 7), Color("ed6975"))
+                box(Rect2(boss_pos.x - 45, boss_pos.y - 65, 90 * boss_hp / (140.0 if current_day == 1 else 190.0), 7), Color("ed6975"))
                 label("ХРАНИТЕЛЬ", 935, 380, 17)
             elif not stone_taken:
                 var stone := Vector2(1010, 465)
@@ -519,7 +552,7 @@ func _draw() -> void:
             draw_dark_lord(player)
             if swing_timer > 0.0:
                 box(Rect2(player.x + (17.0 if facing > 0 else -75.0), player.y - 17.0, 58.0, 10.0), Color("d6a2e9"))
-            label("НОЧЬ 1 / 5  •  КАТАКОМБЫ", 25, 35, 27, Color("b9afea"))
+            label("НОЧЬ %d / 2  •  %s" % [current_day, "КАТАКОМБЫ" if current_day == 1 else "ПРОКЛЯТАЯ УСЫПАЛЬНИЦА"], 25, 35, 27, Color("b9afea"))
             label("Здоровье: %d    Мана: %d    Души: %d    Камень: %s" % [maxi(0, ceili(player_hp)), mana, souls, "ДА" if stone_taken else "НЕТ"], 25, 71, 22)
             label("Шипы: серые — безопасно; жёлтые — предупреждение; красные — урон", 25, 106, 17, Color("e6bb91"))
             label("A/D: ходьба | W / Space: прыжок | J: удар | H: лечение | Shift: рывок | P: пауза", 20, 625, 18)
