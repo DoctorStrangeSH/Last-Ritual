@@ -176,3 +176,6 @@ Godot ещё не запускался в этой сессии. Существ�
 
 ## v2.1 RC49
 `sell_selected_tower()` refunds floor(50% of base cost plus upgrade costs) and removes selected tower. Bottom-right sale card shows exact refund; upgrade card separates action from next-level cost. `tests/campaign_smoke.gd` checks ballista sale refund.
+
+## v2.1 RC50
+`apply_tower_shot()` централизует эффекты попаданий: bone ставит `slow_timer` и `slow_factor=0.62`; fire использует поле `critical`, множитель x1.8, splash 35% в пределах 78+4*(level-1) пикселей и только в пределах той же линии. В `update_day` создаются выстрелы с критическим шансом 18% + 4% за уровень. `tower_ability_description()` используется в HUD. Smoke tests добавлены для замедления, splash и crit.
