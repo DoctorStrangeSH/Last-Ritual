@@ -28,11 +28,12 @@ func run_tests() -> void:
     game.spawn_timer = 0.0
     game.update_day(0.0)
     check(game.enemies.size() == 1 and game.enemies[0]["kind"] == "saboteur", "sixth wave spawns saboteur")
-    game.enemies[0]["x"] = 400.0
-    game.towers.append({"x": 420.0, "type": "bone", "cooldown": 99.0})
-    game.update_day(0.1)
-    check(float(game.towers[0]["disabled"]) > 4.0, "saboteur disables nearby tower")
-    check(game.enemies[0]["sabotaged"], "saboteur triggers only once")
+    if game.enemies.size() > 0:
+        game.enemies[0]["x"] = 400.0
+        game.towers.append({"x": 420.0, "type": "bone", "cooldown": 99.0})
+        game.update_day(0.1)
+        check(float(game.towers[0].get("disabled", 0.0)) > 4.0, "saboteur disables nearby tower")
+        check(bool(game.enemies[0].get("sabotaged", false)), "saboteur triggers only once")
     game.reset_all()
     game.phase = "night"
     game.stone_taken = true
@@ -108,7 +109,9 @@ func run_tests() -> void:
     check(game.load_campaign(), "checkpoint load")
     check(game.phase == "ritual" and game.current_day == 2 and game.stones_collected == 2, "checkpoint phase and progress")
     check(game.mana == 93 and game.souls == 11 and game.wall_hp == 78.0, "checkpoint resources")
-    check(game.towers.size() == 1 and game.towers[0]["type"] == "fire", "checkpoint tower")
+    check(game.towers.size() == 1, "checkpoint tower count")
+    if game.towers.size() == 1:
+        check(game.towers[0]["type"] == "fire", "checkpoint tower type")
     var corrupt := FileAccess.open("user://campaign_smoke_test.json", FileAccess.WRITE)
     corrupt.store_string("{not valid json")
     corrupt.close()
