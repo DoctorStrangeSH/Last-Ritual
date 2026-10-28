@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.1-rc53: clean mouse-first HUD, mouse controls and floating damage feedback
+## Last Ritual v2.1-rc53: clean mouse-first HUD, mouse controls, firing flashes and damage feedback
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -680,11 +680,14 @@ func update_day(delta: float) -> void:
         enemies.append({"x": W + 32.0, "hp": health, "max_hp": health, "speed": speed, "damage": damage, "hit_cd": 0.0, "kind": kind, "lane": randi_range(0, 2), "sabotaged": false})
     for tower in towers:
         tower["disabled"] = maxf(0.0, float(tower.get("disabled", 0.0)) - delta)
+        tower["flash"] = maxf(0.0, float(tower.get("flash", 0.0)) - delta)
         tower["cooldown"] -= delta
         if tower["type"] == "necro":
             if tower["cooldown"] <= 0.0 and tower["disabled"] <= 0.0:
                 var summon_level: int = int(tower.get("level", 1))
                 skeletons.append({"x": float(tower["x"]) + 55.0, "lane": int(tower.get("lane", 1)), "hp": 65.0 + 30.0 * float(summon_level - 1), "life": 6.0})
+                tower["flash"] = 0.18
+                tower["flash_target_x"] = float(tower["x"]) + 55.0
                 tower["cooldown"] = maxf(4.0, 7.0 - float(summon_level - 1))
             continue
         if tower["cooldown"] <= 0.0 and tower["disabled"] <= 0.0:
@@ -694,6 +697,8 @@ func update_day(delta: float) -> void:
                     target_x = enemy["x"]
             if target_x != INF:
                 tower["cooldown"] = 0.9 if tower["type"] == "bone" else 1.8
+                tower["flash"] = 0.16
+                tower["flash_target_x"] = target_x
                 var tower_level: int = int(tower.get("level", 1))
                 var is_critical: bool = tower["type"] == "fire" and randf() < (0.18 + 0.04 * float(tower_level - 1))
                 shots.append({"x": tower["x"], "target": target_x, "lane": int(tower.get("lane", 1)), "damage": (22.0 if tower["type"] == "bone" else 65.0) * (1.0 + 0.45 * float(tower_level - 1)), "type": tower["type"], "level": tower_level, "critical": is_critical})
@@ -1262,7 +1267,16 @@ func _draw() -> void:
             for tower_i in range(towers.size()):
                 var tower: Dictionary = towers[tower_i]
                 var tx: float = tower["x"]
-                var tower_y: float = FLOOR + float(LANE_OFFSETS[int(tower.get("lane", 1))])
+                var tower_lane: int = int(tower.get("lane", 1))
+                var tower_y: float = FLOOR + float(LANE_OFFSETS[tower_lane])
+                var fire_flash: float = clampf(float(tower.get("flash", 0.0)) / 0.18, 0.0, 1.0)
+                if fire_flash > 0.0:
+                    var glow_color: Color = Color("86e6f0") if tower["type"] == "bone" else (Color("ffc17a") if tower["type"] == "fire" else Color("d9a2ff"))
+                    glow_color.a = 0.12 + fire_flash * 0.22
+                    draw_circle(Vector2(tx, tower_y - 54.0), 34.0 + (1.0 - fire_flash) * 8.0, glow_color)
+                    var tracer_color: Color = glow_color
+                    tracer_color.a = fire_flash * 0.68
+                    draw_line(Vector2(tx + 5.0, tower_y - 78.0), Vector2(float(tower.get("flash_target_x", tx)), FLOOR - 32.0 + float(LANE_OFFSETS[tower_lane])), tracer_color, 3.0 if tower["type"] == "fire" else 2.0)
                 var tower_art: Texture2D = preload("res://assets/towers/bone_tower.svg") if tower["type"] == "bone" else (preload("res://assets/towers/infernal_ballista.svg") if tower["type"] == "fire" else preload("res://assets/towers/necromancer_tower.svg"))
                 draw_texture_rect(tower_art, Rect2(tx - 30.0, tower_y - 106.0, 60.0, 106.0), false)
                 if selected_tower_index == tower_i:
