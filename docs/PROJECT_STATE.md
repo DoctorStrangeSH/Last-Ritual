@@ -364,3 +364,10 @@
 - Скелеты (6 сек, 65/95/125 HP) блокируют врагов своей линии и принимают урон. Интервал призыва: 7/6/5 сек.
 - Клавиша 6 и мышь выбирают башню; продажа/улучшение используют существующие функции.
 - Тесты покрывают призыв и очистку после ночи. Ожидается проверка CI.
+
+## v2.1 RC52 — UI cleanup
+- Tower selection and upgrades mouse-only; removed siege keybinds 1–5/6 and Ctrl+click upgrade.
+- No default tower selected on new run; build ghost/range/lane highlight visible only during active card drag.
+- Bottom panel now holds compact cards, selected tower stats and upgrade/sell buttons; removed floating center info panel and duplicate top HUD rows.
+- Dungeon attack on left mouse click, facing cursor direction; movement/jump unchanged.
+- Dungeon HUD and pause prompts simplified; verify current CI and manually check level 2 layout.
