@@ -1154,9 +1154,9 @@ func _draw() -> void:
         label("Камней: %d / 5. %s" % [stones_collected, "ENTER — продолжить осаду" if stones_collected < 5 else "Для ритуала нужно 50 маны и 8 душ"], 230, 515, 23)
         label("Мана: %d  |  Души: %d" % [mana, souls], 435, 554, 24, Color("edc477"))
         if stones_collected < 5:
-            label("1: усилить башни (45 маны) %s" % ["[КУПЛЕНО]" if tower_power_level > 0 else ""], 310, 415, 20)
-            label("2: печать стен (4 души) %s" % ["[КУПЛЕНО]" if wall_ward_level > 0 else ""], 310, 445, 20)
-        label("ENTER — продолжить / ритуал  |  C — 25 маны на 1 душ", 310, 600, 20)
+            label("УСИЛЕНИЕ БАШЕН — 45 маны %s" % ["[КУПЛЕНО]" if tower_power_level > 0 else ""], 310, 415, 20)
+            label("ЗАЩИТНАЯ ПЕЧАТЬ — 4 души %s" % ["[КУПЛЕНО]" if wall_ward_level > 0 else ""], 310, 445, 20)
+        label("ENTER — продолжить  •  C — обмен 25 маны на душу", 310, 600, 20)
     else:
         box(Rect2(0, FLOOR, W, H - FLOOR), Color("32313b"))
         for i in range(23):
@@ -1551,10 +1551,10 @@ func _draw() -> void:
             pause_controls = "Карточки мышью — башни  |  R — ремонт стен (20 маны)"
         elif phase == "final_siege":
             pause_goal = "ЦЕЛЬ: продержись до завершения финального ритуала!"
-            pause_controls = "1/2 — башни  |  ЛКМ — построить  |  R — ремонт (20 маны)"
+            pause_controls = "Карточки мышью — башни  |  R — ремонт стен (20 маны)"
         elif phase == "night":
             pause_goal = "ЦЕЛЬ: вернись к порталу слева." if stone_taken else ("ЦЕЛЬ: забери камень справа." if boss_hp <= 0.0 else "ЦЕЛЬ: победи хранителя и забери камень.")
-            pause_controls = "A/D — ходить  |  W/Space — прыгать  |  J — удар"
+            pause_controls = "ЛКМ — атака  |  A/D — ходить  |  W/Space — прыгать"
         else:
             pause_goal = "ЦЕЛЬ: усиливай крепость и продолжай ритуал."
             pause_controls = "1/2 — улучшения  |  C — обмен маны  |  Enter — дальше"
