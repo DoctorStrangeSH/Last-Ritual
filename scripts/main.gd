@@ -12,6 +12,8 @@ var legacy_shards := 0
 var legacy_level := 0
 var achievement_wins := 0
 var achievement_best_day := 1
+var legacy_damage_level := 0
+var achievement_nightmare := false
 var meta_paid_this_run := false
 var reward_bone_bonus := 0
 var reward_mana_bonus := 0
@@ -103,7 +105,7 @@ func _ready() -> void:
 func save_meta() -> void:
     var file := FileAccess.open(META_PATH, FileAccess.WRITE)
     if file != null:
-        file.store_string(JSON.stringify({"difficulty": difficulty, "shards": legacy_shards, "level": legacy_level, "wins": achievement_wins, "best_day": achievement_best_day}))
+        file.store_string(JSON.stringify({"difficulty": difficulty, "shards": legacy_shards, "level": legacy_level, "wins": achievement_wins, "best_day": achievement_best_day, "damage_level": legacy_damage_level, "nightmare": achievement_nightmare}))
 
 func load_meta() -> void:
     if not FileAccess.file_exists(META_PATH):
@@ -119,6 +121,8 @@ func load_meta() -> void:
     legacy_level = clampi(int(data.get("level", 0)), 0, 10)
     achievement_wins = clampi(int(data.get("wins", 0)), 0, 99999)
     achievement_best_day = clampi(int(data.get("best_day", 1)), 1, 5)
+    legacy_damage_level = clampi(int(data.get("damage_level", 0)), 0, 5)
+    achievement_nightmare = bool(data.get("nightmare", false))
 
 func start_run() -> void:
     reset_all()
@@ -136,6 +140,16 @@ func buy_legacy() -> void:
     save_meta()
     show_notice("Наследие улучшено до %d уровня!" % legacy_level)
 
+func buy_legacy_damage() -> void:
+    var cost: int = 4 + legacy_damage_level * 3
+    if legacy_damage_level >= 5 or legacy_shards < cost:
+        show_notice("Недостаточно осколков или достигнут максимум 5")
+        return
+    legacy_shards -= cost
+    legacy_damage_level += 1
+    save_meta()
+    show_notice("Урон башен усилен навсегда!")
+
 func award_run(is_win: bool) -> void:
     if meta_paid_this_run:
         return
@@ -144,6 +158,10 @@ func award_run(is_win: bool) -> void:
     achievement_best_day = maxi(achievement_best_day, current_day)
     if is_win:
         achievement_wins += 1
+        if difficulty >= 3 and not achievement_nightmare:
+            achievement_nightmare = true
+            legacy_shards += 20
+            show_notice("Достижение «Покоритель кошмара»: +20 осколков!")
     save_meta()
 
 func reset_all() -> void:
@@ -509,7 +527,10 @@ func _input(event: InputEvent) -> void:
             else:
                 buy_legacy()
         elif menu_click.y >= 400.0 and menu_click.y < 445.0:
-            menu_page = "legacy" if menu_page == "main" else "main"
+            if menu_page == "legacy":
+                buy_legacy_damage()
+            else:
+                menu_page = "legacy"
         elif menu_click.y >= 450.0 and menu_click.y < 495.0:
             menu_page = "achievements" if menu_page == "main" else "main"
         return
@@ -767,7 +788,7 @@ func apply_tower_shot(shot: Dictionary, target_index: int) -> void:
     var kind: String = str(shot.get("type", "bone"))
     var level: int = int(shot.get("level", 1))
     var critical: bool = bool(shot.get("critical", false))
-    var power_multiplier: float = (1.35 if tower_power_level > 0 else 1.0) * (1.0 + 0.12 * float(reward_bone_bonus))
+    var power_multiplier: float = (1.35 if tower_power_level > 0 else 1.0) * (1.0 + 0.12 * float(reward_bone_bonus)) * (1.0 + 0.06 * float(legacy_damage_level))
     var critical_multiplier: float = 1.8 if critical else 1.0
     var damage: float = float(shot["damage"]) * power_multiplier * critical_multiplier
     enemies[target_index]["hp"] = float(enemies[target_index]["hp"]) - damage
@@ -1318,12 +1339,13 @@ func _draw() -> void:
         elif menu_page == "legacy":
             label("СЛОЖНОСТЬ: %d / 4   [НАЖАТЬ]" % difficulty, 355, 330, 21, Color("ffdcae"))
             label("ПОВЫСИТЬ НАСЛЕДИЕ: %d оск." % (2 + legacy_level * 2), 355, 380, 21)
-            label("НАЗАД", 480, 430, 21)
-            label("Осколки: %d  •  Наследие: %d/10" % [legacy_shards, legacy_level], 340, 478, 20)
+            label("УРОН БАШЕН: %d/5  •  %d оск." % [legacy_damage_level, 4 + legacy_damage_level * 3], 355, 430, 19)
+            label("НАЗАД  •  Осколки: %d" % legacy_shards, 390, 478, 19)
         else:
-            label("ПОБЕД: %d" % achievement_wins, 430, 337, 23, Color("ffdcae"))
-            label("ЛУЧШИЙ ДЕНЬ: %d / 5" % achievement_best_day, 407, 385, 22)
-            label("НАЖМИ ДЛЯ ВОЗВРАТА", 385, 460, 20)
+            label("ПОБЕД: %d  •  ЛУЧШИЙ ДЕНЬ: %d/5" % [achievement_wins, achievement_best_day], 348, 337, 20, Color("ffdcae"))
+            label("ПОКОРИТЕЛЬ КОШМАРА: %s" % ("ОТКРЫТО" if achievement_nightmare else "ЗАКРЫТО"), 352, 385, 19)
+            label("Победи на сложности 3 или 4 — +20 осколков", 342, 420, 17)
+            label("НАЖМИ ДЛЯ ВОЗВРАТА", 385, 470, 20)
         return
     if phase == "win" or phase == "lose":
         if phase == "win":
