@@ -1,10 +1,11 @@
 extends Node2D
-## Last Ritual v1.8: final siege stability and balance, Godot 4.2+
+## Last Ritual v1.9: interday save checkpoints, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
 const DAY_LENGTH := 56.0
 const MAX_WALL := 100.0
+const SAVE_PATH := "user://campaign_v1.json"
 var phase := "title"
 var time_left := DAY_LENGTH
 var wall_hp := MAX_WALL
@@ -134,6 +135,10 @@ func _unhandled_input(event: InputEvent) -> void:
             return
         if paused:
             return
+        if phase == "title" and event.keycode == KEY_L:
+            if not load_campaign():
+                show_notice("Сохранение не найдено или повреждено")
+            return
         if event.keycode == KEY_ENTER or event.keycode == KEY_KP_ENTER:
             if phase == "title" or phase == "win" or phase == "lose":
                 reset_all()
@@ -165,6 +170,7 @@ func _unhandled_input(event: InputEvent) -> void:
                 mana -= 25
                 souls += 1
                 show_notice("Алтарь преобразовал ману в душу")
+                save_campaign()
             else:
                 show_notice("Не хватает маны для преобразования")
 
@@ -199,6 +205,78 @@ func resolve_altar() -> void:
     else:
         show_notice("Для ритуала нужно 50 маны и 8 душ. C — обмен.")
 
+func save_campaign() -> bool:
+    if phase != "ritual" or stones_collected < 1 or stones_collected > 5:
+        return false
+    var saved_towers: Array[Dictionary] = []
+    for tower in towers:
+        saved_towers.append({"x": float(tower["x"]), "type": str(tower["type"])})
+    var data := {
+        "version": 1, "day": current_day, "stones": stones_collected,
+        "mana": mana, "souls": souls, "wall_hp": wall_hp,
+        "tower_power": tower_power_level, "wall_ward": wall_ward_level,
+        "towers": saved_towers
+    }
+    var temp_path := SAVE_PATH + ".tmp"
+    var file := FileAccess.open(temp_path, FileAccess.WRITE)
+    if file == null:
+        return false
+    file.store_string(JSON.stringify(data))
+    file.flush()
+    file.close()
+    return DirAccess.rename_absolute(ProjectSettings.globalize_path(temp_path), ProjectSettings.globalize_path(SAVE_PATH)) == OK
+
+func load_campaign() -> bool:
+    if not FileAccess.file_exists(SAVE_PATH):
+        return false
+    var file := FileAccess.open(SAVE_PATH, FileAccess.READ)
+    if file == null:
+        return false
+    var parsed: Variant = JSON.parse_string(file.get_as_text())
+    if not parsed is Dictionary:
+        return false
+    var data: Dictionary = parsed
+    for key in ["version", "day", "stones", "mana", "souls", "wall_hp", "tower_power", "wall_ward", "towers"]:
+        if not data.has(key):
+            return false
+    if data["version"] != 1 or not data["day"] is float or not data["stones"] is float:
+        return false
+    var day := int(data["day"])
+    var stones := int(data["stones"])
+    if day < 1 or day > 5 or stones != day:
+        return false
+    for key in ["mana", "souls", "wall_hp", "tower_power", "wall_ward"]:
+        if not data[key] is float:
+            return false
+    if data["mana"] < 0 or data["souls"] < 0 or data["wall_hp"] <= 0 or data["wall_hp"] > MAX_WALL:
+        return false
+    if data["tower_power"] < 0 or data["tower_power"] > 1 or data["wall_ward"] < 0 or data["wall_ward"] > 1:
+        return false
+    if not data["towers"] is Array or data["towers"].size() > 12:
+        return false
+    var checked_towers: Array[Dictionary] = []
+    for item in data["towers"]:
+        if not item is Dictionary or not item.has("x") or not item.has("type"):
+            return false
+        if not item["x"] is float or item["x"] < 245.0 or item["x"] > 1020.0:
+            return false
+        if item["type"] != "bone" and item["type"] != "fire":
+            return false
+        checked_towers.append({"x": float(item["x"]), "type": item["type"], "cooldown": 0.0})
+    reset_all()
+    current_day = day
+    stones_collected = stones
+    mana = int(data["mana"])
+    souls = int(data["souls"])
+    wall_hp = float(data["wall_hp"])
+    tower_power_level = int(data["tower_power"])
+    wall_ward_level = int(data["wall_ward"])
+    towers = checked_towers
+    phase = "ritual"
+    stone_taken = true
+    show_notice("Сохранение загружено: камней %d / 5" % stones_collected)
+    return true
+
 func _input(event: InputEvent) -> void:
     if (phase == "day" or phase == "final_siege") and not paused and event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
         build_tower(selected_build, get_global_mouse_position().x)
@@ -216,6 +294,7 @@ func buy_upgrade(kind: String) -> void:
             mana -= 45
             tower_power_level = 1
             show_notice("Башни усилены: +35% урона навсегда")
+            save_campaign()
     elif kind == "ward":
         if wall_ward_level >= 1:
             show_notice("Защитная печать уже активирована")
@@ -226,6 +305,7 @@ func buy_upgrade(kind: String) -> void:
             wall_ward_level = 1
             wall_hp = minf(MAX_WALL, wall_hp + 30.0)
             show_notice("Печать укрепила стены и снизила урон на 25%")
+            save_campaign()
 
 func show_notice(message: String) -> void:
     notice = message
@@ -504,6 +584,8 @@ func update_night(delta: float) -> void:
         show_notice("Камень %d/5 получен! Вернись к порталу слева." % stones_collected)
     if stone_taken and player.x < 85.0:
         phase = "ritual"
+        if not save_campaign():
+            show_notice("Не удалось записать сохранение")
 
 func hurt(amount: float) -> void:
     if hurt_cooldown > 0.0:
@@ -568,8 +650,8 @@ func _draw() -> void:
         draw_circle(Vector2(880, 170), 105, Color("5e244e"))
         label("ПОСЛЕДНИЙ РИТУАЛ", 225, 255, 52, Color("e3b3e9"))
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
-        label("ENTER — начать пролог", 432, 415, 26, Color("f5cf84"))
-        label("Версия 1.4: пять дней, пять ночей, пять камней", 325, 474, 18, Color("aaaaaa"))
+        label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
+        label("Версия 1.9: пять дней, пять ночей, пять камней", 325, 474, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         label("РИТУАЛ ЗАВЕРШЁН" if phase == "win" else "КРЕПОСТЬ ПАЛА", 300, 275, 48, Color("a9e4bc") if phase == "win" else Color("ff7777"))
