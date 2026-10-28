@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.1-rc50: tower special abilities slow splash critical hits, Godot 4.2+
+## Last Ritual v2.1-rc51: necromancer tower, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -1120,7 +1120,7 @@ func _draw() -> void:
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
         label("M — атмосфера: %d/4  |  N — эффекты: %d/4" % [music_volume, effects_volume], 375, 463, 19, Color("d5bfda"))
-        label("Версия 2.1 RC50: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
+        label("Версия 2.1 RC51: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         if phase == "win":
@@ -1233,7 +1233,7 @@ func _draw() -> void:
                 var tower: Dictionary = towers[tower_i]
                 var tx: float = tower["x"]
                 var tower_y: float = FLOOR + float(LANE_OFFSETS[int(tower.get("lane", 1))])
-                var tower_art: Texture2D = preload("res://assets/towers/bone_tower.svg") if tower["type"] == "bone" else preload("res://assets/towers/infernal_ballista.svg")
+                var tower_art: Texture2D = preload("res://assets/towers/bone_tower.svg") if tower["type"] == "bone" else (preload("res://assets/towers/infernal_ballista.svg") if tower["type"] == "fire" else preload("res://assets/towers/necromancer_tower.svg"))
                 draw_texture_rect(tower_art, Rect2(tx - 30.0, tower_y - 106.0, 60.0, 106.0), false)
                 if selected_tower_index == tower_i:
                     draw_rect(Rect2(tx - 34.0, tower_y - 111.0, 68.0, 115.0), Color("f7dfad"), false, 2.0)
@@ -1243,6 +1243,11 @@ func _draw() -> void:
                 label("%d" % int(tower.get("level", 1)), tx - 5.0, tower_y - 126.0, 16, Color("ffe3a5"))
                 if float(tower.get("disabled", 0.0)) > 0.0:
                     draw_line(Vector2(tx - 12, tower_y - 96), Vector2(tx + 12, tower_y - 72), Color("e1bac3"), 3.0)
+            for sk in skeletons:
+                var sk_y: float = FLOOR + float(LANE_OFFSETS[int(sk["lane"])])
+                draw_circle(Vector2(float(sk["x"]), sk_y - 23.0), 12.0, Color("b7d3b2"))
+                draw_line(Vector2(float(sk["x"]), sk_y - 10.0), Vector2(float(sk["x"]), sk_y - 45.0), Color("e0e7cb"), 4.0)
+                draw_line(Vector2(float(sk["x"]) - 11.0, sk_y - 29.0), Vector2(float(sk["x"]) + 11.0, sk_y - 29.0), Color("e0e7cb"), 3.0)
             for e in enemies:
                 var ex: float = e["x"]
                 var enemy_lane_offset: float = float(LANE_OFFSETS[int(e.get("lane", 1))])
@@ -1290,13 +1295,13 @@ func _draw() -> void:
             var cursor_lane_y: float = FLOOR + float(LANE_OFFSETS[preview_lane])
             if cursor.y < 551.0 and cursor_x >= 245.0 and cursor_x <= 1020.0:
                 var range_radius: float = 260.0 if selected_build == "bone" else 375.0
-                var can_place: bool = mana >= (30 if selected_build == "bone" else 55)
+                var can_place: bool = mana >= (30 if selected_build == "bone" else (55 if selected_build == "fire" else 65))
                 for placed_tower in towers:
                     if int(placed_tower.get("lane", 1)) == preview_lane and absf(float(placed_tower["x"]) - cursor_x) < 65.0:
                         can_place = false
                 draw_line(Vector2(239.0, cursor_lane_y), Vector2(1125.0, cursor_lane_y), Color("c8e5a0", 0.75), 4.0)
                 draw_arc(Vector2(cursor_x, cursor_lane_y - 67.0), range_radius, PI, TAU, 32, Color(0.48, 0.85, 0.69, 0.27) if can_place else Color(0.95, 0.30, 0.34, 0.22), 2.0)
-                var preview_art: Texture2D = preload("res://assets/towers/bone_tower.svg") if selected_build == "bone" else preload("res://assets/towers/infernal_ballista.svg")
+                var preview_art: Texture2D = preload("res://assets/towers/bone_tower.svg") if selected_build == "bone" else (preload("res://assets/towers/infernal_ballista.svg") if selected_build == "fire" else preload("res://assets/towers/necromancer_tower.svg"))
                 draw_texture_rect(preview_art, Rect2(cursor_x - 30.0, cursor_lane_y - 106.0, 60.0, 106.0), false, Color(0.68, 1.0, 0.72, 0.76) if can_place else Color(1.0, 0.38, 0.38, 0.72))
                 label("МОЖНО ПОСТРОИТЬ" if can_place else "НЕТ МЕСТА / МАНЫ", clampf(cursor_x - 90.0, 245.0, 920.0), cursor_lane_y - 126.0, 15, Color("b8f1c0") if can_place else Color("ffaaa9"))
             draw_gothic_hud_panel(150.0)
@@ -1315,17 +1320,17 @@ func _draw() -> void:
             # RTS-style mouse palette: build cards and contextual tower inspection.
             box(Rect2(0.0, 551.0, W, 97.0), Color(0.08, 0.065, 0.13, 0.96))
             draw_line(Vector2(0, 551), Vector2(W, 551), Color("b59ab9"), 3.0)
-            for card_index in range(2):
+            for card_index in range(3):
                 var card_x: float = 20.0 + float(card_index) * 200.0
-                var card_kind: String = "bone" if card_index == 0 else "fire"
+                var card_kind: String = "bone" if card_index == 0 else ("fire" if card_index == 1 else "necro")
                 box(Rect2(card_x, 557.0, 186.0, 85.0), Color("5e405d") if selected_build == card_kind else Color("332b40"))
                 draw_rect(Rect2(card_x, 557.0, 186.0, 85.0), Color("e2be9e") if selected_build == card_kind else Color("806d85"), false, 2.0)
-                var card_art: Texture2D = preload("res://assets/towers/bone_tower.svg") if card_index == 0 else preload("res://assets/towers/infernal_ballista.svg")
+                var card_art: Texture2D = preload("res://assets/towers/bone_tower.svg") if card_index == 0 else (preload("res://assets/towers/infernal_ballista.svg") if card_index == 1 else preload("res://assets/towers/necromancer_tower.svg"))
                 draw_texture_rect(card_art, Rect2(card_x + 7.0, 563.0, 34.0, 54.0), false)
-                label("КОСТЯНАЯ" if card_index == 0 else "БАЛЛИСТА", card_x + 47.0, 578.0, 17, Color("f4d2af"))
-                label("30 маны" if card_index == 0 else "55 маны", card_x + 47.0, 597.0, 16)
-                label("Урон %d • Дал. %d" % ([22, 260] if card_index == 0 else [65, 375]), card_x + 47.0, 616.0, 14, Color("d2c6db"))
-                label("Замедление" if card_index == 0 else "Крит + урон по площади", card_x + 8.0, 634.0, 13, Color("a9dce2") if card_index == 0 else Color("ffbf8a"))
+                label("КОСТЯНАЯ" if card_index == 0 else ("БАЛЛИСТА" if card_index == 1 else "НЕКРОМАНТ"), card_x + 47.0, 578.0, 17, Color("f4d2af"))
+                label("30 маны" if card_index == 0 else ("55 маны" if card_index == 1 else "65 маны"), card_x + 47.0, 597.0, 16)
+                label("Урон %d • Дал. %d" % ([22, 260] if card_index == 0 else ([65, 375] if card_index == 1 else [0, 0])), card_x + 47.0, 616.0, 14, Color("d2c6db"))
+                label("Замедление" if card_index == 0 else ("Крит + взрыв" if card_index == 1 else "Призыв скелетов"), card_x + 8.0, 634.0, 13, Color("a9dce2") if card_index == 0 else Color("ffbf8a"))
             label("Клик по карточке — выбор", 426.0, 585.0, 17)
             label("Перетащи на линию или кликни", 426.0, 608.0, 16, Color("c8bed1"))
             if selected_tower_index >= 0 and selected_tower_index < towers.size():
@@ -1338,10 +1343,10 @@ func _draw() -> void:
                 label("%d маны • ур. %d" % [price, mini(level + 1, 3)] if level < 3 else "Уровень 3 / 3", 743.0, 614.0, 17)
                 box(Rect2(731.0, 262.0, 384.0, 151.0), Color(0.11, 0.075, 0.17, 0.93))
                 draw_rect(Rect2(731.0, 262.0, 384.0, 151.0), Color("b98faa"), false, 2.0)
-                label("%s  •  Уровень %d" % ["КОСТЯНАЯ" if inspected["type"] == "bone" else "БАЛЛИСТА", level], 746.0, 300.0, 19, Color("eed3b4"))
+                label("%s  •  Уровень %d" % ["КОСТЯНАЯ" if inspected["type"] == "bone" else ("БАЛЛИСТА" if inspected["type"] == "fire" else "НЕКРОМАНТ"), level], 746.0, 300.0, 19, Color("eed3b4"))
                 label("HP: %d / %d   Линия: %d" % [ceili(float(inspected.get("hp", 0.0))), ceili(tower_max_hp(inspected)), int(inspected.get("lane", 1)) + 1], 746.0, 331.0, 18)
-                var damage: float = (22.0 if inspected["type"] == "bone" else 65.0) * (1.0 + 0.45 * float(level - 1)) * (1.35 if tower_power_level > 0 else 1.0)
-                label("Урон: %d    Дальность: %d" % [ceili(damage), 260 if inspected["type"] == "bone" else 375], 746.0, 359.0, 18)
+                var damage: float = (22.0 if inspected["type"] == "bone" else (65.0 if inspected["type"] == "fire" else 0.0)) * (1.0 + 0.45 * float(level - 1)) * (1.35 if tower_power_level > 0 else 1.0)
+                label("Урон: %d    Дальность: %d" % [ceili(damage), 260 if inspected["type"] == "bone" else (375 if inspected["type"] == "fire" else 0)], 746.0, 359.0, 18)
                 label(tower_ability_description(str(inspected["type"]), level), 746.0, 388.0, 18, Color("a9dce2") if inspected["type"] == "bone" else Color("ffbf8a"))
             box(Rect2(970.0, 562.0, 165.0, 74.0), Color("49303f") if selected_tower_index >= 0 and selected_tower_index < towers.size() else Color("292433"))
             draw_rect(Rect2(970.0, 562.0, 165.0, 74.0), Color("cf9d9d") if selected_tower_index >= 0 and selected_tower_index < towers.size() else Color("66556e"), false, 2.0)
