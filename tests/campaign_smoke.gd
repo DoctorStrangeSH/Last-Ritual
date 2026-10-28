@@ -22,6 +22,16 @@ func run_tests() -> void:
     game.save_path = "user://campaign_smoke_test.json"
     game.reset_all()
     check(game.current_day == 1, "initial day")
+    game.phase = "night"
+    game.stone_taken = true
+    game.stones_collected = 1
+    game.player = Vector2(50, 528)
+    game.player_hp = 0.0
+    game.hurt_cooldown = 0.0
+    game.hurt(1.0)
+    game.update_night(0.0)
+    check(game.phase == "lose", "dead player cannot escape through portal")
+    game.reset_all()
     game.phase = "ritual"
     game.stones_collected = 1
     game.mana = 110
