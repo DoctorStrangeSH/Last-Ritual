@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.0-rc23: contextual pause screen, Godot 4.2+
+## Last Ritual v2.0-rc24: danger alerts, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -882,7 +882,7 @@ func _draw() -> void:
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
         label("M — атмосфера: %d/4  |  N — эффекты: %d/4" % [music_volume, effects_volume], 375, 463, 19, Color("d5bfda"))
-        label("Версия 2.0 RC23: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
+        label("Версия 2.0 RC24: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         if phase == "win":
@@ -1004,6 +1004,13 @@ func _draw() -> void:
                 box(Rect2(245, 176, 688, 73), Color(0.15, 0.11, 0.22, 0.85))
                 label("ПЕРВЫЙ ДЕНЬ: 1 — костяная башня (30 маны)", 267, 205, 22, Color("f4d09b"))
                 label("Выбери башню и нажми ЛКМ справа от крепости.", 267, 230, 19)
+            if wall_hp > 0.0 and wall_hp <= 30.0:
+                var alert_blink: float = 0.65 + 0.35 * sin(atmosphere_clock * 8.0)
+                box(Rect2(320, 169, 515, 39), Color(0.49, 0.10, 0.14, 0.50 + alert_blink * 0.35))
+                label("ТРЕВОГА! СТЕНЫ НА ГРАНИ — R: РЕМОНТ", 334, 196, 20, Color("ffe6d4"))
+            if phase == "final_siege" and final_timer <= 10.0:
+                box(Rect2(358, 222, 440, 38), Color(0.32, 0.17, 0.42, 0.85))
+                label("ПОСЛЕДНИЕ %d СЕКУНД!" % ceili(maxf(final_timer, 0.0)), 398, 249, 24, Color("f4d0ff"))
             label("1/2: выбор башни  |  ЛКМ: строить  |  R: ремонт стен (20)  |  P: пауза", 24, 625, 18)
         elif phase == "night":
             draw_circle(Vector2(940, 115), 67.0, Color(0.67, 0.65, 0.94, 0.10))
@@ -1126,6 +1133,10 @@ func _draw() -> void:
                 label("ЦЕЛЬ: забери светящийся камень справа!", 25, 181, 19, Color("f4d29a"))
             elif stone_taken:
                 label("ЦЕЛЬ: камень твой! Вернись к ПОРТАЛУ слева.", 25, 181, 19, Color("a8e9d0"))
+            if player_hp > 0.0 and player_hp <= 25.0:
+                var danger_blink: float = 0.60 + 0.40 * sin(atmosphere_clock * 8.0)
+                box(Rect2(310, 212, 530, 43), Color(0.54, 0.09, 0.18, 0.40 + danger_blink * 0.40))
+                label("КРИТИЧЕСКОЕ ЗДОРОВЬЕ! H — ЛЕЧЕНИЕ", 332, 240, 21, Color("ffe0dd"))
             label("A/D: ходьба | W / Space: прыжок | J: удар | H: лечение | Shift: рывок | P: пауза", 20, 625, 18)
     for particle in particles:
         var alpha: float = clampf(float(particle["life"]) / 0.55, 0.0, 1.0)
