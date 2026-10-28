@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v1.2: fortress upgrades, Godot 4.2+
+## Last Ritual v1.3: third siege and saboteurs, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -49,6 +49,7 @@ var current_day := 1
 var stones_collected := 0
 var tower_power_level := 0
 var wall_ward_level := 0
+var saboteurs_defeated := 0
 var trap_clock := 0.0
 var trap_positions := [375.0, 775.0]
 var chest_taken := false
@@ -69,6 +70,7 @@ func reset_all() -> void:
     stones_collected = 0
     tower_power_level = 0
     wall_ward_level = 0
+    saboteurs_defeated = 0
     trap_clock = 0.0
     chest_taken = false
     relic_taken = false
@@ -130,16 +132,16 @@ func _unhandled_input(event: InputEvent) -> void:
                 reset_all()
                 phase = "day"
             elif phase == "ritual":
-                if stones_collected < 2:
+                if stones_collected < 3:
                     phase = "day"
-                    current_day = 2
+                    current_day += 1
                     time_left = DAY_LENGTH
                     spawn_timer = 1.0
                     wave_count = 0
                     enemies.clear()
                     shots.clear()
                     player_hp = 100.0
-                    show_notice("День 2: армия Света усилилась! Башни сохранены.")
+                    show_notice("День %d: армия Света усилилась! Башни сохранены." % current_day)
                 elif mana >= 50 and souls >= 8:
                     mana -= 50
                     souls -= 8
@@ -179,7 +181,7 @@ func _input(event: InputEvent) -> void:
         build_tower(selected_build, get_global_mouse_position().x)
 
 func buy_upgrade(kind: String) -> void:
-    if stones_collected >= 2:
+    if stones_collected >= 3:
         show_notice("Осада окончена: заверши ритуал")
         return
     if kind == "tower":
@@ -242,7 +244,7 @@ func begin_night() -> void:
     grounded = true
     jump_was_down = false
     player_hp = 100.0
-    boss_hp = 140.0 if current_day == 1 else 190.0
+    boss_hp = 140.0 if current_day == 1 else (190.0 if current_day == 2 else 230.0)
     boss_strike_timer = 2.0
     boss_windup = 0.0
     mage = {"x": 570.0, "hp": 60.0 if current_day == 1 else 85.0, "cooldown": 1.4}
@@ -252,7 +254,14 @@ func begin_night() -> void:
     chest_taken = false
     relic_taken = false
     trap_clock = 0.0
-    if current_day == 2:
+    if current_day == 3:
+        platforms = [Rect2(175, 445, 130, 16), Rect2(390, 385, 140, 16), Rect2(610, 400, 120, 16), Rect2(790, 345, 140, 16)]
+        trap_positions = [340.0, 735.0, 955.0]
+        gems = [Vector2(230, 415), Vector2(455, 355), Vector2(675, 370), Vector2(850, 315), Vector2(1030, 516)]
+        mage["x"] = 685.0
+        mage["hp"] = 105.0
+        night_enemies = [{"x": 315.0, "hp": 80.0, "dir": 1.0}, {"x": 800.0, "hp": 100.0, "dir": -1.0}]
+    elif current_day == 2:
         platforms = [Rect2(165, 440, 150, 16), Rect2(360, 375, 130, 16), Rect2(575, 430, 145, 16), Rect2(770, 345, 145, 16)]
         trap_positions = [315.0, 645.0, 930.0]
         gems = [Vector2(230, 405), Vector2(415, 340), Vector2(650, 396), Vector2(845, 310), Vector2(1025, 519)]
@@ -271,17 +280,20 @@ func update_day(delta: float) -> void:
         wave_count += 1
         spawn_timer = maxf(1.05, 3.5 - wave_count * 0.065)
         var kind := "raider"
-        if wave_count % 7 == 0:
+        if current_day >= 3 and wave_count % 6 == 0:
+            kind = "saboteur"
+        elif wave_count % 7 == 0:
             kind = "runner"
         elif wave_count % 5 == 0:
             kind = "brute"
-        var health := (27.0 if kind == "runner" else (100.0 if kind == "brute" else 46.0)) * (1.0 if current_day == 1 else 1.45)
-        var speed := 84.0 if kind == "runner" else (25.0 if kind == "brute" else 43.0)
+        var health := (27.0 if kind == "runner" else (100.0 if kind == "brute" else (55.0 if kind == "saboteur" else 46.0))) * (1.0 if current_day == 1 else (1.45 if current_day == 2 else 1.7))
+        var speed := 84.0 if kind == "runner" else (65.0 if kind == "saboteur" else (25.0 if kind == "brute" else 43.0))
         var damage := (6.0 if kind == "runner" else (19.0 if kind == "brute" else 9.0)) * (1.0 if current_day == 1 else 1.3)
-        enemies.append({"x": W + 32.0, "hp": health, "max_hp": health, "speed": speed, "damage": damage, "hit_cd": 0.0, "kind": kind})
+        enemies.append({"x": W + 32.0, "hp": health, "max_hp": health, "speed": speed, "damage": damage, "hit_cd": 0.0, "kind": kind, "sabotaged": false})
     for tower in towers:
+        tower["disabled"] = maxf(0.0, float(tower.get("disabled", 0.0)) - delta)
         tower["cooldown"] -= delta
-        if tower["cooldown"] <= 0.0:
+        if tower["cooldown"] <= 0.0 and tower["disabled"] <= 0.0:
             var target_x := INF
             for enemy in enemies:
                 if absf(enemy["x"] - tower["x"]) <= (260.0 if tower["type"] == "bone" else 375.0) and enemy["x"] < target_x:
@@ -306,8 +318,17 @@ func update_day(delta: float) -> void:
             mana += 9
             souls += 1
             kills_today += 1
+            if enemy["kind"] == "saboteur":
+                saboteurs_defeated += 1
             enemies.remove_at(i)
             continue
+        if enemy["kind"] == "saboteur" and not enemy["sabotaged"]:
+            for tower in towers:
+                if absf(enemy["x"] - tower["x"]) < 95.0:
+                    tower["disabled"] = 4.5
+                    enemy["sabotaged"] = true
+                    show_notice("Диверсант отключил башню на 4,5 секунды!")
+                    break
         if enemy["x"] > 191.0:
             enemy["x"] -= enemy["speed"] * delta
         else:
@@ -439,7 +460,7 @@ func update_night(delta: float) -> void:
     if boss_hp <= 0.0 and not stone_taken and player.distance_to(Vector2(1010, 465)) < 43.0:
         stone_taken = true
         stones_collected += 1
-        show_notice("Камень %d/2 получен! Вернись к порталу слева." % stones_collected)
+        show_notice("Камень %d/3 получен! Вернись к порталу слева." % stones_collected)
     if stone_taken and player.x < 85.0:
         phase = "ritual"
 
@@ -507,7 +528,7 @@ func _draw() -> void:
         label("ПОСЛЕДНИЙ РИТУАЛ", 225, 255, 52, Color("e3b3e9"))
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать пролог", 432, 415, 26, Color("f5cf84"))
-        label("Версия 1.2: два дня, две ночи, два камня", 325, 474, 18, Color("aaaaaa"))
+        label("Версия 1.3: три дня, три ночи, три камня", 325, 474, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         label("РИТУАЛ ЗАВЕРШЁН" if phase == "win" else "КРЕПОСТЬ ПАЛА", 300, 275, 48, Color("a9e4bc") if phase == "win" else Color("ff7777"))
@@ -518,7 +539,7 @@ func _draw() -> void:
         draw_circle(Vector2(575, 340), 140, Color("382347"))
         draw_colored_polygon(PackedVector2Array([Vector2(575, 215), Vector2(640, 340), Vector2(575, 465), Vector2(510, 340)]), Color("a950d1"))
         label("АЛТАРЬ БЕЗДНЫ", 398, 145, 39, Color("e9b5fb"))
-        label("Камней: %d / 2. %s" % [stones_collected, "ENTER — продолжить осаду" if stones_collected < 2 else "Для ритуала нужно 50 маны и 8 душ"], 230, 515, 23)
+        label("Камней: %d / 3. %s" % [stones_collected, "ENTER — продолжить осаду" if stones_collected < 3 else "Для ритуала нужно 50 маны и 8 душ"], 230, 515, 23)
         label("Мана: %d  |  Души: %d" % [mana, souls], 435, 554, 24, Color("edc477"))
         if stones_collected < 2:
             label("1: усилить башни (45 маны) %s" % ["[КУПЛЕНО]" if tower_power_level > 0 else ""], 310, 415, 20)
@@ -545,10 +566,10 @@ func _draw() -> void:
             for tower in towers:
                 var tx: float = tower["x"]
                 box(Rect2(tx - 17, FLOOR - 74, 34, 74), Color("9a8a9e") if tower["type"] == "bone" else Color("a65542"))
-                draw_circle(Vector2(tx, FLOOR - 82), 20, Color("8ad0d1") if tower["type"] == "bone" else Color("ff965d"))
+                draw_circle(Vector2(tx, FLOOR - 82), 20, Color("8a8190") if float(tower.get("disabled", 0.0)) > 0.0 else (Color("8ad0d1") if tower["type"] == "bone" else Color("ff965d")))
             for e in enemies:
                 var ex: float = e["x"]
-                var enemy_color := Color("edc265") if e["kind"] == "runner" else (Color("d66c69") if e["kind"] == "brute" else Color("b0af9b"))
+                var enemy_color := Color("edc265") if e["kind"] == "runner" else (Color("7adbe4") if e["kind"] == "saboteur" else Color("b0af9b")) if e["kind"] == "saboteur" else (Color("d66c69") if e["kind"] == "brute" else Color("b0af9b"))
                 box(Rect2(ex - 13, FLOOR - 43, 26, 43), enemy_color)
                 box(Rect2(ex - 17, FLOOR - 53, 34 * e["hp"] / e["max_hp"], 4), Color("f57c79"))
             var cursor_x := get_global_mouse_position().x
@@ -556,7 +577,7 @@ func _draw() -> void:
                 var range_radius := 260.0 if selected_build == "bone" else 375.0
                 draw_arc(Vector2(cursor_x, FLOOR - 72), range_radius, PI, TAU, 28, Color("72aa9a", 0.28), 2.0)
                 box(Rect2(cursor_x - 17.0, FLOOR - 74.0, 34, 74), Color("619d9c", 0.46) if selected_build == "bone" else Color("ba7954", 0.46))
-            label("ДЕНЬ %d / 2  •  ОСАДА" % current_day, 25, 35, 27, Color("f8c59e"))
+            label("ДЕНЬ %d / 3  •  ОСАДА" % current_day, 25, 35, 27, Color("f8c59e"))
             label("До ночи: %02d c    Стены: %d / 100    Мана: %d    Души: %d" % [ceili(maxf(time_left, 0.0)), maxi(0, ceili(wall_hp)), mana, souls], 25, 71, 22)
             box(Rect2(25, 82, 260, 13), Color("553840"))
             box(Rect2(25, 82, 260.0 * clampf(wall_hp / MAX_WALL, 0.0, 1.0), 13), Color("8cbe88") if wall_hp > 30.0 else Color("ed6b73"))
@@ -600,7 +621,7 @@ func _draw() -> void:
                     box(Rect2(boss_pos.x - 85, FLOOR - 10, 170, 10), Color("eb5c60"))
                     label("УДАР!", boss_pos.x - 30, 405, 20, Color("f4a2a2"))
                 box(Rect2(boss_pos.x - 31, boss_pos.y - 47, 62, 91), Color("a24e71"))
-                box(Rect2(boss_pos.x - 45, boss_pos.y - 65, 90 * boss_hp / (140.0 if current_day == 1 else 190.0), 7), Color("ed6975"))
+                box(Rect2(boss_pos.x - 45, boss_pos.y - 65, 90 * boss_hp / (140.0 if current_day == 1 else (190.0 if current_day == 2 else 230.0)), 7), Color("ed6975"))
                 label("ХРАНИТЕЛЬ", 935, 380, 17)
             elif not stone_taken:
                 var stone := Vector2(1010, 465)
@@ -613,7 +634,7 @@ func _draw() -> void:
             draw_dark_lord(player)
             if swing_timer > 0.0:
                 box(Rect2(player.x + (17.0 if facing > 0 else -75.0), player.y - 17.0, 58.0, 10.0), Color("d6a2e9"))
-            label("НОЧЬ %d / 2  •  %s" % [current_day, "КАТАКОМБЫ" if current_day == 1 else "ПРОКЛЯТАЯ УСЫПАЛЬНИЦА"], 25, 35, 27, Color("b9afea"))
+            label("НОЧЬ %d / 3  •  %s" % [current_day, "КАТАКОМБЫ" if current_day == 1 else ("ПРОКЛЯТАЯ УСЫПАЛЬНИЦА" if current_day == 2 else "СОБОР СВЕТА")], 25, 35, 27, Color("b9afea"))
             label("Здоровье: %d    Мана: %d    Души: %d    Камень: %s" % [maxi(0, ceili(player_hp)), mana, souls, "ДА" if stone_taken else "НЕТ"], 25, 71, 22)
             label("Шипы: серые — безопасно; жёлтые — предупреждение; красные — урон", 25, 106, 17, Color("e6bb91"))
             label("A/D: ходьба | W / Space: прыжок | J: удар | H: лечение | Shift: рывок | P: пауза", 20, 625, 18)
