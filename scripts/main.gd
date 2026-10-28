@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.0-rc43: character idle and walk motion, Godot 4.2+
+## Last Ritual v2.0-rc44: attack and damage feedback, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -916,7 +916,7 @@ func _draw() -> void:
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
         label("M — атмосфера: %d/4  |  N — эффекты: %d/4" % [music_volume, effects_volume], 375, 463, 19, Color("d5bfda"))
-        label("Версия 2.0 RC43: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
+        label("Версия 2.0 RC44: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         if phase == "win":
@@ -1241,8 +1241,13 @@ func _draw() -> void:
                 box(Rect2(player.x - facing * 72.0 - 12.0, player.y - 21.0, 24.0, 43.0), Color("533b87"))
                 box(Rect2(player.x - facing * 38.0 - 12.0, player.y - 21.0, 24.0, 43.0), Color("7951ab"))
             draw_dark_lord(player)
+            if hurt_cooldown > 0.0 and sin(atmosphere_clock * 26.0) > 0.15:
+                draw_rect(Rect2(player.x - 31.0, player.y - 57.0, 62.0, 83.0), Color(1.0, 0.29, 0.38, 0.35), false, 3.0)
             if swing_timer > 0.0:
-                box(Rect2(player.x + (17.0 if facing > 0 else -75.0), player.y - 17.0, 58.0, 10.0), Color("d6a2e9"))
+                var swing_progress: float = 1.0 - swing_timer / 0.16
+                var start_angle: float = -1.2 + swing_progress * 1.8 if facing > 0.0 else PI + 0.5 - swing_progress * 1.8
+                draw_arc(player + Vector2(facing * 24.0, -14.0), 62.0, start_angle, start_angle + 1.0, 22, Color(0.85, 0.62, 1.0, 0.85), 7.0)
+                draw_arc(player + Vector2(facing * 24.0, -14.0), 68.0, start_angle + 0.1, start_angle + 0.8, 18, Color(0.96, 0.87, 1.0, 0.48), 3.0)
             draw_gothic_hud_panel(181.0)
             label("НОЧЬ %d / 5  •  %s" % [current_day, "КАТАКОМБЫ" if current_day == 1 else ("ПРОКЛЯТАЯ УСЫПАЛЬНИЦА" if current_day == 2 else ("СОБОР СВЕТА" if current_day == 3 else ("КРОВАВЫЕ ШАХТЫ" if current_day == 4 else "ГРОБНИЦА ПЕРВОГО КОРОЛЯ")))], 25, 35, 27, Color("b9afea"))
             box(Rect2(24, 78, 260, 9), Color("413345"))
