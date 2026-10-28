@@ -216,7 +216,8 @@ func run_tests() -> void:
     game.facing = 1.0
     game.mage["hp"] = 0.0
     game.boss_hp = 0.0
-    game.night_enemies = [{"x": 420.0, "hp": 100.0, "dir": 1.0}]
+    game.night_enemies.clear()
+    game.night_enemies.append({"x": 420.0, "hp": 100.0, "dir": 1.0})
     game.shadow_cleave()
     check(game.mana == 80 and game.cleave_cooldown == 6.0, "shadow cleave consumes mana and starts cooldown")
     check(float(game.night_enemies[0]["hp"]) == 52.0, "shadow cleave hits beyond basic range for double damage")
