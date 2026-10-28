@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v0.7: single-scene prototype, Godot 4.2+
+## Last Ritual v0.8: single-scene prototype, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -45,6 +45,9 @@ var kills_today := 0
 var repairs_today := 0
 var selected_build := "bone"
 var day_elapsed := 0.0
+var trap_clock := 0.0
+var trap_positions := [375.0, 775.0]
+var chest_taken := false
 
 func _ready() -> void:
     font = ThemeDB.fallback_font
@@ -57,6 +60,8 @@ func reset_all() -> void:
     repairs_today = 0
     selected_build = "bone"
     day_elapsed = 0.0
+    trap_clock = 0.0
+    chest_taken = false
     time_left = DAY_LENGTH
     wall_hp = MAX_WALL
     mana = 70
@@ -270,6 +275,7 @@ func update_night(delta: float) -> void:
     swing_timer = maxf(0.0, swing_timer - delta)
     dash_cooldown = maxf(0.0, dash_cooldown - delta)
     dash_trail = maxf(0.0, dash_trail - delta)
+    trap_clock += delta
     var direction := Input.get_axis("ui_left", "ui_right")
     if Input.is_key_pressed(KEY_A):
         direction -= 1.0
@@ -298,6 +304,16 @@ func update_night(delta: float) -> void:
                 player.y = p.position.y - 22.0
                 vel.y = 0.0
                 grounded = true
+    if not chest_taken and player.distance_to(Vector2(899, 365)) < 37.0:
+        chest_taken = true
+        mana += 35
+        souls += 2
+        show_notice("Тайник некроманта: +35 маны, +2 души")
+    var spike_phase := fmod(trap_clock, 3.1)
+    if spike_phase >= 2.1 and player.y + 21.0 >= FLOOR - 13.0:
+        for tx in trap_positions:
+            if absf(player.x - tx) < 29.0:
+                hurt(20.0)
     for i in range(gems.size() - 1, -1, -1):
         if player.distance_to(gems[i]) < 32.0:
             mana += 12
@@ -389,7 +405,7 @@ func _draw() -> void:
         label("ПОСЛЕДНИЙ РИТУАЛ", 225, 255, 52, Color("e3b3e9"))
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать пролог", 432, 415, 26, Color("f5cf84"))
-        label("Версия 0.7: один день, одна ночь, один ритуал", 325, 474, 18, Color("aaaaaa"))
+        label("Версия 0.8: один день, одна ночь, один ритуал", 325, 474, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         label("РИТУАЛ ЗАВЕРШЁН" if phase == "win" else "КРЕПОСТЬ ПАЛА", 300, 275, 48, Color("a9e4bc") if phase == "win" else Color("ff7777"))
@@ -439,6 +455,17 @@ func _draw() -> void:
             draw_circle(Vector2(940, 115), 53, Color("bbb6d6"))
             for p in platforms:
                 box(p, Color("6c5c77"))
+            var spike_phase := fmod(trap_clock, 3.1)
+            for tx in trap_positions:
+                var trap_color := Color("5c566a") if spike_phase < 1.4 else (Color("efa857") if spike_phase < 2.1 else Color("f05268"))
+                box(Rect2(tx - 31.0, FLOOR - 8.0, 62, 8), trap_color)
+                if spike_phase >= 2.1:
+                    for spike in range(4):
+                        draw_colored_polygon(PackedVector2Array([Vector2(tx - 28 + spike * 16, FLOOR), Vector2(tx - 20 + spike * 16, FLOOR - 24), Vector2(tx - 12 + spike * 16, FLOOR)]), trap_color)
+            if not chest_taken:
+                box(Rect2(874, 345, 46, 26), Color("a67c47"))
+                box(Rect2(874, 342, 46, 6), Color("f1d085"))
+                label("ТАЙНИК", 863, 332, 15, Color("f1d085"))
             for gem in gems:
                 draw_colored_polygon(PackedVector2Array([gem + Vector2(0, -16), gem + Vector2(13, 0), gem + Vector2(0, 16), gem + Vector2(-13, 0)]), Color("5de0e9"))
             for e in night_enemies:
@@ -470,7 +497,8 @@ func _draw() -> void:
                 box(Rect2(player.x + (17.0 if facing > 0 else -75.0), player.y - 17.0, 58.0, 10.0), Color("d6a2e9"))
             label("НОЧЬ 1 / 5  •  КАТАКОМБЫ", 25, 35, 27, Color("b9afea"))
             label("Здоровье: %d    Мана: %d    Души: %d    Камень: %s" % [maxi(0, ceili(player_hp)), mana, souls, "ДА" if stone_taken else "НЕТ"], 25, 71, 22)
-            label("A/D: ходьба | W / Space: прыжок | J: удар | H: лечение | Shift: рывок (15 маны) | P: пауза", 20, 625, 18)
+            label("Шипы: серые — безопасно; жёлтые — предупреждение; красные — урон", 25, 106, 17, Color("e6bb91"))
+            label("A/D: ходьба | W / Space: прыжок | J: удар | H: лечение | Shift: рывок | P: пауза", 20, 625, 18)
     if notice_timer > 0.0:
         box(Rect2(190, 97, 775, 50), Color("39283d"))
         label(notice, 215, 131, 19, Color("f5dcaf"))
