@@ -383,3 +383,9 @@
 - Tower hits briefly tint enemy sprites using tower-type colors; critical ballista hits are gold. Splash damage triggers a smaller orange flash. Visual-only, no damage timing change.
 - Fixed saboteur HP bar vertical offset on outer lanes and clamped fallback HP bars to 0..1.
 - Smoke tests cover hit flash state/color and HP damage.
+
+## v2.2 RC55 — roguelite foundation
+- Clickable gothic menu (New, Continue, Legacy & Difficulty, Achievements). The Continue button still loads the existing altar checkpoint, not an arbitrary mid-level state.
+- Meta persistence in `user://ritual_legacy.json` (difficulty 0–4, shards, legacy level 0–10, wins, best day). Difficulty scales siege enemy HP/damage and night boss HP.
+- Legacy levels cost shards and grant +12 starting mana each new run. Win/loss awards shards once; wins/best-day stats retained.
+- Smoke tests cover legacy purchase, difficulty persistence across run reset, reward idempotency. Needs CI confirmation and game feel validation.
