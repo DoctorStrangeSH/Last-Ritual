@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.0-rc24: danger alerts, Godot 4.2+
+## Last Ritual v2.0-rc25: campaign statistics, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -45,6 +45,8 @@ var notice_timer := 0.0
 var font: Font
 var paused := false
 var kills_today := 0
+var campaign_kills := 0
+var towers_built := 0
 var repairs_today := 0
 var selected_build := "bone"
 var day_elapsed := 0.0
@@ -81,6 +83,8 @@ func reset_all() -> void:
     phase = "title"
     paused = false
     kills_today = 0
+    campaign_kills = 0
+    towers_built = 0
     repairs_today = 0
     selected_build = "bone"
     day_elapsed = 0.0
@@ -264,7 +268,8 @@ func save_campaign() -> bool:
         "version": 1, "day": current_day, "stones": stones_collected,
         "mana": mana, "souls": souls, "wall_hp": wall_hp,
         "tower_power": tower_power_level, "wall_ward": wall_ward_level,
-        "towers": saved_towers
+        "towers": saved_towers,
+        "campaign_kills": campaign_kills, "towers_built": towers_built
     }
     var temp_path := save_path + ".tmp"
     var file := FileAccess.open(temp_path, FileAccess.WRITE)
@@ -326,7 +331,24 @@ func load_campaign() -> bool:
             if absf(float(placed["x"]) - float(item["x"])) < 65.0:
                 return false
         checked_towers.append({"x": float(item["x"]), "type": item["type"], "cooldown": 0.0})
+    var loaded_kills := 0
+    var loaded_builds := checked_towers.size()
+    for stat_key in ["campaign_kills", "towers_built"]:
+        if data.has(stat_key):
+            var stat_value: Variant = data[stat_key]
+            if not (stat_value is float or stat_value is int) or not is_finite(float(stat_value)):
+                return false
+            if stat_value < 0 or stat_value > 100000 or float(stat_value) != floorf(float(stat_value)):
+                return false
+    if data.has("campaign_kills"):
+        loaded_kills = int(data["campaign_kills"])
+    if data.has("towers_built"):
+        loaded_builds = int(data["towers_built"])
+    if loaded_builds < checked_towers.size():
+        return false
     reset_all()
+    campaign_kills = loaded_kills
+    towers_built = loaded_builds
     current_day = day
     stones_collected = stones
     mana = int(data["mana"])
@@ -388,6 +410,7 @@ func build_tower(kind: String, mx: float) -> void:
             return
     mana -= cost
     towers.append({"x": mx, "type": kind, "cooldown": 0.0})
+    towers_built += 1
     show_notice("Построено: " + ("Костяная башня" if kind == "bone" else "Адская баллиста"))
     if current_day == 1 and towers.size() == 1:
         show_notice("Первая башня готова! R чинит стены за 20 маны; враги идут справа.")
@@ -507,6 +530,7 @@ func update_day(delta: float) -> void:
             mana += 9
             souls += 1
             kills_today += 1
+            campaign_kills += 1
             if enemy["kind"] == "saboteur":
                 saboteurs_defeated += 1
             burst_particles(Vector2(float(enemy["x"]), FLOOR - 30.0), Color("a2d5e0") if enemy["kind"] == "saboteur" else Color("d9a1a8"), 9)
@@ -882,7 +906,7 @@ func _draw() -> void:
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
         label("M — атмосфера: %d/4  |  N — эффекты: %d/4" % [music_volume, effects_volume], 375, 463, 19, Color("d5bfda"))
-        label("Версия 2.0 RC24: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
+        label("Версия 2.0 RC25: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         if phase == "win":
@@ -908,7 +932,10 @@ func _draw() -> void:
                 draw_circle(Vector2(ash_x, ash_y), 2.5, Color(0.9, 0.48, 0.48, 0.35))
             label("КРЕПОСТЬ ПАЛА", 325, 270, 48, Color("ff7777"))
             label("Огонь ритуала угас. Но тьма ещё вернётся.", 293, 337, 24, Color("e1b8bf"))
-        label("ENTER — новая попытка", 414, 415, 24, Color("f5cf84"))
+        box(Rect2(255, 365, 642, 103), Color(0.12, 0.09, 0.18, 0.86))
+        label("ИТОГИ ПОХОДА", 451, 391, 22, Color("f5cf84"))
+        label("Врагов: %d   |   Построено башен: %d   |   Камней: %d/5" % [campaign_kills, towers_built, stones_collected], 294, 427, 20)
+        label("ENTER — новая попытка", 414, 509, 24, Color("f5cf84"))
         return
     if phase == "ritual":
         var altar_glow := 0.58 + 0.42 * sin(atmosphere_clock * 2.2)
