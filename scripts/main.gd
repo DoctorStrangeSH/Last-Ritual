@@ -1331,8 +1331,8 @@ func _draw() -> void:
                 label("30 маны" if card_index == 0 else ("55 маны" if card_index == 1 else "65 маны"), card_x + 47.0, 597.0, 16)
                 label("Урон %d • Дал. %d" % ([22, 260] if card_index == 0 else ([65, 375] if card_index == 1 else [0, 0])), card_x + 47.0, 616.0, 14, Color("d2c6db"))
                 label("Замедление" if card_index == 0 else ("Крит + взрыв" if card_index == 1 else "Призыв скелетов"), card_x + 8.0, 634.0, 13, Color("a9dce2") if card_index == 0 else Color("ffbf8a"))
-            label("Клик по карточке — выбор", 426.0, 585.0, 17)
-            label("Перетащи на линию или кликни", 426.0, 608.0, 16, Color("c8bed1"))
+            label("Перетащи", 618.0, 585.0, 16)
+            label("или кликни", 618.0, 608.0, 16, Color("c8bed1"))
             if selected_tower_index >= 0 and selected_tower_index < towers.size():
                 var inspected: Dictionary = towers[selected_tower_index]
                 var level: int = int(inspected.get("level", 1))
