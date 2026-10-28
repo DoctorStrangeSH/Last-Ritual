@@ -1004,6 +1004,7 @@ func hurt(amount: float) -> void:
     if player_hp <= 0.0:
         player_hp = 0.0
         phase = "lose"
+        award_run(false)
 
 func attack() -> void:
     if attack_cooldown > 0.0:
