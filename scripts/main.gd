@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v1.1: two-night prototype, Godot 4.2+
+## Last Ritual v1.2: fortress upgrades, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -47,6 +47,8 @@ var selected_build := "bone"
 var day_elapsed := 0.0
 var current_day := 1
 var stones_collected := 0
+var tower_power_level := 0
+var wall_ward_level := 0
 var trap_clock := 0.0
 var trap_positions := [375.0, 775.0]
 var chest_taken := false
@@ -65,6 +67,8 @@ func reset_all() -> void:
     day_elapsed = 0.0
     current_day = 1
     stones_collected = 0
+    tower_power_level = 0
+    wall_ward_level = 0
     trap_clock = 0.0
     chest_taken = false
     relic_taken = false
@@ -158,6 +162,10 @@ func _unhandled_input(event: InputEvent) -> void:
                 heal_player()
             elif event.keycode == KEY_SHIFT:
                 shadow_dash()
+        elif phase == "ritual" and event.keycode == KEY_1:
+            buy_upgrade("tower")
+        elif phase == "ritual" and event.keycode == KEY_2:
+            buy_upgrade("ward")
         elif phase == "ritual" and event.keycode == KEY_C:
             if mana >= 25:
                 mana -= 25
@@ -169,6 +177,30 @@ func _unhandled_input(event: InputEvent) -> void:
 func _input(event: InputEvent) -> void:
     if phase == "day" and not paused and event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
         build_tower(selected_build, get_global_mouse_position().x)
+
+func buy_upgrade(kind: String) -> void:
+    if stones_collected >= 2:
+        show_notice("Осада окончена: заверши ритуал")
+        return
+    if kind == "tower":
+        if tower_power_level >= 1:
+            show_notice("Усиление башен уже приобретено")
+        elif mana < 45:
+            show_notice("Для усиления башен нужно 45 маны")
+        else:
+            mana -= 45
+            tower_power_level = 1
+            show_notice("Башни усилены: +35% урона навсегда")
+    elif kind == "ward":
+        if wall_ward_level >= 1:
+            show_notice("Защитная печать уже активирована")
+        elif souls < 4:
+            show_notice("Для печати нужно 4 души")
+        else:
+            souls -= 4
+            wall_ward_level = 1
+            wall_hp = minf(MAX_WALL, wall_hp + 30.0)
+            show_notice("Печать укрепила стены и снизила урон на 25%")
 
 func show_notice(message: String) -> void:
     notice = message
@@ -266,7 +298,7 @@ func update_day(delta: float) -> void:
                 distance = d
                 closest_index = i
         if closest_index >= 0:
-            enemies[closest_index]["hp"] -= shot["damage"]
+            enemies[closest_index]["hp"] -= shot["damage"] * (1.35 if tower_power_level > 0 else 1.0)
     shots.clear()
     for i in range(enemies.size() - 1, -1, -1):
         var enemy := enemies[i]
@@ -281,7 +313,7 @@ func update_day(delta: float) -> void:
         else:
             enemy["hit_cd"] -= delta
             if enemy["hit_cd"] <= 0.0:
-                wall_hp -= enemy["damage"]
+                wall_hp -= enemy["damage"] * (0.75 if wall_ward_level > 0 else 1.0)
                 enemy["hit_cd"] = 1.3
     if wall_hp <= 0.0:
         phase = "lose"
@@ -475,7 +507,7 @@ func _draw() -> void:
         label("ПОСЛЕДНИЙ РИТУАЛ", 225, 255, 52, Color("e3b3e9"))
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать пролог", 432, 415, 26, Color("f5cf84"))
-        label("Версия 1.1: два дня, две ночи, два камня", 325, 474, 18, Color("aaaaaa"))
+        label("Версия 1.2: два дня, две ночи, два камня", 325, 474, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         label("РИТУАЛ ЗАВЕРШЁН" if phase == "win" else "КРЕПОСТЬ ПАЛА", 300, 275, 48, Color("a9e4bc") if phase == "win" else Color("ff7777"))
@@ -488,6 +520,9 @@ func _draw() -> void:
         label("АЛТАРЬ БЕЗДНЫ", 398, 145, 39, Color("e9b5fb"))
         label("Камней: %d / 2. %s" % [stones_collected, "ENTER — продолжить осаду" if stones_collected < 2 else "Для ритуала нужно 50 маны и 8 душ"], 230, 515, 23)
         label("Мана: %d  |  Души: %d" % [mana, souls], 435, 554, 24, Color("edc477"))
+        if stones_collected < 2:
+            label("1: усилить башни (45 маны) %s" % ["[КУПЛЕНО]" if tower_power_level > 0 else ""], 310, 415, 20)
+            label("2: печать стен (4 души) %s" % ["[КУПЛЕНО]" if wall_ward_level > 0 else ""], 310, 445, 20)
         label("ENTER — продолжить / ритуал  |  C — 25 маны на 1 душ", 310, 600, 20)
     else:
         box(Rect2(0, FLOOR, W, H - FLOOR), Color("32313b"))
