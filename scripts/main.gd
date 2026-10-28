@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.0-rc15: animated final ritual, Godot 4.2+
+## Last Ritual v2.0-rc16: victory and defeat scenes, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -728,12 +728,33 @@ func _draw() -> void:
         label("ПОСЛЕДНИЙ РИТУАЛ", 225, 255, 52, Color("e3b3e9"))
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
-        label("Версия 2.0 RC15: пять дней, пять ночей, пять камней", 325, 474, 18, Color("aaaaaa"))
+        label("Версия 2.0 RC16: пять дней, пять ночей, пять камней", 325, 474, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
-        label("РИТУАЛ ЗАВЕРШЁН" if phase == "win" else "КРЕПОСТЬ ПАЛА", 300, 275, 48, Color("a9e4bc") if phase == "win" else Color("ff7777"))
-        label("Ты пробудил древнюю силу." if phase == "win" else "Тьма ещё может вернуться...", 350, 340, 26)
-        label("ENTER — новая попытка", 414, 415, 24)
+        if phase == "win":
+            var victory_pulse: float = 0.5 + 0.5 * sin(atmosphere_clock * 2.5)
+            draw_circle(Vector2(576, 290), 165.0 + victory_pulse * 13.0, Color(0.58, 0.25, 0.87, 0.10 + victory_pulse * 0.08))
+            draw_arc(Vector2(576, 290), 136.0, 0.0, TAU, 64, Color("c29ae9"), 4.0)
+            for rune in range(10):
+                var angle: float = atmosphere_clock * 0.33 + TAU * float(rune) / 10.0
+                var point := Vector2(576 + cos(angle) * 138.0, 290 + sin(angle) * 138.0)
+                draw_circle(point, 5.0, Color("ddc0ff"))
+            label("РИТУАЛ ЗАВЕРШЁН", 286, 270, 48, Color("e3b3e9"))
+            label("Древняя сила пробудилась. Крепость выстояла.", 285, 337, 24, Color("e9d8f0"))
+        else:
+            box(Rect2(0, FLOOR, W, H - FLOOR), Color("332633"))
+            for ruin in range(5):
+                var rx: float = 215.0 + float(ruin) * 170.0
+                var height: float = 65.0 + float(ruin % 3) * 28.0
+                draw_colored_polygon(PackedVector2Array([Vector2(rx - 36, FLOOR), Vector2(rx - 25, FLOOR - height), Vector2(rx - 10, FLOOR - height + 22), Vector2(rx + 8, FLOOR - height + 5), Vector2(rx + 34, FLOOR)]), Color("584353"))
+                draw_line(Vector2(rx - 35, FLOOR - height), Vector2(rx + 20, FLOOR - 20), Color("a26165"), 3.0)
+            for ash in range(12):
+                var ash_x: float = fmod(float(ash * 109) + atmosphere_clock * 12.0, W)
+                var ash_y: float = 165.0 + float((ash * 53) % 320) + sin(atmosphere_clock + float(ash)) * 10.0
+                draw_circle(Vector2(ash_x, ash_y), 2.5, Color(0.9, 0.48, 0.48, 0.35))
+            label("КРЕПОСТЬ ПАЛА", 325, 270, 48, Color("ff7777"))
+            label("Огонь ритуала угас. Но тьма ещё вернётся.", 293, 337, 24, Color("e1b8bf"))
+        label("ENTER — новая попытка", 414, 415, 24, Color("f5cf84"))
         return
     if phase == "ritual":
         var altar_glow := 0.58 + 0.42 * sin(atmosphere_clock * 2.2)
