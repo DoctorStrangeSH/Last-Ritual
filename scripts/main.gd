@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v0.4: single-scene prototype, Godot 4.2+
+## Last Ritual v0.5: single-scene prototype, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -24,6 +24,8 @@ var swing_timer := 0.0
 var boss_strike_timer := 2.0
 var boss_windup := 0.0
 var potions_used := 0
+var dash_cooldown := 0.0
+var dash_trail := 0.0
 var platforms := [Rect2(205, 473, 135, 16), Rect2(415, 413, 145, 16), Rect2(640, 462, 130, 16), Rect2(830, 396, 135, 16)]
 var gems: Array[Vector2] = []
 var night_enemies: Array[Dictionary] = []
@@ -67,6 +69,8 @@ func reset_all() -> void:
     boss_strike_timer = 2.0
     boss_windup = 0.0
     potions_used = 0
+    dash_cooldown = 0.0
+    dash_trail = 0.0
     player_hp = 100.0
     boss_hp = 140.0
     stone_taken = false
@@ -121,6 +125,8 @@ func _unhandled_input(event: InputEvent) -> void:
                 attack()
             elif event.keycode == KEY_H:
                 heal_player()
+            elif event.keycode == KEY_SHIFT:
+                shadow_dash()
         elif phase == "ritual" and event.keycode == KEY_C:
             if mana >= 25:
                 mana -= 25
@@ -221,10 +227,26 @@ func heal_player() -> void:
         potions_used += 1
         show_notice("Тёмная магия восстановила 30 здоровья")
 
+func shadow_dash() -> void:
+    if dash_cooldown > 0.0:
+        show_notice("Теневой рывок восстанавливается")
+        return
+    if mana < 15:
+        show_notice("Теневой рывок требует 15 маны")
+        return
+    mana -= 15
+    dash_cooldown = 2.5
+    dash_trail = 0.25
+    player.x = clampf(player.x + facing * 125.0, 16.0, W - 16.0)
+    hurt_cooldown = maxf(hurt_cooldown, 0.35)
+    show_notice("Теневой рывок!")
+
 func update_night(delta: float) -> void:
     attack_cooldown = maxf(0.0, attack_cooldown - delta)
     hurt_cooldown = maxf(0.0, hurt_cooldown - delta)
     swing_timer = maxf(0.0, swing_timer - delta)
+    dash_cooldown = maxf(0.0, dash_cooldown - delta)
+    dash_trail = maxf(0.0, dash_trail - delta)
     var direction := Input.get_axis("ui_left", "ui_right")
     if Input.is_key_pressed(KEY_A):
         direction -= 1.0
@@ -322,7 +344,7 @@ func _draw() -> void:
         label("ПОСЛЕДНИЙ РИТУАЛ", 225, 255, 52, Color("e3b3e9"))
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать пролог", 432, 415, 26, Color("f5cf84"))
-        label("Версия 0.4: один день, одна ночь, один ритуал", 325, 474, 18, Color("aaaaaa"))
+        label("Версия 0.5: один день, одна ночь, один ритуал", 325, 474, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         label("РИТУАЛ ЗАВЕРШЁН" if phase == "win" else "КРЕПОСТЬ ПАЛА", 300, 275, 48, Color("a9e4bc") if phase == "win" else Color("ff7777"))
@@ -379,13 +401,16 @@ func _draw() -> void:
                 draw_colored_polygon(PackedVector2Array([stone + Vector2(0, -28), stone + Vector2(20, 0), stone + Vector2(0, 28), stone + Vector2(-20, 0)]), Color("d75bf3"))
             box(Rect2(35, 465, 49, 85), Color("784a93"))
             label("ПОРТАЛ", 24, 451, 16)
+            if dash_trail > 0.0:
+                box(Rect2(player.x - facing * 72.0 - 12.0, player.y - 21.0, 24.0, 43.0), Color("533b87"))
+                box(Rect2(player.x - facing * 38.0 - 12.0, player.y - 21.0, 24.0, 43.0), Color("7951ab"))
             box(Rect2(player.x - 14, player.y - 21, 28, 43), Color("a376c0") if hurt_cooldown <= 0.0 else Color("ed9393"))
             draw_circle(player + Vector2(0, -24), 14, Color("d9cbca"))
             if swing_timer > 0.0:
                 box(Rect2(player.x + (17.0 if facing > 0 else -75.0), player.y - 17.0, 58.0, 10.0), Color("d6a2e9"))
             label("НОЧЬ 1 / 5  •  КАТАКОМБЫ", 25, 35, 27, Color("b9afea"))
             label("Здоровье: %d    Мана: %d    Души: %d    Камень: %s" % [maxi(0, ceili(player_hp)), mana, souls, "ДА" if stone_taken else "НЕТ"], 25, 71, 22)
-            label("A/D: ходьба | W / Space: прыжок | J: удар | H: лечение (20 маны) | P: пауза", 20, 625, 18)
+            label("A/D: ходьба | W / Space: прыжок | J: удар | H: лечение | Shift: рывок (15 маны) | P: пауза", 20, 625, 18)
     if notice_timer > 0.0:
         box(Rect2(190, 97, 775, 50), Color("39283d"))
         label(notice, 215, 131, 19, Color("f5dcaf"))
