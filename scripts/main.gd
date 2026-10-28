@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.0-rc45: magical impact sparks, Godot 4.2+
+## Last Ritual v2.1-rc46: tower upgrades HP three lanes and night reset, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -49,6 +49,8 @@ var campaign_kills := 0
 var towers_built := 0
 var repairs_today := 0
 var selected_build := "bone"
+var selected_lane := 1
+const LANE_OFFSETS := [-56.0, 0.0, 56.0]
 var day_elapsed := 0.0
 var current_day := 1
 var stones_collected := 0
@@ -87,6 +89,7 @@ func reset_all() -> void:
     towers_built = 0
     repairs_today = 0
     selected_build = "bone"
+    selected_lane = 1
     day_elapsed = 0.0
     current_day = 1
     stones_collected = 0
@@ -204,6 +207,15 @@ func _unhandled_input(event: InputEvent) -> void:
             elif event.keycode == KEY_2:
                 selected_build = "fire"
                 show_notice("Выбрана адская баллиста: щёлкни мышью, чтобы построить")
+            elif event.keycode == KEY_3:
+                selected_lane = 0
+                show_notice("Линия 1: верхняя")
+            elif event.keycode == KEY_4:
+                selected_lane = 1
+                show_notice("Линия 2: центральная")
+            elif event.keycode == KEY_5:
+                selected_lane = 2
+                show_notice("Линия 3: нижняя")
         elif phase == "night":
             if event.keycode == KEY_J:
                 attack()
@@ -239,7 +251,8 @@ func resolve_altar() -> void:
         enemies.clear()
         shots.clear()
         player_hp = 100.0
-        show_notice("День %d: армия Света усилилась! Башни сохранены." % current_day)
+        towers.clear()
+        show_notice("День %d: башни прошлого дня исчезли. Построй новую оборону!" % current_day)
     elif mana >= 50 and souls >= 8:
         mana -= 50
         souls -= 8
@@ -263,7 +276,7 @@ func save_campaign() -> bool:
         return false
     var saved_towers: Array[Dictionary] = []
     for tower in towers:
-        saved_towers.append({"x": float(tower["x"]), "type": str(tower["type"])})
+        saved_towers.append({"x": float(tower["x"]), "type": str(tower["type"]), "lane": int(tower.get("lane", 1)), "level": int(tower.get("level", 1)), "hp": float(tower.get("hp", tower_max_hp(tower)))})
     var data := {
         "version": 1, "day": current_day, "stones": stones_collected,
         "mana": mana, "souls": souls, "wall_hp": wall_hp,
@@ -327,10 +340,18 @@ func load_campaign() -> bool:
             return false
         if item["type"] != "bone" and item["type"] != "fire":
             return false
+        var saved_lane: int = int(item.get("lane", 1))
+        var saved_level: int = int(item.get("level", 1))
+        if saved_lane < 0 or saved_lane > 2 or saved_level < 1 or saved_level > 3:
+            return false
         for placed in checked_towers:
-            if absf(float(placed["x"]) - float(item["x"])) < 65.0:
+            if int(placed.get("lane", 1)) == saved_lane and absf(float(placed["x"]) - float(item["x"])) < 65.0:
                 return false
-        checked_towers.append({"x": float(item["x"]), "type": item["type"], "cooldown": 0.0})
+        var loaded_tower: Dictionary = {"x": float(item["x"]), "type": item["type"], "lane": saved_lane, "level": saved_level, "cooldown": 0.0}
+        loaded_tower["hp"] = float(item.get("hp", tower_max_hp(loaded_tower)))
+        if not is_finite(float(loaded_tower["hp"])) or loaded_tower["hp"] <= 0.0 or loaded_tower["hp"] > tower_max_hp(loaded_tower):
+            return false
+        checked_towers.append(loaded_tower)
     var loaded_kills := 0
     var loaded_builds := checked_towers.size()
     for stat_key in ["campaign_kills", "towers_built"]:
@@ -356,7 +377,7 @@ func load_campaign() -> bool:
     wall_hp = float(data["wall_hp"])
     tower_power_level = int(data["tower_power"])
     wall_ward_level = int(data["wall_ward"])
-    towers = checked_towers
+    towers = []
     phase = "ritual"
     stone_taken = true
     show_notice("Сохранение загружено: камней %d / 5" % stones_collected)
@@ -364,7 +385,10 @@ func load_campaign() -> bool:
 
 func _input(event: InputEvent) -> void:
     if (phase == "day" or phase == "final_siege") and not paused and event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-        build_tower(selected_build, get_global_mouse_position().x)
+        if Input.is_key_pressed(KEY_CTRL):
+            upgrade_tower(get_global_mouse_position().x, selected_lane)
+        else:
+            build_tower(selected_build, get_global_mouse_position().x, selected_lane)
 
 func buy_upgrade(kind: String) -> void:
     if stones_collected >= 5:
@@ -396,7 +420,28 @@ func show_notice(message: String) -> void:
     notice = message
     notice_timer = 2.7
 
-func build_tower(kind: String, mx: float) -> void:
+func tower_max_hp(tower: Dictionary) -> float:
+    return (120.0 if tower["type"] == "bone" else 165.0) + float(int(tower.get("level", 1)) - 1) * 55.0
+
+func upgrade_tower(mx: float, lane: int) -> void:
+    for tower in towers:
+        if int(tower.get("lane", 1)) != lane or absf(float(tower["x"]) - mx) > 35.0:
+            continue
+        if int(tower.get("level", 1)) >= 3:
+            show_notice("Башня уже максимального уровня")
+            return
+        var price: int = 25 * int(tower.get("level", 1))
+        if mana < price:
+            show_notice("Улучшение требует %d маны" % price)
+            return
+        mana -= price
+        tower["level"] = int(tower.get("level", 1)) + 1
+        tower["hp"] = minf(tower_max_hp(tower), float(tower.get("hp", 0.0)) + 55.0)
+        show_notice("Башня улучшена до уровня %d!" % int(tower["level"]))
+        return
+    show_notice("Нет башни для улучшения на выбранной линии")
+
+func build_tower(kind: String, mx: float, lane: int = 1) -> void:
     var cost := 30 if kind == "bone" else 55
     if mx < 245 or mx > 1020:
         show_notice("Ставь башни между крепостью и врагом")
@@ -405,11 +450,11 @@ func build_tower(kind: String, mx: float) -> void:
         show_notice("Не хватает %d маны для башни (нужно %d)" % [cost - mana, cost])
         return
     for tower in towers:
-        if absf(tower["x"] - mx) < 65.0:
+        if int(tower.get("lane", 1)) == lane and absf(tower["x"] - mx) < 65.0:
             show_notice("Слишком близко: оставь между башнями не меньше 65 шагов")
             return
     mana -= cost
-    towers.append({"x": mx, "type": kind, "cooldown": 0.0})
+    towers.append({"x": mx, "type": kind, "lane": lane, "level": 1, "hp": 120.0 if kind == "bone" else 165.0, "cooldown": 0.0})
     towers_built += 1
     show_notice("Построено: " + ("Костяная башня" if kind == "bone" else "Адская баллиста"))
     if current_day == 1 and towers.size() == 1:
@@ -429,6 +474,7 @@ func repair_wall() -> void:
 
 func begin_night() -> void:
     phase = "night"
+    towers.clear()
     stone_taken = false
     player = Vector2(95, FLOOR - 25)
     vel = Vector2.ZERO
@@ -467,7 +513,7 @@ func begin_night() -> void:
         mage["hp"] = 105.0
         night_enemies = [{"x": 315.0, "hp": 80.0, "dir": 1.0}, {"x": 800.0, "hp": 100.0, "dir": -1.0}]
     elif current_day == 2:
-        platforms = [Rect2(165, 440, 150, 16), Rect2(360, 375, 130, 16), Rect2(575, 430, 145, 16), Rect2(770, 345, 145, 16)]
+        platforms = [Rect2(145, 476, 175, 16), Rect2(345, 425, 155, 16), Rect2(555, 450, 160, 16), Rect2(765, 395, 150, 16)]
         trap_positions = [315.0, 645.0, 930.0]
         gems = [Vector2(230, 405), Vector2(415, 340), Vector2(650, 396), Vector2(845, 310), Vector2(1025, 519)]
         mage["x"] = 715.0
@@ -497,24 +543,24 @@ func update_day(delta: float) -> void:
         var health := (27.0 if kind == "runner" else (100.0 if kind == "brute" else (55.0 if kind == "saboteur" else 46.0))) * (1.0 if current_day == 1 else (1.45 if current_day == 2 else (1.7 if current_day == 3 else (1.95 if current_day == 4 else 2.1))))
         var speed := 84.0 if kind == "runner" else (65.0 if kind == "saboteur" else (25.0 if kind == "brute" else 43.0))
         var damage := (6.0 if kind == "runner" else (19.0 if kind == "brute" else 9.0)) * (1.0 if current_day == 1 else 1.3)
-        enemies.append({"x": W + 32.0, "hp": health, "max_hp": health, "speed": speed, "damage": damage, "hit_cd": 0.0, "kind": kind, "sabotaged": false})
+        enemies.append({"x": W + 32.0, "hp": health, "max_hp": health, "speed": speed, "damage": damage, "hit_cd": 0.0, "kind": kind, "lane": randi_range(0, 2), "sabotaged": false})
     for tower in towers:
         tower["disabled"] = maxf(0.0, float(tower.get("disabled", 0.0)) - delta)
         tower["cooldown"] -= delta
         if tower["cooldown"] <= 0.0 and tower["disabled"] <= 0.0:
             var target_x := INF
             for enemy in enemies:
-                if absf(enemy["x"] - tower["x"]) <= (260.0 if tower["type"] == "bone" else 375.0) and enemy["x"] < target_x:
+                if int(enemy.get("lane", 1)) == int(tower.get("lane", 1)) and absf(enemy["x"] - tower["x"]) <= (260.0 if tower["type"] == "bone" else 375.0) and enemy["x"] < target_x:
                     target_x = enemy["x"]
             if target_x != INF:
                 tower["cooldown"] = 0.9 if tower["type"] == "bone" else 1.8
-                shots.append({"x": tower["x"], "target": target_x, "damage": 22.0 if tower["type"] == "bone" else 65.0, "type": tower["type"]})
+                shots.append({"x": tower["x"], "target": target_x, "lane": int(tower.get("lane", 1)), "damage": (22.0 if tower["type"] == "bone" else 65.0) * (1.0 + 0.45 * float(int(tower.get("level", 1)) - 1)), "type": tower["type"]})
     for shot in shots:
         var closest_index := -1
         var distance := INF
         for i in range(enemies.size()):
             var d: float = absf(enemies[i]["x"] - shot["target"])
-            if d < distance:
+            if int(enemies[i].get("lane", 1)) == int(shot.get("lane", 1)) and d < distance:
                 distance = d
                 closest_index = i
         if closest_index >= 0:
@@ -538,11 +584,14 @@ func update_day(delta: float) -> void:
             continue
         if enemy["kind"] == "saboteur" and not enemy["sabotaged"]:
             for tower in towers:
-                if absf(enemy["x"] - tower["x"]) < 95.0:
+                if int(enemy.get("lane", 1)) == int(tower.get("lane", 1)) and absf(enemy["x"] - tower["x"]) < 95.0:
                     tower["disabled"] = 4.5
                     enemy["sabotaged"] = true
                     show_notice("Диверсант отключил башню на 4,5 секунды!")
                     break
+        for tower in towers:
+            if int(tower.get("lane", 1)) == int(enemy.get("lane", 1)) and absf(float(tower["x"]) - float(enemy["x"])) < 31.0:
+                tower["hp"] = float(tower.get("hp", tower_max_hp(tower))) - float(enemy["damage"]) * delta * 0.8
         if enemy["x"] > 191.0:
             enemy["x"] -= enemy["speed"] * delta
         else:
@@ -550,6 +599,10 @@ func update_day(delta: float) -> void:
             if enemy["hit_cd"] <= 0.0:
                 wall_hp -= enemy["damage"] * (0.75 if wall_ward_level > 0 else 1.0)
                 enemy["hit_cd"] = 1.3
+    for tower_index in range(towers.size() - 1, -1, -1):
+        if float(towers[tower_index].get("hp", 1.0)) <= 0.0:
+            burst_particles(Vector2(float(towers[tower_index]["x"]), FLOOR - 68.0), Color("f5a47d"), 12)
+            towers.remove_at(tower_index)
     if wall_hp <= 0.0:
         wall_hp = 0.0
         phase = "lose"
@@ -601,7 +654,7 @@ func update_night(delta: float) -> void:
         facing = signf(vel.x)
     var jump_down := Input.is_key_pressed(KEY_W) or Input.is_key_pressed(KEY_SPACE) or Input.is_action_pressed("ui_accept")
     if jump_down and not jump_was_down and grounded:
-        vel.y = -455.0
+        vel.y = -490.0
         grounded = false
     jump_was_down = jump_down
     vel.y += 1060.0 * delta
@@ -919,7 +972,7 @@ func _draw() -> void:
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
         label("M — атмосфера: %d/4  |  N — эффекты: %d/4" % [music_volume, effects_volume], 375, 463, 19, Color("d5bfda"))
-        label("Версия 2.0 RC45: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
+        label("Версия 2.1 RC46: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         if phase == "win":
