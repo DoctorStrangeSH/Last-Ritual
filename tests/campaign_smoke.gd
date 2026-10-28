@@ -183,14 +183,18 @@ func run_tests() -> void:
     for offer in game.reward_offers:
         distinct[offer] = true
     check(distinct.size() == 3, "reward draft never duplicates a card")
-    game.reward_offers = [3, 4, 0]
+    game.reward_offers.clear()
+    for offer in [3, 4, 0]:
+        game.reward_offers.append(offer)
     game.phase = "reward"
     game.current_day = 1
     game.stones_collected = 1
     game.souls = 0
     game.choose_reward(0)
     check(game.souls == 3 and game.phase == "ritual", "soul tribute resolves and returns to altar")
-    game.reward_offers = [4, 3, 0]
+    game.reward_offers.clear()
+    for offer in [4, 3, 0]:
+        game.reward_offers.append(offer)
     game.phase = "reward"
     game.wall_hp = 10.0
     game.mana = 0
