@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.2-rc55: enemy hit reactions, lane-aligned health bars and combat feedback
+## Last Ritual v2.2-rc56: enemy hit reactions, lane-aligned health bars and combat feedback
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -13,6 +13,9 @@ var legacy_level := 0
 var achievement_wins := 0
 var achievement_best_day := 1
 var meta_paid_this_run := false
+var reward_bone_bonus := 0
+var reward_mana_bonus := 0
+var reward_ward_bonus := 0
 var menu_page := "main"
 const AUDIO_SETTINGS_PATH := "user://audio_settings.cfg"
 var save_path := SAVE_PATH
@@ -148,6 +151,9 @@ func reset_all() -> void:
     towers_built = 0
     repairs_today = 0
     meta_paid_this_run = false
+    reward_bone_bonus = 0
+    reward_mana_bonus = 0
+    reward_ward_bonus = 0
     selected_build = ""
     selected_lane = 1
     selected_tower_index = -1
@@ -286,6 +292,23 @@ func _unhandled_input(event: InputEvent) -> void:
             else:
                 show_notice("Не хватает маны для преобразования")
 
+func choose_reward(choice: int) -> void:
+    if phase != "reward" or choice < 0 or choice > 2:
+        return
+    if choice == 0:
+        reward_bone_bonus += 1
+        show_notice("Дар: башни наносят больше урона в этом походе!")
+    elif choice == 1:
+        reward_mana_bonus += 1
+        mana += 35
+        show_notice("Дар: +35 маны сейчас и +5 за каждую победу!")
+    else:
+        reward_ward_bonus += 1
+        wall_hp = minf(MAX_WALL, wall_hp + 35.0)
+        show_notice("Дар: стены восстановлены и укреплены!")
+    phase = "ritual"
+    save_campaign()
+
 func resolve_altar() -> void:
     if phase != "ritual":
         return
@@ -335,7 +358,8 @@ func save_campaign() -> bool:
         "mana": mana, "souls": souls, "wall_hp": wall_hp,
         "tower_power": tower_power_level, "wall_ward": wall_ward_level,
         "towers": saved_towers,
-        "campaign_kills": campaign_kills, "towers_built": maxi(towers_built, towers.size())
+        "campaign_kills": campaign_kills, "towers_built": maxi(towers_built, towers.size()),
+        "reward_bone": reward_bone_bonus, "reward_mana": reward_mana_bonus, "reward_ward": reward_ward_bonus
     }
     var temp_path := save_path + ".tmp"
     var file := FileAccess.open(temp_path, FileAccess.WRITE)
@@ -430,6 +454,9 @@ func load_campaign() -> bool:
     wall_hp = float(data["wall_hp"])
     tower_power_level = int(data["tower_power"])
     wall_ward_level = int(data["wall_ward"])
+    reward_bone_bonus = clampi(int(data.get("reward_bone", 0)), 0, 5)
+    reward_mana_bonus = clampi(int(data.get("reward_mana", 0)), 0, 5)
+    reward_ward_bonus = clampi(int(data.get("reward_ward", 0)), 0, 5)
     towers = []
     phase = "ritual"
     stone_taken = true
@@ -472,6 +499,11 @@ func _input(event: InputEvent) -> void:
         if absf(attack_target.x - player.x) > 10.0:
             facing = signf(attack_target.x - player.x)
         attack()
+        return
+    if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed and phase == "reward":
+        var reward_click: Vector2 = get_global_mouse_position()
+        if reward_click.y >= 270.0 and reward_click.y <= 455.0:
+            choose_reward(int(floor((reward_click.x - 140.0) / 297.0)))
         return
     if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed and phase == "ritual":
         var altar_click: Vector2 = get_global_mouse_position()
@@ -716,7 +748,7 @@ func apply_tower_shot(shot: Dictionary, target_index: int) -> void:
     var kind: String = str(shot.get("type", "bone"))
     var level: int = int(shot.get("level", 1))
     var critical: bool = bool(shot.get("critical", false))
-    var power_multiplier: float = 1.35 if tower_power_level > 0 else 1.0
+    var power_multiplier: float = (1.35 if tower_power_level > 0 else 1.0) * (1.0 + 0.12 * float(reward_bone_bonus))
     var critical_multiplier: float = 1.8 if critical else 1.0
     var damage: float = float(shot["damage"]) * power_multiplier * critical_multiplier
     enemies[target_index]["hp"] = float(enemies[target_index]["hp"]) - damage
@@ -810,7 +842,7 @@ func update_day(delta: float) -> void:
     for i in range(enemies.size() - 1, -1, -1):
         var enemy := enemies[i]
         if enemy["hp"] <= 0.0:
-            mana += 9
+            mana += 9 + reward_mana_bonus * 5
             souls += 1
             kills_today += 1
             campaign_kills += 1
@@ -991,9 +1023,8 @@ func update_night(delta: float) -> void:
         stones_collected += 1
         show_notice("Камень %d/5 получен! Вернись к порталу слева." % stones_collected)
     if phase == "night" and stone_taken and player_hp > 0.0 and player.x < 85.0:
-        phase = "ritual"
-        if not save_campaign():
-            show_notice("Не удалось записать сохранение")
+        phase = "reward"
+        show_notice("Выбери один из трёх даров Бездны!")
 
 func hurt(amount: float) -> void:
     if hurt_cooldown > 0.0:
@@ -1290,6 +1321,20 @@ func _draw() -> void:
         label("Врагов: %d   |   Построено башен: %d   |   Камней: %d/5" % [campaign_kills, towers_built, stones_collected], 294, 427, 20)
         label("ЛКМ — вернуться в главное меню", 365, 509, 22, Color("f5cf84"))
         label("Осколки наследия: %d" % legacy_shards, 413, 469, 18)
+        return
+    if phase == "reward":
+        box(Rect2(112, 142, 928, 374), Color(0.095, 0.07, 0.15, 0.96))
+        draw_rect(Rect2(112, 142, 928, 374), Color("ad85c9"), false, 3.0)
+        label("ВЫБЕРИ ДАР БЕЗДНЫ", 320, 210, 36, Color("e9beff"))
+        label("Один дар после каждой ночи • действует до конца похода", 205, 250, 19, Color("cfc2dc"))
+        for reward_i in range(3):
+            var reward_x: float = 140.0 + float(reward_i) * 297.0
+            box(Rect2(reward_x, 270.0, 276.0, 185.0), Color("322442"))
+            draw_rect(Rect2(reward_x, 270.0, 276.0, 185.0), Color("a68bb9"), false, 2.0)
+            label("МОЩЬ БАШЕН" if reward_i == 0 else ("ЗАПАС МАНЫ" if reward_i == 1 else "КРЕПОСТЬ"), reward_x + 24.0, 324.0, 21, Color("f3dbba"))
+            label("+12% урона башен" if reward_i == 0 else ("+35 маны сейчас" if reward_i == 1 else "+35 здоровья стен"), reward_x + 22.0, 370.0, 19)
+            label("до конца забега" if reward_i == 0 else ("+5 маны за врага" if reward_i == 1 else "восстановление стен"), reward_x + 22.0, 406.0, 18, Color("bbdfcc"))
+            label("НАЖМИ", reward_x + 87.0, 437.0, 17, Color("ffe1ad"))
         return
     if phase == "ritual":
         var altar_glow := 0.58 + 0.42 * sin(atmosphere_clock * 2.2)
