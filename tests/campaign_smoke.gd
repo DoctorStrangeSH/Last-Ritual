@@ -90,6 +90,17 @@ func run_tests() -> void:
     corrupt.store_string("{not valid json")
     corrupt.close()
     check(not game.load_campaign(), "corrupt save is rejected")
+    var invalid := {"version": 1, "day": 2, "stones": 2, "mana": 90, "souls": 10, "wall_hp": 90, "tower_power": 0, "wall_ward": 0, "towers": [{"x": 400.0, "type": "bone"}, {"x": 420.0, "type": "bone"}]}
+    var bad_file := FileAccess.open("user://campaign_v1.json", FileAccess.WRITE)
+    bad_file.store_string(JSON.stringify(invalid))
+    bad_file.close()
+    check(not game.load_campaign(), "overlapping saved towers rejected")
+    invalid["towers"] = []
+    invalid["stones"] = 1.5
+    bad_file = FileAccess.open("user://campaign_v1.json", FileAccess.WRITE)
+    bad_file.store_string(JSON.stringify(invalid))
+    bad_file.close()
+    check(not game.load_campaign(), "fractional stone count rejected")
     DirAccess.remove_absolute(ProjectSettings.globalize_path("user://campaign_v1.json"))
     game.queue_free()
     print("Failures: ", failures)
