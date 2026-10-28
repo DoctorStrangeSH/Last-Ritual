@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.0-rc3: save validation and campaign safeguards, Godot 4.2+
+## Last Ritual v2.0-rc4: state transition safeguards, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -597,7 +597,7 @@ func update_night(delta: float) -> void:
         stone_taken = true
         stones_collected += 1
         show_notice("Камень %d/5 получен! Вернись к порталу слева." % stones_collected)
-    if stone_taken and player.x < 85.0:
+    if phase == "night" and stone_taken and player_hp > 0.0 and player.x < 85.0:
         phase = "ritual"
         if not save_campaign():
             show_notice("Не удалось записать сохранение")
@@ -608,6 +608,7 @@ func hurt(amount: float) -> void:
     hurt_cooldown = 1.2
     player_hp -= amount
     if player_hp <= 0.0:
+        player_hp = 0.0
         phase = "lose"
 
 func attack() -> void:
