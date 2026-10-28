@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.0-rc42: gothic title and ritual UI, Godot 4.2+
+## Last Ritual v2.0-rc43: character idle and walk motion, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -851,7 +851,11 @@ func box(rect: Rect2, col: Color) -> void:
 func draw_dark_lord(pos: Vector2) -> void:
     # Imported SVG artwork replaces the original geometric placeholder.
     # The sword effect remains drawn by the night phase.
-    draw_texture_rect(preload("res://assets/characters/dark_lord.svg"), Rect2(pos.x - 31.0, pos.y - 57.0, 62.0, 83.0), false)
+    var stride: float = clampf(absf(vel.x) / 230.0, 0.0, 1.0)
+    var bounce: float = sin(atmosphere_clock * 11.0) * 2.8 * stride
+    var breathe: float = sin(atmosphere_clock * 2.5) * 1.0
+    var sprite_width: float = 62.0 + stride * 1.6
+    draw_texture_rect(preload("res://assets/characters/dark_lord.svg"), Rect2(pos.x - sprite_width * 0.5, pos.y - 57.0 + bounce + breathe, sprite_width, 83.0 - stride * 1.2), false)
 
 func _draw() -> void:
     box(Rect2(0, 0, W, H), Color("10101e"))
@@ -912,7 +916,7 @@ func _draw() -> void:
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
         label("M — атмосфера: %d/4  |  N — эффекты: %d/4" % [music_volume, effects_volume], 375, 463, 19, Color("d5bfda"))
-        label("Версия 2.0 RC42: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
+        label("Версия 2.0 RC43: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         if phase == "win":
@@ -1026,17 +1030,20 @@ func _draw() -> void:
                 var ex: float = e["x"]
                 var enemy_color := Color("7adbe4") if e["kind"] == "saboteur" else (Color("edc265") if e["kind"] == "runner" else (Color("d66c69") if e["kind"] == "brute" else Color("b0af9b")))
                 if e["kind"] == "raider":
-                    draw_texture_rect(preload("res://assets/enemies/raider.svg"), Rect2(ex - 21.0, FLOOR - 62.0, 42.0, 62.0), false)
+                    var step_y: float = sin(atmosphere_clock * 7.0 + ex * 0.08) * 2.0
+                    draw_texture_rect(preload("res://assets/enemies/raider.svg"), Rect2(ex - 21.0, FLOOR - 62.0 + step_y, 42.0, 62.0), false)
                     box(Rect2(ex - 17, FLOOR - 67, 34.0 * clampf(float(e["hp"]) / float(e["max_hp"]), 0.0, 1.0), 4), Color("f57c79"))
                     continue
                 if e["kind"] == "saboteur":
-                    draw_texture_rect(preload("res://assets/enemies/saboteur.svg"), Rect2(ex - 21.0, FLOOR - 62.0, 42.0, 62.0), false)
+                    var step_y: float = sin(atmosphere_clock * 9.0 + ex * 0.08) * 2.0
+                    draw_texture_rect(preload("res://assets/enemies/saboteur.svg"), Rect2(ex - 21.0, FLOOR - 62.0 + step_y, 42.0, 62.0), false)
                     box(Rect2(ex - 17, FLOOR - 67, 34.0 * clampf(float(e["hp"]) / float(e["max_hp"]), 0.0, 1.0), 4), Color("f57c79"))
                     continue
                 if e["kind"] == "runner" or e["kind"] == "brute":
                     var sprite_path := preload("res://assets/enemies/runner.svg") if e["kind"] == "runner" else preload("res://assets/enemies/brute.svg")
                     var sprite_size := Vector2(41.0, 57.0) if e["kind"] == "runner" else Vector2(62.0, 77.0)
-                    draw_texture_rect(sprite_path, Rect2(ex - sprite_size.x * 0.5, FLOOR - sprite_size.y, sprite_size.x, sprite_size.y), false)
+                    var gait: float = sin(atmosphere_clock * (13.0 if e["kind"] == "runner" else 5.0) + ex * 0.07) * (3.0 if e["kind"] == "runner" else 1.5)
+                    draw_texture_rect(sprite_path, Rect2(ex - sprite_size.x * 0.5, FLOOR - sprite_size.y + gait, sprite_size.x, sprite_size.y), false)
                     box(Rect2(ex - 17.0, FLOOR - sprite_size.y - 7.0, 34.0 * clampf(float(e["hp"]) / float(e["max_hp"]), 0.0, 1.0), 4.0), Color("f57c79"))
                     continue
                 var march: float = sin(atmosphere_clock * (11.0 if e["kind"] == "runner" else 6.0) + ex * 0.05) * 3.0
