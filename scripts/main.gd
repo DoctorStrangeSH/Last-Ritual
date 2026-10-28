@@ -569,7 +569,7 @@ func _draw() -> void:
                 draw_circle(Vector2(tx, FLOOR - 82), 20, Color("8a8190") if float(tower.get("disabled", 0.0)) > 0.0 else (Color("8ad0d1") if tower["type"] == "bone" else Color("ff965d")))
             for e in enemies:
                 var ex: float = e["x"]
-                var enemy_color := Color("edc265") if e["kind"] == "runner" else (Color("7adbe4") if e["kind"] == "saboteur" else Color("b0af9b")) if e["kind"] == "saboteur" else (Color("d66c69") if e["kind"] == "brute" else Color("b0af9b"))
+                var enemy_color := Color("7adbe4") if e["kind"] == "saboteur" else (Color("edc265") if e["kind"] == "runner" else (Color("d66c69") if e["kind"] == "brute" else Color("b0af9b")))
                 box(Rect2(ex - 13, FLOOR - 43, 26, 43), enemy_color)
                 box(Rect2(ex - 17, FLOOR - 53, 34 * e["hp"] / e["max_hp"], 4), Color("f57c79"))
             var cursor_x := get_global_mouse_position().x
