@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.0-rc36: standalone night background artwork, Godot 4.2+
+## Last Ritual v2.0-rc37: all five night backgrounds, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -851,10 +851,16 @@ func _draw() -> void:
         draw_texture_rect(preload("res://assets/backgrounds/catacombs.svg"), Rect2(0, 0, W, H), false)
     elif phase == "night" and current_day == 3:
         draw_texture_rect(preload("res://assets/backgrounds/light_cathedral.svg"), Rect2(0, 0, W, H), false)
+    elif phase == "night" and current_day == 2:
+        draw_texture_rect(preload("res://assets/backgrounds/cursed_crypt.svg"), Rect2(0, 0, W, H), false)
+    elif phase == "night" and current_day == 4:
+        draw_texture_rect(preload("res://assets/backgrounds/blood_mines.svg"), Rect2(0, 0, W, H), false)
+    elif phase == "night" and current_day == 5:
+        draw_texture_rect(preload("res://assets/backgrounds/first_kings_tomb.svg"), Rect2(0, 0, W, H), false)
     for i in range(11):
         draw_circle(Vector2(55 + i * 111, 85 + (i * 37) % 80), 2.0, Color("77779a"))
-    if phase == "night" and current_day != 1 and current_day != 3:
-        # Distant cathedral silhouette: separated from interactive level geometry.
+    if phase == "night" and current_day < 1:
+        # Legacy fallback for invalid night indices: separated from interactive level geometry.
         draw_circle(Vector2(858, 160), 96.0, Color(0.48, 0.61, 0.82, 0.09))
         for spire in range(8):
             var far_x: float = 60.0 + float(spire) * 154.0
@@ -902,7 +908,7 @@ func _draw() -> void:
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
         label("M — атмосфера: %d/4  |  N — эффекты: %d/4" % [music_volume, effects_volume], 375, 463, 19, Color("d5bfda"))
-        label("Версия 2.0 RC36: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
+        label("Версия 2.0 RC37: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         if phase == "win":
