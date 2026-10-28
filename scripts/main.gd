@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.0-rc14: unique night architecture, Godot 4.2+
+## Last Ritual v2.0-rc15: animated final ritual, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -728,7 +728,7 @@ func _draw() -> void:
         label("ПОСЛЕДНИЙ РИТУАЛ", 225, 255, 52, Color("e3b3e9"))
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
-        label("Версия 2.0 RC14: пять дней, пять ночей, пять камней", 325, 474, 18, Color("aaaaaa"))
+        label("Версия 2.0 RC15: пять дней, пять ночей, пять камней", 325, 474, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         label("РИТУАЛ ЗАВЕРШЁН" if phase == "win" else "КРЕПОСТЬ ПАЛА", 300, 275, 48, Color("a9e4bc") if phase == "win" else Color("ff7777"))
@@ -766,6 +766,20 @@ func _draw() -> void:
                 box(Rect2(86 + j * 25, 357, 10, 28), Color("211c30"))
             draw_circle(Vector2(131, 412), 17, Color("aa5570", 0.6))
             label("КРЕПОСТЬ", 73, 252, 19)
+            if phase == "final_siege":
+                var progress: float = clampf(1.0 - final_timer / 45.0, 0.0, 1.0)
+                var core := Vector2(540.0, FLOOR - 18.0)
+                draw_circle(core, 85.0, Color(0.65, 0.28, 0.88, 0.08 + progress * 0.18))
+                draw_arc(core, 72.0, 0.0, TAU, 60, Color(0.88, 0.59, 1.0, 0.45 + progress * 0.45), 4.0)
+                draw_arc(core, 47.0, 0.0, TAU, 48, Color(0.69, 0.4, 0.95, 0.65), 3.0)
+                for glyph in range(8):
+                    var theta: float = atmosphere_clock * 0.7 + TAU * float(glyph) / 8.0
+                    var glyph_pos := core + Vector2(cos(theta) * 68.0, sin(theta) * 26.0)
+                    draw_circle(glyph_pos, 5.0, Color(0.9, 0.71, 1.0, 0.6 + progress * 0.4))
+                for ray in range(5):
+                    var ray_x: float = core.x - 36.0 + float(ray) * 18.0
+                    var ray_height: float = 12.0 + progress * 95.0
+                    draw_line(Vector2(ray_x, core.y - 20.0), Vector2(ray_x, core.y - ray_height), Color(0.82, 0.47, 1.0, 0.14 + progress * 0.38), 3.0)
             # Cloth banners move gently; purely decorative, no physics or RNG.
             for banner in range(2):
                 var bx := 83.0 + float(banner) * 88.0
