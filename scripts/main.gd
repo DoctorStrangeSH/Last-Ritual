@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.0-rc32: runner and brute SVG artwork, Godot 4.2+
+## Last Ritual v2.0-rc33: night boss sprite artwork, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -885,7 +885,7 @@ func _draw() -> void:
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
         label("M — атмосфера: %d/4  |  N — эффекты: %d/4" % [music_volume, effects_volume], 375, 463, 19, Color("d5bfda"))
-        label("Версия 2.0 RC32: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
+        label("Версия 2.0 RC33: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         if phase == "win":
@@ -1169,9 +1169,7 @@ func _draw() -> void:
                 var mage_x: float = float(mage["x"])
                 var mage_float: float = sin(atmosphere_clock * 3.2) * 4.0
                 draw_circle(Vector2(mage_x, FLOOR - 64 + mage_float), 32, Color(0.35, 0.71, 1.0, 0.12))
-                draw_colored_polygon(PackedVector2Array([Vector2(mage_x - 18, FLOOR - 18 + mage_float), Vector2(mage_x - 12, FLOOR - 76 + mage_float), Vector2(mage_x + 12, FLOOR - 76 + mage_float), Vector2(mage_x + 18, FLOOR - 18 + mage_float)]), Color("41638f"))
-                draw_circle(Vector2(mage_x, FLOOR - 79 + mage_float), 16, Color("a8d6ef"))
-                draw_circle(Vector2(mage_x + 21, FLOOR - 55 + mage_float), 8, Color("72d6ff"))
+                draw_texture_rect(preload("res://assets/enemies/light_mage.svg"), Rect2(mage_x - 27.0, FLOOR - 109.0 + mage_float, 54.0, 92.0), false)
                 box(Rect2(mage_x - 19, FLOOR - 96, 38.0 * clampf(float(mage["hp"]) / (60.0 if current_day == 1 else (120.0 if current_day == 4 else (145.0 if current_day == 5 else (105.0 if current_day == 3 else 85.0)))), 0.0, 1.0), 4), Color("71b7ff"))
             for bolt in mage_bolts:
                 draw_circle(bolt["pos"], 8.0, Color("7bd9ff"))
@@ -1180,17 +1178,7 @@ func _draw() -> void:
                     box(Rect2(boss_pos.x - 85, FLOOR - 10, 170, 10), Color("eb5c60"))
                     label("УДАР!", boss_pos.x - 30, 405, 20, Color("f4a2a2"))
                     draw_arc(boss_pos, 94.0 + sin(atmosphere_clock * 17.0) * 3.0, 0.0, TAU, 40, Color(1.0, 0.27, 0.34, 0.47), 4.0)
-                box(Rect2(boss_pos.x - 31, boss_pos.y - 47, 62, 91), Color("a24e71"))
-                draw_colored_polygon(PackedVector2Array([boss_pos + Vector2(-29, -37), boss_pos + Vector2(-49, -79), boss_pos + Vector2(-10, -48)]), Color("7a395e"))
-                draw_colored_polygon(PackedVector2Array([boss_pos + Vector2(29, -37), boss_pos + Vector2(49, -79), boss_pos + Vector2(10, -48)]), Color("7a395e"))
-                # Layered armour, crown and glowing chest seal distinguish the guardian.
-                box(Rect2(boss_pos.x - 37, boss_pos.y - 26, 74, 13), Color("6c3757"))
-                draw_colored_polygon(PackedVector2Array([boss_pos + Vector2(-25, -39), boss_pos + Vector2(0, -16), boss_pos + Vector2(25, -39), boss_pos + Vector2(0, 18)]), Color("823454"))
-                draw_circle(boss_pos + Vector2(0, -8), 9.0 + sin(atmosphere_clock * 4.0) * 2.0, Color("db77b8"))
-                draw_circle(boss_pos + Vector2(0, -27), 19, Color("5b2544"))
-                draw_colored_polygon(PackedVector2Array([boss_pos + Vector2(-18, -44), boss_pos + Vector2(-13, -61), boss_pos + Vector2(0, -48), boss_pos + Vector2(13, -61), boss_pos + Vector2(18, -44)]), Color("b77b91"))
-                draw_circle(boss_pos + Vector2(-8, -29), 4, Color("ffa4c3"))
-                draw_circle(boss_pos + Vector2(8, -29), 4, Color("ffa4c3"))
+                draw_texture_rect(preload("res://assets/enemies/abyss_guardian.svg"), Rect2(boss_pos.x - 52.0, boss_pos.y - 89.0, 104.0, 133.0), false)
                 box(Rect2(boss_pos.x - 45, boss_pos.y - 65, 90 * boss_hp / (140.0 if current_day == 1 else (190.0 if current_day == 2 else (230.0 if current_day == 3 else (270.0 if current_day == 4 else 340.0)))), 7), Color("ed6975"))
                 label("ХРАНИТЕЛЬ", 935, 380, 17)
             elif not stone_taken:
