@@ -22,6 +22,22 @@ func run_tests() -> void:
     game.save_path = "user://campaign_smoke_test.json"
     game.reset_all()
     check(game.current_day == 1, "initial day")
+    game.legacy_shards = 12
+    game.legacy_damage_level = 0
+    game.buy_legacy_damage()
+    check(game.legacy_damage_level == 1 and game.legacy_shards == 8, "permanent tower damage upgrade purchase")
+    game.difficulty = 3
+    game.current_day = 5
+    game.stones_collected = 5
+    game.achievement_nightmare = false
+    game.meta_paid_this_run = false
+    game.award_run(true)
+    check(game.achievement_nightmare and game.legacy_shards >= 28, "nightmare victory unlock and bonus reward")
+    game.reset_all()
+    game.difficulty = 1
+    game.legacy_shards = 0
+    game.legacy_damage_level = 0
+    game.achievement_nightmare = false
     game.phase = "reward"
     game.current_day = 4
     game.choose_reward(2)
