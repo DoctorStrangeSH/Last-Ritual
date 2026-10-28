@@ -22,6 +22,13 @@ func run_tests() -> void:
     game.save_path = "user://campaign_smoke_test.json"
     game.reset_all()
     check(game.current_day == 1, "initial day")
+    game.phase = "day"
+    game.wave_count = 5
+    game.spawn_timer = 0.0
+    game.update_day(0.0)
+    check(game.enemies.size() == 1 and bool(game.enemies[0].get("elite", false)), "sixth wave spawns an elite enemy")
+    check(float(game.enemies[0]["hp"]) > 55.0, "elite enemy gets bonus health")
+    game.reset_all()
     game.phase = "reward"
     game.mana = 100
     game.choose_reward(1)
