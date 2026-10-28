@@ -27,6 +27,11 @@ func run_tests() -> void:
     game.spawn_damage_popup(Vector2(100.0, 200.0), 65.0, Color("ffe18a"), true)
     check(game.damage_popups.size() == 2 and game.damage_popups[1]["text"] == "CRIT! 65", "critical damage feedback")
     game.damage_popups.clear()
+    game.enemies.append({"x": 240.0, "hp": 100.0, "max_hp": 100.0, "kind": "raider", "lane": 1, "slow_timer": 0.0, "slow_factor": 1.0})
+    game.apply_tower_shot({"x": 150.0, "target": 240.0, "lane": 1, "damage": 22.0, "type": "bone", "level": 1, "critical": false}, 0)
+    check(float(game.enemies[0].get("hit_flash", 0.0)) > 0.0, "enemy hit reaction starts")
+    check(game.enemies[0].has("hit_flash_color") and float(game.enemies[0]["hp"]) < 100.0, "enemy hit reaction has color and damage")
+    game.enemies.clear()
     game.phase = "day"
     game.current_day = 3
     game.wave_count = 5
