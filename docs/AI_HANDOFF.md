@@ -193,3 +193,6 @@ Added `damage_popups` transient visual state (max 24; 0.72s lifetime) and `spawn
 
 ## RC54 handoff
 Enemy dictionaries gain transient `hit_flash` and `hit_flash_color`. `_process` decays flash duration; `_draw` tints enemy sprite/geometry while the flash is active. Direct and splash tower damage set distinct tint colors. Saboteur health bar now respects `enemy_lane_offset`; fallback health bar ratio is clamped. `tests/campaign_smoke.gd` checks hit reaction and damage application. Verify newest Windows build in Actions.
+
+## v2.2 RC55
+Meta system: `META_PATH`, `save_meta`, `load_meta`, `start_run`, `buy_legacy`, `award_run` implemented in `scripts/main.gd`. Main menu mouse clicks route to New, Continue (existing checkpoint), Legacy/Difficulty, Achievements. `difficulty` (0–4) modifies daytime HP/damage and night boss HP; `legacy_level` (0–10) adds 12 mana per level at new-run start. `legacy_shards`, `achievement_wins`, and `achievement_best_day` persist in a separate JSON file. Payout once per run with `meta_paid_this_run`; no procedural level generation yet. Verify CI and manual UI alignment before additional features.
