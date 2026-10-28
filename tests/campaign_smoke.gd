@@ -22,6 +22,12 @@ func run_tests() -> void:
     game.save_path = "user://campaign_smoke_test.json"
     game.reset_all()
     check(game.current_day == 1, "initial day")
+    game.phase = "reward"
+    game.current_day = 4
+    game.choose_reward(2)
+    check(game.legendary_boon == 2 and game.phase == "ritual", "fourth night offers legendary necromancer boon")
+    game.reset_all()
+    check(game.legendary_boon == -1, "legendary boon resets on new run")
     game.phase = "day"
     game.wave_count = 5
     game.spawn_timer = 0.0
