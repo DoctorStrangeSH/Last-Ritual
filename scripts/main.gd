@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.1-rc53: clean mouse-first HUD, mouse controls, firing flashes and damage feedback
+## Last Ritual v2.1-rc54: enemy hit reactions, lane-aligned health bars and combat feedback
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -163,6 +163,8 @@ func _process(delta: float) -> void:
         impacts[i]["life"] = float(impacts[i]["life"]) - delta
         if impacts[i]["life"] <= 0.0:
             impacts.remove_at(i)
+    for enemy in enemies:
+        enemy["hit_flash"] = maxf(0.0, float(enemy.get("hit_flash", 0.0)) - delta)
     for i in range(damage_popups.size() - 1, -1, -1):
         damage_popups[i]["life"] = float(damage_popups[i]["life"]) - delta
         damage_popups[i]["pos"] = damage_popups[i]["pos"] + Vector2(0.0, -34.0 * delta)
@@ -634,6 +636,8 @@ func apply_tower_shot(shot: Dictionary, target_index: int) -> void:
     var critical_multiplier: float = 1.8 if critical else 1.0
     var damage: float = float(shot["damage"]) * power_multiplier * critical_multiplier
     enemies[target_index]["hp"] = float(enemies[target_index]["hp"]) - damage
+    enemies[target_index]["hit_flash"] = 0.16
+    enemies[target_index]["hit_flash_color"] = Color("ffe18a") if critical else (Color("a8e8f0") if kind == "bone" else Color("ffb26e"))
     var target_pos := Vector2(target_x, FLOOR - 32.0 + float(LANE_OFFSETS[lane]))
     var hit_tint: Color = Color("ffe18a") if critical else (Color("a8e8f0") if kind == "bone" else Color("ffbf82"))
     spawn_damage_popup(target_pos, damage, hit_tint, critical)
@@ -650,6 +654,8 @@ func apply_tower_shot(shot: Dictionary, target_index: int) -> void:
             if absf(float(enemies[splash_index]["x"]) - target_x) <= splash_radius:
                 var splash_damage: float = float(shot["damage"]) * 0.35 * power_multiplier * critical_multiplier
                 enemies[splash_index]["hp"] = float(enemies[splash_index]["hp"]) - splash_damage
+                enemies[splash_index]["hit_flash"] = 0.13
+                enemies[splash_index]["hit_flash_color"] = Color("ffb26e")
                 var splash_pos := Vector2(float(enemies[splash_index]["x"]), FLOOR - 32.0 + float(LANE_OFFSETS[lane]))
                 emit_impact(splash_pos, Color("ff9d59"), 16.0)
                 spawn_damage_popup(splash_pos, splash_damage, Color("ffb26e"), critical)
@@ -1296,23 +1302,27 @@ func _draw() -> void:
                 var ex: float = e["x"]
                 var enemy_lane_offset: float = float(LANE_OFFSETS[int(e.get("lane", 1))])
                 var enemy_color := Color("7adbe4") if e["kind"] == "saboteur" else (Color("edc265") if e["kind"] == "runner" else (Color("d66c69") if e["kind"] == "brute" else Color("b0af9b")))
+                var flash_amount: float = clampf(float(e.get("hit_flash", 0.0)) / 0.16, 0.0, 1.0)
+                var flash_color: Color = e.get("hit_flash_color", Color.WHITE)
+                var sprite_tint: Color = Color.WHITE.lerp(flash_color, flash_amount)
                 if e["kind"] == "raider":
                     var step_y: float = sin(atmosphere_clock * 7.0 + ex * 0.08) * 2.0
-                    draw_texture_rect(preload("res://assets/enemies/raider.svg"), Rect2(ex - 21.0, FLOOR - 62.0 + step_y + enemy_lane_offset, 42.0, 62.0), false)
+                    draw_texture_rect(preload("res://assets/enemies/raider.svg"), Rect2(ex - 21.0, FLOOR - 62.0 + step_y + enemy_lane_offset, 42.0, 62.0), false, sprite_tint)
                     box(Rect2(ex - 17, FLOOR - 67 + enemy_lane_offset, 34.0 * clampf(float(e["hp"]) / float(e["max_hp"]), 0.0, 1.0), 4), Color("f57c79"))
                     continue
                 if e["kind"] == "saboteur":
                     var step_y: float = sin(atmosphere_clock * 9.0 + ex * 0.08) * 2.0
-                    draw_texture_rect(preload("res://assets/enemies/saboteur.svg"), Rect2(ex - 21.0, FLOOR - 62.0 + step_y + enemy_lane_offset, 42.0, 62.0), false)
-                    box(Rect2(ex - 17, FLOOR - 67, 34.0 * clampf(float(e["hp"]) / float(e["max_hp"]), 0.0, 1.0), 4), Color("f57c79"))
+                    draw_texture_rect(preload("res://assets/enemies/saboteur.svg"), Rect2(ex - 21.0, FLOOR - 62.0 + step_y + enemy_lane_offset, 42.0, 62.0), false, sprite_tint)
+                    box(Rect2(ex - 17, FLOOR - 67 + enemy_lane_offset, 34.0 * clampf(float(e["hp"]) / float(e["max_hp"]), 0.0, 1.0), 4), Color("f57c79"))
                     continue
                 if e["kind"] == "runner" or e["kind"] == "brute":
                     var sprite_path := preload("res://assets/enemies/runner.svg") if e["kind"] == "runner" else preload("res://assets/enemies/brute.svg")
                     var sprite_size := Vector2(41.0, 57.0) if e["kind"] == "runner" else Vector2(62.0, 77.0)
                     var gait: float = sin(atmosphere_clock * (13.0 if e["kind"] == "runner" else 5.0) + ex * 0.07) * (3.0 if e["kind"] == "runner" else 1.5)
-                    draw_texture_rect(sprite_path, Rect2(ex - sprite_size.x * 0.5, FLOOR - sprite_size.y + gait + enemy_lane_offset, sprite_size.x, sprite_size.y), false)
+                    draw_texture_rect(sprite_path, Rect2(ex - sprite_size.x * 0.5, FLOOR - sprite_size.y + gait + enemy_lane_offset, sprite_size.x, sprite_size.y), false, sprite_tint)
                     box(Rect2(ex - 17.0, FLOOR - sprite_size.y - 7.0 + enemy_lane_offset, 34.0 * clampf(float(e["hp"]) / float(e["max_hp"]), 0.0, 1.0), 4.0), Color("f57c79"))
                     continue
+                enemy_color = enemy_color.lerp(flash_color, flash_amount)
                 var march: float = sin(atmosphere_clock * (11.0 if e["kind"] == "runner" else 6.0) + ex * 0.05) * 3.0
                 var width: float = 19.0 if e["kind"] == "brute" else (10.0 if e["kind"] == "runner" else 13.0)
                 var height: float = 56.0 if e["kind"] == "brute" else (37.0 if e["kind"] == "runner" else 43.0)
@@ -1332,7 +1342,7 @@ func _draw() -> void:
                     draw_line(Vector2(ex + 12, FLOOR - 34), Vector2(ex + 26, FLOOR - 14), Color("b9bbc0"), 3.0)
                 draw_circle(Vector2(ex - 4, FLOOR - height - 9 + march), 2.0, Color("ffc2a3"))
                 draw_circle(Vector2(ex + 4, FLOOR - height - 9 + march), 2.0, Color("ffc2a3"))
-                box(Rect2(ex - 17, FLOOR - 53 + enemy_lane_offset, 34 * e["hp"] / e["max_hp"], 4), Color("f57c79"))
+                box(Rect2(ex - 17, FLOOR - 53 + enemy_lane_offset, 34 * clampf(float(e["hp"]) / float(e["max_hp"]), 0.0, 1.0), 4), Color("f57c79"))
             var cursor: Vector2 = get_global_mouse_position()
             var cursor_x: float = cursor.x
             var preview_lane: int = lane_for_y(cursor.y)
