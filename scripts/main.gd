@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.0-rc40: crimson siege backdrop, Godot 4.2+
+## Last Ritual v2.0-rc41: gothic gameplay HUD, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -834,6 +834,14 @@ func emit_impact(pos: Vector2, color: Color, radius: float) -> void:
         impacts.pop_front()
     impacts.append({"pos": pos, "color": color, "radius": radius, "life": 0.23})
 
+func draw_gothic_hud_panel(height: float) -> void:
+    # Semi-transparent HUD keeps detailed scenery visible while improving legibility.
+    box(Rect2(12.0, 9.0, W - 24.0, height), Color(0.075, 0.065, 0.12, 0.82))
+    box(Rect2(12.0, 9.0, W - 24.0, 3.0), Color("a97d9d"))
+    box(Rect2(12.0, 9.0 + height - 3.0, W - 24.0, 3.0), Color("66516d"))
+    for corner in [22.0, W - 32.0]:
+        draw_colored_polygon(PackedVector2Array([Vector2(corner, 14.0), Vector2(corner + 10.0, 24.0), Vector2(corner, 34.0), Vector2(corner - 10.0, 24.0)]), Color("ae8cae"))
+
 func label(t: String, x: float, y: float, size: int = 20, color: Color = Color.WHITE) -> void:
     draw_string(font, Vector2(x, y), t, HORIZONTAL_ALIGNMENT_LEFT, -1, size, color)
 
@@ -897,7 +905,7 @@ func _draw() -> void:
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
         label("M — атмосфера: %d/4  |  N — эффекты: %d/4" % [music_volume, effects_volume], 375, 463, 19, Color("d5bfda"))
-        label("Версия 2.0 RC40: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
+        label("Версия 2.0 RC41: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         if phase == "win":
@@ -1042,6 +1050,7 @@ func _draw() -> void:
                 var range_radius := 260.0 if selected_build == "bone" else 375.0
                 draw_arc(Vector2(cursor_x, FLOOR - 72), range_radius, PI, TAU, 28, Color("72aa9a", 0.28), 2.0)
                 box(Rect2(cursor_x - 17.0, FLOOR - 74.0, 34, 74), Color("619d9c", 0.46) if selected_build == "bone" else Color("ba7954", 0.46))
+            draw_gothic_hud_panel(150.0)
             label("ФИНАЛЬНЫЙ ШТУРМ — %d с" % ceili(maxf(0.0, final_timer)) if phase == "final_siege" else "ДЕНЬ %d / 5  •  ОСАДА" % current_day, 25, 35, 27, Color("f8c59e"))
             var siege_status := "Ритуал: %02d с" % ceili(maxf(final_timer, 0.0)) if phase == "final_siege" else "До ночи: %02d с" % ceili(maxf(time_left, 0.0))
             label("%s    Стены: %d / 100    Мана: %d    Души: %d" % [siege_status, maxi(0, ceili(wall_hp)), mana, souls], 25, 71, 22)
@@ -1213,7 +1222,10 @@ func _draw() -> void:
             draw_dark_lord(player)
             if swing_timer > 0.0:
                 box(Rect2(player.x + (17.0 if facing > 0 else -75.0), player.y - 17.0, 58.0, 10.0), Color("d6a2e9"))
+            draw_gothic_hud_panel(181.0)
             label("НОЧЬ %d / 5  •  %s" % [current_day, "КАТАКОМБЫ" if current_day == 1 else ("ПРОКЛЯТАЯ УСЫПАЛЬНИЦА" if current_day == 2 else ("СОБОР СВЕТА" if current_day == 3 else ("КРОВАВЫЕ ШАХТЫ" if current_day == 4 else "ГРОБНИЦА ПЕРВОГО КОРОЛЯ")))], 25, 35, 27, Color("b9afea"))
+            box(Rect2(24, 78, 260, 9), Color("413345"))
+            box(Rect2(24, 78, 260.0 * clampf(player_hp / 100.0, 0.0, 1.0), 9), Color("dc6e83") if player_hp <= 25.0 else Color("b37fd2"))
             label("Здоровье: %d    Мана: %d    Души: %d    Камень: %s" % [maxi(0, ceili(player_hp)), mana, souls, "ДА" if stone_taken else "НЕТ"], 25, 71, 22)
             var trap_warning := "ШИПЫ АКТИВНЫ — уйди с опасного участка!" if spike_phase >= 2.1 else ("Шипы скоро активируются!" if spike_phase >= 1.4 else "Шипы сейчас безопасны")
             label(trap_warning, 25, 106, 18, Color("f38c95") if spike_phase >= 2.1 else (Color("f1c780") if spike_phase >= 1.4 else Color("9fd7bd")))
