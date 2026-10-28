@@ -45,8 +45,12 @@ func run_tests() -> void:
     check(int(game.towers[0]["level"]) == 2 and game.mana < old_mana, "tower upgrade costs mana and increases level")
     game.enemies = [{"x": 400.0, "hp": 200.0, "max_hp": 200.0, "speed": 0.0, "damage": 60.0, "hit_cd": 10.0, "kind": "raider", "lane": 0, "sabotaged": false}]
     game.spawn_timer = 100.0
-    game.update_day(3.0)
+    game.update_day(0.7)
     check(game.towers.size() == 2 and float(game.towers[0]["hp"]) < game.tower_max_hp(game.towers[0]), "enemy damages tower on its lane")
+    check(float(game.enemies[0]["x"]) == 400.0, "enemy stops to attack blocking tower")
+    game.towers[0]["hp"] = 1.0
+    game.update_day(0.1)
+    check(game.towers.size() == 1 and int(game.towers[0]["lane"]) == 2, "destroyed tower removed only from attacked lane")
     game.begin_night()
     check(game.towers.is_empty(), "towers cleared at nightfall")
     game.reset_all()
