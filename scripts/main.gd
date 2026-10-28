@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.0-rc20: persistent audio settings, Godot 4.2+
+## Last Ritual v2.0-rc21: first-day building guidance, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -380,15 +380,17 @@ func build_tower(kind: String, mx: float) -> void:
         show_notice("Ставь башни между крепостью и врагом")
         return
     if mana < cost:
-        show_notice("Недостаточно маны")
+        show_notice("Не хватает %d маны для башни (нужно %d)" % [cost - mana, cost])
         return
     for tower in towers:
         if absf(tower["x"] - mx) < 65.0:
-            show_notice("Башни слишком близко")
+            show_notice("Слишком близко: оставь между башнями не меньше 65 шагов")
             return
     mana -= cost
     towers.append({"x": mx, "type": kind, "cooldown": 0.0})
     show_notice("Построено: " + ("Костяная башня" if kind == "bone" else "Адская баллиста"))
+    if current_day == 1 and towers.size() == 1:
+        show_notice("Первая башня готова! R чинит стены за 20 маны; враги идут справа.")
 
 func repair_wall() -> void:
     if wall_hp >= MAX_WALL:
@@ -879,7 +881,7 @@ func _draw() -> void:
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
         label("M — атмосфера: %d/4  |  N — эффекты: %d/4" % [music_volume, effects_volume], 375, 463, 19, Color("d5bfda"))
-        label("Версия 2.0 RC20: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
+        label("Версия 2.0 RC21: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         if phase == "win":
@@ -996,6 +998,11 @@ func _draw() -> void:
             box(Rect2(25, 82, 260, 13), Color("553840"))
             box(Rect2(25, 82, 260.0 * clampf(wall_hp / MAX_WALL, 0.0, 1.0), 13), Color("8cbe88") if wall_hp > 30.0 else Color("ed6b73"))
             label("Убийств: %d  |  Врагов: %d  |  Выбрано: %s" % [kills_today, enemies.size(), "Костяная" if selected_build == "bone" else "Баллиста"], 25, 126, 18)
+            label("Цена: %d маны  |  Можно построить: %s" % [30 if selected_build == "bone" else 55, "ДА" if mana >= (30 if selected_build == "bone" else 55) else "НЕТ"], 25, 151, 17, Color("9ed9ad") if mana >= (30 if selected_build == "bone" else 55) else Color("f3a0a0"))
+            if current_day == 1 and phase == "day" and towers.is_empty():
+                box(Rect2(245, 176, 688, 73), Color(0.15, 0.11, 0.22, 0.85))
+                label("ПЕРВЫЙ ДЕНЬ: 1 — костяная башня (30 маны)", 267, 205, 22, Color("f4d09b"))
+                label("Выбери башню и нажми ЛКМ справа от крепости.", 267, 230, 19)
             label("1/2: выбор башни  |  ЛКМ: строить  |  R: ремонт стен (20)  |  P: пауза", 24, 625, 18)
         elif phase == "night":
             draw_circle(Vector2(940, 115), 67.0, Color(0.67, 0.65, 0.94, 0.10))
