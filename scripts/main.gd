@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.0-rc5: day statistics and saboteur regression, Godot 4.2+
+## Last Ritual v2.0-rc7: clearer combat HUD, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -669,7 +669,7 @@ func _draw() -> void:
         label("ПОСЛЕДНИЙ РИТУАЛ", 225, 255, 52, Color("e3b3e9"))
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
-        label("Версия 2.0 RC1: пять дней, пять ночей, пять камней", 325, 474, 18, Color("aaaaaa"))
+        label("Версия 2.0 RC7: пять дней, пять ночей, пять камней", 325, 474, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         label("РИТУАЛ ЗАВЕРШЁН" if phase == "win" else "КРЕПОСТЬ ПАЛА", 300, 275, 48, Color("a9e4bc") if phase == "win" else Color("ff7777"))
@@ -719,7 +719,12 @@ func _draw() -> void:
                 draw_arc(Vector2(cursor_x, FLOOR - 72), range_radius, PI, TAU, 28, Color("72aa9a", 0.28), 2.0)
                 box(Rect2(cursor_x - 17.0, FLOOR - 74.0, 34, 74), Color("619d9c", 0.46) if selected_build == "bone" else Color("ba7954", 0.46))
             label("ФИНАЛЬНЫЙ ШТУРМ — %d с" % ceili(maxf(0.0, final_timer)) if phase == "final_siege" else "ДЕНЬ %d / 5  •  ОСАДА" % current_day, 25, 35, 27, Color("f8c59e"))
-            label("До ночи: %02d c    Стены: %d / 100    Мана: %d    Души: %d" % [ceili(maxf(time_left, 0.0)), maxi(0, ceili(wall_hp)), mana, souls], 25, 71, 22)
+            var siege_status := "Ритуал: %02d с" % ceili(maxf(final_timer, 0.0)) if phase == "final_siege" else "До ночи: %02d с" % ceili(maxf(time_left, 0.0))
+            label("%s    Стены: %d / 100    Мана: %d    Души: %d" % [siege_status, maxi(0, ceili(wall_hp)), mana, souls], 25, 71, 22)
+            if phase == "final_siege":
+                box(Rect2(680, 84, 310, 13), Color("543c54"))
+                box(Rect2(680, 84, 310.0 * clampf(1.0 - final_timer / 45.0, 0.0, 1.0), 13), Color("d8a6e8"))
+                label("ЗАЩИЩАЙ АЛТАРЬ!", 700, 125, 18, Color("edc2f7"))
             box(Rect2(25, 82, 260, 13), Color("553840"))
             box(Rect2(25, 82, 260.0 * clampf(wall_hp / MAX_WALL, 0.0, 1.0), 13), Color("8cbe88") if wall_hp > 30.0 else Color("ed6b73"))
             label("Убийств: %d  |  Врагов: %d  |  Выбрано: %s" % [kills_today, enemies.size(), "Костяная" if selected_build == "bone" else "Баллиста"], 25, 126, 18)
@@ -777,7 +782,10 @@ func _draw() -> void:
                 box(Rect2(player.x + (17.0 if facing > 0 else -75.0), player.y - 17.0, 58.0, 10.0), Color("d6a2e9"))
             label("НОЧЬ %d / 5  •  %s" % [current_day, "КАТАКОМБЫ" if current_day == 1 else ("ПРОКЛЯТАЯ УСЫПАЛЬНИЦА" if current_day == 2 else ("СОБОР СВЕТА" if current_day == 3 else ("КРОВАВЫЕ ШАХТЫ" if current_day == 4 else "ГРОБНИЦА ПЕРВОГО КОРОЛЯ")))], 25, 35, 27, Color("b9afea"))
             label("Здоровье: %d    Мана: %d    Души: %d    Камень: %s" % [maxi(0, ceili(player_hp)), mana, souls, "ДА" if stone_taken else "НЕТ"], 25, 71, 22)
-            label("Шипы: серые — безопасно; жёлтые — предупреждение; красные — урон", 25, 106, 17, Color("e6bb91"))
+            var trap_warning := "ШИПЫ АКТИВНЫ — уйди с опасного участка!" if spike_phase >= 2.1 else ("Шипы скоро активируются!" if spike_phase >= 1.4 else "Шипы сейчас безопасны")
+            label(trap_warning, 25, 106, 18, Color("f38c95") if spike_phase >= 2.1 else (Color("f1c780") if spike_phase >= 1.4 else Color("9fd7bd")))
+            box(Rect2(25, 117, 250, 7), Color("383748"))
+            box(Rect2(25, 117, 250.0 * clampf(spike_phase / 3.1, 0.0, 1.0), 7), Color("e8797a") if spike_phase >= 2.1 else Color("d9b67b"))
             label("A/D: ходьба | W / Space: прыжок | J: удар | H: лечение | Shift: рывок | P: пауза", 20, 625, 18)
     if notice_timer > 0.0:
         box(Rect2(190, 97, 775, 50), Color("39283d"))
