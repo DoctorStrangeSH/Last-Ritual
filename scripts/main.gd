@@ -377,6 +377,13 @@ func reward_note(kind: int) -> String:
         4: return "риск ради силы"
     return ""
 
+# Synergy requires two different run-long gifts, never permanent upgrades.
+func has_blood_economy_synergy() -> bool:
+    return reward_bone_bonus > 0 and reward_mana_bonus > 0
+
+func kill_mana_reward(elite_bonus: int = 0) -> int:
+    return 9 + reward_mana_bonus * 5 + elite_bonus + (3 if has_blood_economy_synergy() else 0)
+
 func choose_reward(choice: int) -> void:
     if phase != "reward" or choice < 0 or choice > 2:
         return
@@ -410,6 +417,8 @@ func choose_reward(choice: int) -> void:
         mana += 65
         wall_hp = maxf(1.0, wall_hp - 15.0)
         show_notice("Запретный обмен: мана за прочность стен!")
+    if has_blood_economy_synergy():
+        show_notice("СИНЕРГИЯ: Жатва Бездны! +3 маны за убийство.")
     phase = "ritual"
     save_campaign()
 
@@ -976,7 +985,7 @@ func update_day(delta: float) -> void:
             var elite_bonus: int = 16 if bool(enemy.get("elite", false)) else 0
             if elite_bonus > 0:
                 elite_kills += 1
-            mana += 9 + reward_mana_bonus * 5 + elite_bonus
+            mana += kill_mana_reward(elite_bonus)
             souls += 2 if elite_bonus > 0 or siege_event == 2 else 1
             kills_today += 1
             campaign_kills += 1
@@ -1515,6 +1524,8 @@ func _draw() -> void:
         box(Rect2(200, 479, 755, 105), Color(0.11, 0.08, 0.17, 0.89))
         draw_rect(Rect2(200, 479, 755, 105), Color("80628f"), false, 2.0)
         label("АЛТАРЬ БЕЗДНЫ", 398, 145, 39, Color("e9b5fb"))
+        if has_blood_economy_synergy():
+            label("ЖАТВА БЕЗДНЫ: +3 маны за убийство", 362, 365, 18, Color("b9f4d1"))
         label("Камней: %d / 5. %s" % [stones_collected, "ENTER — продолжить осаду" if stones_collected < 5 else "Для ритуала нужно 50 маны и 8 душ"], 230, 515, 23)
         label("Мана: %d  |  Души: %d" % [mana, souls], 435, 554, 24, Color("edc477"))
         if stones_collected < 5:

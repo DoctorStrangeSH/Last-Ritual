@@ -201,6 +201,15 @@ func run_tests() -> void:
     game.choose_reward(0)
     check(game.mana == 65 and game.wall_hp == 1.0, "forbidden exchange keeps fortress alive")
     game.reset_all()
+    check(not game.has_blood_economy_synergy() and game.kill_mana_reward() == 9, "synergy inactive without gifts")
+    game.reward_bone_bonus = 1
+    check(not game.has_blood_economy_synergy(), "single gift cannot activate synergy")
+    game.reward_mana_bonus = 1
+    check(game.has_blood_economy_synergy() and game.kill_mana_reward() == 17, "power and mana gifts unlock harvest bonus")
+    check(game.kill_mana_reward(16) == 33, "synergy stacks with elite reward")
+    game.reset_all()
+    check(not game.has_blood_economy_synergy(), "synergy resets between runs")
+    game.reset_all()
     game.phase = "night"
     game.stone_taken = true
     game.stones_collected = 1
