@@ -389,3 +389,6 @@
 - Meta persistence in `user://ritual_legacy.json` (difficulty 0–4, shards, legacy level 0–10, wins, best day). Difficulty scales siege enemy HP/damage and night boss HP.
 - Legacy levels cost shards and grant +12 starting mana each new run. Win/loss awards shards once; wins/best-day stats retained.
 - Smoke tests cover legacy purchase, difficulty persistence across run reset, reward idempotency. Needs CI confirmation and game feel validation.
+
+## RC56 — выбор дара Бездны после ночи
+После возвращения с Камнем Бездны открывается экран из трёх наград, выбираемых мышкой: +12% урона башен до конца забега; +35 маны сразу и +5 за каждого убитого врага; или восстановление 35 HP стен. После выбора открывается обычный Алтарь и записывается контрольная точка. Временные бонусы сохраняются в сохранении кампании, но сбрасываются при новой игре. Есть smoke-тесты на выбор, повторное нажатие и сброс наград.
