@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.0-rc27: distinct enemy silhouettes, Godot 4.2+
+## Last Ritual v2.0-rc28: gothic dungeon detail, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -913,7 +913,7 @@ func _draw() -> void:
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
         label("M — атмосфера: %d/4  |  N — эффекты: %d/4" % [music_volume, effects_volume], 375, 463, 19, Color("d5bfda"))
-        label("Версия 2.0 RC27: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
+        label("Версия 2.0 RC28: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         if phase == "win":
@@ -1115,8 +1115,25 @@ func _draw() -> void:
                     var cx := 195.0 + float(column) * 315.0
                     box(Rect2(cx, 320, 18, FLOOR - 320), Color("30293d"))
                     box(Rect2(cx - 8, 313, 34, 9), Color("554760"))
+            # Hanging chains and masonry seams give the ruins a stronger silhouette.
+            for chain in range(5):
+                var chain_x: float = 145.0 + float(chain) * 208.0
+                var chain_top: float = 128.0 + float(chain % 3) * 26.0
+                for link in range(7):
+                    var link_y: float = chain_top + float(link) * 13.0
+                    draw_arc(Vector2(chain_x + sin(atmosphere_clock * 0.7 + float(chain)) * 2.0, link_y), 5.0, 0.0, TAU, 12, Color("6f6879"), 2.0)
             for p in platforms:
                 box(p, night_stone)
+                box(Rect2(p.position.x, p.position.y, p.size.x, 4.0), Color("aba0ac"))
+                var brick_count: int = int(p.size.x / 29.0)
+                for brick in range(brick_count):
+                    var seam_x: float = p.position.x + 17.0 + float(brick) * 29.0
+                    draw_line(Vector2(seam_x, p.position.y + 5.0), Vector2(seam_x, p.position.y + p.size.y - 2.0), Color("39354a"), 1.0)
+            # A row of cracked masonry at the foot of each dungeon.
+            for stone in range(19):
+                var stone_x: float = float(stone) * 63.0
+                box(Rect2(stone_x, FLOOR - 12.0, 61, 12), Color("494052"))
+                draw_line(Vector2(stone_x + 22.0, FLOOR - 9.0), Vector2(stone_x + 17.0, FLOOR - 2.0), Color("776779"), 1.0)
             var spike_phase := fmod(trap_clock, 3.1)
             for tx in trap_positions:
                 var trap_color := Color("5c566a") if spike_phase < 1.4 else (Color("efa857") if spike_phase < 2.1 else Color("f05268"))
