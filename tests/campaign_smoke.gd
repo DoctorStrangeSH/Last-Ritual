@@ -52,6 +52,10 @@ func run_tests() -> void:
     game.towers[0]["hp"] = 1.0
     game.update_day(0.1)
     check(game.towers.size() == 1 and int(game.towers[0]["lane"]) == 2, "destroyed tower removed only from attacked lane")
+    game.selected_tower_index = 0
+    var mana_before_sale: int = game.mana
+    game.sell_selected_tower()
+    check(game.towers.is_empty() and game.mana == mana_before_sale + 27, "selling ballista returns half of build cost")
     game.begin_night()
     check(game.towers.is_empty(), "towers cleared at nightfall")
     game.reset_all()
