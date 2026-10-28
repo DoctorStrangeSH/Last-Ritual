@@ -1287,14 +1287,14 @@ func _draw() -> void:
             for card_index in range(2):
                 var card_x: float = 20.0 + float(card_index) * 200.0
                 var card_kind: String = "bone" if card_index == 0 else "fire"
-                box(Rect2(card_x, 562.0, 186.0, 74.0), Color("5e405d") if selected_build == card_kind else Color("332b40"))
-                draw_rect(Rect2(card_x, 562.0, 186.0, 74.0), Color("e2be9e") if selected_build == card_kind else Color("806d85"), false, 2.0)
+                box(Rect2(card_x, 557.0, 186.0, 85.0), Color("5e405d") if selected_build == card_kind else Color("332b40"))
+                draw_rect(Rect2(card_x, 557.0, 186.0, 85.0), Color("e2be9e") if selected_build == card_kind else Color("806d85"), false, 2.0)
                 var card_art: Texture2D = preload("res://assets/towers/bone_tower.svg") if card_index == 0 else preload("res://assets/towers/infernal_ballista.svg")
-                draw_texture_rect(card_art, Rect2(card_x + 7.0, 571.0, 34.0, 56.0), false)
-                label("КОСТЯНАЯ" if card_index == 0 else "БАЛЛИСТА", card_x + 47.0, 584.0, 17, Color("f4d2af"))
-                label("30 маны" if card_index == 0 else "55 маны", card_x + 47.0, 605.0, 16)
-                label("Урон %d • Дал. %d" % ([22, 260] if card_index == 0 else [65, 375]), card_x + 47.0, 626.0, 14, Color("d2c6db"))
-                label("Замедление" if card_index == 0 else "Крит + урон по площади", card_x + 8.0, 647.0, 13, Color("a9dce2") if card_index == 0 else Color("ffbf8a"))
+                draw_texture_rect(card_art, Rect2(card_x + 7.0, 563.0, 34.0, 54.0), false)
+                label("КОСТЯНАЯ" if card_index == 0 else "БАЛЛИСТА", card_x + 47.0, 578.0, 17, Color("f4d2af"))
+                label("30 маны" if card_index == 0 else "55 маны", card_x + 47.0, 597.0, 16)
+                label("Урон %d • Дал. %d" % ([22, 260] if card_index == 0 else [65, 375]), card_x + 47.0, 616.0, 14, Color("d2c6db"))
+                label("Замедление" if card_index == 0 else "Крит + урон по площади", card_x + 8.0, 634.0, 13, Color("a9dce2") if card_index == 0 else Color("ffbf8a"))
             label("Клик по карточке — выбор", 426.0, 585.0, 17)
             label("Перетащи на линию или кликни", 426.0, 608.0, 16, Color("c8bed1"))
             if selected_tower_index >= 0 and selected_tower_index < towers.size():
