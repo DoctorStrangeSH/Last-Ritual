@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.0-rc17: atmospheric title screen, Godot 4.2+
+## Last Ritual v2.0-rc18: procedural audio, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -60,9 +60,14 @@ var final_timer := 45.0
 var impacts: Array[Dictionary] = []
 var particles: Array[Dictionary] = []
 var atmosphere_clock := 0.0
+var audio_bank: Dictionary = {}
+var audio_players: Array[AudioStreamPlayer] = []
+var next_audio_channel := 0
+var hit_sound_cooldown := 0.0
 
 func _ready() -> void:
     font = ThemeDB.fallback_font
+    setup_audio()
     reset_all()
 
 func reset_all() -> void:
@@ -84,6 +89,7 @@ func reset_all() -> void:
     impacts.clear()
     particles.clear()
     atmosphere_clock = 0.0
+    hit_sound_cooldown = 0.0
     time_left = DAY_LENGTH
     wall_hp = MAX_WALL
     mana = 70
@@ -122,6 +128,7 @@ func _process(delta: float) -> void:
         queue_redraw()
         return
     atmosphere_clock += delta
+    hit_sound_cooldown = maxf(0.0, hit_sound_cooldown - delta)
     if notice_timer > 0:
         notice_timer -= delta
     for i in range(particles.size() - 1, -1, -1):
@@ -143,6 +150,7 @@ func _process(delta: float) -> void:
         update_day(delta)
         if phase == "final_siege" and wall_hp > 0.0 and final_timer <= 0.0:
             phase = "win"
+            play_cue("victory")
     queue_redraw()
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -212,6 +220,7 @@ func resolve_altar() -> void:
         mana -= 50
         souls -= 8
         phase = "final_siege"
+        play_cue("ritual")
         final_timer = 45.0
         enemies.clear()
         shots.clear()
@@ -466,6 +475,9 @@ func update_day(delta: float) -> void:
         if closest_index >= 0:
             enemies[closest_index]["hp"] -= shot["damage"] * (1.35 if tower_power_level > 0 else 1.0)
             emit_impact(Vector2(float(enemies[closest_index]["x"]), FLOOR - 32.0), Color("ffb36b") if shot["type"] == "fire" else Color("8de1e7"), 25.0)
+            if hit_sound_cooldown <= 0.0:
+                play_cue("hit")
+                hit_sound_cooldown = 0.13
     shots.clear()
     for i in range(enemies.size() - 1, -1, -1):
         var enemy := enemies[i]
@@ -495,6 +507,7 @@ func update_day(delta: float) -> void:
     if wall_hp <= 0.0:
         wall_hp = 0.0
         phase = "lose"
+        play_cue("defeat")
     elif phase == "day" and time_left <= 0.0:
         begin_night()
 
@@ -521,6 +534,7 @@ func shadow_dash() -> void:
     dash_trail = 0.25
     player.x = clampf(player.x + facing * 125.0, 16.0, W - 16.0)
     hurt_cooldown = maxf(hurt_cooldown, 0.35)
+    play_cue("magic")
     show_notice("Теневой рывок!")
 
 func update_night(delta: float) -> void:
@@ -630,6 +644,7 @@ func hurt(amount: float) -> void:
         return
     hurt_cooldown = 1.2
     player_hp -= amount
+    play_cue("damage")
     if player_hp <= 0.0:
         player_hp = 0.0
         phase = "lose"
@@ -639,6 +654,7 @@ func attack() -> void:
         return
     attack_cooldown = 0.34
     swing_timer = 0.16
+    play_cue("hit")
     var reach := 88.0
     for e in night_enemies:
         if (e["x"] - player.x) * facing >= -10.0 and (e["x"] - player.x) * facing < reach and absf(player.y - (FLOOR - 22.0)) < 75.0:
@@ -660,6 +676,41 @@ func attack() -> void:
             souls += 4
             burst_particles(boss_pos, Color("f67ba2"), 24)
             show_notice("Хранитель повержен. Забери Камень Бездны!")
+
+func setup_audio() -> void:
+    # Small mono PCM waveforms generated once at startup; no external assets.
+    for name in ["hit", "damage", "magic", "ritual", "victory", "defeat"]:
+        var length: float = 0.15 if name == "hit" else (0.24 if name == "damage" else (0.40 if name == "magic" else 0.85))
+        var freq: float = 155.0 if name == "hit" else (110.0 if name == "damage" else (430.0 if name == "magic" else (290.0 if name == "ritual" else (520.0 if name == "victory" else 120.0))))
+        var sample_rate := 22050
+        var sample_count := int(length * float(sample_rate))
+        var bytes := PackedByteArray()
+        bytes.resize(sample_count * 2)
+        for sample in range(sample_count):
+            var t: float = float(sample) / float(sample_rate)
+            var envelope: float = pow(1.0 - float(sample) / float(sample_count), 1.8)
+            var sweep: float = freq * (1.0 + t * (0.8 if name == "magic" or name == "victory" else -0.65))
+            var wave: float = sin(TAU * sweep * t) * 0.75 + sin(TAU * sweep * 1.5 * t) * 0.25
+            bytes.encode_s16(sample * 2, int(clampf(wave * envelope * 8500.0, -32767.0, 32767.0)))
+        var stream := AudioStreamWAV.new()
+        stream.format = AudioStreamWAV.FORMAT_16_BITS
+        stream.mix_rate = sample_rate
+        stream.stereo = false
+        stream.data = bytes
+        audio_bank[name] = stream
+    for channel in range(4):
+        var audio_player := AudioStreamPlayer.new()
+        audio_player.volume_db = -9.0
+        add_child(audio_player)
+        audio_players.append(audio_player)
+
+func play_cue(name: String) -> void:
+    if not audio_bank.has(name) or audio_players.is_empty():
+        return
+    var player_audio := audio_players[next_audio_channel]
+    next_audio_channel = (next_audio_channel + 1) % audio_players.size()
+    player_audio.stream = audio_bank[name]
+    player_audio.play()
 
 func burst_particles(origin: Vector2, tint: Color, count: int) -> void:
     for i in range(count):
@@ -745,7 +796,7 @@ func _draw() -> void:
         label("ПОСЛЕДНИЙ РИТУАЛ", 225, 255, 52, Color(0.78 + 0.12 * title_pulse, 0.56 + 0.15 * title_pulse, 0.86 + 0.10 * title_pulse))
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
-        label("Версия 2.0 RC17: пять дней, пять ночей, пять камней", 325, 474, 18, Color("aaaaaa"))
+        label("Версия 2.0 RC18: пять дней, пять ночей, пять камней", 325, 474, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         if phase == "win":
