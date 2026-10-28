@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.0-rc30: standalone hero artwork, Godot 4.2+
+## Last Ritual v2.0-rc31: enemy SVG artwork, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -885,7 +885,7 @@ func _draw() -> void:
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
         label("M — атмосфера: %d/4  |  N — эффекты: %d/4" % [music_volume, effects_volume], 375, 463, 19, Color("d5bfda"))
-        label("Версия 2.0 RC30: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
+        label("Версия 2.0 RC31: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         if phase == "win":
@@ -1014,6 +1014,14 @@ func _draw() -> void:
             for e in enemies:
                 var ex: float = e["x"]
                 var enemy_color := Color("7adbe4") if e["kind"] == "saboteur" else (Color("edc265") if e["kind"] == "runner" else (Color("d66c69") if e["kind"] == "brute" else Color("b0af9b")))
+                if e["kind"] == "raider":
+                    draw_texture_rect(preload("res://assets/enemies/raider.svg"), Rect2(ex - 21.0, FLOOR - 62.0, 42.0, 62.0), false)
+                    box(Rect2(ex - 17, FLOOR - 67, 34.0 * clampf(float(e["hp"]) / float(e["max_hp"]), 0.0, 1.0), 4), Color("f57c79"))
+                    continue
+                if e["kind"] == "saboteur":
+                    draw_texture_rect(preload("res://assets/enemies/saboteur.svg"), Rect2(ex - 21.0, FLOOR - 62.0, 42.0, 62.0), false)
+                    box(Rect2(ex - 17, FLOOR - 67, 34.0 * clampf(float(e["hp"]) / float(e["max_hp"]), 0.0, 1.0), 4), Color("f57c79"))
+                    continue
                 var march: float = sin(atmosphere_clock * (11.0 if e["kind"] == "runner" else 6.0) + ex * 0.05) * 3.0
                 var width: float = 19.0 if e["kind"] == "brute" else (10.0 if e["kind"] == "runner" else 13.0)
                 var height: float = 56.0 if e["kind"] == "brute" else (37.0 if e["kind"] == "runner" else 43.0)
