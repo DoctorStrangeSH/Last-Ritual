@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v0.5: single-scene prototype, Godot 4.2+
+## Last Ritual v0.6: single-scene prototype, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -29,6 +29,8 @@ var dash_trail := 0.0
 var platforms := [Rect2(205, 473, 135, 16), Rect2(415, 413, 145, 16), Rect2(640, 462, 130, 16), Rect2(830, 396, 135, 16)]
 var gems: Array[Vector2] = []
 var night_enemies: Array[Dictionary] = []
+var mage: Dictionary = {}
+var mage_bolts: Array[Dictionary] = []
 var boss_hp := 140.0
 var boss_pos := Vector2(1015, FLOOR - 46)
 var stone_taken := false
@@ -78,6 +80,8 @@ func reset_all() -> void:
     hurt_cooldown = 0.0
     gems = [Vector2(250, 442), Vector2(460, 380), Vector2(689, 429), Vector2(879, 363), Vector2(535, 520)]
     night_enemies = [{"x": 350.0, "hp": 44.0, "dir": -1.0}, {"x": 700.0, "hp": 44.0, "dir": 1.0}]
+    mage = {"x": 570.0, "hp": 60.0, "cooldown": 1.4}
+    mage_bolts.clear()
     notice = ""
     notice_timer = 0.0
     queue_redraw()
@@ -290,6 +294,22 @@ func update_night(delta: float) -> void:
             mana += 10
             souls += 2
             night_enemies.remove_at(i)
+    if mage["hp"] > 0.0:
+        mage["cooldown"] -= delta
+        if mage["cooldown"] <= 0.0 and absf(player.x - mage["x"]) < 520.0:
+            mage["cooldown"] = 2.2
+            var start := Vector2(mage["x"], FLOOR - 65.0)
+            var aim := (player - start).normalized()
+            mage_bolts.append({"pos": start, "velocity": aim * 195.0, "life": 3.0})
+    for i in range(mage_bolts.size() - 1, -1, -1):
+        var bolt := mage_bolts[i]
+        bolt["pos"] += bolt["velocity"] * delta
+        bolt["life"] -= delta
+        if bolt["pos"].distance_to(player) < 23.0:
+            hurt(14.0)
+            mage_bolts.remove_at(i)
+        elif bolt["life"] <= 0.0:
+            mage_bolts.remove_at(i)
     if boss_hp > 0.0:
         boss_strike_timer -= delta
         if boss_strike_timer <= 0.0 and boss_windup <= 0.0:
@@ -322,6 +342,12 @@ func attack() -> void:
     for e in night_enemies:
         if (e["x"] - player.x) * facing >= -10.0 and (e["x"] - player.x) * facing < reach and absf(player.y - (FLOOR - 22.0)) < 75.0:
             e["hp"] -= 24.0
+    if mage["hp"] > 0.0 and (mage["x"] - player.x) * facing >= -10.0 and (mage["x"] - player.x) * facing < reach and absf(player.y - (FLOOR - 60.0)) < 95.0:
+        mage["hp"] -= 24.0
+        if mage["hp"] <= 0.0:
+            mana += 18
+            souls += 2
+            show_notice("Маг Света повержен!")
     if boss_hp > 0.0 and (boss_pos.x - player.x) * facing >= -10.0 and (boss_pos.x - player.x) * facing < reach and absf(player.y - boss_pos.y) < 85.0:
         boss_hp -= 18.0
         if boss_hp <= 0.0:
@@ -344,7 +370,7 @@ func _draw() -> void:
         label("ПОСЛЕДНИЙ РИТУАЛ", 225, 255, 52, Color("e3b3e9"))
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать пролог", 432, 415, 26, Color("f5cf84"))
-        label("Версия 0.5: один день, одна ночь, один ритуал", 325, 474, 18, Color("aaaaaa"))
+        label("Версия 0.6: один день, одна ночь, один ритуал", 325, 474, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         label("РИТУАЛ ЗАВЕРШЁН" if phase == "win" else "КРЕПОСТЬ ПАЛА", 300, 275, 48, Color("a9e4bc") if phase == "win" else Color("ff7777"))
@@ -389,6 +415,12 @@ func _draw() -> void:
                 draw_colored_polygon(PackedVector2Array([gem + Vector2(0, -16), gem + Vector2(13, 0), gem + Vector2(0, 16), gem + Vector2(-13, 0)]), Color("5de0e9"))
             for e in night_enemies:
                 box(Rect2(e["x"] - 16, FLOOR - 34, 32, 34), Color("86aa87"))
+            if mage["hp"] > 0.0:
+                box(Rect2(mage["x"] - 14.0, FLOOR - 68.0, 28, 68), Color("5d9ac7"))
+                draw_circle(Vector2(mage["x"], FLOOR - 73.0), 17.0, Color("a8d6ef"))
+                box(Rect2(mage["x"] - 19.0, FLOOR - 90.0, 38.0 * mage["hp"] / 60.0, 4), Color("71b7ff"))
+            for bolt in mage_bolts:
+                draw_circle(bolt["pos"], 8.0, Color("7bd9ff"))
             if boss_hp > 0.0:
                 if boss_windup > 0.0:
                     box(Rect2(boss_pos.x - 85, FLOOR - 10, 170, 10), Color("eb5c60"))
