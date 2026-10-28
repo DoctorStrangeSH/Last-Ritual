@@ -61,7 +61,14 @@ func run_tests() -> void:
     game.resolve_altar()
     check(game.phase == "final_siege", "ritual starts final siege")
     check(game.final_timer == 45.0, "final siege timer set")
+    check(game.mana == 30, "final ritual grants emergency mana")
     game.final_timer = 0.0
+    game.wall_hp = 0.0
+    game._process(0.0)
+    check(game.phase == "lose", "fallen walls prevent victory")
+    game.phase = "final_siege"
+    game.final_timer = 0.0
+    game.wall_hp = 100.0
     game._process(0.0)
     check(game.phase == "win", "surviving final siege wins")
     game.reset_all()
