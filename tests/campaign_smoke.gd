@@ -22,6 +22,12 @@ func run_tests() -> void:
     game.save_path = "user://campaign_smoke_test.json"
     game.reset_all()
     check(game.current_day == 1, "initial day")
+    game.dungeon_route = 1
+    game.platforms = [Rect2(200.0, 420.0, 135.0, 16.0)]
+    game.apply_dungeon_route()
+    check(game.platforms[0].position == Vector2(222.0, 408.0), "alternate dungeon route changes platform layout")
+    check(game.secret_cache_pos.x == 610.0, "secret cache placed for chosen route")
+    game.reset_all()
     game.legacy_shards = 30
     game.buy_talent("hero")
     game.buy_talent("necro")
