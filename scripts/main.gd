@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v0.8: single-scene prototype, Godot 4.2+
+## Last Ritual v0.9: single-scene prototype, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -396,16 +396,35 @@ func label(t: String, x: float, y: float, size: int = 20, color: Color = Color.W
 func box(rect: Rect2, col: Color) -> void:
     draw_rect(rect, col)
 
+func draw_dark_lord(pos: Vector2) -> void:
+    # Procedural character silhouette: cloak, horned helm and glowing eyes.
+    var cloak := PackedVector2Array([pos + Vector2(-15, 9), pos + Vector2(15, 9), pos + Vector2(24, 27), pos + Vector2(-23, 27)])
+    draw_colored_polygon(cloak, Color("42305f"))
+    box(Rect2(pos.x - 13, pos.y - 17, 26, 34), Color("7451a0") if hurt_cooldown <= 0.0 else Color("d87386"))
+    draw_circle(pos + Vector2(0, -24), 15, Color("25213c"))
+    draw_colored_polygon(PackedVector2Array([pos + Vector2(-14, -28), pos + Vector2(-23, -49), pos + Vector2(-5, -36)]), Color("5d5273"))
+    draw_colored_polygon(PackedVector2Array([pos + Vector2(14, -28), pos + Vector2(23, -49), pos + Vector2(5, -36)]), Color("5d5273"))
+    box(Rect2(pos.x - 10, pos.y - 27, 7, 4), Color("f2678b"))
+    box(Rect2(pos.x + 3, pos.y - 27, 7, 4), Color("f2678b"))
+
 func _draw() -> void:
     box(Rect2(0, 0, W, H), Color("10101e"))
     for i in range(11):
         draw_circle(Vector2(55 + i * 111, 85 + (i * 37) % 80), 2.0, Color("77779a"))
+    if phase == "day" or phase == "night":
+        # Layered silhouettes create depth without requiring external textures.
+        for i in range(9):
+            var sx := float(i * 148 - 50)
+            draw_colored_polygon(PackedVector2Array([Vector2(sx, FLOOR), Vector2(sx + 72, 320 + (i % 3) * 40), Vector2(sx + 155, FLOOR)]), Color("191a2d"))
+            box(Rect2(sx + 47, 375 + (i % 2) * 32, 22, FLOOR - 375), Color("222237"))
+        for i in range(19):
+            box(Rect2(i * 64, FLOOR - 8, 60, 8), Color("4a4154"))
     if phase == "title":
         draw_circle(Vector2(880, 170), 105, Color("5e244e"))
         label("ПОСЛЕДНИЙ РИТУАЛ", 225, 255, 52, Color("e3b3e9"))
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать пролог", 432, 415, 26, Color("f5cf84"))
-        label("Версия 0.8: один день, одна ночь, один ритуал", 325, 474, 18, Color("aaaaaa"))
+        label("Версия 0.9: один день, одна ночь, один ритуал", 325, 474, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         label("РИТУАЛ ЗАВЕРШЁН" if phase == "win" else "КРЕПОСТЬ ПАЛА", 300, 275, 48, Color("a9e4bc") if phase == "win" else Color("ff7777"))
@@ -430,6 +449,12 @@ func _draw() -> void:
             for i in range(3):
                 box(Rect2(70 + i * 44, 297, 25, 24), Color("514358"))
             box(Rect2(111, 430, 40, 120), Color("241c31"))
+            for row in range(6):
+                for col in range(3):
+                    box(Rect2(72 + col * 38 + (row % 2) * 9, 339 + row * 33, 30, 4), Color("6a596e"))
+            for j in range(3):
+                box(Rect2(86 + j * 25, 357, 10, 28), Color("211c30"))
+            draw_circle(Vector2(131, 412), 17, Color("aa5570", 0.6))
             label("КРЕПОСТЬ", 73, 252, 19)
             for tower in towers:
                 var tx: float = tower["x"]
@@ -491,8 +516,7 @@ func _draw() -> void:
             if dash_trail > 0.0:
                 box(Rect2(player.x - facing * 72.0 - 12.0, player.y - 21.0, 24.0, 43.0), Color("533b87"))
                 box(Rect2(player.x - facing * 38.0 - 12.0, player.y - 21.0, 24.0, 43.0), Color("7951ab"))
-            box(Rect2(player.x - 14, player.y - 21, 28, 43), Color("a376c0") if hurt_cooldown <= 0.0 else Color("ed9393"))
-            draw_circle(player + Vector2(0, -24), 14, Color("d9cbca"))
+            draw_dark_lord(player)
             if swing_timer > 0.0:
                 box(Rect2(player.x + (17.0 if facing > 0 else -75.0), player.y - 17.0, 58.0, 10.0), Color("d6a2e9"))
             label("НОЧЬ 1 / 5  •  КАТАКОМБЫ", 25, 35, 27, Color("b9afea"))
