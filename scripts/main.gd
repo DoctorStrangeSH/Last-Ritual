@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v1.7: final siege, Godot 4.2+
+## Last Ritual v1.8: final siege stability and balance, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -120,11 +120,9 @@ func _process(delta: float) -> void:
     elif phase == "night":
         update_night(delta)
     elif phase == "final_siege":
-        final_timer -= delta
+        final_timer = maxf(0.0, final_timer - delta)
         update_day(delta)
-        if phase == "night":
-            phase = "final_siege"
-        if wall_hp > 0.0 and final_timer <= 0.0:
+        if phase == "final_siege" and wall_hp > 0.0 and final_timer <= 0.0:
             phase = "win"
     queue_redraw()
 
@@ -192,7 +190,12 @@ func resolve_altar() -> void:
         enemies.clear()
         shots.clear()
         spawn_timer = 0.3
-        show_notice("Последний штурм! Продержись 45 секунд.")
+        for tower in towers:
+            tower["disabled"] = 0.0
+            tower["cooldown"] = 0.0
+        wall_hp = minf(MAX_WALL, wall_hp + 20.0)
+        mana += 30
+        show_notice("Последний штурм: +20 стен, +30 маны! Продержись 45 сек.")
     else:
         show_notice("Для ритуала нужно 50 маны и 8 душ. C — обмен.")
 
@@ -314,6 +317,8 @@ func update_day(delta: float) -> void:
     if spawn_timer <= 0.0:
         wave_count += 1
         spawn_timer = maxf(1.05, 3.5 - wave_count * 0.065)
+        if phase == "final_siege":
+            spawn_timer = maxf(0.85, 1.75 - wave_count * 0.02)
         var kind := "raider"
         if current_day >= 3 and wave_count % 6 == 0:
             kind = "saboteur"
@@ -321,7 +326,7 @@ func update_day(delta: float) -> void:
             kind = "runner"
         elif wave_count % 5 == 0:
             kind = "brute"
-        var health := (27.0 if kind == "runner" else (100.0 if kind == "brute" else (55.0 if kind == "saboteur" else 46.0))) * (1.0 if current_day == 1 else (1.45 if current_day == 2 else (1.7 if current_day == 3 else 1.95)))
+        var health := (27.0 if kind == "runner" else (100.0 if kind == "brute" else (55.0 if kind == "saboteur" else 46.0))) * (1.0 if current_day == 1 else (1.45 if current_day == 2 else (1.7 if current_day == 3 else (1.95 if current_day == 4 else 2.1))))
         var speed := 84.0 if kind == "runner" else (65.0 if kind == "saboteur" else (25.0 if kind == "brute" else 43.0))
         var damage := (6.0 if kind == "runner" else (19.0 if kind == "brute" else 9.0)) * (1.0 if current_day == 1 else 1.3)
         enemies.append({"x": W + 32.0, "hp": health, "max_hp": health, "speed": speed, "damage": damage, "hit_cd": 0.0, "kind": kind, "sabotaged": false})
@@ -372,6 +377,7 @@ func update_day(delta: float) -> void:
                 wall_hp -= enemy["damage"] * (0.75 if wall_ward_level > 0 else 1.0)
                 enemy["hit_cd"] = 1.3
     if wall_hp <= 0.0:
+        wall_hp = 0.0
         phase = "lose"
     elif phase == "day" and time_left <= 0.0:
         begin_night()
