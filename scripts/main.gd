@@ -345,6 +345,12 @@ func _unhandled_input(event: InputEvent) -> void:
             else:
                 show_notice("Не хватает маны для преобразования")
 
+func has_bone_bastion_synergy() -> bool:
+    return reward_bone_bonus > 0 and reward_ward_bonus > 0
+
+func summon_skeleton_hp(level: int) -> float:
+    return 65.0 + 30.0 * float(level - 1) + 20.0 * float(legacy_necro_level) + (90.0 if legendary_boon == 2 else 0.0) + (40.0 if has_bone_bastion_synergy() else 0.0)
+
 func roll_reward_offers() -> void:
     var pool: Array[int] = [0, 1, 2, 3, 4]
     pool.shuffle()
@@ -417,7 +423,9 @@ func choose_reward(choice: int) -> void:
         mana += 65
         wall_hp = maxf(1.0, wall_hp - 15.0)
         show_notice("Запретный обмен: мана за прочность стен!")
-    if has_blood_economy_synergy():
+    if has_bone_bastion_synergy():
+        show_notice("СИНЕРГИЯ: Костяной бастион! +40 HP скелетам.")
+    elif has_blood_economy_synergy():
         show_notice("СИНЕРГИЯ: Жатва Бездны! +3 маны за убийство.")
     phase = "ritual"
     save_campaign()
@@ -949,7 +957,7 @@ func update_day(delta: float) -> void:
         if tower["type"] == "necro":
             if tower["cooldown"] <= 0.0 and tower["disabled"] <= 0.0:
                 var summon_level: int = int(tower.get("level", 1))
-                skeletons.append({"x": float(tower["x"]) + 55.0, "lane": int(tower.get("lane", 1)), "hp": 65.0 + 30.0 * float(summon_level - 1) + 20.0 * float(legacy_necro_level) + (90.0 if legendary_boon == 2 else 0.0), "life": 10.0 if legendary_boon == 2 else 6.0})
+                skeletons.append({"x": float(tower["x"]) + 55.0, "lane": int(tower.get("lane", 1)), "hp": summon_skeleton_hp(summon_level), "life": 10.0 if legendary_boon == 2 else 6.0})
                 tower["flash"] = 0.18
                 tower["flash_target_x"] = float(tower["x"]) + 55.0
                 tower["cooldown"] = maxf(4.0, 7.0 - float(summon_level - 1))
@@ -1525,7 +1533,9 @@ func _draw() -> void:
         draw_rect(Rect2(200, 479, 755, 105), Color("80628f"), false, 2.0)
         label("АЛТАРЬ БЕЗДНЫ", 398, 145, 39, Color("e9b5fb"))
         if has_blood_economy_synergy():
-            label("ЖАТВА БЕЗДНЫ: +3 маны за убийство", 362, 365, 18, Color("b9f4d1"))
+            label("ЖАТВА БЕЗДНЫ: +3 маны за убийство", 362, 345, 18, Color("b9f4d1"))
+        if has_bone_bastion_synergy():
+            label("КОСТЯНОЙ БАСТИОН: +40 HP скелетам", 362, 365, 18, Color("d3edcb"))
         label("Камней: %d / 5. %s" % [stones_collected, "ENTER — продолжить осаду" if stones_collected < 5 else "Для ритуала нужно 50 маны и 8 душ"], 230, 515, 23)
         label("Мана: %d  |  Души: %d" % [mana, souls], 435, 554, 24, Color("edc477"))
         if stones_collected < 5:
