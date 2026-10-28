@@ -589,10 +589,13 @@ func update_day(delta: float) -> void:
                     enemy["sabotaged"] = true
                     show_notice("Диверсант отключил башню на 4,5 секунды!")
                     break
+        var blocked_by_tower := false
         for tower in towers:
-            if int(tower.get("lane", 1)) == int(enemy.get("lane", 1)) and absf(float(tower["x"]) - float(enemy["x"])) < 31.0:
-                tower["hp"] = float(tower.get("hp", tower_max_hp(tower))) - float(enemy["damage"]) * delta * 0.8
-        if enemy["x"] > 191.0:
+            if int(tower.get("lane", 1)) == int(enemy.get("lane", 1)) and absf(float(tower["x"]) - float(enemy["x"])) < 31.0 and float(tower.get("hp", tower_max_hp(tower))) > 0.0:
+                tower["hp"] = float(tower.get("hp", tower_max_hp(tower))) - float(enemy["damage"]) * delta * 1.5
+                blocked_by_tower = true
+                break
+        if enemy["x"] > 191.0 and not blocked_by_tower:
             enemy["x"] -= enemy["speed"] * delta
         else:
             enemy["hit_cd"] -= delta
