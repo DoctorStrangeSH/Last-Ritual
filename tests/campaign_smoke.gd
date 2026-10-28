@@ -22,6 +22,16 @@ func run_tests() -> void:
     game.save_path = "user://campaign_smoke_test.json"
     game.reset_all()
     check(game.current_day == 1, "initial day")
+    game.legacy_shards = 30
+    game.buy_talent("hero")
+    game.buy_talent("necro")
+    check(game.legacy_hero_level == 1 and game.legacy_necro_level == 1, "permanent hero and necro talents purchased")
+    check(game.legacy_shards == 22, "talents consume the appropriate shard costs")
+    game.reset_all()
+    check(game.legacy_hero_level == 1 and game.legacy_necro_level == 1, "talents persist across resets")
+    game.legacy_hero_level = 0
+    game.legacy_necro_level = 0
+    game.legacy_shards = 0
     game.legacy_shards = 12
     game.legacy_damage_level = 0
     game.buy_legacy_damage()
