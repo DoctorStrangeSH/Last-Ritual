@@ -565,7 +565,7 @@ func update_day(delta: float) -> void:
                 closest_index = i
         if closest_index >= 0:
             enemies[closest_index]["hp"] -= shot["damage"] * (1.35 if tower_power_level > 0 else 1.0)
-            emit_impact(Vector2(float(enemies[closest_index]["x"]), FLOOR - 32.0), Color("ffb36b") if shot["type"] == "fire" else Color("8de1e7"), 25.0)
+            emit_impact(Vector2(float(enemies[closest_index]["x"]), FLOOR - 32.0 + float(LANE_OFFSETS[int(enemies[closest_index].get("lane", 1))])), Color("ffb36b") if shot["type"] == "fire" else Color("8de1e7"), 25.0)
             if hit_sound_cooldown <= 0.0:
                 play_cue("hit")
                 hit_sound_cooldown = 0.13
@@ -579,7 +579,7 @@ func update_day(delta: float) -> void:
             campaign_kills += 1
             if enemy["kind"] == "saboteur":
                 saboteurs_defeated += 1
-            burst_particles(Vector2(float(enemy["x"]), FLOOR - 30.0), Color("a2d5e0") if enemy["kind"] == "saboteur" else Color("d9a1a8"), 9)
+            burst_particles(Vector2(float(enemy["x"]), FLOOR - 30.0 + float(LANE_OFFSETS[int(enemy.get("lane", 1))])), Color("a2d5e0") if enemy["kind"] == "saboteur" else Color("d9a1a8"), 9)
             enemies.remove_at(i)
             continue
         if enemy["kind"] == "saboteur" and not enemy["sabotaged"]:
@@ -1099,11 +1099,11 @@ func _draw() -> void:
                 if e["kind"] == "raider":
                     var step_y: float = sin(atmosphere_clock * 7.0 + ex * 0.08) * 2.0
                     draw_texture_rect(preload("res://assets/enemies/raider.svg"), Rect2(ex - 21.0, FLOOR - 62.0 + step_y + enemy_lane_offset, 42.0, 62.0), false)
-                    box(Rect2(ex - 17, FLOOR - 67, 34.0 * clampf(float(e["hp"]) / float(e["max_hp"]), 0.0, 1.0), 4), Color("f57c79"))
+                    box(Rect2(ex - 17, FLOOR - 67 + enemy_lane_offset, 34.0 * clampf(float(e["hp"]) / float(e["max_hp"]), 0.0, 1.0), 4), Color("f57c79"))
                     continue
                 if e["kind"] == "saboteur":
                     var step_y: float = sin(atmosphere_clock * 9.0 + ex * 0.08) * 2.0
-                    draw_texture_rect(preload("res://assets/enemies/saboteur.svg"), Rect2(ex - 21.0, FLOOR - 62.0 + step_y, 42.0, 62.0), false)
+                    draw_texture_rect(preload("res://assets/enemies/saboteur.svg"), Rect2(ex - 21.0, FLOOR - 62.0 + step_y + enemy_lane_offset, 42.0, 62.0), false)
                     box(Rect2(ex - 17, FLOOR - 67, 34.0 * clampf(float(e["hp"]) / float(e["max_hp"]), 0.0, 1.0), 4), Color("f57c79"))
                     continue
                 if e["kind"] == "runner" or e["kind"] == "brute":
@@ -1111,7 +1111,7 @@ func _draw() -> void:
                     var sprite_size := Vector2(41.0, 57.0) if e["kind"] == "runner" else Vector2(62.0, 77.0)
                     var gait: float = sin(atmosphere_clock * (13.0 if e["kind"] == "runner" else 5.0) + ex * 0.07) * (3.0 if e["kind"] == "runner" else 1.5)
                     draw_texture_rect(sprite_path, Rect2(ex - sprite_size.x * 0.5, FLOOR - sprite_size.y + gait + enemy_lane_offset, sprite_size.x, sprite_size.y), false)
-                    box(Rect2(ex - 17.0, FLOOR - sprite_size.y - 7.0, 34.0 * clampf(float(e["hp"]) / float(e["max_hp"]), 0.0, 1.0), 4.0), Color("f57c79"))
+                    box(Rect2(ex - 17.0, FLOOR - sprite_size.y - 7.0 + enemy_lane_offset, 34.0 * clampf(float(e["hp"]) / float(e["max_hp"]), 0.0, 1.0), 4.0), Color("f57c79"))
                     continue
                 var march: float = sin(atmosphere_clock * (11.0 if e["kind"] == "runner" else 6.0) + ex * 0.05) * 3.0
                 var width: float = 19.0 if e["kind"] == "brute" else (10.0 if e["kind"] == "runner" else 13.0)
@@ -1132,7 +1132,7 @@ func _draw() -> void:
                     draw_line(Vector2(ex + 12, FLOOR - 34), Vector2(ex + 26, FLOOR - 14), Color("b9bbc0"), 3.0)
                 draw_circle(Vector2(ex - 4, FLOOR - height - 9 + march), 2.0, Color("ffc2a3"))
                 draw_circle(Vector2(ex + 4, FLOOR - height - 9 + march), 2.0, Color("ffc2a3"))
-                box(Rect2(ex - 17, FLOOR - 53, 34 * e["hp"] / e["max_hp"], 4), Color("f57c79"))
+                box(Rect2(ex - 17, FLOOR - 53 + enemy_lane_offset, 34 * e["hp"] / e["max_hp"], 4), Color("f57c79"))
             var cursor_x := get_global_mouse_position().x
             var cursor_lane_y: float = FLOOR + float(LANE_OFFSETS[selected_lane])
             if cursor_x >= 245.0 and cursor_x <= 1020.0:
