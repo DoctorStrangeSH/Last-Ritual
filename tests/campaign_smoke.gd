@@ -22,6 +22,25 @@ func run_tests() -> void:
     game.save_path = "user://campaign_smoke_test.json"
     game.reset_all()
     check(game.current_day == 1, "initial day")
+    game.legacy_shards = 8
+    game.legacy_level = 0
+    game.buy_legacy()
+    check(game.legacy_level == 1 and game.legacy_shards == 6, "permanent legacy purchase")
+    game.difficulty = 3
+    game.start_run()
+    check(game.mana == 82 and game.legacy_level == 1 and game.difficulty == 3, "new run receives permanent starting mana and preserves difficulty")
+    game.current_day = 5
+    game.stones_collected = 5
+    game.award_run(true)
+    var reward_shards: int = game.legacy_shards
+    check(game.achievement_wins >= 1 and reward_shards > 6, "victory awards persistent progress")
+    game.award_run(true)
+    check(game.legacy_shards == reward_shards, "run rewards cannot be farmed twice")
+    game.reset_all()
+    game.difficulty = 1
+    game.legacy_level = 0
+    game.legacy_shards = 0
+
     game.spawn_damage_popup(Vector2(100.0, 200.0), 24.0, Color("a8e8f0"))
     check(game.damage_popups.size() == 1 and game.damage_popups[0]["text"] == "24", "floating damage feedback")
     game.spawn_damage_popup(Vector2(100.0, 200.0), 65.0, Color("ffe18a"), true)
