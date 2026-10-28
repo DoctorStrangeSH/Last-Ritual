@@ -1,0 +1,40 @@
+name: Windows build
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'project.godot'
+      - 'export_presets.cfg'
+      - 'scenes/**'
+      - 'scripts/**'
+      - '.github/workflows/windows-build.yml'
+permissions:
+  contents: read
+jobs:
+  windows:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Godot 4.4.1 and export templates
+        run: |
+          set -euxo pipefail
+          wget -q https://github.com/godotengine/godot/releases/download/4.4.1-stable/Godot_v4.4.1-stable_linux.x86_64.zip
+          unzip -q Godot_v4.4.1-stable_linux.x86_64.zip
+          chmod +x Godot_v4.4.1-stable_linux.x86_64
+          mkdir -p ~/.local/share/godot/export_templates/4.4.1.stable
+          wget -q https://github.com/godotengine/godot/releases/download/4.4.1-stable/Godot_v4.4.1-stable_export_templates.tpz
+          unzip -q Godot_v4.4.1-stable_export_templates.tpz
+          cp templates/* ~/.local/share/godot/export_templates/4.4.1.stable/
+      - name: Import assets and check scripts
+        run: ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --editor --quit
+      - name: Export Windows EXE
+        run: |
+          mkdir -p build/windows
+          ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --export-release "Windows Desktop" build/windows/LastRitual.exe
+          test -s build/windows/LastRitual.exe
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LastRitual-Windows
+          path: build/windows/*
+          if-no-files-found: error
