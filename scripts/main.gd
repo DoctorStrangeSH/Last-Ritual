@@ -841,39 +841,9 @@ func box(rect: Rect2, col: Color) -> void:
     draw_rect(rect, col)
 
 func draw_dark_lord(pos: Vector2) -> void:
+    # Imported SVG artwork replaces the original geometric placeholder.
+    # The sword effect remains drawn by the night phase.
     draw_texture_rect(preload("res://assets/characters/dark_lord.svg"), Rect2(pos.x - 31.0, pos.y - 57.0, 62.0, 83.0), false)
-    return
-    # Animated, procedural silhouette. Motion follows horizontal velocity.
-    var movement: float = clampf(absf(vel.x) / 235.0, 0.0, 1.0)
-    var flutter: float = sin(atmosphere_clock * (4.0 + movement * 7.0)) * (2.0 + movement * 5.0)
-    var tail: float = -facing * movement * 12.0
-    var cloak := PackedVector2Array([
-        pos + Vector2(-14, 5), pos + Vector2(14, 5),
-        pos + Vector2(23 + tail + flutter, 28),
-        pos + Vector2(3 + tail * 0.4, 23 + flutter * 0.3),
-        pos + Vector2(-23 + tail + flutter * 0.5, 28)
-    ])
-    draw_colored_polygon(cloak, Color("42305f"))
-    draw_line(pos + Vector2(0, 9), pos + Vector2(tail + flutter, 27), Color("9f6bc0"), 2.0)
-    box(Rect2(pos.x - 13, pos.y - 17, 26, 34), Color("7451a0") if hurt_cooldown <= 0.0 else Color("d87386"))
-    # Layered chest armour, shoulder plates, clasp and hood detailing.
-    draw_colored_polygon(PackedVector2Array([pos + Vector2(-13, -15), pos + Vector2(0, -8), pos + Vector2(13, -15), pos + Vector2(9, 10), pos + Vector2(0, 17), pos + Vector2(-9, 10)]), Color("342b50"))
-    draw_colored_polygon(PackedVector2Array([pos + Vector2(-17, -17), pos + Vector2(-2, -18), pos + Vector2(-7, -7), pos + Vector2(-19, -5)]), Color("8f789e"))
-    draw_colored_polygon(PackedVector2Array([pos + Vector2(17, -17), pos + Vector2(2, -18), pos + Vector2(7, -7), pos + Vector2(19, -5)]), Color("8f789e"))
-    draw_circle(pos + Vector2(0, -8), 5, Color("bb83df"))
-    draw_line(pos + Vector2(-8, 5), pos + Vector2(8, 5), Color("a48cae"), 2.0)
-    draw_circle(pos + Vector2(0, -24), 15, Color("25213c"))
-    draw_arc(pos + Vector2(0, -24), 16.0, PI * 0.12, PI * 0.88, 10, Color("746485"), 2.0)
-    draw_colored_polygon(PackedVector2Array([pos + Vector2(-14, -28), pos + Vector2(-23, -49), pos + Vector2(-5, -36)]), Color("5d5273"))
-    draw_colored_polygon(PackedVector2Array([pos + Vector2(14, -28), pos + Vector2(23, -49), pos + Vector2(5, -36)]), Color("5d5273"))
-    var eye_power: float = 0.68 + 0.32 * sin(atmosphere_clock * 5.0)
-    for offset in [-7.0, 7.0]:
-        draw_circle(pos + Vector2(offset, -25), 8.0, Color(1.0, 0.18, 0.4, 0.12 * eye_power))
-        box(Rect2(pos.x + offset - 3.5, pos.y - 27, 7, 4), Color("f2678b") * eye_power)
-    if swing_timer > 0.0:
-        var strike_alpha: float = clampf(swing_timer / 0.16, 0.0, 1.0)
-        var strike_color := Color(0.86, 0.62, 1.0, strike_alpha)
-        draw_arc(pos + Vector2(facing * 20.0, -9.0), 41.0, -PI * 0.45 if facing > 0.0 else PI * 0.55, PI * 0.45 if facing > 0.0 else PI * 1.45, 18, strike_color, 6.0)
 
 func _draw() -> void:
     box(Rect2(0, 0, W, H), Color("10101e"))
