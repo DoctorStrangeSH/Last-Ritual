@@ -211,6 +211,21 @@ func run_tests() -> void:
     check(not game.has_blood_economy_synergy(), "synergy resets between runs")
     game.reset_all()
     game.phase = "night"
+    game.mana = 100
+    game.player = Vector2(300.0, 528.0)
+    game.facing = 1.0
+    game.mage["hp"] = 0.0
+    game.boss_hp = 0.0
+    game.night_enemies = [{"x": 420.0, "hp": 100.0, "dir": 1.0}]
+    game.shadow_cleave()
+    check(game.mana == 80 and game.cleave_cooldown == 6.0, "shadow cleave consumes mana and starts cooldown")
+    check(float(game.night_enemies[0]["hp"]) == 52.0, "shadow cleave hits beyond basic range for double damage")
+    game.shadow_cleave()
+    check(game.mana == 80, "cleave cannot repeat while attack is cooling down")
+    game.reset_all()
+    check(game.cleave_cooldown == 0.0, "cleave cooldown resets between runs")
+    game.reset_all()
+    game.phase = "night"
     game.stone_taken = true
     game.stones_collected = 1
     game.player = Vector2(50, 528)
