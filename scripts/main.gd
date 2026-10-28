@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.1-rc46: tower upgrades HP three lanes and night reset, Godot 4.2+
+## Last Ritual v2.1-rc47: clickable tower defense palette, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -50,7 +50,8 @@ var towers_built := 0
 var repairs_today := 0
 var selected_build := "bone"
 var selected_lane := 1
-const LANE_OFFSETS := [-56.0, 0.0, 56.0]
+const LANE_OFFSETS := [-110.0, -55.0, 0.0]
+var selected_tower_index := -1
 var day_elapsed := 0.0
 var current_day := 1
 var stones_collected := 0
@@ -90,6 +91,7 @@ func reset_all() -> void:
     repairs_today = 0
     selected_build = "bone"
     selected_lane = 1
+    selected_tower_index = -1
     day_elapsed = 0.0
     current_day = 1
     stones_collected = 0
@@ -252,6 +254,7 @@ func resolve_altar() -> void:
         shots.clear()
         player_hp = 100.0
         towers.clear()
+        selected_tower_index = -1
         show_notice("День %d: башни прошлого дня исчезли. Построй новую оборону!" % current_day)
     elif mana >= 50 and souls >= 8:
         mana -= 50
@@ -384,11 +387,41 @@ func load_campaign() -> bool:
     return true
 
 func _input(event: InputEvent) -> void:
-    if (phase == "day" or phase == "final_siege") and not paused and event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-        if Input.is_key_pressed(KEY_CTRL):
-            upgrade_tower(get_global_mouse_position().x, selected_lane)
-        else:
-            build_tower(selected_build, get_global_mouse_position().x, selected_lane)
+    if (phase != "day" and phase != "final_siege") or paused:
+        return
+    if not (event is InputEventMouseButton) or not event.pressed or event.button_index != MOUSE_BUTTON_LEFT:
+        return
+    var mouse: Vector2 = get_global_mouse_position()
+    # Bottom build palette is clickable and cannot accidentally place towers.
+    if mouse.y >= 554.0:
+        if mouse.x >= 20.0 and mouse.x <= 206.0:
+            selected_build = "bone"
+            selected_tower_index = -1
+        elif mouse.x >= 220.0 and mouse.x <= 406.0:
+            selected_build = "fire"
+            selected_tower_index = -1
+        elif mouse.x >= 735.0 and mouse.x <= 955.0 and selected_tower_index >= 0 and selected_tower_index < towers.size():
+            var tower: Dictionary = towers[selected_tower_index]
+            upgrade_tower(float(tower["x"]), int(tower.get("lane", 1)))
+        return
+    var lane: int = 0
+    var nearest_distance: float = INF
+    for lane_index in range(3):
+        var dy: float = absf(mouse.y - (FLOOR + float(LANE_OFFSETS[lane_index]) - 48.0))
+        if dy < nearest_distance:
+            nearest_distance = dy
+            lane = lane_index
+    selected_lane = lane
+    for i in range(towers.size()):
+        if int(towers[i].get("lane", 1)) == lane and absf(float(towers[i]["x"]) - mouse.x) <= 32.0:
+            selected_tower_index = i
+            show_notice("Башня выбрана. Улучшение — кнопка снизу.")
+            return
+    selected_tower_index = -1
+    if Input.is_key_pressed(KEY_CTRL):
+        upgrade_tower(mouse.x, lane)
+    else:
+        build_tower(selected_build, mouse.x, lane)
 
 func buy_upgrade(kind: String) -> void:
     if stones_collected >= 5:
@@ -455,6 +488,7 @@ func build_tower(kind: String, mx: float, lane: int = 1) -> void:
             return
     mana -= cost
     towers.append({"x": mx, "type": kind, "lane": lane, "level": 1, "hp": 120.0 if kind == "bone" else 165.0, "cooldown": 0.0})
+    selected_tower_index = towers.size() - 1
     towers_built += 1
     show_notice("Построено: " + ("Костяная башня" if kind == "bone" else "Адская баллиста"))
     if current_day == 1 and towers.size() == 1:
@@ -474,6 +508,7 @@ func repair_wall() -> void:
 
 func begin_night() -> void:
     phase = "night"
+    selected_tower_index = -1
     towers.clear()
     stone_taken = false
     player = Vector2(95, FLOOR - 25)
@@ -975,7 +1010,7 @@ func _draw() -> void:
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
         label("M — атмосфера: %d/4  |  N — эффекты: %d/4" % [music_volume, effects_volume], 375, 463, 19, Color("d5bfda"))
-        label("Версия 2.1 RC46: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
+        label("Версия 2.1 RC47: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         if phase == "win":
@@ -1084,11 +1119,14 @@ func _draw() -> void:
                 var lane_y: float = FLOOR + float(LANE_OFFSETS[lane_index])
                 draw_line(Vector2(239.0, lane_y), Vector2(1125.0, lane_y), Color("b7a5ad", 0.47 if selected_lane == lane_index else 0.22), 2.0)
                 label("%d" % (lane_index + 1), 224.0, lane_y - 7.0, 15, Color("f1c6d3"))
-            for tower in towers:
+            for tower_i in range(towers.size()):
+                var tower: Dictionary = towers[tower_i]
                 var tx: float = tower["x"]
                 var tower_y: float = FLOOR + float(LANE_OFFSETS[int(tower.get("lane", 1))])
                 var tower_art: Texture2D = preload("res://assets/towers/bone_tower.svg") if tower["type"] == "bone" else preload("res://assets/towers/infernal_ballista.svg")
                 draw_texture_rect(tower_art, Rect2(tx - 30.0, tower_y - 106.0, 60.0, 106.0), false)
+                if selected_tower_index == tower_i:
+                    draw_rect(Rect2(tx - 34.0, tower_y - 111.0, 68.0, 115.0), Color("f7dfad"), false, 2.0)
                 var hp_ratio: float = clampf(float(tower.get("hp", tower_max_hp(tower))) / tower_max_hp(tower), 0.0, 1.0)
                 box(Rect2(tx - 24.0, tower_y - 120.0, 48.0, 6.0), Color("442b36"))
                 box(Rect2(tx - 24.0, tower_y - 120.0, 48.0 * hp_ratio, 6.0), Color("88d0a2") if hp_ratio > 0.3 else Color("ec7778"))
@@ -1155,6 +1193,34 @@ func _draw() -> void:
             label("Убийств: %d  |  Врагов: %d  |  Выбрано: %s" % [kills_today, enemies.size(), "Костяная" if selected_build == "bone" else "Баллиста"], 25, 126, 18)
             label("Линия: %d (клавиши 3/4/5)  |  Ctrl+ЛКМ: улучшить башню" % (selected_lane + 1), 25, 161, 17, Color("f1d5ac"))
             label("Цена: %d маны  |  Можно построить: %s" % [30 if selected_build == "bone" else 55, "ДА" if mana >= (30 if selected_build == "bone" else 55) else "НЕТ"], 25, 151, 17, Color("9ed9ad") if mana >= (30 if selected_build == "bone" else 55) else Color("f3a0a0"))
+            # RTS-style mouse palette: build cards and contextual tower inspection.
+            box(Rect2(0.0, 551.0, W, 97.0), Color(0.08, 0.065, 0.13, 0.96))
+            draw_line(Vector2(0, 551), Vector2(W, 551), Color("b59ab9"), 3.0)
+            for card_index in range(2):
+                var card_x: float = 20.0 + float(card_index) * 200.0
+                var card_kind: String = "bone" if card_index == 0 else "fire"
+                box(Rect2(card_x, 562.0, 186.0, 74.0), Color("5e405d") if selected_build == card_kind else Color("332b40"))
+                draw_rect(Rect2(card_x, 562.0, 186.0, 74.0), Color("e2be9e") if selected_build == card_kind else Color("806d85"), false, 2.0)
+                label("КОСТЯНАЯ" if card_index == 0 else "БАЛЛИСТА", card_x + 10.0, 587.0, 19, Color("f4d2af"))
+                label("30 маны" if card_index == 0 else "55 маны", card_x + 12.0, 615.0, 19)
+            label("ЛКМ: выбрать и строить", 426.0, 587.0, 18)
+            label("Башня: ЛКМ для осмотра", 426.0, 612.0, 17, Color("c8bed1"))
+            if selected_tower_index >= 0 and selected_tower_index < towers.size():
+                var inspected: Dictionary = towers[selected_tower_index]
+                var level: int = int(inspected.get("level", 1))
+                var price: int = 25 * level
+                box(Rect2(733.0, 562.0, 221.0, 74.0), Color("59415b"))
+                draw_rect(Rect2(733.0, 562.0, 221.0, 74.0), Color("cda6ba"), false, 2.0)
+                label("УЛУЧШИТЬ: %s" % ("MAX" if level >= 3 else "%d маны" % price), 743.0, 588.0, 18)
+                label("Уровень %d → %d" % [level, mini(level + 1, 3)], 743.0, 614.0, 18)
+                box(Rect2(731.0, 272.0, 384.0, 125.0), Color(0.11, 0.075, 0.17, 0.93))
+                draw_rect(Rect2(731.0, 272.0, 384.0, 125.0), Color("b98faa"), false, 2.0)
+                label("%s  •  Уровень %d" % ["КОСТЯНАЯ" if inspected["type"] == "bone" else "БАЛЛИСТА", level], 746.0, 300.0, 19, Color("eed3b4"))
+                label("HP: %d / %d   Линия: %d" % [ceili(float(inspected.get("hp", 0.0))), ceili(tower_max_hp(inspected)), int(inspected.get("lane", 1)) + 1], 746.0, 331.0, 18)
+                var damage: float = (22.0 if inspected["type"] == "bone" else 65.0) * (1.0 + 0.45 * float(level - 1)) * (1.35 if tower_power_level > 0 else 1.0)
+                label("Урон: %d    Дальность: %d" % [ceili(damage), 260 if inspected["type"] == "bone" else 375], 746.0, 359.0, 18)
+            label("Линия %d" % (selected_lane + 1), 978.0, 591.0, 20, Color("f3d6ab"))
+            label("Клик по полю", 972.0, 614.0, 17)
             if current_day == 1 and phase == "day" and towers.is_empty():
                 box(Rect2(245, 176, 688, 73), Color(0.15, 0.11, 0.22, 0.85))
                 label("ПЕРВЫЙ ДЕНЬ: 1 — костяная башня (30 маны)", 267, 205, 22, Color("f4d09b"))
