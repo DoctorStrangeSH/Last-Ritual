@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.2-rc56: enemy hit reactions, lane-aligned health bars and combat feedback
+## Last Ritual v2.2-rc57: enemy hit reactions, lane-aligned health bars and combat feedback
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -30,6 +30,8 @@ var shots: Array[Dictionary] = []
 var skeletons: Array[Dictionary] = []
 var spawn_timer := 0.0
 var wave_count := 0
+var siege_event := 0
+var elite_kills := 0
 var player := Vector2(95, FLOOR - 25)
 var vel := Vector2.ZERO
 var grounded := false
@@ -181,6 +183,8 @@ func reset_all() -> void:
     shots.clear()
     skeletons.clear()
     wave_count = 0
+    siege_event = 0
+    elite_kills = 0
     spawn_timer = 1.0
     player = Vector2(95, FLOOR - 25)
     vel = Vector2.ZERO
@@ -319,6 +323,7 @@ func resolve_altar() -> void:
         day_elapsed = 0.0
         spawn_timer = 1.0
         wave_count = 0
+        siege_event = 0
         kills_today = 0
         repairs_today = 0
         enemies.clear()
@@ -786,6 +791,9 @@ func update_day(delta: float) -> void:
     spawn_timer -= delta
     if spawn_timer <= 0.0:
         wave_count += 1
+        if wave_count % 8 == 0:
+            siege_event = randi_range(0, 2)
+            show_notice("СОБЫТИЕ: %s" % (["Багровая орда", "Проклятый туман", "Души павших"][siege_event]))
         spawn_timer = maxf(1.05, 3.5 - wave_count * 0.065)
         if phase == "final_siege":
             spawn_timer = maxf(0.85, 1.75 - wave_count * 0.02)
@@ -801,7 +809,15 @@ func update_day(delta: float) -> void:
         var damage := (6.0 if kind == "runner" else (19.0 if kind == "brute" else 9.0)) * (1.0 if current_day == 1 else 1.3)
         health *= 0.8 + float(difficulty) * 0.2
         damage *= 0.8 + float(difficulty) * 0.2
-        enemies.append({"x": W + 32.0, "hp": health, "max_hp": health, "speed": speed, "damage": damage, "hit_cd": 0.0, "kind": kind, "lane": randi_range(0, 2), "sabotaged": false})
+        var elite: bool = wave_count >= 4 and wave_count % 6 == 0
+        if elite:
+            health *= 2.2
+            damage *= 1.5
+        if siege_event == 0:
+            speed *= 1.15
+        elif siege_event == 1:
+            health *= 1.12
+        enemies.append({"x": W + 32.0, "hp": health, "max_hp": health, "speed": speed, "damage": damage, "hit_cd": 0.0, "kind": kind, "lane": randi_range(0, 2), "sabotaged": false, "elite": elite})
     for tower in towers:
         tower["disabled"] = maxf(0.0, float(tower.get("disabled", 0.0)) - delta)
         tower["flash"] = maxf(0.0, float(tower.get("flash", 0.0)) - delta)
@@ -842,8 +858,11 @@ func update_day(delta: float) -> void:
     for i in range(enemies.size() - 1, -1, -1):
         var enemy := enemies[i]
         if enemy["hp"] <= 0.0:
-            mana += 9 + reward_mana_bonus * 5
-            souls += 1
+            var elite_bonus: int = 16 if bool(enemy.get("elite", false)) else 0
+            if elite_bonus > 0:
+                elite_kills += 1
+            mana += 9 + reward_mana_bonus * 5 + elite_bonus
+            souls += 2 if elite_bonus > 0 or siege_event == 2 else 1
             kills_today += 1
             campaign_kills += 1
             if enemy["kind"] == "saboteur":
@@ -1452,7 +1471,9 @@ func _draw() -> void:
                 var enemy_color := Color("7adbe4") if e["kind"] == "saboteur" else (Color("edc265") if e["kind"] == "runner" else (Color("d66c69") if e["kind"] == "brute" else Color("b0af9b")))
                 var flash_amount: float = clampf(float(e.get("hit_flash", 0.0)) / 0.16, 0.0, 1.0)
                 var flash_color: Color = e.get("hit_flash_color", Color.WHITE)
-                var sprite_tint: Color = Color.WHITE.lerp(flash_color, flash_amount)
+                var sprite_tint: Color = (Color("e4b9fa") if bool(e.get("elite", false)) else Color.WHITE).lerp(flash_color, flash_amount)
+                if bool(e.get("elite", false)):
+                    draw_arc(Vector2(ex, FLOOR - 37.0 + enemy_lane_offset), 36.0, 0.0, TAU, 28, Color("b78be2", 0.62), 2.0)
                 if e["kind"] == "raider":
                     var step_y: float = sin(atmosphere_clock * 7.0 + ex * 0.08) * 2.0
                     draw_texture_rect(preload("res://assets/enemies/raider.svg"), Rect2(ex - 21.0, FLOOR - 62.0 + step_y + enemy_lane_offset, 42.0, 62.0), false, sprite_tint)
