@@ -73,6 +73,24 @@ func run_tests() -> void:
     check(game.phase == "win", "surviving final siege wins")
     game.reset_all()
     check(game.current_day == 1 and game.towers.is_empty(), "restart resets")
+    game.phase = "ritual"
+    game.current_day = 2
+    game.stones_collected = 2
+    game.mana = 93
+    game.souls = 11
+    game.wall_hp = 78.0
+    game.towers.append({"x": 430.0, "type": "fire", "cooldown": 0.0})
+    check(game.save_campaign(), "checkpoint save")
+    game.reset_all()
+    check(game.load_campaign(), "checkpoint load")
+    check(game.phase == "ritual" and game.current_day == 2 and game.stones_collected == 2, "checkpoint phase and progress")
+    check(game.mana == 93 and game.souls == 11 and game.wall_hp == 78.0, "checkpoint resources")
+    check(game.towers.size() == 1 and game.towers[0]["type"] == "fire", "checkpoint tower")
+    var corrupt := FileAccess.open(game.SAVE_PATH, FileAccess.WRITE)
+    corrupt.store_string("{not valid json")
+    corrupt.close()
+    check(not game.load_campaign(), "corrupt save is rejected")
+    DirAccess.remove_absolute(ProjectSettings.globalize_path(game.SAVE_PATH))
     game.queue_free()
     print("Failures: ", failures)
     quit(1 if failures > 0 else 0)
