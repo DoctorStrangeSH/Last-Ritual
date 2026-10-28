@@ -170,3 +170,6 @@ Godot ещё не запускался в этой сессии. Существ�
 
 ## v2.1 RC46
 Крупная переработка: `selected_lane`, `LANE_OFFSETS`, `upgrade_tower`, `tower_max_hp`, HP/level/lane в словарях башен, lane у врагов и выстрелов. Противники останавливаются для атаки башен, те уничтожаются при нуле HP. Клавиши 3/4/5 выбирают линию; Ctrl+ЛКМ улучшает ближайшую башню выбранной линии. Башни сбрасываются на night и в resolve_altar, загрузка старых сохранений допустима, но временные башни при загрузке не восстанавливаются. Ночь 2: пересмотрены платформы и усилен прыжок. Проверить CI, балансы и действия на поле.
+
+## v2.1 RC48
+`dragging_tower` tracks press on either bottom tower card; release on battlefield calls `build_tower` using `lane_for_y`. Existing click-to-select then click-to-place remains. Placement preview uses actual tower SVG, validates mana/range/spacing and draws a lane highlight and attack arc. Cards now show tower artwork and base stats. Selection index updates when towers are removed.
