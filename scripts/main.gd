@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.0-rc12: animated dark lord, Godot 4.2+
+## Last Ritual v2.0-rc13: night enemy silhouettes, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -728,7 +728,7 @@ func _draw() -> void:
         label("ПОСЛЕДНИЙ РИТУАЛ", 225, 255, 52, Color("e3b3e9"))
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
-        label("Версия 2.0 RC12: пять дней, пять ночей, пять камней", 325, 474, 18, Color("aaaaaa"))
+        label("Версия 2.0 RC13: пять дней, пять ночей, пять камней", 325, 474, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         label("РИТУАЛ ЗАВЕРШЁН" if phase == "win" else "КРЕПОСТЬ ПАЛА", 300, 275, 48, Color("a9e4bc") if phase == "win" else Color("ff7777"))
@@ -843,18 +843,37 @@ func _draw() -> void:
                 draw_circle(gem, 20.0 + sin(atmosphere_clock * 3.0 + gem.x) * 3.0, Color(0.32, 0.90, 1.0, 0.16))
                 draw_colored_polygon(PackedVector2Array([gem + Vector2(0, -16), gem + Vector2(13, 0), gem + Vector2(0, 16), gem + Vector2(-13, 0)]), Color("5de0e9"))
             for e in night_enemies:
-                box(Rect2(e["x"] - 16, FLOOR - 34, 32, 34), Color("86aa87"))
+                if float(e["hp"]) <= 0.0:
+                    continue
+                var enemy_x: float = float(e["x"])
+                var bob: float = sin(atmosphere_clock * 7.0 + enemy_x * 0.04) * 3.0
+                box(Rect2(enemy_x - 15.0, FLOOR - 39.0 + bob, 30, 38), Color("557a66"))
+                draw_circle(Vector2(enemy_x, FLOOR - 43.0 + bob), 13, Color("9cc09b"))
+                draw_colored_polygon(PackedVector2Array([Vector2(enemy_x - 14, FLOOR - 48 + bob), Vector2(enemy_x - 20, FLOOR - 64 + bob), Vector2(enemy_x - 5, FLOOR - 53 + bob)]), Color("71917f"))
+                draw_colored_polygon(PackedVector2Array([Vector2(enemy_x + 14, FLOOR - 48 + bob), Vector2(enemy_x + 20, FLOOR - 64 + bob), Vector2(enemy_x + 5, FLOOR - 53 + bob)]), Color("71917f"))
+                box(Rect2(enemy_x - 8, FLOOR - 46 + bob, 5, 3), Color("f5c877"))
+                box(Rect2(enemy_x + 3, FLOOR - 46 + bob, 5, 3), Color("f5c877"))
             if mage["hp"] > 0.0:
-                box(Rect2(mage["x"] - 14.0, FLOOR - 68.0, 28, 68), Color("5d9ac7"))
-                draw_circle(Vector2(mage["x"], FLOOR - 73.0), 17.0, Color("a8d6ef"))
-                box(Rect2(mage["x"] - 19.0, FLOOR - 90.0, 38.0 * mage["hp"] / 60.0, 4), Color("71b7ff"))
+                var mage_x: float = float(mage["x"])
+                var mage_float: float = sin(atmosphere_clock * 3.2) * 4.0
+                draw_circle(Vector2(mage_x, FLOOR - 64 + mage_float), 32, Color(0.35, 0.71, 1.0, 0.12))
+                draw_colored_polygon(PackedVector2Array([Vector2(mage_x - 18, FLOOR - 18 + mage_float), Vector2(mage_x - 12, FLOOR - 76 + mage_float), Vector2(mage_x + 12, FLOOR - 76 + mage_float), Vector2(mage_x + 18, FLOOR - 18 + mage_float)]), Color("41638f"))
+                draw_circle(Vector2(mage_x, FLOOR - 79 + mage_float), 16, Color("a8d6ef"))
+                draw_circle(Vector2(mage_x + 21, FLOOR - 55 + mage_float), 8, Color("72d6ff"))
+                box(Rect2(mage_x - 19, FLOOR - 96, 38.0 * clampf(float(mage["hp"]) / (60.0 if current_day == 1 else (120.0 if current_day == 4 else (145.0 if current_day == 5 else (105.0 if current_day == 3 else 85.0)))), 0.0, 1.0), 4), Color("71b7ff"))
             for bolt in mage_bolts:
                 draw_circle(bolt["pos"], 8.0, Color("7bd9ff"))
             if boss_hp > 0.0:
                 if boss_windup > 0.0:
                     box(Rect2(boss_pos.x - 85, FLOOR - 10, 170, 10), Color("eb5c60"))
                     label("УДАР!", boss_pos.x - 30, 405, 20, Color("f4a2a2"))
+                    draw_arc(boss_pos, 94.0 + sin(atmosphere_clock * 17.0) * 3.0, 0.0, TAU, 40, Color(1.0, 0.27, 0.34, 0.47), 4.0)
                 box(Rect2(boss_pos.x - 31, boss_pos.y - 47, 62, 91), Color("a24e71"))
+                draw_colored_polygon(PackedVector2Array([boss_pos + Vector2(-29, -37), boss_pos + Vector2(-49, -79), boss_pos + Vector2(-10, -48)]), Color("7a395e"))
+                draw_colored_polygon(PackedVector2Array([boss_pos + Vector2(29, -37), boss_pos + Vector2(49, -79), boss_pos + Vector2(10, -48)]), Color("7a395e"))
+                draw_circle(boss_pos + Vector2(0, -27), 19, Color("5b2544"))
+                draw_circle(boss_pos + Vector2(-8, -29), 4, Color("ffa4c3"))
+                draw_circle(boss_pos + Vector2(8, -29), 4, Color("ffa4c3"))
                 box(Rect2(boss_pos.x - 45, boss_pos.y - 65, 90 * boss_hp / (140.0 if current_day == 1 else (190.0 if current_day == 2 else (230.0 if current_day == 3 else (270.0 if current_day == 4 else 340.0)))), 7), Color("ed6975"))
                 label("ХРАНИТЕЛЬ", 935, 380, 17)
             elif not stone_taken:
