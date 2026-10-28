@@ -1,11 +1,19 @@
 extends Node2D
-## Last Ritual v2.1-rc54: enemy hit reactions, lane-aligned health bars and combat feedback
+## Last Ritual v2.2-rc55: enemy hit reactions, lane-aligned health bars and combat feedback
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
 const DAY_LENGTH := 56.0
 const MAX_WALL := 100.0
 const SAVE_PATH := "user://campaign_v1.json"
+const META_PATH := "user://ritual_legacy.json"
+var difficulty := 1
+var legacy_shards := 0
+var legacy_level := 0
+var achievement_wins := 0
+var achievement_best_day := 1
+var meta_paid_this_run := false
+var menu_page := "main"
 const AUDIO_SETTINGS_PATH := "user://audio_settings.cfg"
 var save_path := SAVE_PATH
 var phase := "title"
@@ -84,6 +92,53 @@ func _ready() -> void:
     load_audio_settings()
     apply_audio_volumes()
     reset_all()
+    load_meta()
+
+func save_meta() -> void:
+    var file := FileAccess.open(META_PATH, FileAccess.WRITE)
+    if file != null:
+        file.store_string(JSON.stringify({"difficulty": difficulty, "shards": legacy_shards, "level": legacy_level, "wins": achievement_wins, "best_day": achievement_best_day}))
+
+func load_meta() -> void:
+    if not FileAccess.file_exists(META_PATH):
+        return
+    var file := FileAccess.open(META_PATH, FileAccess.READ)
+    if file == null or file.get_length() > 4096:
+        return
+    var data: Variant = JSON.parse_string(file.get_as_text())
+    if not data is Dictionary:
+        return
+    difficulty = clampi(int(data.get("difficulty", 1)), 0, 4)
+    legacy_shards = clampi(int(data.get("shards", 0)), 0, 99999)
+    legacy_level = clampi(int(data.get("level", 0)), 0, 10)
+    achievement_wins = clampi(int(data.get("wins", 0)), 0, 99999)
+    achievement_best_day = clampi(int(data.get("best_day", 1)), 1, 5)
+
+func start_run() -> void:
+    reset_all()
+    phase = "day"
+    mana += legacy_level * 12
+    wall_hp = minf(MAX_WALL, wall_hp + legacy_level * 3.0)
+
+func buy_legacy() -> void:
+    var cost: int = 2 + legacy_level * 2
+    if legacy_level >= 10 or legacy_shards < cost:
+        show_notice("Нужно %d осколков, максимум уровня 10" % cost)
+        return
+    legacy_shards -= cost
+    legacy_level += 1
+    save_meta()
+    show_notice("Наследие улучшено до %d уровня!" % legacy_level)
+
+func award_run(is_win: bool) -> void:
+    if meta_paid_this_run:
+        return
+    meta_paid_this_run = true
+    legacy_shards += maxi(1, stones_collected + (4 if is_win else 0)) * (difficulty + 1)
+    achievement_best_day = maxi(achievement_best_day, current_day)
+    if is_win:
+        achievement_wins += 1
+    save_meta()
 
 func reset_all() -> void:
     phase = "title"
@@ -92,6 +147,7 @@ func reset_all() -> void:
     campaign_kills = 0
     towers_built = 0
     repairs_today = 0
+    meta_paid_this_run = false
     selected_build = ""
     selected_lane = 1
     selected_tower_index = -1
@@ -179,6 +235,7 @@ func _process(delta: float) -> void:
         update_day(delta)
         if phase == "final_siege" and wall_hp > 0.0 and final_timer <= 0.0:
             phase = "win"
+            award_run(true)
             play_cue("victory")
     queue_redraw()
 
@@ -208,8 +265,7 @@ func _unhandled_input(event: InputEvent) -> void:
             return
         if event.keycode == KEY_ENTER or event.keycode == KEY_KP_ENTER:
             if phase == "title" or phase == "win" or phase == "lose":
-                reset_all()
-                phase = "day"
+                start_run()
             elif phase == "ritual":
                 resolve_altar()
         if phase == "day" or phase == "final_siege":
@@ -383,6 +439,33 @@ func load_campaign() -> bool:
 func _input(event: InputEvent) -> void:
     if paused:
         dragging_tower = false
+        return
+    if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed and (phase == "title" or phase == "win" or phase == "lose"):
+        var menu_click := get_global_mouse_position()
+        if phase != "title":
+            if menu_click.y > 485.0:
+                menu_page = "main"
+                phase = "title"
+            return
+        if menu_page == "achievements":
+            menu_page = "main"
+            return
+        if menu_click.y >= 300.0 and menu_click.y < 345.0:
+            if menu_page == "main":
+                start_run()
+            else:
+                difficulty = (difficulty + 1) % 5
+                save_meta()
+        elif menu_click.y >= 350.0 and menu_click.y < 395.0:
+            if menu_page == "main":
+                if not load_campaign():
+                    show_notice("Нет сохранённой кампании")
+            else:
+                buy_legacy()
+        elif menu_click.y >= 400.0 and menu_click.y < 445.0:
+            menu_page = "legacy" if menu_page == "main" else "main"
+        elif menu_click.y >= 450.0 and menu_click.y < 495.0:
+            menu_page = "achievements" if menu_page == "main" else "main"
         return
     if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed and phase == "night":
         var attack_target: Vector2 = get_global_mouse_position()
@@ -576,6 +659,7 @@ func begin_night() -> void:
     jump_was_down = false
     player_hp = 100.0
     boss_hp = 140.0 if current_day == 1 else (190.0 if current_day == 2 else (230.0 if current_day == 3 else (270.0 if current_day == 4 else 340.0)))
+    boss_hp *= 0.8 + float(difficulty) * 0.2
     boss_strike_timer = 2.0
     boss_windup = 0.0
     mage = {"x": 570.0, "hp": 60.0 if current_day == 1 else 85.0, "cooldown": 1.4}
@@ -683,6 +767,8 @@ func update_day(delta: float) -> void:
         var health := (27.0 if kind == "runner" else (100.0 if kind == "brute" else (55.0 if kind == "saboteur" else 46.0))) * (1.0 if current_day == 1 else (1.45 if current_day == 2 else (1.7 if current_day == 3 else (1.95 if current_day == 4 else 2.1))))
         var speed := 84.0 if kind == "runner" else (65.0 if kind == "saboteur" else (25.0 if kind == "brute" else 43.0))
         var damage := (6.0 if kind == "runner" else (19.0 if kind == "brute" else 9.0)) * (1.0 if current_day == 1 else 1.3)
+        health *= 0.8 + float(difficulty) * 0.2
+        damage *= 0.8 + float(difficulty) * 0.2
         enemies.append({"x": W + 32.0, "hp": health, "max_hp": health, "speed": speed, "damage": damage, "hit_cd": 0.0, "kind": kind, "lane": randi_range(0, 2), "sabotaged": false})
     for tower in towers:
         tower["disabled"] = maxf(0.0, float(tower.get("disabled", 0.0)) - delta)
@@ -775,6 +861,7 @@ func update_day(delta: float) -> void:
     if wall_hp <= 0.0:
         wall_hp = 0.0
         phase = "lose"
+        award_run(false)
         play_cue("defeat")
     elif phase == "day" and time_left <= 0.0:
         begin_night()
@@ -1153,11 +1240,21 @@ func _draw() -> void:
         draw_line(Vector2(194, 511), Vector2(958, 511), Color("866487"), 2.0)
         for ornament in [192.0, 960.0]:
             draw_colored_polygon(PackedVector2Array([Vector2(ornament, 208), Vector2(ornament + 10, 221), Vector2(ornament, 234), Vector2(ornament - 10, 221)]), Color("bb86b4"))
-        label("ПОСЛЕДНИЙ РИТУАЛ", 225, 255, 52, Color(0.78 + 0.12 * title_pulse, 0.56 + 0.15 * title_pulse, 0.86 + 0.10 * title_pulse))
-        label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
-        label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
-        label("M — атмосфера: %d/4  |  N — эффекты: %d/4" % [music_volume, effects_volume], 375, 463, 19, Color("d5bfda"))
-        label("Версия 2.1 RC51: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
+        label("ПОСЛЕДНИЙ РИТУАЛ", 224, 245, 46, Color("e4b9ed"))
+        if menu_page == "main":
+            label("НОВАЯ ИГРА", 422, 330, 23, Color("ffdcae"))
+            label("ПРОДОЛЖИТЬ", 422, 380, 23)
+            label("НАСЛЕДИЕ И СЛОЖНОСТЬ", 356, 430, 23)
+            label("ДОСТИЖЕНИЯ", 422, 480, 23)
+        elif menu_page == "legacy":
+            label("СЛОЖНОСТЬ: %d / 4   [НАЖАТЬ]" % difficulty, 355, 330, 21, Color("ffdcae"))
+            label("ПОВЫСИТЬ НАСЛЕДИЕ: %d оск." % (2 + legacy_level * 2), 355, 380, 21)
+            label("НАЗАД", 480, 430, 21)
+            label("Осколки: %d  •  Наследие: %d/10" % [legacy_shards, legacy_level], 340, 478, 20)
+        else:
+            label("ПОБЕД: %d" % achievement_wins, 430, 337, 23, Color("ffdcae"))
+            label("ЛУЧШИЙ ДЕНЬ: %d / 5" % achievement_best_day, 407, 385, 22)
+            label("НАЖМИ ДЛЯ ВОЗВРАТА", 385, 460, 20)
         return
     if phase == "win" or phase == "lose":
         if phase == "win":
@@ -1186,7 +1283,8 @@ func _draw() -> void:
         box(Rect2(255, 365, 642, 103), Color(0.12, 0.09, 0.18, 0.86))
         label("ИТОГИ ПОХОДА", 451, 391, 22, Color("f5cf84"))
         label("Врагов: %d   |   Построено башен: %d   |   Камней: %d/5" % [campaign_kills, towers_built, stones_collected], 294, 427, 20)
-        label("ENTER — новая попытка", 414, 509, 24, Color("f5cf84"))
+        label("ЛКМ — вернуться в главное меню", 365, 509, 22, Color("f5cf84"))
+        label("Осколки наследия: %d" % legacy_shards, 413, 469, 18)
         return
     if phase == "ritual":
         var altar_glow := 0.58 + 0.42 * sin(atmosphere_clock * 2.2)
