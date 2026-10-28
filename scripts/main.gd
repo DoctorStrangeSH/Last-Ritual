@@ -1281,27 +1281,28 @@ func _draw() -> void:
             var preview_lane: int = lane_for_y(cursor.y)
             var cursor_lane_y: float = FLOOR + float(LANE_OFFSETS[preview_lane])
             if dragging_tower and cursor.y < 548.0 and cursor_x >= 245.0 and cursor_x <= 1020.0:
-                var range_radius: float = 260.0 if selected_build == "bone" else 375.0
+                var range_radius: float = 260.0 if selected_build == "bone" else (375.0 if selected_build == "fire" else 0.0)
                 var can_place: bool = mana >= (30 if selected_build == "bone" else (55 if selected_build == "fire" else 65))
                 for placed_tower in towers:
                     if int(placed_tower.get("lane", 1)) == preview_lane and absf(float(placed_tower["x"]) - cursor_x) < 65.0:
                         can_place = false
                 draw_line(Vector2(239.0, cursor_lane_y), Vector2(1125.0, cursor_lane_y), Color("c8e5a0", 0.75), 4.0)
-                draw_arc(Vector2(cursor_x, cursor_lane_y - 67.0), range_radius, PI, TAU, 32, Color(0.48, 0.85, 0.69, 0.27) if can_place else Color(0.95, 0.30, 0.34, 0.22), 2.0)
+                if range_radius > 0.0:
+                    draw_arc(Vector2(cursor_x, cursor_lane_y - 67.0), range_radius, PI, TAU, 32, Color(0.48, 0.85, 0.69, 0.27) if can_place else Color(0.95, 0.30, 0.34, 0.22), 2.0)
                 var preview_art: Texture2D = preload("res://assets/towers/bone_tower.svg") if selected_build == "bone" else (preload("res://assets/towers/infernal_ballista.svg") if selected_build == "fire" else preload("res://assets/towers/necromancer_tower.svg"))
                 draw_texture_rect(preview_art, Rect2(cursor_x - 30.0, cursor_lane_y - 106.0, 60.0, 106.0), false, Color(0.68, 1.0, 0.72, 0.76) if can_place else Color(1.0, 0.38, 0.38, 0.72))
                 label("МОЖНО ПОСТРОИТЬ" if can_place else "НЕТ МЕСТА / МАНЫ", clampf(cursor_x - 90.0, 245.0, 920.0), cursor_lane_y - 126.0, 15, Color("b8f1c0") if can_place else Color("ffaaa9"))
             draw_gothic_hud_panel(150.0)
             label("ФИНАЛЬНЫЙ ШТУРМ — %d с" % ceili(maxf(0.0, final_timer)) if phase == "final_siege" else "ДЕНЬ %d / 5  •  ОСАДА" % current_day, 25, 35, 27, Color("f8c59e"))
             var siege_status := "Ритуал: %02d с" % ceili(maxf(final_timer, 0.0)) if phase == "final_siege" else "До ночи: %02d с" % ceili(maxf(time_left, 0.0))
-            label("%s    Стены: %d / 100    Мана: %d    Души: %d" % [siege_status, maxi(0, ceili(wall_hp)), mana, souls], 25, 71, 22)
+            label("%s    Мана: %d    Души: %d" % [siege_status, mana, souls], 25, 71, 22)
             if phase == "final_siege":
                 box(Rect2(680, 84, 310, 13), Color("543c54"))
                 box(Rect2(680, 84, 310.0 * clampf(1.0 - final_timer / 45.0, 0.0, 1.0), 13), Color("d8a6e8"))
                 label("ЗАЩИЩАЙ АЛТАРЬ!", 700, 125, 18, Color("edc2f7"))
             box(Rect2(25, 82, 260, 13), Color("553840"))
             box(Rect2(25, 82, 260.0 * clampf(wall_hp / MAX_WALL, 0.0, 1.0), 13), Color("8cbe88") if wall_hp > 30.0 else Color("ed6b73"))
-            label("Убийств: %d  |  Врагов на поле: %d" % [kills_today, enemies.size()], 25, 126, 18)
+            label("Стены %d%%   •   Убийств %d   •   Врагов %d" % [ceili(wall_hp), kills_today, enemies.size()], 25, 126, 17)
 
             # RTS-style mouse palette: build cards and contextual tower inspection.
             box(Rect2(0.0, 551.0, W, 97.0), Color(0.08, 0.065, 0.13, 0.96))
@@ -1501,24 +1502,20 @@ func _draw() -> void:
                 var start_angle: float = -1.2 + swing_progress * 1.8 if facing > 0.0 else PI + 0.5 - swing_progress * 1.8
                 draw_arc(player + Vector2(facing * 24.0, -14.0), 62.0, start_angle, start_angle + 1.0, 22, Color(0.85, 0.62, 1.0, 0.85), 7.0)
                 draw_arc(player + Vector2(facing * 24.0, -14.0), 68.0, start_angle + 0.1, start_angle + 0.8, 18, Color(0.96, 0.87, 1.0, 0.48), 3.0)
-            draw_gothic_hud_panel(181.0)
+            draw_gothic_hud_panel(156.0)
             label("НОЧЬ %d / 5  •  %s" % [current_day, "КАТАКОМБЫ" if current_day == 1 else ("ПРОКЛЯТАЯ УСЫПАЛЬНИЦА" if current_day == 2 else ("СОБОР СВЕТА" if current_day == 3 else ("КРОВАВЫЕ ШАХТЫ" if current_day == 4 else "ГРОБНИЦА ПЕРВОГО КОРОЛЯ")))], 25, 35, 27, Color("b9afea"))
             box(Rect2(24, 78, 260, 9), Color("413345"))
             box(Rect2(24, 78, 260.0 * clampf(player_hp / 100.0, 0.0, 1.0), 9), Color("dc6e83") if player_hp <= 25.0 else Color("b37fd2"))
-            label("Здоровье: %d    Мана: %d    Души: %d    Камень: %s" % [maxi(0, ceili(player_hp)), mana, souls, "ДА" if stone_taken else "НЕТ"], 25, 71, 22)
-            var trap_warning := "ШИПЫ АКТИВНЫ — уйди с опасного участка!" if spike_phase >= 2.1 else ("Шипы скоро активируются!" if spike_phase >= 1.4 else "Шипы сейчас безопасны")
-            label(trap_warning, 25, 106, 18, Color("f38c95") if spike_phase >= 2.1 else (Color("f1c780") if spike_phase >= 1.4 else Color("9fd7bd")))
-            box(Rect2(25, 117, 250, 7), Color("383748"))
-            box(Rect2(25, 117, 250.0 * clampf(spike_phase / 3.1, 0.0, 1.0), 7), Color("e8797a") if spike_phase >= 2.1 else Color("d9b67b"))
-            var can_heal: bool = mana >= 20 and player_hp < 100.0
-            var can_dash: bool = mana >= 15 and dash_cooldown <= 0.0
-            label("H: лечение 20 маны %s  |  Shift: рывок 15 маны %s" % ["[ГОТОВО]" if can_heal else "[НЕДОСТУПНО]", "[ГОТОВО]" if can_dash else "[НЕДОСТУПНО]"], 25, 152, 17, Color("c8bedf"))
+            label("HP %d/100    Мана %d    Души %d    Камень %s" % [maxi(0, ceili(player_hp)), mana, souls, "ДА" if stone_taken else "НЕТ"], 25, 71, 21)
+            label("ЛОВУШКИ", 25, 106, 15, Color("f38c95") if spike_phase >= 2.1 else Color("f1c780"))
+            box(Rect2(105, 96, 180, 9), Color("383748"))
+            box(Rect2(105, 96, 180.0 * clampf(spike_phase / 3.1, 0.0, 1.0), 9), Color("e8797a") if spike_phase >= 2.1 else Color("d9b67b"))
             if current_day == 1 and boss_hp > 0.0 and not stone_taken:
-                label("ЦЕЛЬ: победи хранителя справа, затем забери Камень Бездны.", 25, 181, 17, Color("f4d29a"))
+                label("ЦЕЛЬ: победи хранителя справа и забери Камень Бездны.", 25, 145, 16, Color("f4d29a"))
             elif boss_hp <= 0.0 and not stone_taken:
-                label("ЦЕЛЬ: забери светящийся камень справа!", 25, 181, 19, Color("f4d29a"))
+                label("ЦЕЛЬ: забери светящийся камень справа!", 25, 145, 17, Color("f4d29a"))
             elif stone_taken:
-                label("ЦЕЛЬ: камень твой! Вернись к ПОРТАЛУ слева.", 25, 181, 19, Color("a8e9d0"))
+                label("ЦЕЛЬ: вернись с камнем к ПОРТАЛУ слева.", 25, 145, 17, Color("a8e9d0"))
             if player_hp > 0.0 and player_hp <= 25.0:
                 var danger_blink: float = 0.60 + 0.40 * sin(atmosphere_clock * 8.0)
                 box(Rect2(310, 212, 530, 43), Color(0.54, 0.09, 0.18, 0.40 + danger_blink * 0.40))
@@ -1551,7 +1548,7 @@ func _draw() -> void:
         var pause_controls := ""
         if phase == "day":
             pause_goal = "ЦЕЛЬ: защити крепость до наступления ночи."
-            pause_controls = "1/2 — башни  |  ЛКМ — построить  |  R — ремонт (20 маны)"
+            pause_controls = "Карточки мышью — башни  |  R — ремонт стен (20 маны)"
         elif phase == "final_siege":
             pause_goal = "ЦЕЛЬ: продержись до завершения финального ритуала!"
             pause_controls = "1/2 — башни  |  ЛКМ — построить  |  R — ремонт (20 маны)"
