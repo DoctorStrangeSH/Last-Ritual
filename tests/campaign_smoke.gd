@@ -47,13 +47,23 @@ func run_tests() -> void:
     check(game.boss_hp == 270.0 and game.trap_positions.size() == 4, "Blood Mines layout and boss")
     game.phase = "ritual"
     game.stones_collected = 4
+    game.resolve_altar()
+    check(game.phase == "day" and game.current_day == 5, "fourth stone advances to day five")
+    game.begin_night()
+    check(game.boss_hp == 340.0 and game.trap_positions.size() == 4, "fifth night boss and traps")
+    game.phase = "ritual"
+    game.stones_collected = 5
     game.mana = 49
     game.souls = 8
     game.resolve_altar()
     check(game.phase == "ritual", "ritual requires mana")
     game.mana = 50
     game.resolve_altar()
-    check(game.phase == "win", "final ritual")
+    check(game.phase == "final_siege", "ritual starts final siege")
+    check(game.final_timer == 45.0, "final siege timer set")
+    game.final_timer = 0.0
+    game._process(0.0)
+    check(game.phase == "win", "surviving final siege wins")
     game.reset_all()
     check(game.current_day == 1 and game.towers.is_empty(), "restart resets")
     game.queue_free()
