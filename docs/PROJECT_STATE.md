@@ -378,3 +378,8 @@
 - Floating damage popups for tower shots, splash hits, hero melee and boss hits; critical ballista hits use a gold `CRIT!` label.
 - Brief tower flash and lane tracer on shot, plus a purple pulse when necromancer towers summon skeletons. These are visual-only and don't alter damage timing.
 - Smoke tests cover damage popups, critical popups, and tower firing flash.
+
+## RC54 — enemy hit reactions
+- Tower hits briefly tint enemy sprites using tower-type colors; critical ballista hits are gold. Splash damage triggers a smaller orange flash. Visual-only, no damage timing change.
+- Fixed saboteur HP bar vertical offset on outer lanes and clamped fallback HP bars to 0..1.
+- Smoke tests cover hit flash state/color and HP damage.
