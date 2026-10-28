@@ -210,6 +210,16 @@ func run_tests() -> void:
     game.reset_all()
     check(not game.has_blood_economy_synergy(), "synergy resets between runs")
     game.reset_all()
+    check(not game.has_bone_bastion_synergy(), "bone bastion inactive without gifts")
+    var base_skeleton_hp: float = game.summon_skeleton_hp(1)
+    game.reward_bone_bonus = 1
+    check(not game.has_bone_bastion_synergy(), "bone bastion requires ward gift")
+    game.reward_ward_bonus = 1
+    check(game.has_bone_bastion_synergy(), "bone bastion unlocks from two gifts")
+    check(game.summon_skeleton_hp(1) == base_skeleton_hp + 40.0, "bone bastion boosts skeleton HP")
+    game.reset_all()
+    check(not game.has_bone_bastion_synergy(), "bone bastion resets with run")
+    game.reset_all()
     game.phase = "night"
     game.stone_taken = true
     game.stones_collected = 1
