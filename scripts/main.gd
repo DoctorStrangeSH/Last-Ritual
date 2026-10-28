@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.0-rc38: gothic tower sprites, Godot 4.2+
+## Last Ritual v2.0-rc39: gothic fortress sprite, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -895,7 +895,7 @@ func _draw() -> void:
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
         label("M — атмосфера: %d/4  |  N — эффекты: %d/4" % [music_volume, effects_volume], 375, 463, 19, Color("d5bfda"))
-        label("Версия 2.0 RC38: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
+        label("Версия 2.0 RC39: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         if phase == "win":
@@ -961,17 +961,7 @@ func _draw() -> void:
             for debris in range(10):
                 var dx: float = 240.0 + float(debris) * 91.0
                 draw_colored_polygon(PackedVector2Array([Vector2(dx - 15.0, FLOOR), Vector2(dx, FLOOR - 10.0 - float(debris % 3) * 5.0), Vector2(dx + 22.0, FLOOR)]), Color("5c5062"))
-            box(Rect2(65, 315, 127, 236), Color("514358"))
-            box(Rect2(85, 274, 86, 58), Color("514358"))
-            for i in range(3):
-                box(Rect2(70 + i * 44, 297, 25, 24), Color("514358"))
-            box(Rect2(111, 430, 40, 120), Color("241c31"))
-            for row in range(6):
-                for col in range(3):
-                    box(Rect2(72 + col * 38 + (row % 2) * 9, 339 + row * 33, 30, 4), Color("6a596e"))
-            for j in range(3):
-                box(Rect2(86 + j * 25, 357, 10, 28), Color("211c30"))
-            draw_circle(Vector2(131, 412), 17, Color("aa5570", 0.6))
+            draw_texture_rect(preload("res://assets/buildings/dark_fortress.svg"), Rect2(45, 258, 177, 293), false)
             label("КРЕПОСТЬ", 73, 252, 19)
             if phase == "final_siege":
                 var progress: float = clampf(1.0 - final_timer / 45.0, 0.0, 1.0)
