@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.1-rc47: clickable tower defense palette, Godot 4.2+
+## Last Ritual v2.1-rc48: drag and drop tower cards with placement preview, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -52,6 +52,7 @@ var selected_build := "bone"
 var selected_lane := 1
 const LANE_OFFSETS := [-110.0, -55.0, 0.0]
 var selected_tower_index := -1
+var dragging_tower := false
 var day_elapsed := 0.0
 var current_day := 1
 var stones_collected := 0
@@ -388,40 +389,46 @@ func load_campaign() -> bool:
 
 func _input(event: InputEvent) -> void:
     if (phase != "day" and phase != "final_siege") or paused:
+        dragging_tower = false
         return
-    if not (event is InputEventMouseButton) or not event.pressed or event.button_index != MOUSE_BUTTON_LEFT:
+    if not (event is InputEventMouseButton) or event.button_index != MOUSE_BUTTON_LEFT:
         return
     var mouse: Vector2 = get_global_mouse_position()
-    # Bottom build palette is clickable and cannot accidentally place towers.
-    if mouse.y >= 554.0:
-        if mouse.x >= 20.0 and mouse.x <= 206.0:
-            selected_build = "bone"
-            selected_tower_index = -1
-        elif mouse.x >= 220.0 and mouse.x <= 406.0:
-            selected_build = "fire"
-            selected_tower_index = -1
-        elif mouse.x >= 735.0 and mouse.x <= 955.0 and selected_tower_index >= 0 and selected_tower_index < towers.size():
-            var tower: Dictionary = towers[selected_tower_index]
-            upgrade_tower(float(tower["x"]), int(tower.get("lane", 1)))
-        return
-    var lane: int = 0
-    var nearest_distance: float = INF
-    for lane_index in range(3):
-        var dy: float = absf(mouse.y - (FLOOR + float(LANE_OFFSETS[lane_index]) - 48.0))
-        if dy < nearest_distance:
-            nearest_distance = dy
-            lane = lane_index
-    selected_lane = lane
-    for i in range(towers.size()):
-        if int(towers[i].get("lane", 1)) == lane and absf(float(towers[i]["x"]) - mouse.x) <= 32.0:
-            selected_tower_index = i
-            show_notice("Башня выбрана. Улучшение — кнопка снизу.")
+    if event.pressed:
+        # Press a card to select it; drag and release over a lane to build immediately.
+        if mouse.y >= 554.0:
+            if mouse.x >= 20.0 and mouse.x <= 206.0:
+                selected_build = "bone"
+                selected_tower_index = -1
+                dragging_tower = true
+            elif mouse.x >= 220.0 and mouse.x <= 406.0:
+                selected_build = "fire"
+                selected_tower_index = -1
+                dragging_tower = true
+            elif mouse.x >= 735.0 and mouse.x <= 955.0 and selected_tower_index >= 0 and selected_tower_index < towers.size():
+                var tower: Dictionary = towers[selected_tower_index]
+                upgrade_tower(float(tower["x"]), int(tower.get("lane", 1)))
             return
-    selected_tower_index = -1
-    if Input.is_key_pressed(KEY_CTRL):
-        upgrade_tower(mouse.x, lane)
+        var lane: int = lane_for_y(mouse.y)
+        selected_lane = lane
+        for i in range(towers.size()):
+            if int(towers[i].get("lane", 1)) == lane and absf(float(towers[i]["x"]) - mouse.x) <= 32.0:
+                selected_tower_index = i
+                dragging_tower = false
+                show_notice("Башня выбрана. Характеристики и улучшение — на панели.")
+                return
+        selected_tower_index = -1
+        dragging_tower = false
+        if Input.is_key_pressed(KEY_CTRL):
+            upgrade_tower(mouse.x, lane)
+        else:
+            build_tower(selected_build, mouse.x, lane)
     else:
-        build_tower(selected_build, mouse.x, lane)
+        if dragging_tower:
+            dragging_tower = false
+            if mouse.y < 551.0:
+                selected_lane = lane_for_y(mouse.y)
+                build_tower(selected_build, mouse.x, selected_lane)
 
 func buy_upgrade(kind: String) -> void:
     if stones_collected >= 5:
@@ -455,6 +462,16 @@ func show_notice(message: String) -> void:
 
 func tower_max_hp(tower: Dictionary) -> float:
     return (120.0 if tower["type"] == "bone" else 165.0) + float(int(tower.get("level", 1)) - 1) * 55.0
+
+func lane_for_y(y: float) -> int:
+    var best_lane: int = 0
+    var best_distance: float = INF
+    for lane_index in range(3):
+        var distance: float = absf(y - (FLOOR + float(LANE_OFFSETS[lane_index]) - 48.0))
+        if distance < best_distance:
+            best_distance = distance
+            best_lane = lane_index
+    return best_lane
 
 func upgrade_tower(mx: float, lane: int) -> void:
     for tower in towers:
@@ -641,6 +658,10 @@ func update_day(delta: float) -> void:
         if float(towers[tower_index].get("hp", 1.0)) <= 0.0:
             burst_particles(Vector2(float(towers[tower_index]["x"]), FLOOR - 68.0), Color("f5a47d"), 12)
             towers.remove_at(tower_index)
+            if selected_tower_index == tower_index:
+                selected_tower_index = -1
+            elif selected_tower_index > tower_index:
+                selected_tower_index -= 1
     if wall_hp <= 0.0:
         wall_hp = 0.0
         phase = "lose"
@@ -1010,7 +1031,7 @@ func _draw() -> void:
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
         label("M — атмосфера: %d/4  |  N — эффекты: %d/4" % [music_volume, effects_volume], 375, 463, 19, Color("d5bfda"))
-        label("Версия 2.1 RC47: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
+        label("Версия 2.1 RC48: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         if phase == "win":
@@ -1174,12 +1195,21 @@ func _draw() -> void:
                 draw_circle(Vector2(ex - 4, FLOOR - height - 9 + march), 2.0, Color("ffc2a3"))
                 draw_circle(Vector2(ex + 4, FLOOR - height - 9 + march), 2.0, Color("ffc2a3"))
                 box(Rect2(ex - 17, FLOOR - 53 + enemy_lane_offset, 34 * e["hp"] / e["max_hp"], 4), Color("f57c79"))
-            var cursor_x := get_global_mouse_position().x
-            var cursor_lane_y: float = FLOOR + float(LANE_OFFSETS[selected_lane])
-            if cursor_x >= 245.0 and cursor_x <= 1020.0:
-                var range_radius := 260.0 if selected_build == "bone" else 375.0
-                draw_arc(Vector2(cursor_x, cursor_lane_y - 72), range_radius, PI, TAU, 28, Color("72aa9a", 0.28), 2.0)
-                box(Rect2(cursor_x - 17.0, cursor_lane_y - 74.0, 34, 74), Color("619d9c", 0.46) if selected_build == "bone" else Color("ba7954", 0.46))
+            var cursor: Vector2 = get_global_mouse_position()
+            var cursor_x: float = cursor.x
+            var preview_lane: int = lane_for_y(cursor.y)
+            var cursor_lane_y: float = FLOOR + float(LANE_OFFSETS[preview_lane])
+            if cursor.y < 551.0 and cursor_x >= 245.0 and cursor_x <= 1020.0:
+                var range_radius: float = 260.0 if selected_build == "bone" else 375.0
+                var can_place: bool = mana >= (30 if selected_build == "bone" else 55)
+                for placed_tower in towers:
+                    if int(placed_tower.get("lane", 1)) == preview_lane and absf(float(placed_tower["x"]) - cursor_x) < 65.0:
+                        can_place = false
+                draw_line(Vector2(239.0, cursor_lane_y), Vector2(1125.0, cursor_lane_y), Color("c8e5a0", 0.75), 4.0)
+                draw_arc(Vector2(cursor_x, cursor_lane_y - 67.0), range_radius, PI, TAU, 32, Color(0.48, 0.85, 0.69, 0.27) if can_place else Color(0.95, 0.30, 0.34, 0.22), 2.0)
+                var preview_art: Texture2D = preload("res://assets/towers/bone_tower.svg") if selected_build == "bone" else preload("res://assets/towers/infernal_ballista.svg")
+                draw_texture_rect(preview_art, Rect2(cursor_x - 30.0, cursor_lane_y - 106.0, 60.0, 106.0), false, Color(0.68, 1.0, 0.72, 0.76) if can_place else Color(1.0, 0.38, 0.38, 0.72))
+                label("МОЖНО ПОСТРОИТЬ" if can_place else "НЕТ МЕСТА / МАНЫ", clampf(cursor_x - 90.0, 245.0, 920.0), cursor_lane_y - 126.0, 15, Color("b8f1c0") if can_place else Color("ffaaa9"))
             draw_gothic_hud_panel(150.0)
             label("ФИНАЛЬНЫЙ ШТУРМ — %d с" % ceili(maxf(0.0, final_timer)) if phase == "final_siege" else "ДЕНЬ %d / 5  •  ОСАДА" % current_day, 25, 35, 27, Color("f8c59e"))
             var siege_status := "Ритуал: %02d с" % ceili(maxf(final_timer, 0.0)) if phase == "final_siege" else "До ночи: %02d с" % ceili(maxf(time_left, 0.0))
@@ -1201,10 +1231,13 @@ func _draw() -> void:
                 var card_kind: String = "bone" if card_index == 0 else "fire"
                 box(Rect2(card_x, 562.0, 186.0, 74.0), Color("5e405d") if selected_build == card_kind else Color("332b40"))
                 draw_rect(Rect2(card_x, 562.0, 186.0, 74.0), Color("e2be9e") if selected_build == card_kind else Color("806d85"), false, 2.0)
-                label("КОСТЯНАЯ" if card_index == 0 else "БАЛЛИСТА", card_x + 10.0, 587.0, 19, Color("f4d2af"))
-                label("30 маны" if card_index == 0 else "55 маны", card_x + 12.0, 615.0, 19)
-            label("ЛКМ: выбрать и строить", 426.0, 587.0, 18)
-            label("Башня: ЛКМ для осмотра", 426.0, 612.0, 17, Color("c8bed1"))
+                var card_art: Texture2D = preload("res://assets/towers/bone_tower.svg") if card_index == 0 else preload("res://assets/towers/infernal_ballista.svg")
+                draw_texture_rect(card_art, Rect2(card_x + 7.0, 571.0, 34.0, 56.0), false)
+                label("КОСТЯНАЯ" if card_index == 0 else "БАЛЛИСТА", card_x + 47.0, 584.0, 17, Color("f4d2af"))
+                label("30 маны" if card_index == 0 else "55 маны", card_x + 47.0, 605.0, 16)
+                label("Урон %d • Дал. %d" % ([22, 260] if card_index == 0 else [65, 375]), card_x + 47.0, 626.0, 14, Color("d2c6db"))
+            label("Клик по карточке — выбор", 426.0, 585.0, 17)
+            label("Перетащи на линию или кликни", 426.0, 608.0, 16, Color("c8bed1"))
             if selected_tower_index >= 0 and selected_tower_index < towers.size():
                 var inspected: Dictionary = towers[selected_tower_index]
                 var level: int = int(inspected.get("level", 1))
