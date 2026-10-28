@@ -1946,7 +1946,7 @@ func _draw() -> void:
                 var danger_blink: float = 0.60 + 0.40 * sin(atmosphere_clock * 8.0)
                 box(Rect2(310, 212, 530, 43), Color(0.54, 0.09, 0.18, 0.40 + danger_blink * 0.40))
                 label("КРИТИЧЕСКОЕ ЗДОРОВЬЕ! H — ЛЕЧЕНИЕ", 332, 240, 21, Color("ffe0dd"))
-            label("ЛКМ: атака  •  A/D: движение  •  W/Space: прыжок  •  H: лечение  •  Shift: рывок", 20, 625, 17)
+            label("ЛКМ: атака  •  ПКМ: рассекатель (20 маны)  •  A/D: ходьба  •  W/Space: прыжок", 20, 625, 17)
     for particle in particles:
         var alpha: float = clampf(float(particle["life"]) / 0.55, 0.0, 1.0)
         var tint: Color = particle["color"]
@@ -1987,12 +1987,12 @@ func _draw() -> void:
             pause_controls = "Карточки мышью — башни  |  R — ремонт стен (20 маны)"
         elif phase == "night":
             pause_goal = "ЦЕЛЬ: вернись к порталу слева." if stone_taken else ("ЦЕЛЬ: забери камень справа." if boss_hp <= 0.0 else "ЦЕЛЬ: победи хранителя и забери камень.")
-            pause_controls = "ЛКМ — атака  |  A/D — ходить  |  W/Space — прыгать"
+            pause_controls = "ЛКМ — атака  |  ПКМ — рассекатель  |  A/D — ходить"
         else:
             pause_goal = "ЦЕЛЬ: усиливай крепость и продолжай ритуал."
             pause_controls = "ЛКМ — улучшение / продолжение  |  C — обмен маны"
         label(pause_goal, 235, 278, 21, Color("f5d39e"))
         label(pause_controls, 235, 328, 18)
         if phase == "night":
-            label("H — лечение (20 маны)  |  Shift — рывок (15 маны)", 235, 361, 18)
+            label("H — лечение (20 маны)  |  Shift — рывок (15 маны)  |  ПКМ — удар (20 маны)", 235, 361, 18)
         label("M — фон  |  N — эффекты  |  P — продолжить", 235, 414, 20, Color("c9addd"))
