@@ -196,3 +196,6 @@ Enemy dictionaries gain transient `hit_flash` and `hit_flash_color`. `_process` 
 
 ## v2.2 RC55
 Meta system: `META_PATH`, `save_meta`, `load_meta`, `start_run`, `buy_legacy`, `award_run` implemented in `scripts/main.gd`. Main menu mouse clicks route to New, Continue (existing checkpoint), Legacy/Difficulty, Achievements. `difficulty` (0–4) modifies daytime HP/damage and night boss HP; `legacy_level` (0–10) adds 12 mana per level at new-run start. `legacy_shards`, `achievement_wins`, and `achievement_best_day` persist in a separate JSON file. Payout once per run with `meta_paid_this_run`; no procedural level generation yet. Verify CI and manual UI alignment before additional features.
+
+## RC60 — ветки талантов героя и некромантии
+В меню «Наследие и сложность» нажми «Таланты героя», чтобы открыть вторую страницу с двумя постоянными улучшениями. «Тёмный клинок» повышает урон героя на +3 за уровень (до 5), «Костяная стража» повышает HP всех призванных скелетов на +20 за уровень (до 5). Покупка только мышью, стоимость увеличивается с каждым уровнем, новые значения сохраняются в существующем мета-файле с обратной совместимостью. Тесты проверяют стоимость, покупку и сохранение уровней при сбросе забега.
