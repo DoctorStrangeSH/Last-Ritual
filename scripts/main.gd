@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.0-rc8: combat impact effects, Godot 4.2+
+## Last Ritual v2.0-rc9: defeat particles, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -58,6 +58,7 @@ var chest_taken := false
 var relic_taken := false
 var final_timer := 45.0
 var impacts: Array[Dictionary] = []
+var particles: Array[Dictionary] = []
 
 func _ready() -> void:
     font = ThemeDB.fallback_font
@@ -80,6 +81,7 @@ func reset_all() -> void:
     relic_taken = false
     final_timer = 45.0
     impacts.clear()
+    particles.clear()
     time_left = DAY_LENGTH
     wall_hp = MAX_WALL
     mana = 70
@@ -119,6 +121,12 @@ func _process(delta: float) -> void:
         return
     if notice_timer > 0:
         notice_timer -= delta
+    for i in range(particles.size() - 1, -1, -1):
+        particles[i]["life"] = float(particles[i]["life"]) - delta
+        particles[i]["pos"] = particles[i]["pos"] + particles[i]["vel"] * delta
+        particles[i]["vel"] = particles[i]["vel"] + Vector2(0.0, 95.0) * delta
+        if particles[i]["life"] <= 0.0:
+            particles.remove_at(i)
     for i in range(impacts.size() - 1, -1, -1):
         impacts[i]["life"] = float(impacts[i]["life"]) - delta
         if impacts[i]["life"] <= 0.0:
@@ -464,6 +472,7 @@ func update_day(delta: float) -> void:
             kills_today += 1
             if enemy["kind"] == "saboteur":
                 saboteurs_defeated += 1
+            burst_particles(Vector2(float(enemy["x"]), FLOOR - 30.0), Color("a2d5e0") if enemy["kind"] == "saboteur" else Color("d9a1a8"), 9)
             enemies.remove_at(i)
             continue
         if enemy["kind"] == "saboteur" and not enemy["sabotaged"]:
@@ -576,6 +585,7 @@ func update_night(delta: float) -> void:
         if e["hp"] <= 0:
             mana += 10
             souls += 2
+            burst_particles(Vector2(float(e["x"]), FLOOR - 24.0), Color("a6c8a2"), 10)
             night_enemies.remove_at(i)
     if mage["hp"] > 0.0:
         mage["cooldown"] -= delta
@@ -637,6 +647,7 @@ func attack() -> void:
         if mage["hp"] <= 0.0:
             mana += 18
             souls += 2
+            burst_particles(Vector2(float(mage["x"]), FLOOR - 54.0), Color("8acfff"), 17)
             show_notice("Маг Света повержен!")
     if boss_hp > 0.0 and (boss_pos.x - player.x) * facing >= -10.0 and (boss_pos.x - player.x) * facing < reach and absf(player.y - boss_pos.y) < 85.0:
         boss_hp -= 18.0
@@ -644,7 +655,16 @@ func attack() -> void:
         if boss_hp <= 0.0:
             mana += 25
             souls += 4
+            burst_particles(boss_pos, Color("f67ba2"), 24)
             show_notice("Хранитель повержен. Забери Камень Бездны!")
+
+func burst_particles(origin: Vector2, tint: Color, count: int) -> void:
+    for i in range(count):
+        if particles.size() >= 96:
+            particles.pop_front()
+        var angle := TAU * float(i) / float(count)
+        var speed := 65.0 + float(i % 4) * 22.0
+        particles.append({"pos": origin, "vel": Vector2(cos(angle), sin(angle)) * speed, "color": tint, "life": 0.55, "radius": 3.0 + float(i % 3)})
 
 func emit_impact(pos: Vector2, color: Color, radius: float) -> void:
     if impacts.size() >= 36:
@@ -803,6 +823,11 @@ func _draw() -> void:
             box(Rect2(25, 117, 250, 7), Color("383748"))
             box(Rect2(25, 117, 250.0 * clampf(spike_phase / 3.1, 0.0, 1.0), 7), Color("e8797a") if spike_phase >= 2.1 else Color("d9b67b"))
             label("A/D: ходьба | W / Space: прыжок | J: удар | H: лечение | Shift: рывок | P: пауза", 20, 625, 18)
+    for particle in particles:
+        var alpha: float = clampf(float(particle["life"]) / 0.55, 0.0, 1.0)
+        var tint: Color = particle["color"]
+        tint.a = alpha
+        draw_circle(particle["pos"], float(particle["radius"]) * alpha, tint)
     for impact in impacts:
         var fade: float = clampf(float(impact["life"]) / 0.23, 0.0, 1.0)
         var effect_color: Color = impact["color"]
