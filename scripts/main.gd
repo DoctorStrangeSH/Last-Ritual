@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.0-rc22: night onboarding, Godot 4.2+
+## Last Ritual v2.0-rc23: contextual pause screen, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -882,7 +882,7 @@ func _draw() -> void:
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
         label("M — атмосфера: %d/4  |  N — эффекты: %d/4" % [music_volume, effects_volume], 375, 463, 19, Color("d5bfda"))
-        label("Версия 2.0 RC22: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
+        label("Версия 2.0 RC23: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         if phase == "win":
@@ -1141,6 +1141,25 @@ func _draw() -> void:
         box(Rect2(190, 97, 775, 50), Color("39283d"))
         label(notice, 215, 131, 19, Color("f5dcaf"))
     if paused:
-        box(Rect2(310, 220, 535, 170), Color("171425"))
-        label("ПАУЗА", 469, 287, 45, Color("e3b3e9"))
-        label("Нажми P, чтобы продолжить", 394, 345, 23)
+        box(Rect2(190, 155, 775, 340), Color("171425"))
+        box(Rect2(201, 166, 753, 318), Color("30253f"))
+        label("ПАУЗА", 485, 216, 42, Color("e3b3e9"))
+        var pause_goal := ""
+        var pause_controls := ""
+        if phase == "day":
+            pause_goal = "ЦЕЛЬ: защити крепость до наступления ночи."
+            pause_controls = "1/2 — башни  |  ЛКМ — построить  |  R — ремонт (20 маны)"
+        elif phase == "final_siege":
+            pause_goal = "ЦЕЛЬ: продержись до завершения финального ритуала!"
+            pause_controls = "1/2 — башни  |  ЛКМ — построить  |  R — ремонт (20 маны)"
+        elif phase == "night":
+            pause_goal = "ЦЕЛЬ: вернись к порталу слева." if stone_taken else ("ЦЕЛЬ: забери камень справа." if boss_hp <= 0.0 else "ЦЕЛЬ: победи хранителя и забери камень.")
+            pause_controls = "A/D — ходить  |  W/Space — прыгать  |  J — удар"
+        else:
+            pause_goal = "ЦЕЛЬ: усиливай крепость и продолжай ритуал."
+            pause_controls = "1/2 — улучшения  |  C — обмен маны  |  Enter — дальше"
+        label(pause_goal, 235, 278, 21, Color("f5d39e"))
+        label(pause_controls, 235, 328, 18)
+        if phase == "night":
+            label("H — лечение (20 маны)  |  Shift — рывок (15 маны)", 235, 361, 18)
+        label("M — фон  |  N — эффекты  |  P — продолжить", 235, 414, 20, Color("c9addd"))
