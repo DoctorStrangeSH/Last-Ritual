@@ -8,6 +8,7 @@ on:
       - 'export_presets.cfg'
       - 'scenes/**'
       - 'scripts/**'
+      - 'tests/**'
       - '.github/workflows/windows-build.yml'
 permissions:
   contents: read
@@ -28,6 +29,8 @@ jobs:
           cp templates/* ~/.local/share/godot/export_templates/4.4.1.stable/
       - name: Import assets and check scripts
         run: ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --editor --quit
+      - name: Run campaign smoke tests
+        run: ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --script res://tests/campaign_smoke.gd
       - name: Export Windows EXE
         run: |
           mkdir -p build/windows
