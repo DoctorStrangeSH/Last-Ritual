@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.0-rc18: procedural audio, Godot 4.2+
+## Last Ritual v2.0-rc19: ambient soundscapes, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -64,6 +64,8 @@ var audio_bank: Dictionary = {}
 var audio_players: Array[AudioStreamPlayer] = []
 var next_audio_channel := 0
 var hit_sound_cooldown := 0.0
+var ambient_player: AudioStreamPlayer
+var ambient_phase := ""
 
 func _ready() -> void:
     font = ThemeDB.fallback_font
@@ -128,6 +130,7 @@ func _process(delta: float) -> void:
         queue_redraw()
         return
     atmosphere_clock += delta
+    update_ambience()
     hit_sound_cooldown = maxf(0.0, hit_sound_cooldown - delta)
     if notice_timer > 0:
         notice_timer -= delta
@@ -698,11 +701,50 @@ func setup_audio() -> void:
         stream.stereo = false
         stream.data = bytes
         audio_bank[name] = stream
+    for mood in ["title", "day", "night", "ritual", "final_siege"]:
+        var fundamental: float = 58.0 if mood == "title" else (74.0 if mood == "day" else (49.0 if mood == "night" else (92.0 if mood == "ritual" else 108.0)))
+        var rate := 22050
+        var duration := 4.0
+        var count := int(duration * float(rate))
+        var pcm := PackedByteArray()
+        pcm.resize(count * 2)
+        for index in range(count):
+            var t: float = float(index) / float(rate)
+            var fade: float = minf(1.0, minf(t, duration - t) * 3.0)
+            var tremolo: float = 0.72 + 0.28 * sin(TAU * 0.5 * t)
+            var signal: float = (sin(TAU * fundamental * t) * 0.65 + sin(TAU * fundamental * 1.5 * t) * 0.25 + sin(TAU * fundamental * 0.5 * t) * 0.10) * tremolo * fade
+            pcm.encode_s16(index * 2, int(clampf(signal * 3200.0, -32767.0, 32767.0)))
+        var ambient_stream := AudioStreamWAV.new()
+        ambient_stream.format = AudioStreamWAV.FORMAT_16_BITS
+        ambient_stream.mix_rate = rate
+        ambient_stream.stereo = false
+        ambient_stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+        ambient_stream.loop_begin = 0
+        ambient_stream.loop_end = count
+        ambient_stream.data = pcm
+        audio_bank["ambient_" + mood] = ambient_stream
+    ambient_player = AudioStreamPlayer.new()
+    ambient_player.volume_db = -23.0
+    add_child(ambient_player)
     for channel in range(4):
         var audio_player := AudioStreamPlayer.new()
         audio_player.volume_db = -9.0
         add_child(audio_player)
         audio_players.append(audio_player)
+
+func update_ambience() -> void:
+    if ambient_player == null:
+        return
+    var mood := phase
+    if mood == "win" or mood == "lose":
+        mood = ""
+    if mood == ambient_phase:
+        return
+    ambient_phase = mood
+    ambient_player.stop()
+    if audio_bank.has("ambient_" + mood):
+        ambient_player.stream = audio_bank["ambient_" + mood]
+        ambient_player.play()
 
 func play_cue(name: String) -> void:
     if not audio_bank.has(name) or audio_players.is_empty():
@@ -796,7 +838,7 @@ func _draw() -> void:
         label("ПОСЛЕДНИЙ РИТУАЛ", 225, 255, 52, Color(0.78 + 0.12 * title_pulse, 0.56 + 0.15 * title_pulse, 0.86 + 0.10 * title_pulse))
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
-        label("Версия 2.0 RC18: пять дней, пять ночей, пять камней", 325, 474, 18, Color("aaaaaa"))
+        label("Версия 2.0 RC19: пять дней, пять ночей, пять камней", 325, 474, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         if phase == "win":
