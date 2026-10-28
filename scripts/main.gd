@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v0.3: single-scene prototype, Godot 4.2+
+## Last Ritual v0.4: single-scene prototype, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -21,6 +21,9 @@ var grounded := false
 var facing := 1.0
 var jump_was_down := false
 var swing_timer := 0.0
+var boss_strike_timer := 2.0
+var boss_windup := 0.0
+var potions_used := 0
 var platforms := [Rect2(205, 473, 135, 16), Rect2(415, 413, 145, 16), Rect2(640, 462, 130, 16), Rect2(830, 396, 135, 16)]
 var gems: Array[Vector2] = []
 var night_enemies: Array[Dictionary] = []
@@ -61,6 +64,9 @@ func reset_all() -> void:
     facing = 1.0
     jump_was_down = false
     swing_timer = 0.0
+    boss_strike_timer = 2.0
+    boss_windup = 0.0
+    potions_used = 0
     player_hp = 100.0
     boss_hp = 140.0
     stone_taken = false
@@ -110,8 +116,11 @@ func _unhandled_input(event: InputEvent) -> void:
                 build_tower("bone", get_global_mouse_position().x)
             elif event.keycode == KEY_2:
                 build_tower("fire", get_global_mouse_position().x)
-        elif phase == "night" and event.keycode == KEY_J:
-            attack()
+        elif phase == "night":
+            if event.keycode == KEY_J:
+                attack()
+            elif event.keycode == KEY_H:
+                heal_player()
         elif phase == "ritual" and event.keycode == KEY_C:
             if mana >= 25:
                 mana -= 25
@@ -201,6 +210,17 @@ func update_day(delta: float) -> void:
         phase = "night"
         show_notice("Ночь! Уничтожено врагов: %d. Найди Камень Бездны!" % kills_today)
 
+func heal_player() -> void:
+    if player_hp >= 100.0:
+        show_notice("Здоровье уже полное")
+    elif mana < 20:
+        show_notice("Для исцеления требуется 20 маны")
+    else:
+        mana -= 20
+        player_hp = minf(100.0, player_hp + 30.0)
+        potions_used += 1
+        show_notice("Тёмная магия восстановила 30 здоровья")
+
 func update_night(delta: float) -> void:
     attack_cooldown = maxf(0.0, attack_cooldown - delta)
     hurt_cooldown = maxf(0.0, hurt_cooldown - delta)
@@ -248,8 +268,15 @@ func update_night(delta: float) -> void:
             mana += 10
             souls += 2
             night_enemies.remove_at(i)
-    if boss_hp > 0.0 and absf(player.x - boss_pos.x) < 52.0 and player.y > FLOOR - 100.0:
-        hurt(28.0)
+    if boss_hp > 0.0:
+        boss_strike_timer -= delta
+        if boss_strike_timer <= 0.0 and boss_windup <= 0.0:
+            boss_windup = 0.75
+            boss_strike_timer = 2.8
+        if boss_windup > 0.0:
+            boss_windup -= delta
+            if boss_windup <= 0.0 and absf(player.x - boss_pos.x) < 87.0 and player.y > FLOOR - 100.0:
+                hurt(24.0)
     if boss_hp <= 0.0 and not stone_taken and player.distance_to(Vector2(1010, 465)) < 43.0:
         stone_taken = true
         show_notice("Камень Бездны получен! Вернись к порталу слева.")
@@ -295,7 +322,7 @@ func _draw() -> void:
         label("ПОСЛЕДНИЙ РИТУАЛ", 225, 255, 52, Color("e3b3e9"))
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать пролог", 432, 415, 26, Color("f5cf84"))
-        label("Версия 0.3: один день, одна ночь, один ритуал", 325, 474, 18, Color("aaaaaa"))
+        label("Версия 0.4: один день, одна ночь, один ритуал", 325, 474, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         label("РИТУАЛ ЗАВЕРШЁН" if phase == "win" else "КРЕПОСТЬ ПАЛА", 300, 275, 48, Color("a9e4bc") if phase == "win" else Color("ff7777"))
@@ -341,6 +368,9 @@ func _draw() -> void:
             for e in night_enemies:
                 box(Rect2(e["x"] - 16, FLOOR - 34, 32, 34), Color("86aa87"))
             if boss_hp > 0.0:
+                if boss_windup > 0.0:
+                    box(Rect2(boss_pos.x - 85, FLOOR - 10, 170, 10), Color("eb5c60"))
+                    label("УДАР!", boss_pos.x - 30, 405, 20, Color("f4a2a2"))
                 box(Rect2(boss_pos.x - 31, boss_pos.y - 47, 62, 91), Color("a24e71"))
                 box(Rect2(boss_pos.x - 45, boss_pos.y - 65, 90 * boss_hp / 140.0, 7), Color("ed6975"))
                 label("ХРАНИТЕЛЬ", 935, 380, 17)
@@ -355,7 +385,7 @@ func _draw() -> void:
                 box(Rect2(player.x + (17.0 if facing > 0 else -75.0), player.y - 17.0, 58.0, 10.0), Color("d6a2e9"))
             label("НОЧЬ 1 / 5  •  КАТАКОМБЫ", 25, 35, 27, Color("b9afea"))
             label("Здоровье: %d    Мана: %d    Души: %d    Камень: %s" % [maxi(0, ceili(player_hp)), mana, souls, "ДА" if stone_taken else "НЕТ"], 25, 71, 22)
-            label("A/D: ходьба  |  W / Space: прыжок  |  J: удар  |  P: пауза  |  Камень → портал", 20, 625, 18)
+            label("A/D: ходьба | W / Space: прыжок | J: удар | H: лечение (20 маны) | P: пауза", 20, 625, 18)
     if notice_timer > 0.0:
         box(Rect2(190, 97, 775, 50), Color("39283d"))
         label(notice, 215, 131, 19, Color("f5dcaf"))
