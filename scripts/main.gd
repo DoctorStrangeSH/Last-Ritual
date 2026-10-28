@@ -16,6 +16,7 @@ var meta_paid_this_run := false
 var reward_bone_bonus := 0
 var reward_mana_bonus := 0
 var reward_ward_bonus := 0
+var legendary_boon := -1
 var menu_page := "main"
 const AUDIO_SETTINGS_PATH := "user://audio_settings.cfg"
 var save_path := SAVE_PATH
@@ -156,6 +157,7 @@ func reset_all() -> void:
     reward_bone_bonus = 0
     reward_mana_bonus = 0
     reward_ward_bonus = 0
+    legendary_boon = -1
     selected_build = ""
     selected_lane = 1
     selected_tower_index = -1
@@ -299,6 +301,17 @@ func _unhandled_input(event: InputEvent) -> void:
 func choose_reward(choice: int) -> void:
     if phase != "reward" or choice < 0 or choice > 2:
         return
+    if current_day >= 4 and legendary_boon < 0:
+        legendary_boon = choice
+        if choice == 0:
+            show_notice("Легендарный дар: ледяная буря костяных башен!")
+        elif choice == 1:
+            show_notice("Легендарный дар: усиленные взрывы баллист!")
+        else:
+            show_notice("Легендарный дар: бессмертная стража некромантов!")
+        phase = "ritual"
+        save_campaign()
+        return
     if choice == 0:
         reward_bone_bonus += 1
         show_notice("Дар: башни наносят больше урона в этом походе!")
@@ -364,7 +377,7 @@ func save_campaign() -> bool:
         "tower_power": tower_power_level, "wall_ward": wall_ward_level,
         "towers": saved_towers,
         "campaign_kills": campaign_kills, "towers_built": maxi(towers_built, towers.size()),
-        "reward_bone": reward_bone_bonus, "reward_mana": reward_mana_bonus, "reward_ward": reward_ward_bonus
+        "reward_bone": reward_bone_bonus, "reward_mana": reward_mana_bonus, "reward_ward": reward_ward_bonus, "legendary_boon": legendary_boon
     }
     var temp_path := save_path + ".tmp"
     var file := FileAccess.open(temp_path, FileAccess.WRITE)
@@ -462,6 +475,7 @@ func load_campaign() -> bool:
     reward_bone_bonus = clampi(int(data.get("reward_bone", 0)), 0, 5)
     reward_mana_bonus = clampi(int(data.get("reward_mana", 0)), 0, 5)
     reward_ward_bonus = clampi(int(data.get("reward_ward", 0)), 0, 5)
+    legendary_boon = clampi(int(data.get("legendary_boon", -1)), -1, 2)
     towers = []
     phase = "ritual"
     stone_taken = true
@@ -763,17 +777,17 @@ func apply_tower_shot(shot: Dictionary, target_index: int) -> void:
     var hit_tint: Color = Color("ffe18a") if critical else (Color("a8e8f0") if kind == "bone" else Color("ffbf82"))
     spawn_damage_popup(target_pos, damage, hit_tint, critical)
     if kind == "bone":
-        enemies[target_index]["slow_timer"] = maxf(float(enemies[target_index].get("slow_timer", 0.0)), 2.5 + 0.35 * float(level - 1))
-        enemies[target_index]["slow_factor"] = 0.62
+        enemies[target_index]["slow_timer"] = maxf(float(enemies[target_index].get("slow_timer", 0.0)), 2.5 + 0.35 * float(level - 1) + (1.5 if legendary_boon == 0 else 0.0))
+        enemies[target_index]["slow_factor"] = 0.35 if legendary_boon == 0 else 0.62
         emit_impact(target_pos, Color("8de1e7"), 25.0)
     else:
         emit_impact(target_pos, Color("ffe18a") if critical else Color("ffb36b"), 31.0 if critical else 25.0)
-        var splash_radius: float = 78.0 + float(level - 1) * 4.0
+        var splash_radius: float = 78.0 + float(level - 1) * 4.0 + (55.0 if legendary_boon == 1 else 0.0)
         for splash_index in range(enemies.size()):
             if splash_index == target_index or int(enemies[splash_index].get("lane", 1)) != lane:
                 continue
             if absf(float(enemies[splash_index]["x"]) - target_x) <= splash_radius:
-                var splash_damage: float = float(shot["damage"]) * 0.35 * power_multiplier * critical_multiplier
+                var splash_damage: float = float(shot["damage"]) * (0.60 if legendary_boon == 1 else 0.35) * power_multiplier * critical_multiplier
                 enemies[splash_index]["hp"] = float(enemies[splash_index]["hp"]) - splash_damage
                 enemies[splash_index]["hit_flash"] = 0.13
                 enemies[splash_index]["hit_flash_color"] = Color("ffb26e")
@@ -825,7 +839,7 @@ func update_day(delta: float) -> void:
         if tower["type"] == "necro":
             if tower["cooldown"] <= 0.0 and tower["disabled"] <= 0.0:
                 var summon_level: int = int(tower.get("level", 1))
-                skeletons.append({"x": float(tower["x"]) + 55.0, "lane": int(tower.get("lane", 1)), "hp": 65.0 + 30.0 * float(summon_level - 1), "life": 6.0})
+                skeletons.append({"x": float(tower["x"]) + 55.0, "lane": int(tower.get("lane", 1)), "hp": 65.0 + 30.0 * float(summon_level - 1) + (90.0 if legendary_boon == 2 else 0.0), "life": 10.0 if legendary_boon == 2 else 6.0})
                 tower["flash"] = 0.18
                 tower["flash_target_x"] = float(tower["x"]) + 55.0
                 tower["cooldown"] = maxf(4.0, 7.0 - float(summon_level - 1))
@@ -1345,14 +1359,20 @@ func _draw() -> void:
         box(Rect2(112, 142, 928, 374), Color(0.095, 0.07, 0.15, 0.96))
         draw_rect(Rect2(112, 142, 928, 374), Color("ad85c9"), false, 3.0)
         label("ВЫБЕРИ ДАР БЕЗДНЫ", 320, 210, 36, Color("e9beff"))
-        label("Один дар после каждой ночи • действует до конца похода", 205, 250, 19, Color("cfc2dc"))
+        var legendary_choice: bool = current_day >= 4 and legendary_boon < 0
+        label("ЛЕГЕНДАРНЫЙ ДАР — выбери одно усиление" if legendary_choice else "Один дар после каждой ночи • до конца похода", 205, 250, 19, Color("cfc2dc"))
         for reward_i in range(3):
             var reward_x: float = 140.0 + float(reward_i) * 297.0
             box(Rect2(reward_x, 270.0, 276.0, 185.0), Color("322442"))
             draw_rect(Rect2(reward_x, 270.0, 276.0, 185.0), Color("a68bb9"), false, 2.0)
-            label("МОЩЬ БАШЕН" if reward_i == 0 else ("ЗАПАС МАНЫ" if reward_i == 1 else "КРЕПОСТЬ"), reward_x + 24.0, 324.0, 21, Color("f3dbba"))
-            label("+12% урона башен" if reward_i == 0 else ("+35 маны сейчас" if reward_i == 1 else "+35 здоровья стен"), reward_x + 22.0, 370.0, 19)
-            label("до конца забега" if reward_i == 0 else ("+5 маны за врага" if reward_i == 1 else "восстановление стен"), reward_x + 22.0, 406.0, 18, Color("bbdfcc"))
+            if legendary_choice:
+                label("ЛЕДЯНАЯ БУРЯ" if reward_i == 0 else ("АДСКИЙ ВЗРЫВ" if reward_i == 1 else "ВЕЧНАЯ СТРАЖА"), reward_x + 18.0, 324.0, 19, Color("ffe0a8"))
+                label("Замедление 65%" if reward_i == 0 else ("Сильнее урон по площади" if reward_i == 1 else "+90 HP скелетам"), reward_x + 17.0, 370.0, 17)
+                label("+1,5 сек действия" if reward_i == 0 else ("+55 радиус взрыва" if reward_i == 1 else "10 сек призыва"), reward_x + 17.0, 406.0, 17, Color("bbdfcc"))
+            else:
+                label("МОЩЬ БАШЕН" if reward_i == 0 else ("ЗАПАС МАНЫ" if reward_i == 1 else "КРЕПОСТЬ"), reward_x + 24.0, 324.0, 21, Color("f3dbba"))
+                label("+12% урона башен" if reward_i == 0 else ("+35 маны сейчас" if reward_i == 1 else "+35 здоровья стен"), reward_x + 22.0, 370.0, 19)
+                label("до конца забега" if reward_i == 0 else ("+5 маны за врага" if reward_i == 1 else "восстановление стен"), reward_x + 22.0, 406.0, 18, Color("bbdfcc"))
             label("НАЖМИ", reward_x + 87.0, 437.0, 17, Color("ffe1ad"))
         return
     if phase == "ritual":
