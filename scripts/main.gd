@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.0-rc7: clearer combat HUD, Godot 4.2+
+## Last Ritual v2.0-rc8: combat impact effects, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -57,6 +57,7 @@ var trap_positions := [375.0, 775.0]
 var chest_taken := false
 var relic_taken := false
 var final_timer := 45.0
+var impacts: Array[Dictionary] = []
 
 func _ready() -> void:
     font = ThemeDB.fallback_font
@@ -78,6 +79,7 @@ func reset_all() -> void:
     chest_taken = false
     relic_taken = false
     final_timer = 45.0
+    impacts.clear()
     time_left = DAY_LENGTH
     wall_hp = MAX_WALL
     mana = 70
@@ -117,6 +119,10 @@ func _process(delta: float) -> void:
         return
     if notice_timer > 0:
         notice_timer -= delta
+    for i in range(impacts.size() - 1, -1, -1):
+        impacts[i]["life"] = float(impacts[i]["life"]) - delta
+        if impacts[i]["life"] <= 0.0:
+            impacts.remove_at(i)
     if phase == "day":
         update_day(delta)
     elif phase == "night":
@@ -448,6 +454,7 @@ func update_day(delta: float) -> void:
                 closest_index = i
         if closest_index >= 0:
             enemies[closest_index]["hp"] -= shot["damage"] * (1.35 if tower_power_level > 0 else 1.0)
+            emit_impact(Vector2(float(enemies[closest_index]["x"]), FLOOR - 32.0), Color("ffb36b") if shot["type"] == "fire" else Color("8de1e7"), 25.0)
     shots.clear()
     for i in range(enemies.size() - 1, -1, -1):
         var enemy := enemies[i]
@@ -583,6 +590,7 @@ func update_night(delta: float) -> void:
         bolt["life"] -= delta
         if bolt["pos"].distance_to(player) < 23.0:
             hurt(14.0)
+            emit_impact(player, Color("8acfff"), 21.0)
             mage_bolts.remove_at(i)
         elif bolt["life"] <= 0.0:
             mage_bolts.remove_at(i)
@@ -622,18 +630,26 @@ func attack() -> void:
     for e in night_enemies:
         if (e["x"] - player.x) * facing >= -10.0 and (e["x"] - player.x) * facing < reach and absf(player.y - (FLOOR - 22.0)) < 75.0:
             e["hp"] -= 24.0
+            emit_impact(Vector2(float(e["x"]), FLOOR - 25.0), Color("d7b0fa"), 19.0)
     if mage["hp"] > 0.0 and (mage["x"] - player.x) * facing >= -10.0 and (mage["x"] - player.x) * facing < reach and absf(player.y - (FLOOR - 60.0)) < 95.0:
         mage["hp"] -= 24.0
+        emit_impact(Vector2(float(mage["x"]), FLOOR - 55.0), Color("d7b0fa"), 22.0)
         if mage["hp"] <= 0.0:
             mana += 18
             souls += 2
             show_notice("Маг Света повержен!")
     if boss_hp > 0.0 and (boss_pos.x - player.x) * facing >= -10.0 and (boss_pos.x - player.x) * facing < reach and absf(player.y - boss_pos.y) < 85.0:
         boss_hp -= 18.0
+        emit_impact(boss_pos, Color("f67ba2"), 28.0)
         if boss_hp <= 0.0:
             mana += 25
             souls += 4
             show_notice("Хранитель повержен. Забери Камень Бездны!")
+
+func emit_impact(pos: Vector2, color: Color, radius: float) -> void:
+    if impacts.size() >= 36:
+        impacts.pop_front()
+    impacts.append({"pos": pos, "color": color, "radius": radius, "life": 0.23})
 
 func label(t: String, x: float, y: float, size: int = 20, color: Color = Color.WHITE) -> void:
     draw_string(font, Vector2(x, y), t, HORIZONTAL_ALIGNMENT_LEFT, -1, size, color)
@@ -787,6 +803,11 @@ func _draw() -> void:
             box(Rect2(25, 117, 250, 7), Color("383748"))
             box(Rect2(25, 117, 250.0 * clampf(spike_phase / 3.1, 0.0, 1.0), 7), Color("e8797a") if spike_phase >= 2.1 else Color("d9b67b"))
             label("A/D: ходьба | W / Space: прыжок | J: удар | H: лечение | Shift: рывок | P: пауза", 20, 625, 18)
+    for impact in impacts:
+        var fade: float = clampf(float(impact["life"]) / 0.23, 0.0, 1.0)
+        var effect_color: Color = impact["color"]
+        effect_color.a = fade
+        draw_arc(impact["pos"], float(impact["radius"]) * (1.3 - fade * 0.3), 0.0, TAU, 20, effect_color, 3.0)
     if notice_timer > 0.0:
         box(Rect2(190, 97, 775, 50), Color("39283d"))
         label(notice, 215, 131, 19, Color("f5dcaf"))
