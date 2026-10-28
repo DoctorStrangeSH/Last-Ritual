@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.1-rc52: clean mouse-first HUD and dungeon attacks
+## Last Ritual v2.1-rc53: clean mouse-first HUD, mouse controls and floating damage feedback
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -67,6 +67,7 @@ var relic_taken := false
 var final_timer := 45.0
 var impacts: Array[Dictionary] = []
 var particles: Array[Dictionary] = []
+var damage_popups: Array[Dictionary] = []
 var atmosphere_clock := 0.0
 var audio_bank: Dictionary = {}
 var audio_players: Array[AudioStreamPlayer] = []
@@ -106,6 +107,7 @@ func reset_all() -> void:
     final_timer = 45.0
     impacts.clear()
     particles.clear()
+    damage_popups.clear()
     atmosphere_clock = 0.0
     hit_sound_cooldown = 0.0
     time_left = DAY_LENGTH
@@ -161,6 +163,11 @@ func _process(delta: float) -> void:
         impacts[i]["life"] = float(impacts[i]["life"]) - delta
         if impacts[i]["life"] <= 0.0:
             impacts.remove_at(i)
+    for i in range(damage_popups.size() - 1, -1, -1):
+        damage_popups[i]["life"] = float(damage_popups[i]["life"]) - delta
+        damage_popups[i]["pos"] = Vector2(damage_popups[i]["pos"]) + Vector2(0.0, -34.0 * delta)
+        if damage_popups[i]["life"] <= 0.0:
+            damage_popups.remove_at(i)
     if phase == "day":
         update_day(delta)
     elif phase == "night":
@@ -628,6 +635,8 @@ func apply_tower_shot(shot: Dictionary, target_index: int) -> void:
     var damage: float = float(shot["damage"]) * power_multiplier * critical_multiplier
     enemies[target_index]["hp"] = float(enemies[target_index]["hp"]) - damage
     var target_pos := Vector2(target_x, FLOOR - 32.0 + float(LANE_OFFSETS[lane]))
+    var hit_tint: Color = Color("ffe18a") if critical else (Color("a8e8f0") if kind == "bone" else Color("ffbf82"))
+    spawn_damage_popup(target_pos, damage, hit_tint, critical)
     if kind == "bone":
         enemies[target_index]["slow_timer"] = maxf(float(enemies[target_index].get("slow_timer", 0.0)), 2.5 + 0.35 * float(level - 1))
         enemies[target_index]["slow_factor"] = 0.62
@@ -639,9 +648,11 @@ func apply_tower_shot(shot: Dictionary, target_index: int) -> void:
             if splash_index == target_index or int(enemies[splash_index].get("lane", 1)) != lane:
                 continue
             if absf(float(enemies[splash_index]["x"]) - target_x) <= splash_radius:
-                enemies[splash_index]["hp"] = float(enemies[splash_index]["hp"]) - float(shot["damage"]) * 0.35 * power_multiplier * critical_multiplier
+                var splash_damage: float = float(shot["damage"]) * 0.35 * power_multiplier * critical_multiplier
+                enemies[splash_index]["hp"] = float(enemies[splash_index]["hp"]) - splash_damage
                 var splash_pos := Vector2(float(enemies[splash_index]["x"]), FLOOR - 32.0 + float(LANE_OFFSETS[lane]))
                 emit_impact(splash_pos, Color("ff9d59"), 16.0)
+                spawn_damage_popup(splash_pos, splash_damage, Color("ffb26e"), critical)
     if hit_sound_cooldown <= 0.0:
         play_cue("hit")
         hit_sound_cooldown = 0.13
@@ -906,11 +917,15 @@ func attack() -> void:
     for e in night_enemies:
         if (e["x"] - player.x) * facing >= -10.0 and (e["x"] - player.x) * facing < reach and absf(player.y - (FLOOR - 22.0)) < 75.0:
             e["hp"] -= 24.0
-            emit_impact(Vector2(float(e["x"]), FLOOR - 25.0), Color("d7b0fa"), 19.0)
+            var enemy_hit_pos := Vector2(float(e["x"]), FLOOR - 25.0)
+            spawn_damage_popup(enemy_hit_pos, 24.0, Color("d7b0fa"))
+            emit_impact(enemy_hit_pos, Color("d7b0fa"), 19.0)
             burst_particles(Vector2(float(e["x"]), FLOOR - 25.0), Color("bc8cec"), 5)
     if mage["hp"] > 0.0 and (mage["x"] - player.x) * facing >= -10.0 and (mage["x"] - player.x) * facing < reach and absf(player.y - (FLOOR - 60.0)) < 95.0:
         mage["hp"] -= 24.0
-        emit_impact(Vector2(float(mage["x"]), FLOOR - 55.0), Color("d7b0fa"), 22.0)
+        var mage_hit_pos := Vector2(float(mage["x"]), FLOOR - 55.0)
+        spawn_damage_popup(mage_hit_pos, 24.0, Color("b4eaff"))
+        emit_impact(mage_hit_pos, Color("d7b0fa"), 22.0)
         burst_particles(Vector2(float(mage["x"]), FLOOR - 55.0), Color("b4eaff"), 7)
         if mage["hp"] <= 0.0:
             mana += 18
@@ -919,6 +934,7 @@ func attack() -> void:
             show_notice("Маг Света повержен!")
     if boss_hp > 0.0 and (boss_pos.x - player.x) * facing >= -10.0 and (boss_pos.x - player.x) * facing < reach and absf(player.y - boss_pos.y) < 85.0:
         boss_hp -= 18.0
+        spawn_damage_popup(boss_pos, 18.0, Color("ff9db9"))
         emit_impact(boss_pos, Color("f67ba2"), 28.0)
         burst_particles(boss_pos, Color("fb97bd"), 10)
         if boss_hp <= 0.0:
@@ -1023,6 +1039,17 @@ func play_cue(name: String) -> void:
     next_audio_channel = (next_audio_channel + 1) % audio_players.size()
     player_audio.stream = audio_bank[name]
     player_audio.play()
+
+func spawn_damage_popup(pos: Vector2, amount: float, tint: Color, critical: bool = false) -> void:
+    if damage_popups.size() >= 24:
+        damage_popups.pop_front()
+    damage_popups.append({
+        "pos": pos,
+        "text": ("CRIT! " if critical else "") + str(ceili(amount)),
+        "color": tint,
+        "life": 0.72,
+        "max_life": 0.72
+    })
 
 func burst_particles(origin: Vector2, tint: Color, count: int) -> void:
     for i in range(count):
@@ -1553,6 +1580,13 @@ func _draw() -> void:
             var angle: float = TAU * float(spark_index) / 6.0 + atmosphere_clock * 0.7
             var direction: Vector2 = Vector2(cos(angle), sin(angle))
             draw_line(hit_center + direction * ray_size * 0.5, hit_center + direction * ray_size, effect_color, 2.0 * fade)
+    for popup in damage_popups:
+        var popup_alpha: float = clampf(float(popup["life"]) / float(popup["max_life"]), 0.0, 1.0)
+        var popup_color: Color = popup["color"]
+        popup_color.a = popup_alpha
+        var popup_text: String = str(popup["text"])
+        var popup_size: int = 17 if popup_text.begins_with("CRIT") else 15
+        label(popup_text, float(popup["pos"].x) - (30.0 if popup_text.begins_with("CRIT") else 10.0), float(popup["pos"].y) - 9.0, popup_size, popup_color)
     if notice_timer > 0.0:
         box(Rect2(190, 97, 775, 50), Color("39283d"))
         label(notice, 215, 131, 19, Color("f5dcaf"))
