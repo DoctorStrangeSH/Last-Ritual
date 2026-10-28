@@ -412,14 +412,18 @@ func _input(event: InputEvent) -> void:
             elif mouse.x >= 1020.0 and mouse.x <= 1138.0:
                 sell_selected_tower()
             return
+        # Hit-test the whole tower sprite first, not just the center of its lane.
+        for i in range(towers.size()):
+            var tower_lane: int = int(towers[i].get("lane", 1))
+            var tower_base_y: float = FLOOR + float(LANE_OFFSETS[tower_lane])
+            if absf(float(towers[i]["x"]) - mouse.x) <= 35.0 and mouse.y >= tower_base_y - 112.0 and mouse.y <= tower_base_y + 8.0:
+                selected_tower_index = i
+                selected_lane = tower_lane
+                dragging_tower = false
+                show_notice("Башня выбрана. Все характеристики — в нижней панели.")
+                return
         var lane: int = lane_for_y(mouse.y)
         selected_lane = lane
-        for i in range(towers.size()):
-            if int(towers[i].get("lane", 1)) == lane and absf(float(towers[i]["x"]) - mouse.x) <= 32.0:
-                selected_tower_index = i
-                dragging_tower = false
-                show_notice("Башня выбрана. Характеристики и улучшение — на панели.")
-                return
         selected_tower_index = -1
         dragging_tower = false
         if selected_build == "":
