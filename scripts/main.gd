@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.0-rc2: isolated save tests, Godot 4.2+
+## Last Ritual v2.0-rc3: save validation and campaign safeguards, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -233,7 +233,10 @@ func load_campaign() -> bool:
     var file := FileAccess.open(save_path, FileAccess.READ)
     if file == null:
         return false
+    if file.get_length() > 65536:
+        return false
     var parsed: Variant = JSON.parse_string(file.get_as_text())
+    file.close()
     if not parsed is Dictionary:
         return false
     var data: Dictionary = parsed
@@ -256,6 +259,8 @@ func load_campaign() -> bool:
     if data["mana"] != floorf(float(data["mana"])) or data["souls"] != floorf(float(data["souls"])):
         return false
     if data["mana"] < 0 or data["mana"] > 100000 or data["souls"] < 0 or data["souls"] > 100000 or data["wall_hp"] <= 0 or data["wall_hp"] > MAX_WALL:
+        return false
+    if not is_finite(float(data["tower_power"])) or not is_finite(float(data["wall_ward"])):
         return false
     if data["tower_power"] not in [0.0, 1.0] or data["wall_ward"] not in [0.0, 1.0]:
         return false
