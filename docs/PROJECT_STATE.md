@@ -371,3 +371,5 @@
 - Bottom panel now holds compact cards, selected tower stats and upgrade/sell buttons; removed floating center info panel and duplicate top HUD rows.
 - Dungeon attack on left mouse click, facing cursor direction; movement/jump unchanged.
 - Dungeon HUD and pause prompts simplified; verify current CI and manually check level 2 layout.
+
+- Follow-up RC52: altar upgrades and continuation are mouse-clickable; numeric prompts removed. Tower hit-testing covers the full sprite height.
