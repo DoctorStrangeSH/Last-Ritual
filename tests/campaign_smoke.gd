@@ -41,6 +41,12 @@ func run_tests() -> void:
     check(game.boss_hp == 230.0, "third night boss")
     game.phase = "ritual"
     game.stones_collected = 3
+    game.resolve_altar()
+    check(game.phase == "day" and game.current_day == 4, "third stone advances to day 4")
+    game.begin_night()
+    check(game.boss_hp == 270.0 and game.trap_positions.size() == 4, "Blood Mines layout and boss")
+    game.phase = "ritual"
+    game.stones_collected = 4
     game.mana = 49
     game.souls = 8
     game.resolve_altar()
