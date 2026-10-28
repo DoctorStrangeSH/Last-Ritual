@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v0.2: single-scene prototype, Godot 4.2+
+## Last Ritual v0.3: single-scene prototype, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -18,6 +18,9 @@ var wave_count := 0
 var player := Vector2(95, FLOOR - 25)
 var vel := Vector2.ZERO
 var grounded := false
+var facing := 1.0
+var jump_was_down := false
+var swing_timer := 0.0
 var platforms := [Rect2(205, 473, 135, 16), Rect2(415, 413, 145, 16), Rect2(640, 462, 130, 16), Rect2(830, 396, 135, 16)]
 var gems: Array[Vector2] = []
 var night_enemies: Array[Dictionary] = []
@@ -54,6 +57,10 @@ func reset_all() -> void:
     spawn_timer = 1.0
     player = Vector2(95, FLOOR - 25)
     vel = Vector2.ZERO
+    grounded = true
+    facing = 1.0
+    jump_was_down = false
+    swing_timer = 0.0
     player_hp = 100.0
     boss_hp = 140.0
     stone_taken = false
@@ -197,15 +204,20 @@ func update_day(delta: float) -> void:
 func update_night(delta: float) -> void:
     attack_cooldown = maxf(0.0, attack_cooldown - delta)
     hurt_cooldown = maxf(0.0, hurt_cooldown - delta)
+    swing_timer = maxf(0.0, swing_timer - delta)
     var direction := Input.get_axis("ui_left", "ui_right")
     if Input.is_key_pressed(KEY_A):
         direction -= 1.0
     if Input.is_key_pressed(KEY_D):
         direction += 1.0
     vel.x = clampf(direction, -1.0, 1.0) * 235.0
-    if (Input.is_action_just_pressed("ui_accept") or Input.is_key_pressed(KEY_W)) and grounded:
+    if absf(vel.x) > 1.0:
+        facing = signf(vel.x)
+    var jump_down := Input.is_key_pressed(KEY_W) or Input.is_key_pressed(KEY_SPACE) or Input.is_action_pressed("ui_accept")
+    if jump_down and not jump_was_down and grounded:
         vel.y = -455.0
         grounded = false
+    jump_was_down = jump_down
     vel.y += 1060.0 * delta
     var old_bottom := player.y + 22.0
     player.x = clampf(player.x + vel.x * delta, 16.0, W - 16.0)
@@ -230,7 +242,7 @@ func update_night(delta: float) -> void:
         e["x"] += e["dir"] * 38.0 * delta
         if e["x"] < 280.0 or e["x"] > 845.0:
             e["dir"] *= -1.0
-        if absf(player.x - e["x"]) < 30.0 and player.y > FLOOR - 55.0:
+        if e["hp"] > 0.0 and absf(player.x - e["x"]) < 30.0 and player.y > FLOOR - 55.0:
             hurt(17.0)
         if e["hp"] <= 0:
             mana += 10
@@ -256,11 +268,12 @@ func attack() -> void:
     if attack_cooldown > 0.0:
         return
     attack_cooldown = 0.34
+    swing_timer = 0.16
     var reach := 88.0
     for e in night_enemies:
-        if absf(e["x"] - player.x) < reach and absf(player.y - (FLOOR - 22.0)) < 75.0:
+        if (e["x"] - player.x) * facing >= -10.0 and (e["x"] - player.x) * facing < reach and absf(player.y - (FLOOR - 22.0)) < 75.0:
             e["hp"] -= 24.0
-    if boss_hp > 0.0 and absf(player.x - boss_pos.x) < reach and absf(player.y - boss_pos.y) < 85.0:
+    if boss_hp > 0.0 and (boss_pos.x - player.x) * facing >= -10.0 and (boss_pos.x - player.x) * facing < reach and absf(player.y - boss_pos.y) < 85.0:
         boss_hp -= 18.0
         if boss_hp <= 0.0:
             mana += 25
@@ -282,7 +295,7 @@ func _draw() -> void:
         label("ПОСЛЕДНИЙ РИТУАЛ", 225, 255, 52, Color("e3b3e9"))
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать пролог", 432, 415, 26, Color("f5cf84"))
-        label("Версия 0.2: один день, одна ночь, один ритуал", 325, 474, 18, Color("aaaaaa"))
+        label("Версия 0.3: один день, одна ночь, один ритуал", 325, 474, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         label("РИТУАЛ ЗАВЕРШЁН" if phase == "win" else "КРЕПОСТЬ ПАЛА", 300, 275, 48, Color("a9e4bc") if phase == "win" else Color("ff7777"))
@@ -338,6 +351,8 @@ func _draw() -> void:
             label("ПОРТАЛ", 24, 451, 16)
             box(Rect2(player.x - 14, player.y - 21, 28, 43), Color("a376c0") if hurt_cooldown <= 0.0 else Color("ed9393"))
             draw_circle(player + Vector2(0, -24), 14, Color("d9cbca"))
+            if swing_timer > 0.0:
+                box(Rect2(player.x + (17.0 if facing > 0 else -75.0), player.y - 17.0, 58.0, 10.0), Color("d6a2e9"))
             label("НОЧЬ 1 / 5  •  КАТАКОМБЫ", 25, 35, 27, Color("b9afea"))
             label("Здоровье: %d    Мана: %d    Души: %d    Камень: %s" % [maxi(0, ceili(player_hp)), mana, souls, "ДА" if stone_taken else "НЕТ"], 25, 71, 22)
             label("A/D: ходьба  |  W / Space: прыжок  |  J: удар  |  P: пауза  |  Камень → портал", 20, 625, 18)
