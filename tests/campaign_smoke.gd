@@ -67,6 +67,8 @@ func run_tests() -> void:
     game.apply_tower_shot({"type": "fire", "lane": 0, "level": 1, "damage": 65.0, "critical": false}, 0)
     check(float(game.enemies[1]["hp"]) < splash_before, "ballista splash damages nearby enemies on same lane")
     check(float(game.enemies[2]["hp"]) == other_lane_before, "ballista splash does not cross lanes")
+    game.apply_tower_shot({"type": "fire", "lane": 2, "level": 1, "damage": 65.0, "critical": true}, 2)
+    check(float(game.enemies[2]["hp"]) <= other_lane_before - 117.0, "critical ballista hit deals 1.8x damage")
     game.begin_night()
     check(game.towers.is_empty(), "towers cleared at nightfall")
     game.reset_all()
