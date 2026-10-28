@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.0-rc13: night enemy silhouettes, Godot 4.2+
+## Last Ritual v2.0-rc14: unique night architecture, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -728,7 +728,7 @@ func _draw() -> void:
         label("ПОСЛЕДНИЙ РИТУАЛ", 225, 255, 52, Color("e3b3e9"))
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
-        label("Версия 2.0 RC13: пять дней, пять ночей, пять камней", 325, 474, 18, Color("aaaaaa"))
+        label("Версия 2.0 RC14: пять дней, пять ночей, пять камней", 325, 474, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         label("РИТУАЛ ЗАВЕРШЁН" if phase == "win" else "КРЕПОСТЬ ПАЛА", 300, 275, 48, Color("a9e4bc") if phase == "win" else Color("ff7777"))
@@ -818,12 +818,42 @@ func _draw() -> void:
                 var ex := fmod(float(ember * 157) + atmosphere_clock * (8.0 + float(ember % 3) * 4.0), W)
                 var ey := 170.0 + float((ember * 57) % 300) + sin(atmosphere_clock * 1.3 + float(ember)) * 13.0
                 draw_circle(Vector2(ex, ey), 2.5, Color(0.72, 0.52, 0.87, 0.26))
-            for p in platforms:
-                box(p, Color("826479") if current_day == 2 else Color("6c5c77"))
+            # Distinct architectural silhouettes and palettes for each night.
+            var night_stone := Color("6c5c77")
             if current_day == 2:
+                night_stone = Color("826479")
                 for pillar in range(5):
                     box(Rect2(100 + pillar * 220, 215, 29, 335), Color("3c344d"))
                     box(Rect2(91 + pillar * 220, 213, 47, 12), Color("554562"))
+            elif current_day == 3:
+                night_stone = Color("70818b")
+                for arch in range(4):
+                    var ax := 120.0 + float(arch) * 255.0
+                    box(Rect2(ax, 245, 28, 305), Color("344855"))
+                    box(Rect2(ax + 145, 245, 28, 305), Color("344855"))
+                    draw_arc(Vector2(ax + 86, 245), 86.0, PI, TAU, 24, Color("637b87"), 8.0)
+            elif current_day == 4:
+                night_stone = Color("92475a")
+                box(Rect2(0, FLOOR - 16, W, 16), Color("5d2638"))
+                for vein in range(7):
+                    var vx := 80.0 + float(vein) * 168.0
+                    draw_line(Vector2(vx, 190), Vector2(vx + 52, FLOOR - 20), Color(0.95, 0.23, 0.39, 0.3), 7.0)
+                    draw_circle(Vector2(vx + 52, FLOOR - 20), 15.0 + sin(atmosphere_clock * 2.0 + vx) * 2.0, Color(0.94, 0.18, 0.35, 0.15))
+            elif current_day == 5:
+                night_stone = Color("65718e")
+                for monument in range(4):
+                    var mx := 125.0 + float(monument) * 285.0
+                    box(Rect2(mx - 15, 260, 30, 290), Color("354258"))
+                    box(Rect2(mx - 29, 246, 58, 17), Color("546584"))
+                    draw_colored_polygon(PackedVector2Array([Vector2(mx - 35, 246), Vector2(mx, 190), Vector2(mx + 35, 246)]), Color("7189a9"))
+                    draw_circle(Vector2(mx, 288), 10.0, Color(0.49, 0.90, 0.94, 0.33))
+            else:
+                for column in range(3):
+                    var cx := 195.0 + float(column) * 315.0
+                    box(Rect2(cx, 320, 18, FLOOR - 320), Color("30293d"))
+                    box(Rect2(cx - 8, 313, 34, 9), Color("554760"))
+            for p in platforms:
+                box(p, night_stone)
             var spike_phase := fmod(trap_clock, 3.1)
             for tx in trap_positions:
                 var trap_color := Color("5c566a") if spike_phase < 1.4 else (Color("efa857") if spike_phase < 2.1 else Color("f05268"))
