@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.1-rc49: tower sale refunds and clear upgrade pricing, Godot 4.2+
+## Last Ritual v2.1-rc50: tower special abilities slow splash critical hits, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -597,6 +597,42 @@ func begin_night() -> void:
         trap_positions = [375.0, 775.0]
     show_notice("Ночь %d: победи хранителя, забери камень и вернись к порталу слева!" % current_day)
 
+func tower_ability_description(kind: String, level: int = 1) -> String:
+    if kind == "bone":
+        return "Замедление %.1f с" % (2.5 + 0.35 * float(level - 1))
+    return "Крит %.0f%% + взрыв" % ((0.18 + 0.04 * float(level - 1)) * 100.0)
+
+func apply_tower_shot(shot: Dictionary, target_index: int) -> void:
+    if target_index < 0 or target_index >= enemies.size():
+        return
+    var target_x: float = float(enemies[target_index]["x"])
+    var lane: int = int(shot.get("lane", 1))
+    var kind: String = str(shot.get("type", "bone"))
+    var level: int = int(shot.get("level", 1))
+    var critical: bool = bool(shot.get("critical", false))
+    var power_multiplier: float = 1.35 if tower_power_level > 0 else 1.0
+    var critical_multiplier: float = 1.8 if critical else 1.0
+    var damage: float = float(shot["damage"]) * power_multiplier * critical_multiplier
+    enemies[target_index]["hp"] = float(enemies[target_index]["hp"]) - damage
+    var target_pos := Vector2(target_x, FLOOR - 32.0 + float(LANE_OFFSETS[lane]))
+    if kind == "bone":
+        enemies[target_index]["slow_timer"] = maxf(float(enemies[target_index].get("slow_timer", 0.0)), 2.5 + 0.35 * float(level - 1))
+        enemies[target_index]["slow_factor"] = 0.62
+        emit_impact(target_pos, Color("8de1e7"), 25.0)
+    else:
+        emit_impact(target_pos, Color("ffe18a") if critical else Color("ffb36b"), 31.0 if critical else 25.0)
+        var splash_radius: float = 78.0 + float(level - 1) * 4.0
+        for splash_index in range(enemies.size()):
+            if splash_index == target_index or int(enemies[splash_index].get("lane", 1)) != lane:
+                continue
+            if absf(float(enemies[splash_index]["x"]) - target_x) <= splash_radius:
+                enemies[splash_index]["hp"] = float(enemies[splash_index]["hp"]) - float(shot["damage"]) * 0.35 * power_multiplier * critical_multiplier
+                var splash_pos := Vector2(float(enemies[splash_index]["x"]), FLOOR - 32.0 + float(LANE_OFFSETS[lane]))
+                emit_impact(splash_pos, Color("ff9d59"), 16.0)
+    if hit_sound_cooldown <= 0.0:
+        play_cue("hit")
+        hit_sound_cooldown = 0.13
+
 func update_day(delta: float) -> void:
     day_elapsed += delta
     if phase == "day":
@@ -628,7 +664,9 @@ func update_day(delta: float) -> void:
                     target_x = enemy["x"]
             if target_x != INF:
                 tower["cooldown"] = 0.9 if tower["type"] == "bone" else 1.8
-                shots.append({"x": tower["x"], "target": target_x, "lane": int(tower.get("lane", 1)), "damage": (22.0 if tower["type"] == "bone" else 65.0) * (1.0 + 0.45 * float(int(tower.get("level", 1)) - 1)), "type": tower["type"]})
+                var tower_level: int = int(tower.get("level", 1))
+                var is_critical: bool = tower["type"] == "fire" and randf() < (0.18 + 0.04 * float(tower_level - 1))
+                shots.append({"x": tower["x"], "target": target_x, "lane": int(tower.get("lane", 1)), "damage": (22.0 if tower["type"] == "bone" else 65.0) * (1.0 + 0.45 * float(tower_level - 1)), "type": tower["type"], "level": tower_level, "critical": is_critical})
     for shot in shots:
         var closest_index := -1
         var distance := INF
@@ -638,11 +676,7 @@ func update_day(delta: float) -> void:
                 distance = d
                 closest_index = i
         if closest_index >= 0:
-            enemies[closest_index]["hp"] -= shot["damage"] * (1.35 if tower_power_level > 0 else 1.0)
-            emit_impact(Vector2(float(enemies[closest_index]["x"]), FLOOR - 32.0 + float(LANE_OFFSETS[int(enemies[closest_index].get("lane", 1))])), Color("ffb36b") if shot["type"] == "fire" else Color("8de1e7"), 25.0)
-            if hit_sound_cooldown <= 0.0:
-                play_cue("hit")
-                hit_sound_cooldown = 0.13
+            apply_tower_shot(shot, closest_index)
     shots.clear()
     for i in range(enemies.size() - 1, -1, -1):
         var enemy := enemies[i]
@@ -669,8 +703,10 @@ func update_day(delta: float) -> void:
                 tower["hp"] = float(tower.get("hp", tower_max_hp(tower))) - float(enemy["damage"]) * delta * 1.5
                 blocked_by_tower = true
                 break
+        enemy["slow_timer"] = maxf(0.0, float(enemy.get("slow_timer", 0.0)) - delta)
+        var slow_factor: float = float(enemy.get("slow_factor", 1.0)) if float(enemy.get("slow_timer", 0.0)) > 0.0 else 1.0
         if enemy["x"] > 191.0 and not blocked_by_tower:
-            enemy["x"] -= enemy["speed"] * delta
+            enemy["x"] -= enemy["speed"] * slow_factor * delta
         else:
             enemy["hit_cd"] -= delta
             if enemy["hit_cd"] <= 0.0:
@@ -1053,7 +1089,7 @@ func _draw() -> void:
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
         label("M — атмосфера: %d/4  |  N — эффекты: %d/4" % [music_volume, effects_volume], 375, 463, 19, Color("d5bfda"))
-        label("Версия 2.1 RC49: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
+        label("Версия 2.1 RC50: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         if phase == "win":
@@ -1258,6 +1294,7 @@ func _draw() -> void:
                 label("КОСТЯНАЯ" if card_index == 0 else "БАЛЛИСТА", card_x + 47.0, 584.0, 17, Color("f4d2af"))
                 label("30 маны" if card_index == 0 else "55 маны", card_x + 47.0, 605.0, 16)
                 label("Урон %d • Дал. %d" % ([22, 260] if card_index == 0 else [65, 375]), card_x + 47.0, 626.0, 14, Color("d2c6db"))
+                label("Замедление" if card_index == 0 else "Крит + урон по площади", card_x + 8.0, 647.0, 13, Color("a9dce2") if card_index == 0 else Color("ffbf8a"))
             label("Клик по карточке — выбор", 426.0, 585.0, 17)
             label("Перетащи на линию или кликни", 426.0, 608.0, 16, Color("c8bed1"))
             if selected_tower_index >= 0 and selected_tower_index < towers.size():
@@ -1268,12 +1305,13 @@ func _draw() -> void:
                 draw_rect(Rect2(733.0, 562.0, 221.0, 74.0), Color("cda6ba"), false, 2.0)
                 label("УЛУЧШИТЬ" if level < 3 else "МАКСИМУМ", 743.0, 588.0, 18)
                 label("%d маны • ур. %d" % [price, mini(level + 1, 3)] if level < 3 else "Уровень 3 / 3", 743.0, 614.0, 17)
-                box(Rect2(731.0, 272.0, 384.0, 125.0), Color(0.11, 0.075, 0.17, 0.93))
-                draw_rect(Rect2(731.0, 272.0, 384.0, 125.0), Color("b98faa"), false, 2.0)
+                box(Rect2(731.0, 262.0, 384.0, 151.0), Color(0.11, 0.075, 0.17, 0.93))
+                draw_rect(Rect2(731.0, 262.0, 384.0, 151.0), Color("b98faa"), false, 2.0)
                 label("%s  •  Уровень %d" % ["КОСТЯНАЯ" if inspected["type"] == "bone" else "БАЛЛИСТА", level], 746.0, 300.0, 19, Color("eed3b4"))
                 label("HP: %d / %d   Линия: %d" % [ceili(float(inspected.get("hp", 0.0))), ceili(tower_max_hp(inspected)), int(inspected.get("lane", 1)) + 1], 746.0, 331.0, 18)
                 var damage: float = (22.0 if inspected["type"] == "bone" else 65.0) * (1.0 + 0.45 * float(level - 1)) * (1.35 if tower_power_level > 0 else 1.0)
                 label("Урон: %d    Дальность: %d" % [ceili(damage), 260 if inspected["type"] == "bone" else 375], 746.0, 359.0, 18)
+                label(tower_ability_description(str(inspected["type"]), level), 746.0, 388.0, 18, Color("a9dce2") if inspected["type"] == "bone" else Color("ffbf8a"))
             box(Rect2(970.0, 562.0, 165.0, 74.0), Color("49303f") if selected_tower_index >= 0 and selected_tower_index < towers.size() else Color("292433"))
             draw_rect(Rect2(970.0, 562.0, 165.0, 74.0), Color("cf9d9d") if selected_tower_index >= 0 and selected_tower_index < towers.size() else Color("66556e"), false, 2.0)
             if selected_tower_index >= 0 and selected_tower_index < towers.size():
