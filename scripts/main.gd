@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.0-rc28: gothic dungeon detail, Godot 4.2+
+## Last Ritual v2.0-rc29: siege battlefield ruins, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -913,7 +913,7 @@ func _draw() -> void:
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
         label("M — атмосфера: %d/4  |  N — эффекты: %d/4" % [music_volume, effects_volume], 375, 463, 19, Color("d5bfda"))
-        label("Версия 2.0 RC28: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
+        label("Версия 2.0 RC29: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         if phase == "win":
@@ -963,6 +963,22 @@ func _draw() -> void:
         if phase == "day" or phase == "final_siege":
             draw_circle(Vector2(970, 115), 64.0, Color(1.0, 0.49, 0.28, 0.10))
             draw_circle(Vector2(970, 115), 55, Color("bf7a50"))
+            # Ruined battleground: distant tombstones, broken statues and siege debris.
+            for grave in range(7):
+                var gx: float = 265.0 + float(grave) * 124.0
+                var gh: float = 28.0 + float(grave % 3) * 10.0
+                box(Rect2(gx - 13.0, FLOOR - gh, 26.0, gh), Color("484153"))
+                draw_arc(Vector2(gx, FLOOR - gh), 13.0, PI, TAU, 16, Color("797084"), 3.0)
+                draw_line(Vector2(gx, FLOOR - gh + 7.0), Vector2(gx, FLOOR - 8.0), Color("645b71"), 2.0)
+            for statue in range(3):
+                var sx_ruin: float = 340.0 + float(statue) * 275.0
+                box(Rect2(sx_ruin - 20.0, FLOOR - 27.0, 40.0, 27.0), Color("585064"))
+                box(Rect2(sx_ruin - 11.0, FLOOR - 88.0, 22.0, 61.0), Color("665d70"))
+                draw_colored_polygon(PackedVector2Array([Vector2(sx_ruin - 16.0, FLOOR - 88.0), Vector2(sx_ruin + 7.0, FLOOR - 117.0), Vector2(sx_ruin + 11.0, FLOOR - 88.0)]), Color("73697d"))
+                draw_line(Vector2(sx_ruin - 9.0, FLOOR - 67.0), Vector2(sx_ruin + 11.0, FLOOR - 37.0), Color("3c344a"), 3.0)
+            for debris in range(10):
+                var dx: float = 240.0 + float(debris) * 91.0
+                draw_colored_polygon(PackedVector2Array([Vector2(dx - 15.0, FLOOR), Vector2(dx, FLOOR - 10.0 - float(debris % 3) * 5.0), Vector2(dx + 22.0, FLOOR)]), Color("5c5062"))
             box(Rect2(65, 315, 127, 236), Color("514358"))
             box(Rect2(85, 274, 86, 58), Color("514358"))
             for i in range(3):
