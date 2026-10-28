@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.0-rc9: defeat particles, Godot 4.2+
+## Last Ritual v2.0-rc10: atmospheric lighting and fog, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -59,6 +59,7 @@ var relic_taken := false
 var final_timer := 45.0
 var impacts: Array[Dictionary] = []
 var particles: Array[Dictionary] = []
+var atmosphere_clock := 0.0
 
 func _ready() -> void:
     font = ThemeDB.fallback_font
@@ -82,6 +83,7 @@ func reset_all() -> void:
     final_timer = 45.0
     impacts.clear()
     particles.clear()
+    atmosphere_clock = 0.0
     time_left = DAY_LENGTH
     wall_hp = MAX_WALL
     mana = 70
@@ -119,6 +121,7 @@ func _process(delta: float) -> void:
     if paused:
         queue_redraw()
         return
+    atmosphere_clock += delta
     if notice_timer > 0:
         notice_timer -= delta
     for i in range(particles.size() - 1, -1, -1):
@@ -700,12 +703,17 @@ func _draw() -> void:
             box(Rect2(sx + 47, 375 + (i % 2) * 32, 22, FLOOR - 375), Color("222237"))
         for i in range(19):
             box(Rect2(i * 64, FLOOR - 8, 60, 8), Color("4a4154"))
+    if phase == "day" or phase == "night" or phase == "final_siege":
+        # Semi-transparent drifting bands stay behind actors and HUD.
+        for fog in range(6):
+            var drift := fmod(float(fog * 233) + atmosphere_clock * (9.0 + float(fog % 3) * 4.0), W + 300.0) - 150.0
+            draw_circle(Vector2(drift, FLOOR - 42.0 - float(fog % 2) * 28.0), 92.0 + float(fog % 3) * 18.0, Color(0.55, 0.48, 0.68, 0.055))
     if phase == "title":
         draw_circle(Vector2(880, 170), 105, Color("5e244e"))
         label("ПОСЛЕДНИЙ РИТУАЛ", 225, 255, 52, Color("e3b3e9"))
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
-        label("Версия 2.0 RC7: пять дней, пять ночей, пять камней", 325, 474, 18, Color("aaaaaa"))
+        label("Версия 2.0 RC10: пять дней, пять ночей, пять камней", 325, 474, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         label("РИТУАЛ ЗАВЕРШЁН" if phase == "win" else "КРЕПОСТЬ ПАЛА", 300, 275, 48, Color("a9e4bc") if phase == "win" else Color("ff7777"))
@@ -713,6 +721,8 @@ func _draw() -> void:
         label("ENTER — новая попытка", 414, 415, 24)
         return
     if phase == "ritual":
+        var altar_glow := 0.58 + 0.42 * sin(atmosphere_clock * 2.2)
+        draw_circle(Vector2(575, 340), 161.0 + altar_glow * 11.0, Color(0.65, 0.24, 0.86, 0.07 + altar_glow * 0.07))
         draw_circle(Vector2(575, 340), 140, Color("382347"))
         draw_colored_polygon(PackedVector2Array([Vector2(575, 215), Vector2(640, 340), Vector2(575, 465), Vector2(510, 340)]), Color("a950d1"))
         label("АЛТАРЬ БЕЗДНЫ", 398, 145, 39, Color("e9b5fb"))
@@ -727,6 +737,7 @@ func _draw() -> void:
         for i in range(23):
             box(Rect2(i * 52, FLOOR + 12, 50, 5), Color("45414e"))
         if phase == "day" or phase == "final_siege":
+            draw_circle(Vector2(970, 115), 64.0, Color(1.0, 0.49, 0.28, 0.10))
             draw_circle(Vector2(970, 115), 55, Color("bf7a50"))
             box(Rect2(65, 315, 127, 236), Color("514358"))
             box(Rect2(85, 274, 86, 58), Color("514358"))
@@ -766,7 +777,12 @@ func _draw() -> void:
             label("Убийств: %d  |  Врагов: %d  |  Выбрано: %s" % [kills_today, enemies.size(), "Костяная" if selected_build == "bone" else "Баллиста"], 25, 126, 18)
             label("1/2: выбор башни  |  ЛКМ: строить  |  R: ремонт стен (20)  |  P: пауза", 24, 625, 18)
         elif phase == "night":
+            draw_circle(Vector2(940, 115), 67.0, Color(0.67, 0.65, 0.94, 0.10))
             draw_circle(Vector2(940, 115), 53, Color("bbb6d6"))
+            for ember in range(9):
+                var ex := fmod(float(ember * 157) + atmosphere_clock * (8.0 + float(ember % 3) * 4.0), W)
+                var ey := 170.0 + float((ember * 57) % 300) + sin(atmosphere_clock * 1.3 + float(ember)) * 13.0
+                draw_circle(Vector2(ex, ey), 2.5, Color(0.72, 0.52, 0.87, 0.26))
             for p in platforms:
                 box(p, Color("826479") if current_day == 2 else Color("6c5c77"))
             if current_day == 2:
@@ -789,6 +805,7 @@ func _draw() -> void:
                 draw_circle(Vector2(424, 342), 13, Color("d9a2e7"))
                 label("РЕЛИКВИЯ", 383, 311, 16, Color("e7b4f3"))
             for gem in gems:
+                draw_circle(gem, 20.0 + sin(atmosphere_clock * 3.0 + gem.x) * 3.0, Color(0.32, 0.90, 1.0, 0.16))
                 draw_colored_polygon(PackedVector2Array([gem + Vector2(0, -16), gem + Vector2(13, 0), gem + Vector2(0, 16), gem + Vector2(-13, 0)]), Color("5de0e9"))
             for e in night_enemies:
                 box(Rect2(e["x"] - 16, FLOOR - 34, 32, 34), Color("86aa87"))
