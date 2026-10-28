@@ -182,3 +182,6 @@ Godot ещё не запускался в этой сессии. Существ�
 
 ## v2.1 RC51
 `necro` tower, `skeletons` collection and `assets/towers/necromancer_tower.svg` added. Necro spawns a six-second skeletal blocker at x+55 on its lane every 7/6/5 seconds for levels 1/2/3. Enemy melee damages blocking skeleton before a tower. Summons clear at nightfall. Three tower cards are available in mouse toolbar, with key 6 also selecting necro. Smoke test verifies summon/absorption/reset. Review CI and gameplay balancing.
+
+## v2.1 RC52
+Input/UI changes: `_input` routes left-click to `attack()` during `night` and sets `facing` from mouse x. Tower cards only set `selected_build`; no tower is selected by default. Field click without selected tower card shows a notice. Build preview renders only while `dragging_tower`. Mouse card ranges now match compact x positions (14–184, 192–362, 370–540); upgrade/sell regions moved to x900–1015 and 1020–1138. Selected tower stats are embedded in the bottom panel, no center popup. Siege 1–5/6 hotkeys and Ctrl+click upgrade removed. Check CI and level 2 manually.
