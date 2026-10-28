@@ -173,3 +173,6 @@ Godot ещё не запускался в этой сессии. Существ�
 
 ## v2.1 RC48
 `dragging_tower` tracks press on either bottom tower card; release on battlefield calls `build_tower` using `lane_for_y`. Existing click-to-select then click-to-place remains. Placement preview uses actual tower SVG, validates mana/range/spacing and draws a lane highlight and attack arc. Cards now show tower artwork and base stats. Selection index updates when towers are removed.
+
+## v2.1 RC49
+`sell_selected_tower()` refunds floor(50% of base cost plus upgrade costs) and removes selected tower. Bottom-right sale card shows exact refund; upgrade card separates action from next-level cost. `tests/campaign_smoke.gd` checks ballista sale refund.
