@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.0-rc33: night boss sprite artwork, Godot 4.2+
+## Last Ritual v2.0-rc34: cathedral backdrop and checkpoint fix, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -269,7 +269,7 @@ func save_campaign() -> bool:
         "mana": mana, "souls": souls, "wall_hp": wall_hp,
         "tower_power": tower_power_level, "wall_ward": wall_ward_level,
         "towers": saved_towers,
-        "campaign_kills": campaign_kills, "towers_built": towers_built
+        "campaign_kills": campaign_kills, "towers_built": maxi(towers_built, towers.size())
     }
     var temp_path := save_path + ".tmp"
     var file := FileAccess.open(temp_path, FileAccess.WRITE)
@@ -849,6 +849,19 @@ func _draw() -> void:
     box(Rect2(0, 0, W, H), Color("10101e"))
     for i in range(11):
         draw_circle(Vector2(55 + i * 111, 85 + (i * 37) % 80), 2.0, Color("77779a"))
+    if phase == "night":
+        # Distant cathedral silhouette: separated from interactive level geometry.
+        draw_circle(Vector2(858, 160), 96.0, Color(0.48, 0.61, 0.82, 0.09))
+        for spire in range(8):
+            var far_x: float = 60.0 + float(spire) * 154.0
+            var far_h: float = 110.0 + float((spire * 7) % 4) * 35.0
+            box(Rect2(far_x, FLOOR - far_h, 44.0, far_h), Color("161728"))
+            draw_colored_polygon(PackedVector2Array([Vector2(far_x - 9.0, FLOOR - far_h), Vector2(far_x + 22.0, FLOOR - far_h - 70.0), Vector2(far_x + 53.0, FLOOR - far_h)]), Color("202039"))
+            box(Rect2(far_x + 17.0, FLOOR - far_h + 40.0, 11.0, 25.0), Color(0.39, 0.51, 0.67, 0.24))
+        for star in range(18):
+            var star_x: float = 27.0 + float(star) * 67.0
+            var star_y: float = 36.0 + float((star * 29) % 132)
+            draw_circle(Vector2(star_x, star_y), 1.2 + float(star % 3) * 0.5, Color(0.72, 0.77, 0.95, 0.25))
     if phase == "day" or phase == "night" or phase == "final_siege":
         # Layered silhouettes create depth without requiring external textures.
         for i in range(9):
@@ -885,7 +898,7 @@ func _draw() -> void:
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
         label("M — атмосфера: %d/4  |  N — эффекты: %d/4" % [music_volume, effects_volume], 375, 463, 19, Color("d5bfda"))
-        label("Версия 2.0 RC33: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
+        label("Версия 2.0 RC34: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         if phase == "win":
