@@ -190,3 +190,6 @@ RC52 follow-up: ritual phase accepts left-click on altar upgrade rows (y 387–4
 
 ## RC53 visuals
 Added `damage_popups` transient visual state (max 24; 0.72s lifetime) and `spawn_damage_popup`. Popups drift upward and fade; tower direct/splash hits and dungeon melee hits emit them. Tower dictionaries hold `flash` and `flash_target_x` briefly on attack/summon; render uses type-specific glow/tracer, while combat resolution remains instant. Smoke tests assert popup content and flash activation.
+
+## RC54 handoff
+Enemy dictionaries gain transient `hit_flash` and `hit_flash_color`. `_process` decays flash duration; `_draw` tints enemy sprite/geometry while the flash is active. Direct and splash tower damage set distinct tint colors. Saboteur health bar now respects `enemy_lane_offset`; fallback health bar ratio is clamped. `tests/campaign_smoke.gd` checks hit reaction and damage application. Verify newest Windows build in Actions.
