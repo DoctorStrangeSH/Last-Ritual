@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.0-rc44: attack and damage feedback, Godot 4.2+
+## Last Ritual v2.0-rc45: magical impact sparks, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -707,9 +707,11 @@ func attack() -> void:
         if (e["x"] - player.x) * facing >= -10.0 and (e["x"] - player.x) * facing < reach and absf(player.y - (FLOOR - 22.0)) < 75.0:
             e["hp"] -= 24.0
             emit_impact(Vector2(float(e["x"]), FLOOR - 25.0), Color("d7b0fa"), 19.0)
+            burst_particles(Vector2(float(e["x"]), FLOOR - 25.0), Color("bc8cec"), 5)
     if mage["hp"] > 0.0 and (mage["x"] - player.x) * facing >= -10.0 and (mage["x"] - player.x) * facing < reach and absf(player.y - (FLOOR - 60.0)) < 95.0:
         mage["hp"] -= 24.0
         emit_impact(Vector2(float(mage["x"]), FLOOR - 55.0), Color("d7b0fa"), 22.0)
+        burst_particles(Vector2(float(mage["x"]), FLOOR - 55.0), Color("b4eaff"), 7)
         if mage["hp"] <= 0.0:
             mana += 18
             souls += 2
@@ -718,6 +720,7 @@ func attack() -> void:
     if boss_hp > 0.0 and (boss_pos.x - player.x) * facing >= -10.0 and (boss_pos.x - player.x) * facing < reach and absf(player.y - boss_pos.y) < 85.0:
         boss_hp -= 18.0
         emit_impact(boss_pos, Color("f67ba2"), 28.0)
+        burst_particles(boss_pos, Color("fb97bd"), 10)
         if boss_hp <= 0.0:
             mana += 25
             souls += 4
@@ -916,7 +919,7 @@ func _draw() -> void:
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
         label("M — атмосфера: %d/4  |  N — эффекты: %d/4" % [music_volume, effects_volume], 375, 463, 19, Color("d5bfda"))
-        label("Версия 2.0 RC44: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
+        label("Версия 2.0 RC45: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         if phase == "win":
@@ -1281,6 +1284,12 @@ func _draw() -> void:
         var effect_color: Color = impact["color"]
         effect_color.a = fade
         draw_arc(impact["pos"], float(impact["radius"]) * (1.3 - fade * 0.3), 0.0, TAU, 20, effect_color, 3.0)
+        var hit_center: Vector2 = impact["pos"]
+        var ray_size: float = float(impact["radius"]) * (1.65 - fade * 0.5)
+        for spark_index in range(6):
+            var angle: float = TAU * float(spark_index) / 6.0 + atmosphere_clock * 0.7
+            var direction: Vector2 = Vector2(cos(angle), sin(angle))
+            draw_line(hit_center + direction * ray_size * 0.5, hit_center + direction * ray_size, effect_color, 2.0 * fade)
     if notice_timer > 0.0:
         box(Rect2(190, 97, 775, 50), Color("39283d"))
         label(notice, 215, 131, 19, Color("f5dcaf"))
