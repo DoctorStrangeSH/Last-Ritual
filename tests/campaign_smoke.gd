@@ -30,10 +30,25 @@ func run_tests() -> void:
     check(game.enemies.size() == 1 and game.enemies[0]["kind"] == "saboteur", "sixth wave spawns saboteur")
     if game.enemies.size() > 0:
         game.enemies[0]["x"] = 400.0
-        game.towers.append({"x": 420.0, "type": "bone", "cooldown": 99.0})
+        game.towers.append({"x": 420.0, "type": "bone", "lane": int(game.enemies[0].get("lane", 1)), "cooldown": 99.0, "hp": 120.0, "level": 1})
         game.update_day(0.1)
         check(float(game.towers[0].get("disabled", 0.0)) > 4.0, "saboteur disables nearby tower")
         check(bool(game.enemies[0].get("sabotaged", false)), "saboteur triggers only once")
+    game.reset_all()
+    game.phase = "day"
+    game.mana = 500
+    game.build_tower("bone", 400.0, 0)
+    game.build_tower("fire", 400.0, 2)
+    check(game.towers.size() == 2, "same X supports towers in different lanes")
+    var old_mana: int = game.mana
+    game.upgrade_tower(400.0, 0)
+    check(int(game.towers[0]["level"]) == 2 and game.mana < old_mana, "tower upgrade costs mana and increases level")
+    game.enemies = [{"x": 400.0, "hp": 200.0, "max_hp": 200.0, "speed": 0.0, "damage": 60.0, "hit_cd": 10.0, "kind": "raider", "lane": 0, "sabotaged": false}]
+    game.spawn_timer = 100.0
+    game.update_day(3.0)
+    check(game.towers.size() == 2 and float(game.towers[0]["hp"]) < game.tower_max_hp(game.towers[0]), "enemy damages tower on its lane")
+    game.begin_night()
+    check(game.towers.is_empty(), "towers cleared at nightfall")
     game.reset_all()
     game.phase = "night"
     game.stone_taken = true
@@ -54,7 +69,7 @@ func run_tests() -> void:
     game.buy_upgrade("ward")
     game.resolve_altar()
     check(game.current_day == 2 and game.phase == "day", "advance to day 2")
-    check(game.towers.size() == 1 and game.tower_power_level == 1, "persist towers")
+    check(game.towers.is_empty() and game.tower_power_level == 1, "towers reset but permanent upgrade persists")
     game.begin_night()
     check(game.trap_positions.size() == 3, "second night traps")
     game.phase = "ritual"
@@ -109,9 +124,8 @@ func run_tests() -> void:
     check(game.load_campaign(), "checkpoint load")
     check(game.phase == "ritual" and game.current_day == 2 and game.stones_collected == 2, "checkpoint phase and progress")
     check(game.mana == 93 and game.souls == 11 and game.wall_hp == 78.0, "checkpoint resources")
-    check(game.towers.size() == 1, "checkpoint tower count")
-    if game.towers.size() == 1:
-        check(game.towers[0]["type"] == "fire", "checkpoint tower type")
+    check(game.towers.is_empty(), "checkpoint towers reset after night")
+
     var corrupt := FileAccess.open("user://campaign_smoke_test.json", FileAccess.WRITE)
     corrupt.store_string("{not valid json")
     corrupt.close()
