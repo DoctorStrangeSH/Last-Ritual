@@ -143,3 +143,6 @@ Godot ещё не запускался в этой сессии. Существ�
 
 ## v2.0 RC36
 Добавлены `assets/backgrounds/catacombs.svg` и `assets/backgrounds/light_cathedral.svg`; в ночной `_draw()` они выводятся для ночей 1 и 3. Прежние декорации переднего плана остаются. Проверить Godot.
+
+## v2.0 RC37
+Все пять ночей теперь используют отдельные SVG-фоны (`assets/backgrounds/`). Добавлены `cursed_crypt.svg`, `blood_mines.svg`, `first_kings_tomb.svg`; удалён устаревший процедурный фон в `_draw()`. Проверьте результаты CI и вид в Godot на разных ночах.
