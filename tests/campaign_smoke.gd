@@ -43,7 +43,8 @@ func run_tests() -> void:
     var old_mana: int = game.mana
     game.upgrade_tower(400.0, 0)
     check(int(game.towers[0]["level"]) == 2 and game.mana < old_mana, "tower upgrade costs mana and increases level")
-    game.enemies = [{"x": 400.0, "hp": 200.0, "max_hp": 200.0, "speed": 0.0, "damage": 60.0, "hit_cd": 10.0, "kind": "raider", "lane": 0, "sabotaged": false}]
+    game.enemies.clear()
+    game.enemies.append({"x": 400.0, "hp": 200.0, "max_hp": 200.0, "speed": 0.0, "damage": 60.0, "hit_cd": 10.0, "kind": "raider", "lane": 0, "sabotaged": false})
     game.spawn_timer = 100.0
     game.update_day(0.7)
     check(game.towers.size() == 2 and float(game.towers[0]["hp"]) < game.tower_max_hp(game.towers[0]), "enemy damages tower on its lane")
