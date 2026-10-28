@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.0-rc10: atmospheric lighting and fog, Godot 4.2+
+## Last Ritual v2.0-rc11: fortress banners and torchlight, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -713,7 +713,7 @@ func _draw() -> void:
         label("ПОСЛЕДНИЙ РИТУАЛ", 225, 255, 52, Color("e3b3e9"))
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
-        label("Версия 2.0 RC10: пять дней, пять ночей, пять камней", 325, 474, 18, Color("aaaaaa"))
+        label("Версия 2.0 RC11: пять дней, пять ночей, пять камней", 325, 474, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         label("РИТУАЛ ЗАВЕРШЁН" if phase == "win" else "КРЕПОСТЬ ПАЛА", 300, 275, 48, Color("a9e4bc") if phase == "win" else Color("ff7777"))
@@ -751,10 +751,30 @@ func _draw() -> void:
                 box(Rect2(86 + j * 25, 357, 10, 28), Color("211c30"))
             draw_circle(Vector2(131, 412), 17, Color("aa5570", 0.6))
             label("КРЕПОСТЬ", 73, 252, 19)
+            # Cloth banners move gently; purely decorative, no physics or RNG.
+            for banner in range(2):
+                var bx := 83.0 + float(banner) * 88.0
+                var sway := sin(atmosphere_clock * 2.4 + float(banner) * 1.9) * 7.0
+                draw_line(Vector2(bx, 265), Vector2(bx, 349), Color("b7a4a0"), 2.0)
+                draw_colored_polygon(PackedVector2Array([Vector2(bx + 2, 278), Vector2(bx + 29 + sway * 0.35, 288), Vector2(bx + 23 + sway, 342), Vector2(bx + 12, 333), Vector2(bx + 2, 342)]), Color("7b3154"))
+                draw_circle(Vector2(bx + 13 + sway * 0.3, 303), 5.0, Color("e7b580"))
+            # Warm torch pools and animated flames along the fortress wall.
+            for torch in range(2):
+                var fx := 92.0 + float(torch) * 79.0
+                var flicker := sin(atmosphere_clock * 10.0 + float(torch) * 2.3)
+                draw_circle(Vector2(fx, 396), 24.0 + flicker * 3.0, Color(1.0, 0.48, 0.16, 0.10))
+                box(Rect2(fx - 3.0, 400, 6, 23), Color("604239"))
+                draw_colored_polygon(PackedVector2Array([Vector2(fx - 7.0, 399), Vector2(fx + flicker * 3.0, 377.0 - flicker * 3.0), Vector2(fx + 7.0, 399)]), Color("f6a24c"))
+                draw_circle(Vector2(fx, 394), 4.0, Color("ffe0a0"))
             for tower in towers:
                 var tx: float = tower["x"]
                 box(Rect2(tx - 17, FLOOR - 74, 34, 74), Color("9a8a9e") if tower["type"] == "bone" else Color("a65542"))
                 draw_circle(Vector2(tx, FLOOR - 82), 20, Color("8a8190") if float(tower.get("disabled", 0.0)) > 0.0 else (Color("8ad0d1") if tower["type"] == "bone" else Color("ff965d")))
+                box(Rect2(tx - 21.0, FLOOR - 77.0, 42, 7), Color("4c4459"))
+                for crenel in range(3):
+                    box(Rect2(tx - 18.0 + float(crenel) * 13.0, FLOOR - 89.0, 9, 13), Color("85728b") if tower["type"] == "bone" else Color("904739"))
+                if float(tower.get("disabled", 0.0)) > 0.0:
+                    draw_line(Vector2(tx - 12, FLOOR - 96), Vector2(tx + 12, FLOOR - 72), Color("e1bac3"), 3.0)
             for e in enemies:
                 var ex: float = e["x"]
                 var enemy_color := Color("7adbe4") if e["kind"] == "saboteur" else (Color("edc265") if e["kind"] == "runner" else (Color("d66c69") if e["kind"] == "brute" else Color("b0af9b")))
