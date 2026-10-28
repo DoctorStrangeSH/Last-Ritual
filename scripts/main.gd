@@ -756,8 +756,8 @@ func setup_audio() -> void:
             var t: float = float(index) / float(rate)
             var fade: float = minf(1.0, minf(t, duration - t) * 3.0)
             var tremolo: float = 0.72 + 0.28 * sin(TAU * 0.5 * t)
-            var signal: float = (sin(TAU * fundamental * t) * 0.65 + sin(TAU * fundamental * 1.5 * t) * 0.25 + sin(TAU * fundamental * 0.5 * t) * 0.10) * tremolo * fade
-            pcm.encode_s16(index * 2, int(clampf(signal * 3200.0, -32767.0, 32767.0)))
+            var sample_value: float = (sin(TAU * fundamental * t) * 0.65 + sin(TAU * fundamental * 1.5 * t) * 0.25 + sin(TAU * fundamental * 0.5 * t) * 0.10) * tremolo * fade
+            pcm.encode_s16(index * 2, int(clampf(sample_value * 3200.0, -32767.0, 32767.0)))
         var ambient_stream := AudioStreamWAV.new()
         ambient_stream.format = AudioStreamWAV.FORMAT_16_BITS
         ambient_stream.mix_rate = rate
