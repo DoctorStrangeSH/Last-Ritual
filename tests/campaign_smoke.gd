@@ -22,6 +22,18 @@ func run_tests() -> void:
     game.save_path = "user://campaign_smoke_test.json"
     game.reset_all()
     check(game.current_day == 1, "initial day")
+    game.phase = "day"
+    game.current_day = 3
+    game.wave_count = 5
+    game.spawn_timer = 0.0
+    game.update_day(0.0)
+    check(game.enemies.size() == 1 and game.enemies[0]["kind"] == "saboteur", "sixth wave spawns saboteur")
+    game.enemies[0]["x"] = 400.0
+    game.towers.append({"x": 420.0, "type": "bone", "cooldown": 99.0})
+    game.update_day(0.1)
+    check(float(game.towers[0]["disabled"]) > 4.0, "saboteur disables nearby tower")
+    check(game.enemies[0]["sabotaged"], "saboteur triggers only once")
+    game.reset_all()
     game.phase = "night"
     game.stone_taken = true
     game.stones_collected = 1
