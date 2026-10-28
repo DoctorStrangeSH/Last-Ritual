@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v1.3: third siege and saboteurs, Godot 4.2+
+## Last Ritual v1.4: campaign stability, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -401,7 +401,7 @@ func update_night(delta: float) -> void:
                 player.y = p.position.y - 22.0
                 vel.y = 0.0
                 grounded = true
-    var chest_pos := Vector2(850, 314) if current_day == 2 else Vector2(899, 365)
+    var chest_pos := Vector2(850, 314) if current_day == 2 else (Vector2(855, 314) if current_day == 3 else Vector2(899, 365))
     if not chest_taken and player.distance_to(chest_pos) < 42.0:
         chest_taken = true
         mana += 35
@@ -528,7 +528,7 @@ func _draw() -> void:
         label("ПОСЛЕДНИЙ РИТУАЛ", 225, 255, 52, Color("e3b3e9"))
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать пролог", 432, 415, 26, Color("f5cf84"))
-        label("Версия 1.3: три дня, три ночи, три камня", 325, 474, 18, Color("aaaaaa"))
+        label("Версия 1.4: три дня, три ночи, три камня", 325, 474, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         label("РИТУАЛ ЗАВЕРШЁН" if phase == "win" else "КРЕПОСТЬ ПАЛА", 300, 275, 48, Color("a9e4bc") if phase == "win" else Color("ff7777"))
@@ -541,7 +541,7 @@ func _draw() -> void:
         label("АЛТАРЬ БЕЗДНЫ", 398, 145, 39, Color("e9b5fb"))
         label("Камней: %d / 3. %s" % [stones_collected, "ENTER — продолжить осаду" if stones_collected < 3 else "Для ритуала нужно 50 маны и 8 душ"], 230, 515, 23)
         label("Мана: %d  |  Души: %d" % [mana, souls], 435, 554, 24, Color("edc477"))
-        if stones_collected < 2:
+        if stones_collected < 3:
             label("1: усилить башни (45 маны) %s" % ["[КУПЛЕНО]" if tower_power_level > 0 else ""], 310, 415, 20)
             label("2: печать стен (4 души) %s" % ["[КУПЛЕНО]" if wall_ward_level > 0 else ""], 310, 445, 20)
         label("ENTER — продолжить / ритуал  |  C — 25 маны на 1 душ", 310, 600, 20)
@@ -598,7 +598,7 @@ func _draw() -> void:
                 if spike_phase >= 2.1:
                     for spike in range(4):
                         draw_colored_polygon(PackedVector2Array([Vector2(tx - 28 + spike * 16, FLOOR), Vector2(tx - 20 + spike * 16, FLOOR - 24), Vector2(tx - 12 + spike * 16, FLOOR)]), trap_color)
-            var chest_at := Vector2(850, 314) if current_day == 2 else Vector2(899, 365)
+            var chest_at := Vector2(850, 314) if current_day == 2 else (Vector2(855, 314) if current_day == 3 else Vector2(899, 365))
             if not chest_taken:
                 box(Rect2(chest_at.x - 23, chest_at.y - 20, 46, 26), Color("a67c47"))
                 box(Rect2(chest_at.x - 23, chest_at.y - 23, 46, 6), Color("f1d085"))
