@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.0-rc29: siege battlefield ruins, Godot 4.2+
+## Last Ritual v2.0-rc30: standalone hero artwork, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -841,6 +841,8 @@ func box(rect: Rect2, col: Color) -> void:
     draw_rect(rect, col)
 
 func draw_dark_lord(pos: Vector2) -> void:
+    draw_texture_rect(preload("res://assets/characters/dark_lord.svg"), Rect2(pos.x - 31.0, pos.y - 57.0, 62.0, 83.0), false)
+    return
     # Animated, procedural silhouette. Motion follows horizontal velocity.
     var movement: float = clampf(absf(vel.x) / 235.0, 0.0, 1.0)
     var flutter: float = sin(atmosphere_clock * (4.0 + movement * 7.0)) * (2.0 + movement * 5.0)
@@ -913,7 +915,7 @@ func _draw() -> void:
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
         label("M — атмосфера: %d/4  |  N — эффекты: %d/4" % [music_volume, effects_volume], 375, 463, 19, Color("d5bfda"))
-        label("Версия 2.0 RC29: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
+        label("Версия 2.0 RC30: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         if phase == "win":
