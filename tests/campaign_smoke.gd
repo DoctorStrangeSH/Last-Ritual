@@ -201,6 +201,17 @@ func run_tests() -> void:
     game.choose_reward(0)
     check(game.mana == 65 and game.wall_hp == 1.0, "forbidden exchange keeps fortress alive")
     game.reset_all()
+    check(not game.has_bone_bastion_synergy(), "bone bastion starts inactive")
+    var skeleton_base: float = game.summon_skeleton_hp(1)
+    game.reward_bone_bonus = 1
+    check(not game.has_bone_bastion_synergy(), "single power gift does not activate bastion")
+    game.reward_ward_bonus = 1
+    check(game.has_bone_bastion_synergy(), "power and ward gifts activate bone bastion")
+    check(game.summon_skeleton_hp(1) == skeleton_base + 40.0, "bone bastion adds forty summon HP")
+    check(game.summon_skeleton_hp(3) == skeleton_base + 100.0, "bone bastion stacks with tower levels")
+    game.reset_all()
+    check(not game.has_bone_bastion_synergy(), "bone bastion resets between runs")
+    game.reset_all()
     game.phase = "night"
     game.stone_taken = true
     game.stones_collected = 1
