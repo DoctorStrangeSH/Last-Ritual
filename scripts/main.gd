@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.0-rc26: detailed hero and tower silhouettes, Godot 4.2+
+## Last Ritual v2.0-rc27: distinct enemy silhouettes, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -913,7 +913,7 @@ func _draw() -> void:
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
         label("M — атмосфера: %d/4  |  N — эффекты: %d/4" % [music_volume, effects_volume], 375, 463, 19, Color("d5bfda"))
-        label("Версия 2.0 RC26: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
+        label("Версия 2.0 RC27: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         if phase == "win":
@@ -1026,7 +1026,25 @@ func _draw() -> void:
             for e in enemies:
                 var ex: float = e["x"]
                 var enemy_color := Color("7adbe4") if e["kind"] == "saboteur" else (Color("edc265") if e["kind"] == "runner" else (Color("d66c69") if e["kind"] == "brute" else Color("b0af9b")))
-                box(Rect2(ex - 13, FLOOR - 43, 26, 43), enemy_color)
+                var march: float = sin(atmosphere_clock * (11.0 if e["kind"] == "runner" else 6.0) + ex * 0.05) * 3.0
+                var width: float = 19.0 if e["kind"] == "brute" else (10.0 if e["kind"] == "runner" else 13.0)
+                var height: float = 56.0 if e["kind"] == "brute" else (37.0 if e["kind"] == "runner" else 43.0)
+                box(Rect2(ex - width, FLOOR - height + march, width * 2.0, height - march), enemy_color)
+                draw_circle(Vector2(ex, FLOOR - height - 8.0 + march), 13.0 if e["kind"] == "brute" else 9.0, Color("443d4b"))
+                if e["kind"] == "saboteur":
+                    draw_line(Vector2(ex - 14, FLOOR - 32), Vector2(ex + 15, FLOOR - 18), Color("214f60"), 4.0)
+                    draw_circle(Vector2(ex + 12, FLOOR - 30), 6.0, Color("89f3ef"))
+                elif e["kind"] == "runner":
+                    draw_colored_polygon(PackedVector2Array([Vector2(ex - 10, FLOOR - height), Vector2(ex + 1, FLOOR - height - 24), Vector2(ex + 14, FLOOR - height)]), Color("d9aa5e"))
+                    draw_line(Vector2(ex + 8, FLOOR - 20), Vector2(ex + 29, FLOOR - 43), Color("fae2ad"), 3.0)
+                elif e["kind"] == "brute":
+                    box(Rect2(ex - 26, FLOOR - height + 5, 52, 14), Color("8b424e"))
+                    draw_line(Vector2(ex + 20, FLOOR - 41), Vector2(ex + 34, FLOOR - 18), Color("4a3940"), 7.0)
+                else:
+                    box(Rect2(ex - 14, FLOOR - height + 8, 28, 7), Color("766f78"))
+                    draw_line(Vector2(ex + 12, FLOOR - 34), Vector2(ex + 26, FLOOR - 14), Color("b9bbc0"), 3.0)
+                draw_circle(Vector2(ex - 4, FLOOR - height - 9 + march), 2.0, Color("ffc2a3"))
+                draw_circle(Vector2(ex + 4, FLOOR - height - 9 + march), 2.0, Color("ffc2a3"))
                 box(Rect2(ex - 17, FLOOR - 53, 34 * e["hp"] / e["max_hp"], 4), Color("f57c79"))
             var cursor_x := get_global_mouse_position().x
             if cursor_x >= 245.0 and cursor_x <= 1020.0:
@@ -1146,7 +1164,12 @@ func _draw() -> void:
                 box(Rect2(boss_pos.x - 31, boss_pos.y - 47, 62, 91), Color("a24e71"))
                 draw_colored_polygon(PackedVector2Array([boss_pos + Vector2(-29, -37), boss_pos + Vector2(-49, -79), boss_pos + Vector2(-10, -48)]), Color("7a395e"))
                 draw_colored_polygon(PackedVector2Array([boss_pos + Vector2(29, -37), boss_pos + Vector2(49, -79), boss_pos + Vector2(10, -48)]), Color("7a395e"))
+                # Layered armour, crown and glowing chest seal distinguish the guardian.
+                box(Rect2(boss_pos.x - 37, boss_pos.y - 26, 74, 13), Color("6c3757"))
+                draw_colored_polygon(PackedVector2Array([boss_pos + Vector2(-25, -39), boss_pos + Vector2(0, -16), boss_pos + Vector2(25, -39), boss_pos + Vector2(0, 18)]), Color("823454"))
+                draw_circle(boss_pos + Vector2(0, -8), 9.0 + sin(atmosphere_clock * 4.0) * 2.0, Color("db77b8"))
                 draw_circle(boss_pos + Vector2(0, -27), 19, Color("5b2544"))
+                draw_colored_polygon(PackedVector2Array([boss_pos + Vector2(-18, -44), boss_pos + Vector2(-13, -61), boss_pos + Vector2(0, -48), boss_pos + Vector2(13, -61), boss_pos + Vector2(18, -44)]), Color("b77b91"))
                 draw_circle(boss_pos + Vector2(-8, -29), 4, Color("ffa4c3"))
                 draw_circle(boss_pos + Vector2(8, -29), 4, Color("ffa4c3"))
                 box(Rect2(boss_pos.x - 45, boss_pos.y - 65, 90 * boss_hp / (140.0 if current_day == 1 else (190.0 if current_day == 2 else (230.0 if current_day == 3 else (270.0 if current_day == 4 else 340.0)))), 7), Color("ed6975"))
