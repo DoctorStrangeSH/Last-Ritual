@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.1-rc51: necromancer tower, Godot 4.2+
+## Last Ritual v2.1-rc52: clean mouse-first HUD and dungeon attacks
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -206,28 +206,9 @@ func _unhandled_input(event: InputEvent) -> void:
         if phase == "day" or phase == "final_siege":
             if event.keycode == KEY_R:
                 repair_wall()
-            elif event.keycode == KEY_1:
-                selected_build = "bone"
-                show_notice("Выбрана костяная башня: щёлкни мышью, чтобы построить")
-            elif event.keycode == KEY_2:
-                selected_build = "fire"
-                show_notice("Выбрана адская баллиста: щёлкни мышью, чтобы построить")
-            elif event.keycode == KEY_6:
-                selected_build = "necro"
-                show_notice("Выбрана некромантская башня")
-            elif event.keycode == KEY_3:
-                selected_lane = 0
-                show_notice("Линия 1: верхняя")
-            elif event.keycode == KEY_4:
-                selected_lane = 1
-                show_notice("Линия 2: центральная")
-            elif event.keycode == KEY_5:
-                selected_lane = 2
-                show_notice("Линия 3: нижняя")
+
         elif phase == "night":
-            if event.keycode == KEY_J:
-                attack()
-            elif event.keycode == KEY_H:
+            if event.keycode == KEY_H:
                 heal_player()
             elif event.keycode == KEY_SHIFT:
                 shadow_dash()
@@ -395,7 +376,16 @@ func load_campaign() -> bool:
     return true
 
 func _input(event: InputEvent) -> void:
-    if (phase != "day" and phase != "final_siege") or paused:
+    if paused:
+        dragging_tower = false
+        return
+    if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed and phase == "night":
+        var attack_target: Vector2 = get_global_mouse_position()
+        if absf(attack_target.x - player.x) > 10.0:
+            facing = signf(attack_target.x - player.x)
+        attack()
+        return
+    if phase != "day" and phase != "final_siege":
         dragging_tower = false
         return
     if not (event is InputEventMouseButton) or event.button_index != MOUSE_BUTTON_LEFT:
@@ -404,22 +394,22 @@ func _input(event: InputEvent) -> void:
     if event.pressed:
         # Press a card to select it; drag and release over a lane to build immediately.
         if mouse.y >= 554.0:
-            if mouse.x >= 20.0 and mouse.x <= 206.0:
+            if mouse.x >= 14.0 and mouse.x <= 184.0:
                 selected_build = "bone"
                 selected_tower_index = -1
                 dragging_tower = true
-            elif mouse.x >= 220.0 and mouse.x <= 406.0:
+            elif mouse.x >= 192.0 and mouse.x <= 362.0:
                 selected_build = "fire"
                 selected_tower_index = -1
                 dragging_tower = true
-            elif mouse.x >= 420.0 and mouse.x <= 606.0:
+            elif mouse.x >= 370.0 and mouse.x <= 540.0:
                 selected_build = "necro"
                 selected_tower_index = -1
                 dragging_tower = true
-            elif mouse.x >= 735.0 and mouse.x <= 955.0 and selected_tower_index >= 0 and selected_tower_index < towers.size():
+            elif mouse.x >= 900.0 and mouse.x <= 1015.0 and selected_tower_index >= 0 and selected_tower_index < towers.size():
                 var tower: Dictionary = towers[selected_tower_index]
                 upgrade_tower(float(tower["x"]), int(tower.get("lane", 1)))
-            elif mouse.x >= 970.0 and mouse.x <= 1135.0:
+            elif mouse.x >= 1020.0 and mouse.x <= 1138.0:
                 sell_selected_tower()
             return
         var lane: int = lane_for_y(mouse.y)
@@ -432,10 +422,7 @@ func _input(event: InputEvent) -> void:
                 return
         selected_tower_index = -1
         dragging_tower = false
-        if Input.is_key_pressed(KEY_CTRL):
-            upgrade_tower(mouse.x, lane)
-        else:
-            build_tower(selected_build, mouse.x, lane)
+        build_tower(selected_build, mouse.x, lane)
     else:
         if dragging_tower:
             dragging_tower = false
@@ -1293,7 +1280,7 @@ func _draw() -> void:
             var cursor_x: float = cursor.x
             var preview_lane: int = lane_for_y(cursor.y)
             var cursor_lane_y: float = FLOOR + float(LANE_OFFSETS[preview_lane])
-            if cursor.y < 551.0 and cursor_x >= 245.0 and cursor_x <= 1020.0:
+            if dragging_tower and cursor.y < 548.0 and cursor_x >= 245.0 and cursor_x <= 1020.0:
                 var range_radius: float = 260.0 if selected_build == "bone" else 375.0
                 var can_place: bool = mana >= (30 if selected_build == "bone" else (55 if selected_build == "fire" else 65))
                 for placed_tower in towers:
@@ -1314,61 +1301,53 @@ func _draw() -> void:
                 label("ЗАЩИЩАЙ АЛТАРЬ!", 700, 125, 18, Color("edc2f7"))
             box(Rect2(25, 82, 260, 13), Color("553840"))
             box(Rect2(25, 82, 260.0 * clampf(wall_hp / MAX_WALL, 0.0, 1.0), 13), Color("8cbe88") if wall_hp > 30.0 else Color("ed6b73"))
-            label("Убийств: %d  |  Врагов: %d  |  Выбрано: %s" % [kills_today, enemies.size(), "Костяная" if selected_build == "bone" else "Баллиста"], 25, 126, 18)
-            label("Линия: %d (клавиши 3/4/5)  |  Ctrl+ЛКМ: улучшить башню" % (selected_lane + 1), 25, 161, 17, Color("f1d5ac"))
-            label("Цена: %d маны  |  Можно построить: %s" % [30 if selected_build == "bone" else 55, "ДА" if mana >= (30 if selected_build == "bone" else 55) else "НЕТ"], 25, 151, 17, Color("9ed9ad") if mana >= (30 if selected_build == "bone" else 55) else Color("f3a0a0"))
+            label("Убийств: %d  |  Врагов на поле: %d" % [kills_today, enemies.size()], 25, 126, 18)
+
             # RTS-style mouse palette: build cards and contextual tower inspection.
             box(Rect2(0.0, 551.0, W, 97.0), Color(0.08, 0.065, 0.13, 0.96))
             draw_line(Vector2(0, 551), Vector2(W, 551), Color("b59ab9"), 3.0)
             for card_index in range(3):
-                var card_x: float = 20.0 + float(card_index) * 200.0
+                var card_x: float = 14.0 + float(card_index) * 178.0
                 var card_kind: String = "bone" if card_index == 0 else ("fire" if card_index == 1 else "necro")
-                box(Rect2(card_x, 557.0, 186.0, 85.0), Color("5e405d") if selected_build == card_kind else Color("332b40"))
-                draw_rect(Rect2(card_x, 557.0, 186.0, 85.0), Color("e2be9e") if selected_build == card_kind else Color("806d85"), false, 2.0)
+                box(Rect2(card_x, 557.0, 170.0, 85.0), Color("4a394f") if selected_build == card_kind else Color("282536"))
+                draw_rect(Rect2(card_x, 557.0, 170.0, 85.0), Color("d0b1d4") if selected_build == card_kind else Color("66586f"), false, 1.5)
                 var card_art: Texture2D = preload("res://assets/towers/bone_tower.svg") if card_index == 0 else (preload("res://assets/towers/infernal_ballista.svg") if card_index == 1 else preload("res://assets/towers/necromancer_tower.svg"))
-                draw_texture_rect(card_art, Rect2(card_x + 7.0, 563.0, 34.0, 54.0), false)
-                label("КОСТЯНАЯ" if card_index == 0 else ("БАЛЛИСТА" if card_index == 1 else "НЕКРОМАНТ"), card_x + 47.0, 578.0, 17, Color("f4d2af"))
-                label("30 маны" if card_index == 0 else ("55 маны" if card_index == 1 else "65 маны"), card_x + 47.0, 597.0, 16)
-                label("Урон %d • Дал. %d" % ([22, 260] if card_index == 0 else ([65, 375] if card_index == 1 else [0, 0])), card_x + 47.0, 616.0, 14, Color("d2c6db"))
-                label("Замедление" if card_index == 0 else ("Крит + взрыв" if card_index == 1 else "Призыв скелетов"), card_x + 8.0, 634.0, 13, Color("a9dce2") if card_index == 0 else Color("ffbf8a"))
-            label("Перетащи", 618.0, 585.0, 16)
-            label("или кликни", 618.0, 608.0, 16, Color("c8bed1"))
+                draw_texture_rect(card_art, Rect2(card_x + 6.0, 565.0, 30.0, 48.0), false)
+                label("КОСТЯНАЯ" if card_index == 0 else ("БАЛЛИСТА" if card_index == 1 else "НЕКРОМАНТ"), card_x + 42.0, 579.0, 15, Color("f4d2af"))
+                label("30 маны" if card_index == 0 else ("55 маны" if card_index == 1 else "65 маны"), card_x + 42.0, 601.0, 15)
+                label("Замедляет" if card_index == 0 else ("Крит + взрыв" if card_index == 1 else "Призывает скелетов"), card_x + 42.0, 624.0, 12, Color("a9dce2") if card_index == 0 else Color("ffbf8a"))
+            box(Rect2(550.0, 557.0, 340.0, 85.0), Color("211e2d"))
+            draw_rect(Rect2(550.0, 557.0, 340.0, 85.0), Color("66586f"), false, 1.5)
             if selected_tower_index >= 0 and selected_tower_index < towers.size():
                 var inspected: Dictionary = towers[selected_tower_index]
                 var level: int = int(inspected.get("level", 1))
-                var price: int = 25 * level
-                box(Rect2(733.0, 562.0, 221.0, 74.0), Color("59415b"))
-                draw_rect(Rect2(733.0, 562.0, 221.0, 74.0), Color("cda6ba"), false, 2.0)
-                label("УЛУЧШИТЬ" if level < 3 else "МАКСИМУМ", 743.0, 588.0, 18)
-                label("%d маны • ур. %d" % [price, mini(level + 1, 3)] if level < 3 else "Уровень 3 / 3", 743.0, 614.0, 17)
-                box(Rect2(731.0, 262.0, 384.0, 151.0), Color(0.11, 0.075, 0.17, 0.93))
-                draw_rect(Rect2(731.0, 262.0, 384.0, 151.0), Color("b98faa"), false, 2.0)
-                label("%s  •  Уровень %d" % ["КОСТЯНАЯ" if inspected["type"] == "bone" else ("БАЛЛИСТА" if inspected["type"] == "fire" else "НЕКРОМАНТ"), level], 746.0, 300.0, 19, Color("eed3b4"))
-                label("HP: %d / %d   Линия: %d" % [ceili(float(inspected.get("hp", 0.0))), ceili(tower_max_hp(inspected)), int(inspected.get("lane", 1)) + 1], 746.0, 331.0, 18)
-                var damage: float = (22.0 if inspected["type"] == "bone" else (65.0 if inspected["type"] == "fire" else 0.0)) * (1.0 + 0.45 * float(level - 1)) * (1.35 if tower_power_level > 0 else 1.0)
-                label("Урон: %d    Дальность: %d" % [ceili(damage), 260 if inspected["type"] == "bone" else (375 if inspected["type"] == "fire" else 0)], 746.0, 359.0, 18)
-                label(tower_ability_description(str(inspected["type"]), level), 746.0, 388.0, 18, Color("a9dce2") if inspected["type"] == "bone" else Color("ffbf8a"))
-            box(Rect2(970.0, 562.0, 165.0, 74.0), Color("49303f") if selected_tower_index >= 0 and selected_tower_index < towers.size() else Color("292433"))
-            draw_rect(Rect2(970.0, 562.0, 165.0, 74.0), Color("cf9d9d") if selected_tower_index >= 0 and selected_tower_index < towers.size() else Color("66556e"), false, 2.0)
-            if selected_tower_index >= 0 and selected_tower_index < towers.size():
-                var sell_refund: int = tower_sell_refund(towers[selected_tower_index])
-                label("ПРОДАТЬ", 1000.0, 588.0, 19, Color("f3c1bb"))
-                label("+%d маны" % sell_refund, 1000.0, 614.0, 17)
+                var tower_type: String = str(inspected["type"])
+                var tower_name: String = "КОСТЯНАЯ" if tower_type == "bone" else ("БАЛЛИСТА" if tower_type == "fire" else "НЕКРОМАНТ")
+                var damage: float = (22.0 if tower_type == "bone" else (65.0 if tower_type == "fire" else 0.0)) * (1.0 + 0.45 * float(level - 1)) * (1.35 if tower_power_level > 0 else 1.0)
+                label("%s  •  УР. %d" % [tower_name, level], 562.0, 576.0, 15, Color("eed3b4"))
+                label("HP %d/%d  •  Линия %d" % [ceili(float(inspected.get("hp", 0.0))), ceili(tower_max_hp(inspected)), int(inspected.get("lane", 1)) + 1], 562.0, 597.0, 14)
+                label("Урон %d  •  Дальность %d" % [ceili(damage), 260 if tower_type == "bone" else (375 if tower_type == "fire" else 0)], 562.0, 617.0, 14)
+                label(tower_ability_description(tower_type, level), 562.0, 636.0, 13, Color("a9dce2") if tower_type == "bone" else Color("ffbf8a"))
             else:
-                label("ЛИНИЯ %d" % (selected_lane + 1), 987.0, 588.0, 18, Color("f3d6ab"))
-                label("Выбери башню", 982.0, 614.0, 15)
-            if current_day == 1 and phase == "day" and towers.is_empty():
-                box(Rect2(245, 176, 688, 73), Color(0.15, 0.11, 0.22, 0.85))
-                label("ПЕРВЫЙ ДЕНЬ: 1 — костяная башня (30 маны)", 267, 205, 22, Color("f4d09b"))
-                label("Выбери башню и нажми ЛКМ справа от крепости.", 267, 230, 19)
-            if wall_hp > 0.0 and wall_hp <= 30.0:
-                var alert_blink: float = 0.65 + 0.35 * sin(atmosphere_clock * 8.0)
-                box(Rect2(320, 169, 515, 39), Color(0.49, 0.10, 0.14, 0.50 + alert_blink * 0.35))
-                label("ТРЕВОГА! СТЕНЫ НА ГРАНИ — R: РЕМОНТ", 334, 196, 20, Color("ffe6d4"))
-            if phase == "final_siege" and final_timer <= 10.0:
-                box(Rect2(358, 222, 440, 38), Color(0.32, 0.17, 0.42, 0.85))
-                label("ПОСЛЕДНИЕ %d СЕКУНД!" % ceili(maxf(final_timer, 0.0)), 398, 249, 24, Color("f4d0ff"))
-            label("1/2: выбор башни  |  ЛКМ: строить  |  R: ремонт стен (20)  |  P: пауза", 24, 625, 18)
+                label("ВЫБЕРИ БАШНЮ НА ПОЛЕ", 565.0, 589.0, 16, Color("d0c3d8"))
+                label("HP • уровень • урон • способность", 565.0, 614.0, 13, Color("a59aaf"))
+            box(Rect2(900.0, 557.0, 115.0, 85.0), Color("3d354b") if selected_tower_index >= 0 and selected_tower_index < towers.size() else Color("24222f"))
+            draw_rect(Rect2(900.0, 557.0, 115.0, 85.0), Color("b89ac7") if selected_tower_index >= 0 and selected_tower_index < towers.size() else Color("51485c"), false, 1.5)
+            if selected_tower_index >= 0 and selected_tower_index < towers.size():
+                var level_for_button: int = int(towers[selected_tower_index].get("level", 1))
+                label("УЛУЧШИТЬ" if level_for_button < 3 else "МАКС. УР.", 909.0, 588.0, 14, Color("f1d8ff"))
+                label("%d маны" % (25 * level_for_button) if level_for_button < 3 else "3 / 3", 914.0, 614.0, 14)
+            else:
+                label("УЛУЧШИТЬ", 908.0, 588.0, 13, Color("8e8497"))
+                label("Выбери башню", 906.0, 614.0, 11, Color("8e8497"))
+            box(Rect2(1020.0, 557.0, 118.0, 85.0), Color("49303f") if selected_tower_index >= 0 and selected_tower_index < towers.size() else Color("24222f"))
+            draw_rect(Rect2(1020.0, 557.0, 118.0, 85.0), Color("cf9d9d") if selected_tower_index >= 0 and selected_tower_index < towers.size() else Color("51485c"), false, 1.5)
+            if selected_tower_index >= 0 and selected_tower_index < towers.size():
+                label("ПРОДАТЬ", 1040.0, 588.0, 15, Color("f3c1bb"))
+                label("+%d маны" % tower_sell_refund(towers[selected_tower_index]), 1036.0, 614.0, 14)
+            else:
+                label("ПРОДАТЬ", 1042.0, 588.0, 14, Color("8e8497"))
+                label("Выбери башню", 1030.0, 614.0, 11, Color("8e8497"))
         elif phase == "night":
             draw_circle(Vector2(940, 115), 67.0, Color(0.67, 0.65, 0.94, 0.10))
             draw_circle(Vector2(940, 115), 53, Color("bbb6d6"))
@@ -1544,7 +1523,7 @@ func _draw() -> void:
                 var danger_blink: float = 0.60 + 0.40 * sin(atmosphere_clock * 8.0)
                 box(Rect2(310, 212, 530, 43), Color(0.54, 0.09, 0.18, 0.40 + danger_blink * 0.40))
                 label("КРИТИЧЕСКОЕ ЗДОРОВЬЕ! H — ЛЕЧЕНИЕ", 332, 240, 21, Color("ffe0dd"))
-            label("A/D: ходьба | W / Space: прыжок | J: удар | H: лечение | Shift: рывок | P: пауза", 20, 625, 18)
+            label("ЛКМ: атака  •  A/D: движение  •  W/Space: прыжок  •  H: лечение  •  Shift: рывок", 20, 625, 17)
     for particle in particles:
         var alpha: float = clampf(float(particle["life"]) / 0.55, 0.0, 1.0)
         var tint: Color = particle["color"]
