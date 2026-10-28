@@ -212,10 +212,6 @@ func _unhandled_input(event: InputEvent) -> void:
                 heal_player()
             elif event.keycode == KEY_SHIFT:
                 shadow_dash()
-        elif phase == "ritual" and event.keycode == KEY_1:
-            buy_upgrade("tower")
-        elif phase == "ritual" and event.keycode == KEY_2:
-            buy_upgrade("ward")
         elif phase == "ritual" and event.keycode == KEY_C:
             if mana >= 25:
                 mana -= 25
@@ -384,6 +380,15 @@ func _input(event: InputEvent) -> void:
         if absf(attack_target.x - player.x) > 10.0:
             facing = signf(attack_target.x - player.x)
         attack()
+        return
+    if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed and phase == "ritual":
+        var altar_click: Vector2 = get_global_mouse_position()
+        if altar_click.x >= 278.0 and altar_click.x <= 894.0 and altar_click.y >= 387.0 and altar_click.y < 426.0:
+            buy_upgrade("tower")
+        elif altar_click.x >= 278.0 and altar_click.x <= 894.0 and altar_click.y >= 426.0 and altar_click.y <= 464.0:
+            buy_upgrade("ward")
+        elif altar_click.x >= 200.0 and altar_click.x <= 955.0 and altar_click.y >= 479.0 and altar_click.y <= 584.0:
+            resolve_altar()
         return
     if phase != "day" and phase != "final_siege":
         dragging_tower = false
@@ -1161,9 +1166,13 @@ func _draw() -> void:
         label("Камней: %d / 5. %s" % [stones_collected, "ENTER — продолжить осаду" if stones_collected < 5 else "Для ритуала нужно 50 маны и 8 душ"], 230, 515, 23)
         label("Мана: %d  |  Души: %d" % [mana, souls], 435, 554, 24, Color("edc477"))
         if stones_collected < 5:
-            label("УСИЛЕНИЕ БАШЕН — 45 маны %s" % ["[КУПЛЕНО]" if tower_power_level > 0 else ""], 310, 415, 20)
-            label("ЗАЩИТНАЯ ПЕЧАТЬ — 4 души %s" % ["[КУПЛЕНО]" if wall_ward_level > 0 else ""], 310, 445, 20)
-        label("ENTER — продолжить  •  C — обмен 25 маны на душу", 310, 600, 20)
+            box(Rect2(286.0, 391.0, 600.0, 32.0), Color("35283f"))
+            draw_rect(Rect2(286.0, 391.0, 600.0, 32.0), Color("9874a7"), false, 1.0)
+            box(Rect2(286.0, 427.0, 600.0, 32.0), Color("35283f"))
+            draw_rect(Rect2(286.0, 427.0, 600.0, 32.0), Color("9874a7"), false, 1.0)
+            label("УСИЛЕНИЕ БАШЕН — 45 маны %s" % ["[КУПЛЕНО]" if tower_power_level > 0 else ""], 310, 415, 18)
+            label("ЗАЩИТНАЯ ПЕЧАТЬ — 4 души %s" % ["[КУПЛЕНО]" if wall_ward_level > 0 else ""], 310, 449, 18)
+        label("Кликни нижнюю панель, чтобы продолжить  •  C — обмен маны", 310, 600, 17)
     else:
         box(Rect2(0, FLOOR, W, H - FLOOR), Color("32313b"))
         for i in range(23):
@@ -1564,7 +1573,7 @@ func _draw() -> void:
             pause_controls = "ЛКМ — атака  |  A/D — ходить  |  W/Space — прыгать"
         else:
             pause_goal = "ЦЕЛЬ: усиливай крепость и продолжай ритуал."
-            pause_controls = "1/2 — улучшения  |  C — обмен маны  |  Enter — дальше"
+            pause_controls = "ЛКМ — улучшение / продолжение  |  C — обмен маны"
         label(pause_goal, 235, 278, 21, Color("f5d39e"))
         label(pause_controls, 235, 328, 18)
         if phase == "night":
