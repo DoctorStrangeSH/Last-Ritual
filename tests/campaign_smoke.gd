@@ -53,6 +53,7 @@ func run_tests() -> void:
     game.spawn_timer = 100.0
     game.update_day(0.7)
     check(game.towers.size() == 2 and float(game.towers[0]["hp"]) < game.tower_max_hp(game.towers[0]), "enemy damages tower on its lane")
+    check(float(game.towers[0].get("flash", 0.0)) > 0.0, "tower firing feedback is active")
     check(float(game.enemies[0]["x"]) == 400.0, "enemy stops to attack blocking tower")
     game.towers[0]["hp"] = 1.0
     game.update_day(0.1)
