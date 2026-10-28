@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.0-rc25: campaign statistics, Godot 4.2+
+## Last Ritual v2.0-rc26: detailed hero and tower silhouettes, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -854,7 +854,14 @@ func draw_dark_lord(pos: Vector2) -> void:
     draw_colored_polygon(cloak, Color("42305f"))
     draw_line(pos + Vector2(0, 9), pos + Vector2(tail + flutter, 27), Color("9f6bc0"), 2.0)
     box(Rect2(pos.x - 13, pos.y - 17, 26, 34), Color("7451a0") if hurt_cooldown <= 0.0 else Color("d87386"))
+    # Layered chest armour, shoulder plates, clasp and hood detailing.
+    draw_colored_polygon(PackedVector2Array([pos + Vector2(-13, -15), pos + Vector2(0, -8), pos + Vector2(13, -15), pos + Vector2(9, 10), pos + Vector2(0, 17), pos + Vector2(-9, 10)]), Color("342b50"))
+    draw_colored_polygon(PackedVector2Array([pos + Vector2(-17, -17), pos + Vector2(-2, -18), pos + Vector2(-7, -7), pos + Vector2(-19, -5)]), Color("8f789e"))
+    draw_colored_polygon(PackedVector2Array([pos + Vector2(17, -17), pos + Vector2(2, -18), pos + Vector2(7, -7), pos + Vector2(19, -5)]), Color("8f789e"))
+    draw_circle(pos + Vector2(0, -8), 5, Color("bb83df"))
+    draw_line(pos + Vector2(-8, 5), pos + Vector2(8, 5), Color("a48cae"), 2.0)
     draw_circle(pos + Vector2(0, -24), 15, Color("25213c"))
+    draw_arc(pos + Vector2(0, -24), 16.0, PI * 0.12, PI * 0.88, 10, Color("746485"), 2.0)
     draw_colored_polygon(PackedVector2Array([pos + Vector2(-14, -28), pos + Vector2(-23, -49), pos + Vector2(-5, -36)]), Color("5d5273"))
     draw_colored_polygon(PackedVector2Array([pos + Vector2(14, -28), pos + Vector2(23, -49), pos + Vector2(5, -36)]), Color("5d5273"))
     var eye_power: float = 0.68 + 0.32 * sin(atmosphere_clock * 5.0)
@@ -906,7 +913,7 @@ func _draw() -> void:
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
         label("M — атмосфера: %d/4  |  N — эффекты: %d/4" % [music_volume, effects_volume], 375, 463, 19, Color("d5bfda"))
-        label("Версия 2.0 RC25: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
+        label("Версия 2.0 RC26: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         if phase == "win":
@@ -1001,6 +1008,16 @@ func _draw() -> void:
                 var tx: float = tower["x"]
                 box(Rect2(tx - 17, FLOOR - 74, 34, 74), Color("9a8a9e") if tower["type"] == "bone" else Color("a65542"))
                 draw_circle(Vector2(tx, FLOOR - 82), 20, Color("8a8190") if float(tower.get("disabled", 0.0)) > 0.0 else (Color("8ad0d1") if tower["type"] == "bone" else Color("ff965d")))
+                # Stone seams and a distinct weapon silhouette for each tower.
+                for seam in range(3):
+                    draw_line(Vector2(tx - 14.0, FLOOR - 22.0 - float(seam) * 17.0), Vector2(tx + 14.0, FLOOR - 22.0 - float(seam) * 17.0), Color("635968"), 1.0)
+                if tower["type"] == "bone":
+                    draw_line(Vector2(tx - 22.0, FLOOR - 91.0), Vector2(tx + 22.0, FLOOR - 91.0), Color("d3d2d6"), 4.0)
+                    draw_line(Vector2(tx, FLOOR - 105.0), Vector2(tx, FLOOR - 80.0), Color("bdced3"), 4.0)
+                    draw_circle(Vector2(tx, FLOOR - 100.0), 7.0, Color("8ad0d1"))
+                else:
+                    draw_colored_polygon(PackedVector2Array([Vector2(tx - 19, FLOOR - 86), Vector2(tx + 19, FLOOR - 86), Vector2(tx, FLOOR - 113)]), Color("6a2a2f"))
+                    draw_circle(Vector2(tx, FLOOR - 101.0), 8.0 + sin(atmosphere_clock * 8.0) * 2.0, Color("ffae63"))
                 box(Rect2(tx - 21.0, FLOOR - 77.0, 42, 7), Color("4c4459"))
                 for crenel in range(3):
                     box(Rect2(tx - 18.0 + float(crenel) * 13.0, FLOOR - 89.0, 9, 13), Color("85728b") if tower["type"] == "bone" else Color("904739"))
