@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v1.4: campaign stability, Godot 4.2+
+## Last Ritual v1.5: campaign testability, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -132,22 +132,7 @@ func _unhandled_input(event: InputEvent) -> void:
                 reset_all()
                 phase = "day"
             elif phase == "ritual":
-                if stones_collected < 3:
-                    phase = "day"
-                    current_day += 1
-                    time_left = DAY_LENGTH
-                    spawn_timer = 1.0
-                    wave_count = 0
-                    enemies.clear()
-                    shots.clear()
-                    player_hp = 100.0
-                    show_notice("День %d: армия Света усилилась! Башни сохранены." % current_day)
-                elif mana >= 50 and souls >= 8:
-                    mana -= 50
-                    souls -= 8
-                    phase = "win"
-                else:
-                    show_notice("Для ритуала нужно 50 маны и 8 душ. C — обмен.")
+                resolve_altar()
         if phase == "day":
             if event.keycode == KEY_R:
                 repair_wall()
@@ -175,6 +160,27 @@ func _unhandled_input(event: InputEvent) -> void:
                 show_notice("Алтарь преобразовал ману в душу")
             else:
                 show_notice("Не хватает маны для преобразования")
+
+func resolve_altar() -> void:
+    if phase != "ritual":
+        return
+    if stones_collected < 3:
+        current_day += 1
+        phase = "day"
+        time_left = DAY_LENGTH
+        day_elapsed = 0.0
+        spawn_timer = 1.0
+        wave_count = 0
+        enemies.clear()
+        shots.clear()
+        player_hp = 100.0
+        show_notice("День %d: армия Света усилилась! Башни сохранены." % current_day)
+    elif mana >= 50 and souls >= 8:
+        mana -= 50
+        souls -= 8
+        phase = "win"
+    else:
+        show_notice("Для ритуала нужно 50 маны и 8 душ. C — обмен.")
 
 func _input(event: InputEvent) -> void:
     if phase == "day" and not paused and event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
