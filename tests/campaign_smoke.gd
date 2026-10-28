@@ -102,6 +102,14 @@ func run_tests() -> void:
     bad_file.store_string(JSON.stringify(invalid))
     bad_file.close()
     check(not game.load_campaign(), "fractional stone count rejected")
+    invalid["stones"] = 2
+    invalid["towers"] = []
+    var too_large := JSON.stringify(invalid) + " ".repeat(70000)
+    bad_file = FileAccess.open("user://campaign_smoke_test.json", FileAccess.WRITE)
+    bad_file.store_string(too_large)
+    bad_file.close()
+    check(not game.load_campaign(), "oversized save rejected")
+    check(game.current_day == 2 and game.mana == 93, "rejected save preserves existing state")
     DirAccess.remove_absolute(ProjectSettings.globalize_path("user://campaign_smoke_test.json"))
     game.queue_free()
     print("Failures: ", failures)
