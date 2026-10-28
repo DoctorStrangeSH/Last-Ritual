@@ -79,6 +79,9 @@ var tower_power_level := 0
 var wall_ward_level := 0
 var saboteurs_defeated := 0
 var trap_clock := 0.0
+var dungeon_route := 0
+var secret_cache_taken := false
+var secret_cache_pos := Vector2.ZERO
 var trap_positions := [375.0, 775.0]
 var chest_taken := false
 var relic_taken := false
@@ -207,6 +210,8 @@ func reset_all() -> void:
     wall_ward_level = 0
     saboteurs_defeated = 0
     trap_clock = 0.0
+    dungeon_route = 0
+    secret_cache_taken = false
     chest_taken = false
     relic_taken = false
     final_timer = 45.0
@@ -770,6 +775,8 @@ func begin_night() -> void:
     chest_taken = false
     relic_taken = false
     trap_clock = 0.0
+    dungeon_route = randi_range(0, 2)
+    secret_cache_taken = false
     if current_day == 5:
         platforms = [Rect2(190, 450, 150, 16), Rect2(415, 390, 140, 16), Rect2(600, 345, 130, 16), Rect2(795, 390, 130, 16)]
         trap_positions = [325.0, 520.0, 755.0, 965.0]
@@ -800,6 +807,7 @@ func begin_night() -> void:
     else:
         platforms = [Rect2(205, 473, 135, 16), Rect2(415, 413, 145, 16), Rect2(640, 462, 130, 16), Rect2(830, 396, 135, 16)]
         trap_positions = [375.0, 775.0]
+    apply_dungeon_route()
     show_notice("Ночь %d: победи хранителя, забери камень и вернись к порталу слева!" % current_day)
 
 func tower_ability_description(kind: String, level: int = 1) -> String:
@@ -1008,6 +1016,18 @@ func shadow_dash() -> void:
     play_cue("magic")
     show_notice("Теневой рывок!")
 
+func apply_dungeon_route() -> void:
+    # Keep jumps reachable, but vary the exploration path and the secret stash.
+    if dungeon_route == 1:
+        for i in range(platforms.size()):
+            var p: Rect2 = platforms[i]
+            platforms[i] = Rect2(p.position + Vector2(22.0 if i % 2 == 0 else -22.0, -12.0), p.size)
+    elif dungeon_route == 2:
+        for i in range(platforms.size()):
+            var p: Rect2 = platforms[i]
+            platforms[i] = Rect2(p.position + Vector2(-18.0 if i % 2 == 0 else 18.0, 10.0), p.size)
+    secret_cache_pos = Vector2(575.0 if dungeon_route == 0 else (610.0 if dungeon_route == 1 else 535.0), FLOOR - 27.0)
+
 func update_night(delta: float) -> void:
     attack_cooldown = maxf(0.0, attack_cooldown - delta)
     hurt_cooldown = maxf(0.0, hurt_cooldown - delta)
@@ -1054,6 +1074,11 @@ func update_night(delta: float) -> void:
         mana += 20
         souls += 3
         show_notice("Реликвия усыпальницы: +20 маны, +3 души")
+    if not secret_cache_taken and player.distance_to(secret_cache_pos) < 36.0:
+        secret_cache_taken = true
+        mana += 25
+        souls += 1
+        show_notice("Тайник маршрута: +25 маны и +1 душа!")
     var spike_phase := fmod(trap_clock, 3.1)
     if spike_phase >= 2.1 and player.y + 21.0 >= FLOOR - 13.0:
         for tx in trap_positions:
@@ -1807,6 +1832,9 @@ func _draw() -> void:
             if dash_trail > 0.0:
                 box(Rect2(player.x - facing * 72.0 - 12.0, player.y - 21.0, 24.0, 43.0), Color("533b87"))
                 box(Rect2(player.x - facing * 38.0 - 12.0, player.y - 21.0, 24.0, 43.0), Color("7951ab"))
+            if not secret_cache_taken:
+                draw_circle(secret_cache_pos, 12.0, Color("efc77e", 0.55 + 0.15 * sin(atmosphere_clock * 3.0)))
+                draw_rect(Rect2(secret_cache_pos.x - 11.0, secret_cache_pos.y - 8.0, 22.0, 18.0), Color("c99460"), false, 2.0)
             draw_dark_lord(player)
             if hurt_cooldown > 0.0 and sin(atmosphere_clock * 26.0) > 0.15:
                 draw_rect(Rect2(player.x - 31.0, player.y - 57.0, 62.0, 83.0), Color(1.0, 0.29, 0.38, 0.35), false, 3.0)
