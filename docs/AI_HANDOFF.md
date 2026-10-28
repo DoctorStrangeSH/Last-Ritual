@@ -185,3 +185,5 @@ Godot ещё не запускался в этой сессии. Существ�
 
 ## v2.1 RC52
 Input/UI changes: `_input` routes left-click to `attack()` during `night` and sets `facing` from mouse x. Tower cards only set `selected_build`; no tower is selected by default. Field click without selected tower card shows a notice. Build preview renders only while `dragging_tower`. Mouse card ranges now match compact x positions (14–184, 192–362, 370–540); upgrade/sell regions moved to x900–1015 and 1020–1138. Selected tower stats are embedded in the bottom panel, no center popup. Siege 1–5/6 hotkeys and Ctrl+click upgrade removed. Check CI and level 2 manually.
+
+RC52 follow-up: ritual phase accepts left-click on altar upgrade rows (y 387–425 tower power, 426–464 ward) and lower continuation panel (y 479–584). KEY_1/KEY_2 altar upgrades removed; C exchange and Enter continuation remain. Tower hit-test uses sprite bounding box before lane inference.
