@@ -175,6 +175,31 @@ func run_tests() -> void:
     game.begin_night()
     check(game.skeletons.is_empty(), "skeletons expire at nightfall")
     check(game.towers.is_empty(), "towers cleared at nightfall")
+    # Reward drafting: exactly three unique offers from the five-kind pool.
+    game.reset_all()
+    game.roll_reward_offers()
+    check(game.reward_offers.size() == 3, "reward draft offers three cards")
+    var distinct: Dictionary = {}
+    for offer in game.reward_offers:
+        distinct[offer] = true
+    check(distinct.size() == 3, "reward draft never duplicates a card")
+    game.reward_offers.clear()
+    for offer in [3, 4, 0]:
+        game.reward_offers.append(offer)
+    game.phase = "reward"
+    game.current_day = 1
+    game.stones_collected = 1
+    game.souls = 0
+    game.choose_reward(0)
+    check(game.souls == 3 and game.phase == "ritual", "soul tribute resolves and returns to altar")
+    game.reward_offers.clear()
+    for offer in [4, 3, 0]:
+        game.reward_offers.append(offer)
+    game.phase = "reward"
+    game.wall_hp = 10.0
+    game.mana = 0
+    game.choose_reward(0)
+    check(game.mana == 65 and game.wall_hp == 1.0, "forbidden exchange keeps fortress alive")
     game.reset_all()
     game.phase = "night"
     game.stone_taken = true

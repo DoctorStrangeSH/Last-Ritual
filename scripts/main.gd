@@ -21,6 +21,8 @@ var reward_bone_bonus := 0
 var reward_mana_bonus := 0
 var reward_ward_bonus := 0
 var legendary_boon := -1
+# Three unique choices generated when a night ends. Never persisted mid-selection.
+var reward_offers: Array[int] = [0, 1, 2]
 var menu_page := "main"
 const AUDIO_SETTINGS_PATH := "user://audio_settings.cfg"
 var save_path := SAVE_PATH
@@ -200,6 +202,7 @@ func reset_all() -> void:
     reward_mana_bonus = 0
     reward_ward_bonus = 0
     legendary_boon = -1
+    reward_offers = [0, 1, 2]
     selected_build = ""
     selected_lane = 1
     selected_tower_index = -1
@@ -342,6 +345,38 @@ func _unhandled_input(event: InputEvent) -> void:
             else:
                 show_notice("Не хватает маны для преобразования")
 
+func roll_reward_offers() -> void:
+    var pool: Array[int] = [0, 1, 2, 3, 4]
+    pool.shuffle()
+    reward_offers = [pool[0], pool[1], pool[2]]
+
+func reward_name(kind: int) -> String:
+    match kind:
+        0: return "МОЩЬ БАШЕН"
+        1: return "ЗАПАС МАНЫ"
+        2: return "КРЕПОСТЬ"
+        3: return "ДАНЬ ДУШ"
+        4: return "ЗАПРЕТНЫЙ ОБМЕН"
+    return "НЕИЗВЕСТНЫЙ ДАР"
+
+func reward_detail(kind: int) -> String:
+    match kind:
+        0: return "+12% урона башен"
+        1: return "+35 маны сейчас"
+        2: return "+35 здоровья стен"
+        3: return "+3 души сейчас"
+        4: return "+65 маны, -15 HP стен"
+    return ""
+
+func reward_note(kind: int) -> String:
+    match kind:
+        0: return "до конца забега"
+        1: return "+5 маны за врага"
+        2: return "восстановление стен"
+        3: return "на ритуал или улучшение"
+        4: return "риск ради силы"
+    return ""
+
 func choose_reward(choice: int) -> void:
     if phase != "reward" or choice < 0 or choice > 2:
         return
@@ -356,17 +391,25 @@ func choose_reward(choice: int) -> void:
         phase = "ritual"
         save_campaign()
         return
-    if choice == 0:
+    var kind: int = reward_offers[choice]
+    if kind == 0:
         reward_bone_bonus += 1
         show_notice("Дар: башни наносят больше урона в этом походе!")
-    elif choice == 1:
+    elif kind == 1:
         reward_mana_bonus += 1
         mana += 35
         show_notice("Дар: +35 маны сейчас и +5 за каждую победу!")
-    else:
+    elif kind == 2:
         reward_ward_bonus += 1
         wall_hp = minf(MAX_WALL, wall_hp + 35.0)
         show_notice("Дар: стены восстановлены и укреплены!")
+    elif kind == 3:
+        souls += 3
+        show_notice("Дар: три души для алтаря!")
+    elif kind == 4:
+        mana += 65
+        wall_hp = maxf(1.0, wall_hp - 15.0)
+        show_notice("Запретный обмен: мана за прочность стен!")
     phase = "ritual"
     save_campaign()
 
@@ -1131,6 +1174,7 @@ func update_night(delta: float) -> void:
         stones_collected += 1
         show_notice("Камень %d/5 получен! Вернись к порталу слева." % stones_collected)
     if phase == "night" and stone_taken and player_hp > 0.0 and player.x < 85.0:
+        roll_reward_offers()
         phase = "reward"
         show_notice("Выбери один из трёх даров Бездны!")
 
@@ -1452,9 +1496,10 @@ func _draw() -> void:
                 label("Замедление 65%" if reward_i == 0 else ("Сильнее урон по площади" if reward_i == 1 else "+90 HP скелетам"), reward_x + 17.0, 370.0, 17)
                 label("+1,5 сек действия" if reward_i == 0 else ("+55 радиус взрыва" if reward_i == 1 else "10 сек призыва"), reward_x + 17.0, 406.0, 17, Color("bbdfcc"))
             else:
-                label("МОЩЬ БАШЕН" if reward_i == 0 else ("ЗАПАС МАНЫ" if reward_i == 1 else "КРЕПОСТЬ"), reward_x + 24.0, 324.0, 21, Color("f3dbba"))
-                label("+12% урона башен" if reward_i == 0 else ("+35 маны сейчас" if reward_i == 1 else "+35 здоровья стен"), reward_x + 22.0, 370.0, 19)
-                label("до конца забега" if reward_i == 0 else ("+5 маны за врага" if reward_i == 1 else "восстановление стен"), reward_x + 22.0, 406.0, 18, Color("bbdfcc"))
+                var reward_kind: int = reward_offers[reward_i]
+                label(reward_name(reward_kind), reward_x + 18.0, 324.0, 19, Color("f3dbba"))
+                label(reward_detail(reward_kind), reward_x + 18.0, 370.0, 17)
+                label(reward_note(reward_kind), reward_x + 18.0, 406.0, 17, Color("bbdfcc"))
             label("НАЖМИ", reward_x + 87.0, 437.0, 17, Color("ffe1ad"))
         return
     if phase == "ritual":
