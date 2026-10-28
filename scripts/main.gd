@@ -1,11 +1,12 @@
 extends Node2D
-## Last Ritual v2.0-rc1: checkpoint hardening, Godot 4.2+
+## Last Ritual v2.0-rc2: isolated save tests, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
 const DAY_LENGTH := 56.0
 const MAX_WALL := 100.0
 const SAVE_PATH := "user://campaign_v1.json"
+var save_path := SAVE_PATH
 var phase := "title"
 var time_left := DAY_LENGTH
 var wall_hp := MAX_WALL
@@ -217,19 +218,19 @@ func save_campaign() -> bool:
         "tower_power": tower_power_level, "wall_ward": wall_ward_level,
         "towers": saved_towers
     }
-    var temp_path := SAVE_PATH + ".tmp"
+    var temp_path := save_path + ".tmp"
     var file := FileAccess.open(temp_path, FileAccess.WRITE)
     if file == null:
         return false
     file.store_string(JSON.stringify(data))
     file.flush()
     file.close()
-    return DirAccess.rename_absolute(ProjectSettings.globalize_path(temp_path), ProjectSettings.globalize_path(SAVE_PATH)) == OK
+    return DirAccess.rename_absolute(ProjectSettings.globalize_path(temp_path), ProjectSettings.globalize_path(save_path)) == OK
 
 func load_campaign() -> bool:
-    if not FileAccess.file_exists(SAVE_PATH):
+    if not FileAccess.file_exists(save_path):
         return false
-    var file := FileAccess.open(SAVE_PATH, FileAccess.READ)
+    var file := FileAccess.open(save_path, FileAccess.READ)
     if file == null:
         return false
     var parsed: Variant = JSON.parse_string(file.get_as_text())
