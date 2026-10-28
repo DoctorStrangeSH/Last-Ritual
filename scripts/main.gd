@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.1-rc48: drag and drop tower cards with placement preview, Godot 4.2+
+## Last Ritual v2.1-rc49: tower sale refunds and clear upgrade pricing, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -408,6 +408,8 @@ func _input(event: InputEvent) -> void:
             elif mouse.x >= 735.0 and mouse.x <= 955.0 and selected_tower_index >= 0 and selected_tower_index < towers.size():
                 var tower: Dictionary = towers[selected_tower_index]
                 upgrade_tower(float(tower["x"]), int(tower.get("lane", 1)))
+            elif mouse.x >= 970.0 and mouse.x <= 1135.0:
+                sell_selected_tower()
             return
         var lane: int = lane_for_y(mouse.y)
         selected_lane = lane
@@ -472,6 +474,26 @@ func lane_for_y(y: float) -> int:
             best_distance = distance
             best_lane = lane_index
     return best_lane
+
+func tower_sell_refund(tower: Dictionary) -> int:
+    var invested: int = 30 if tower["type"] == "bone" else 55
+    var level: int = int(tower.get("level", 1))
+    for upgrade_step in range(1, level):
+        invested += 25 * upgrade_step
+    return int(floor(float(invested) * 0.5))
+
+func sell_selected_tower() -> void:
+    if selected_tower_index < 0 or selected_tower_index >= towers.size():
+        show_notice("Сначала выбери башню")
+        return
+    var tower: Dictionary = towers[selected_tower_index]
+    var refund: int = tower_sell_refund(tower)
+    var tower_name: String = "Костяная башня" if tower["type"] == "bone" else "Адская баллиста"
+    burst_particles(Vector2(float(tower["x"]), FLOOR + float(LANE_OFFSETS[int(tower.get("lane", 1))]) - 55.0), Color("e3c1a0"), 8)
+    towers.remove_at(selected_tower_index)
+    selected_tower_index = -1
+    mana += refund
+    show_notice("%s продана: возвращено %d маны" % [tower_name, refund])
 
 func upgrade_tower(mx: float, lane: int) -> void:
     for tower in towers:
@@ -1031,7 +1053,7 @@ func _draw() -> void:
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
         label("M — атмосфера: %d/4  |  N — эффекты: %d/4" % [music_volume, effects_volume], 375, 463, 19, Color("d5bfda"))
-        label("Версия 2.1 RC48: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
+        label("Версия 2.1 RC49: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         if phase == "win":
@@ -1244,16 +1266,23 @@ func _draw() -> void:
                 var price: int = 25 * level
                 box(Rect2(733.0, 562.0, 221.0, 74.0), Color("59415b"))
                 draw_rect(Rect2(733.0, 562.0, 221.0, 74.0), Color("cda6ba"), false, 2.0)
-                label("УЛУЧШИТЬ: %s" % ("MAX" if level >= 3 else "%d маны" % price), 743.0, 588.0, 18)
-                label("Уровень %d → %d" % [level, mini(level + 1, 3)], 743.0, 614.0, 18)
+                label("УЛУЧШИТЬ" if level < 3 else "МАКСИМУМ", 743.0, 588.0, 18)
+                label("%d маны • ур. %d" % [price, mini(level + 1, 3)] if level < 3 else "Уровень 3 / 3", 743.0, 614.0, 17)
                 box(Rect2(731.0, 272.0, 384.0, 125.0), Color(0.11, 0.075, 0.17, 0.93))
                 draw_rect(Rect2(731.0, 272.0, 384.0, 125.0), Color("b98faa"), false, 2.0)
                 label("%s  •  Уровень %d" % ["КОСТЯНАЯ" if inspected["type"] == "bone" else "БАЛЛИСТА", level], 746.0, 300.0, 19, Color("eed3b4"))
                 label("HP: %d / %d   Линия: %d" % [ceili(float(inspected.get("hp", 0.0))), ceili(tower_max_hp(inspected)), int(inspected.get("lane", 1)) + 1], 746.0, 331.0, 18)
                 var damage: float = (22.0 if inspected["type"] == "bone" else 65.0) * (1.0 + 0.45 * float(level - 1)) * (1.35 if tower_power_level > 0 else 1.0)
                 label("Урон: %d    Дальность: %d" % [ceili(damage), 260 if inspected["type"] == "bone" else 375], 746.0, 359.0, 18)
-            label("Линия %d" % (selected_lane + 1), 978.0, 591.0, 20, Color("f3d6ab"))
-            label("Клик по полю", 972.0, 614.0, 17)
+            box(Rect2(970.0, 562.0, 165.0, 74.0), Color("49303f") if selected_tower_index >= 0 and selected_tower_index < towers.size() else Color("292433"))
+            draw_rect(Rect2(970.0, 562.0, 165.0, 74.0), Color("cf9d9d") if selected_tower_index >= 0 and selected_tower_index < towers.size() else Color("66556e"), false, 2.0)
+            if selected_tower_index >= 0 and selected_tower_index < towers.size():
+                var sell_refund: int = tower_sell_refund(towers[selected_tower_index])
+                label("ПРОДАТЬ", 1000.0, 588.0, 19, Color("f3c1bb"))
+                label("+%d маны" % sell_refund, 1000.0, 614.0, 17)
+            else:
+                label("ЛИНИЯ %d" % (selected_lane + 1), 987.0, 588.0, 18, Color("f3d6ab"))
+                label("Выбери башню", 982.0, 614.0, 15)
             if current_day == 1 and phase == "day" and towers.is_empty():
                 box(Rect2(245, 176, 688, 73), Color(0.15, 0.11, 0.22, 0.85))
                 label("ПЕРВЫЙ ДЕНЬ: 1 — костяная башня (30 маны)", 267, 205, 22, Color("f4d09b"))
