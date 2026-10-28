@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.0-rc16: victory and defeat scenes, Godot 4.2+
+## Last Ritual v2.0-rc17: atmospheric title screen, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -724,11 +724,28 @@ func _draw() -> void:
             var drift := fmod(float(fog * 233) + atmosphere_clock * (9.0 + float(fog % 3) * 4.0), W + 300.0) - 150.0
             draw_circle(Vector2(drift, FLOOR - 42.0 - float(fog % 2) * 28.0), 92.0 + float(fog % 3) * 18.0, Color(0.55, 0.48, 0.68, 0.055))
     if phase == "title":
-        draw_circle(Vector2(880, 170), 105, Color("5e244e"))
-        label("ПОСЛЕДНИЙ РИТУАЛ", 225, 255, 52, Color("e3b3e9"))
+        var title_pulse: float = 0.5 + 0.5 * sin(atmosphere_clock * 1.7)
+        draw_circle(Vector2(885, 155), 104.0 + title_pulse * 8.0, Color(0.48, 0.19, 0.46, 0.19))
+        draw_circle(Vector2(885, 155), 82.0, Color("5e244e"))
+        for tower_shape in range(5):
+            var tx: float = 190.0 + float(tower_shape) * 185.0
+            var th: float = 160.0 + float(tower_shape % 3) * 48.0
+            box(Rect2(tx, FLOOR - th, 80, th), Color("272039"))
+            for tooth in range(3):
+                box(Rect2(tx + float(tooth) * 26.0, FLOOR - th - 18.0, 19, 22), Color("272039"))
+            box(Rect2(tx + 30.0, FLOOR - th + 46.0, 16, 33), Color("65405e"))
+        box(Rect2(0, FLOOR, W, H - FLOOR), Color("242030"))
+        for mist in range(7):
+            var mx: float = fmod(float(mist * 202) + atmosphere_clock * 13.0, W + 250.0) - 125.0
+            draw_circle(Vector2(mx, FLOOR - 24.0), 82.0, Color(0.62, 0.49, 0.76, 0.08))
+        for spark in range(14):
+            var sx: float = fmod(float(spark * 83) + atmosphere_clock * (5.0 + float(spark % 4)), W)
+            var sy: float = 145.0 + float((spark * 47) % 310) + sin(atmosphere_clock * 1.2 + float(spark)) * 9.0
+            draw_circle(Vector2(sx, sy), 2.0, Color(0.86, 0.59, 0.96, 0.3 + 0.2 * title_pulse))
+        label("ПОСЛЕДНИЙ РИТУАЛ", 225, 255, 52, Color(0.78 + 0.12 * title_pulse, 0.56 + 0.15 * title_pulse, 0.86 + 0.10 * title_pulse))
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
-        label("Версия 2.0 RC16: пять дней, пять ночей, пять камней", 325, 474, 18, Color("aaaaaa"))
+        label("Версия 2.0 RC17: пять дней, пять ночей, пять камней", 325, 474, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         if phase == "win":
