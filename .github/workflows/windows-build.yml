@@ -28,13 +28,13 @@ jobs:
           unzip -q Godot_v4.4.1-stable_export_templates.tpz
           cp templates/* ~/.local/share/godot/export_templates/4.4.1.stable/
       - name: Import assets and check scripts
-        run: ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --editor --quit
+        run: timeout 120s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --editor --quit
       - name: Run campaign smoke tests
-        run: ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --script res://tests/campaign_smoke.gd
+        run: timeout 120s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --script res://tests/campaign_smoke.gd
       - name: Export Windows EXE
         run: |
           mkdir -p build/windows
-          ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --export-release "Windows Desktop" build/windows/LastRitual.exe
+          timeout 180s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --export-release "Windows Desktop" build/windows/LastRitual.exe
           test -s build/windows/LastRitual.exe
       - uses: actions/upload-artifact@v4
         with:
