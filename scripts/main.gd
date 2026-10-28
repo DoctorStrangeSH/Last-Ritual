@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.0-rc21: first-day building guidance, Godot 4.2+
+## Last Ritual v2.0-rc22: night onboarding, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -452,7 +452,7 @@ func begin_night() -> void:
     else:
         platforms = [Rect2(205, 473, 135, 16), Rect2(415, 413, 145, 16), Rect2(640, 462, 130, 16), Rect2(830, 396, 135, 16)]
         trap_positions = [375.0, 775.0]
-    show_notice("Ночь %d: найди Камень Бездны!" % current_day)
+    show_notice("Ночь %d: победи хранителя, забери камень и вернись к порталу слева!" % current_day)
 
 func update_day(delta: float) -> void:
     day_elapsed += delta
@@ -542,14 +542,15 @@ func heal_player() -> void:
         mana -= 20
         player_hp = minf(100.0, player_hp + 30.0)
         potions_used += 1
-        show_notice("Тёмная магия восстановила 30 здоровья")
+        play_cue("magic")
+        show_notice("Тёмная магия восстановила 30 здоровья (+30 HP, -20 маны)")
 
 func shadow_dash() -> void:
     if dash_cooldown > 0.0:
-        show_notice("Теневой рывок восстанавливается")
+        show_notice("Рывок ещё недоступен: осталось %.1f с" % dash_cooldown)
         return
     if mana < 15:
-        show_notice("Теневой рывок требует 15 маны")
+        show_notice("Для рывка нужно 15 маны (не хватает %d)" % (15 - mana))
         return
     mana -= 15
     dash_cooldown = 2.5
@@ -881,7 +882,7 @@ func _draw() -> void:
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
         label("M — атмосфера: %d/4  |  N — эффекты: %d/4" % [music_volume, effects_volume], 375, 463, 19, Color("d5bfda"))
-        label("Версия 2.0 RC21: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
+        label("Версия 2.0 RC22: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         if phase == "win":
@@ -1116,6 +1117,15 @@ func _draw() -> void:
             label(trap_warning, 25, 106, 18, Color("f38c95") if spike_phase >= 2.1 else (Color("f1c780") if spike_phase >= 1.4 else Color("9fd7bd")))
             box(Rect2(25, 117, 250, 7), Color("383748"))
             box(Rect2(25, 117, 250.0 * clampf(spike_phase / 3.1, 0.0, 1.0), 7), Color("e8797a") if spike_phase >= 2.1 else Color("d9b67b"))
+            var can_heal: bool = mana >= 20 and player_hp < 100.0
+            var can_dash: bool = mana >= 15 and dash_cooldown <= 0.0
+            label("H: лечение 20 маны %s  |  Shift: рывок 15 маны %s" % ["[ГОТОВО]" if can_heal else "[НЕДОСТУПНО]", "[ГОТОВО]" if can_dash else "[НЕДОСТУПНО]"], 25, 152, 17, Color("c8bedf"))
+            if current_day == 1 and boss_hp > 0.0 and not stone_taken:
+                label("ЦЕЛЬ: победи хранителя справа, затем забери Камень Бездны.", 25, 181, 17, Color("f4d29a"))
+            elif boss_hp <= 0.0 and not stone_taken:
+                label("ЦЕЛЬ: забери светящийся камень справа!", 25, 181, 19, Color("f4d29a"))
+            elif stone_taken:
+                label("ЦЕЛЬ: камень твой! Вернись к ПОРТАЛУ слева.", 25, 181, 19, Color("a8e9d0"))
             label("A/D: ходьба | W / Space: прыжок | J: удар | H: лечение | Shift: рывок | P: пауза", 20, 625, 18)
     for particle in particles:
         var alpha: float = clampf(float(particle["life"]) / 0.55, 0.0, 1.0)
