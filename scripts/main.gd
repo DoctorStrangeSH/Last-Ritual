@@ -1076,18 +1076,29 @@ func _draw() -> void:
                 box(Rect2(fx - 3.0, 400, 6, 23), Color("604239"))
                 draw_colored_polygon(PackedVector2Array([Vector2(fx - 7.0, 399), Vector2(fx + flicker * 3.0, 377.0 - flicker * 3.0), Vector2(fx + 7.0, 399)]), Color("f6a24c"))
                 draw_circle(Vector2(fx, 394), 4.0, Color("ffe0a0"))
+            # Three visible siege lanes; selected lane is outlined.
+            for lane_index in range(3):
+                var lane_y: float = FLOOR + float(LANE_OFFSETS[lane_index])
+                draw_line(Vector2(239.0, lane_y), Vector2(1125.0, lane_y), Color("b7a5ad", 0.47 if selected_lane == lane_index else 0.22), 2.0)
+                label("%d" % (lane_index + 1), 224.0, lane_y - 7.0, 15, Color("f1c6d3"))
             for tower in towers:
                 var tx: float = tower["x"]
+                var tower_y: float = FLOOR + float(LANE_OFFSETS[int(tower.get("lane", 1))])
                 var tower_art: Texture2D = preload("res://assets/towers/bone_tower.svg") if tower["type"] == "bone" else preload("res://assets/towers/infernal_ballista.svg")
-                draw_texture_rect(tower_art, Rect2(tx - 30.0, FLOOR - 106.0, 60.0, 106.0), false)
+                draw_texture_rect(tower_art, Rect2(tx - 30.0, tower_y - 106.0, 60.0, 106.0), false)
+                var hp_ratio: float = clampf(float(tower.get("hp", tower_max_hp(tower))) / tower_max_hp(tower), 0.0, 1.0)
+                box(Rect2(tx - 24.0, tower_y - 120.0, 48.0, 6.0), Color("442b36"))
+                box(Rect2(tx - 24.0, tower_y - 120.0, 48.0 * hp_ratio, 6.0), Color("88d0a2") if hp_ratio > 0.3 else Color("ec7778"))
+                label("%d" % int(tower.get("level", 1)), tx - 5.0, tower_y - 126.0, 16, Color("ffe3a5"))
                 if float(tower.get("disabled", 0.0)) > 0.0:
-                    draw_line(Vector2(tx - 12, FLOOR - 96), Vector2(tx + 12, FLOOR - 72), Color("e1bac3"), 3.0)
+                    draw_line(Vector2(tx - 12, tower_y - 96), Vector2(tx + 12, tower_y - 72), Color("e1bac3"), 3.0)
             for e in enemies:
                 var ex: float = e["x"]
+                var enemy_lane_offset: float = float(LANE_OFFSETS[int(e.get("lane", 1))])
                 var enemy_color := Color("7adbe4") if e["kind"] == "saboteur" else (Color("edc265") if e["kind"] == "runner" else (Color("d66c69") if e["kind"] == "brute" else Color("b0af9b")))
                 if e["kind"] == "raider":
                     var step_y: float = sin(atmosphere_clock * 7.0 + ex * 0.08) * 2.0
-                    draw_texture_rect(preload("res://assets/enemies/raider.svg"), Rect2(ex - 21.0, FLOOR - 62.0 + step_y, 42.0, 62.0), false)
+                    draw_texture_rect(preload("res://assets/enemies/raider.svg"), Rect2(ex - 21.0, FLOOR - 62.0 + step_y + enemy_lane_offset, 42.0, 62.0), false)
                     box(Rect2(ex - 17, FLOOR - 67, 34.0 * clampf(float(e["hp"]) / float(e["max_hp"]), 0.0, 1.0), 4), Color("f57c79"))
                     continue
                 if e["kind"] == "saboteur":
@@ -1099,7 +1110,7 @@ func _draw() -> void:
                     var sprite_path := preload("res://assets/enemies/runner.svg") if e["kind"] == "runner" else preload("res://assets/enemies/brute.svg")
                     var sprite_size := Vector2(41.0, 57.0) if e["kind"] == "runner" else Vector2(62.0, 77.0)
                     var gait: float = sin(atmosphere_clock * (13.0 if e["kind"] == "runner" else 5.0) + ex * 0.07) * (3.0 if e["kind"] == "runner" else 1.5)
-                    draw_texture_rect(sprite_path, Rect2(ex - sprite_size.x * 0.5, FLOOR - sprite_size.y + gait, sprite_size.x, sprite_size.y), false)
+                    draw_texture_rect(sprite_path, Rect2(ex - sprite_size.x * 0.5, FLOOR - sprite_size.y + gait + enemy_lane_offset, sprite_size.x, sprite_size.y), false)
                     box(Rect2(ex - 17.0, FLOOR - sprite_size.y - 7.0, 34.0 * clampf(float(e["hp"]) / float(e["max_hp"]), 0.0, 1.0), 4.0), Color("f57c79"))
                     continue
                 var march: float = sin(atmosphere_clock * (11.0 if e["kind"] == "runner" else 6.0) + ex * 0.05) * 3.0
@@ -1123,10 +1134,11 @@ func _draw() -> void:
                 draw_circle(Vector2(ex + 4, FLOOR - height - 9 + march), 2.0, Color("ffc2a3"))
                 box(Rect2(ex - 17, FLOOR - 53, 34 * e["hp"] / e["max_hp"], 4), Color("f57c79"))
             var cursor_x := get_global_mouse_position().x
+            var cursor_lane_y: float = FLOOR + float(LANE_OFFSETS[selected_lane])
             if cursor_x >= 245.0 and cursor_x <= 1020.0:
                 var range_radius := 260.0 if selected_build == "bone" else 375.0
-                draw_arc(Vector2(cursor_x, FLOOR - 72), range_radius, PI, TAU, 28, Color("72aa9a", 0.28), 2.0)
-                box(Rect2(cursor_x - 17.0, FLOOR - 74.0, 34, 74), Color("619d9c", 0.46) if selected_build == "bone" else Color("ba7954", 0.46))
+                draw_arc(Vector2(cursor_x, cursor_lane_y - 72), range_radius, PI, TAU, 28, Color("72aa9a", 0.28), 2.0)
+                box(Rect2(cursor_x - 17.0, cursor_lane_y - 74.0, 34, 74), Color("619d9c", 0.46) if selected_build == "bone" else Color("ba7954", 0.46))
             draw_gothic_hud_panel(150.0)
             label("ФИНАЛЬНЫЙ ШТУРМ — %d с" % ceili(maxf(0.0, final_timer)) if phase == "final_siege" else "ДЕНЬ %d / 5  •  ОСАДА" % current_day, 25, 35, 27, Color("f8c59e"))
             var siege_status := "Ритуал: %02d с" % ceili(maxf(final_timer, 0.0)) if phase == "final_siege" else "До ночи: %02d с" % ceili(maxf(time_left, 0.0))
@@ -1138,6 +1150,7 @@ func _draw() -> void:
             box(Rect2(25, 82, 260, 13), Color("553840"))
             box(Rect2(25, 82, 260.0 * clampf(wall_hp / MAX_WALL, 0.0, 1.0), 13), Color("8cbe88") if wall_hp > 30.0 else Color("ed6b73"))
             label("Убийств: %d  |  Врагов: %d  |  Выбрано: %s" % [kills_today, enemies.size(), "Костяная" if selected_build == "bone" else "Баллиста"], 25, 126, 18)
+            label("Линия: %d (клавиши 3/4/5)  |  Ctrl+ЛКМ: улучшить башню" % (selected_lane + 1), 25, 161, 17, Color("f1d5ac"))
             label("Цена: %d маны  |  Можно построить: %s" % [30 if selected_build == "bone" else 55, "ДА" if mana >= (30 if selected_build == "bone" else 55) else "НЕТ"], 25, 151, 17, Color("9ed9ad") if mana >= (30 if selected_build == "bone" else 55) else Color("f3a0a0"))
             if current_day == 1 and phase == "day" and towers.is_empty():
                 box(Rect2(245, 176, 688, 73), Color(0.15, 0.11, 0.22, 0.85))
