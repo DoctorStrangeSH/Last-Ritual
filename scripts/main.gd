@@ -1,11 +1,12 @@
 extends Node2D
-## Last Ritual v2.0-rc19: ambient soundscapes, Godot 4.2+
+## Last Ritual v2.0-rc20: persistent audio settings, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
 const DAY_LENGTH := 56.0
 const MAX_WALL := 100.0
 const SAVE_PATH := "user://campaign_v1.json"
+const AUDIO_SETTINGS_PATH := "user://audio_settings.cfg"
 var save_path := SAVE_PATH
 var phase := "title"
 var time_left := DAY_LENGTH
@@ -66,10 +67,14 @@ var next_audio_channel := 0
 var hit_sound_cooldown := 0.0
 var ambient_player: AudioStreamPlayer
 var ambient_phase := ""
+var music_volume := 3
+var effects_volume := 3
 
 func _ready() -> void:
     font = ThemeDB.fallback_font
     setup_audio()
+    load_audio_settings()
+    apply_audio_volumes()
     reset_all()
 
 func reset_all() -> void:
@@ -158,6 +163,18 @@ func _process(delta: float) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
     if event is InputEventKey and event.pressed and not event.echo:
+        if event.keycode == KEY_M:
+            music_volume = (music_volume + 1) % 5
+            apply_audio_volumes()
+            save_audio_settings()
+            show_notice("Атмосфера: %d/4" % music_volume)
+            return
+        if event.keycode == KEY_N:
+            effects_volume = (effects_volume + 1) % 5
+            apply_audio_volumes()
+            save_audio_settings()
+            show_notice("Эффекты: %d/4" % effects_volume)
+            return
         if event.keycode == KEY_P and phase != "title" and phase != "win" and phase != "lose":
             paused = not paused
             queue_redraw()
@@ -732,6 +749,29 @@ func setup_audio() -> void:
         add_child(audio_player)
         audio_players.append(audio_player)
 
+func apply_audio_volumes() -> void:
+    if ambient_player != null:
+        ambient_player.volume_db = -80.0 if music_volume == 0 else (-31.0 + float(music_volume) * 2.0)
+    for audio_player in audio_players:
+        audio_player.volume_db = -80.0 if effects_volume == 0 else (-21.0 + float(effects_volume) * 4.0)
+
+func save_audio_settings() -> void:
+    var config := ConfigFile.new()
+    config.set_value("audio", "ambient", music_volume)
+    config.set_value("audio", "effects", effects_volume)
+    config.save(AUDIO_SETTINGS_PATH)
+
+func load_audio_settings() -> void:
+    var config := ConfigFile.new()
+    if config.load(AUDIO_SETTINGS_PATH) != OK:
+        return
+    var ambient_value: Variant = config.get_value("audio", "ambient", 3)
+    var effects_value: Variant = config.get_value("audio", "effects", 3)
+    if ambient_value is int and ambient_value >= 0 and ambient_value <= 4:
+        music_volume = ambient_value
+    if effects_value is int and effects_value >= 0 and effects_value <= 4:
+        effects_volume = effects_value
+
 func update_ambience() -> void:
     if ambient_player == null:
         return
@@ -838,7 +878,8 @@ func _draw() -> void:
         label("ПОСЛЕДНИЙ РИТУАЛ", 225, 255, 52, Color(0.78 + 0.12 * title_pulse, 0.56 + 0.15 * title_pulse, 0.86 + 0.10 * title_pulse))
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
-        label("Версия 2.0 RC19: пять дней, пять ночей, пять камней", 325, 474, 18, Color("aaaaaa"))
+        label("M — атмосфера: %d/4  |  N — эффекты: %d/4" % [music_volume, effects_volume], 375, 463, 19, Color("d5bfda"))
+        label("Версия 2.0 RC20: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         if phase == "win":
