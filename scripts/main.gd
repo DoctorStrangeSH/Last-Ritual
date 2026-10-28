@@ -13,6 +13,8 @@ var legacy_level := 0
 var achievement_wins := 0
 var achievement_best_day := 1
 var legacy_damage_level := 0
+var legacy_hero_level := 0
+var legacy_necro_level := 0
 var achievement_nightmare := false
 var meta_paid_this_run := false
 var reward_bone_bonus := 0
@@ -105,7 +107,7 @@ func _ready() -> void:
 func save_meta() -> void:
     var file := FileAccess.open(META_PATH, FileAccess.WRITE)
     if file != null:
-        file.store_string(JSON.stringify({"difficulty": difficulty, "shards": legacy_shards, "level": legacy_level, "wins": achievement_wins, "best_day": achievement_best_day, "damage_level": legacy_damage_level, "nightmare": achievement_nightmare}))
+        file.store_string(JSON.stringify({"difficulty": difficulty, "shards": legacy_shards, "level": legacy_level, "wins": achievement_wins, "best_day": achievement_best_day, "damage_level": legacy_damage_level, "hero_level": legacy_hero_level, "necro_level": legacy_necro_level, "nightmare": achievement_nightmare}))
 
 func load_meta() -> void:
     if not FileAccess.file_exists(META_PATH):
@@ -122,6 +124,8 @@ func load_meta() -> void:
     achievement_wins = clampi(int(data.get("wins", 0)), 0, 99999)
     achievement_best_day = clampi(int(data.get("best_day", 1)), 1, 5)
     legacy_damage_level = clampi(int(data.get("damage_level", 0)), 0, 5)
+    legacy_hero_level = clampi(int(data.get("hero_level", 0)), 0, 5)
+    legacy_necro_level = clampi(int(data.get("necro_level", 0)), 0, 5)
     achievement_nightmare = bool(data.get("nightmare", false))
 
 func start_run() -> void:
@@ -149,6 +153,23 @@ func buy_legacy_damage() -> void:
     legacy_damage_level += 1
     save_meta()
     show_notice("Урон башен усилен навсегда!")
+
+func buy_talent(kind: String) -> void:
+    if kind != "hero" and kind != "necro":
+        return
+    var level: int = legacy_hero_level if kind == "hero" else legacy_necro_level
+    var cost: int = (3 if kind == "hero" else 5) + level * 3
+    if level >= 5 or legacy_shards < cost:
+        show_notice("Недостаточно осколков или максимальный уровень!")
+        return
+    legacy_shards -= cost
+    if kind == "hero":
+        legacy_hero_level += 1
+        show_notice("Герой усилился: +3 урона за уровень")
+    else:
+        legacy_necro_level += 1
+        show_notice("Некромантия усилена: +20 HP скелетам за уровень")
+    save_meta()
 
 func award_run(is_win: bool) -> void:
     if meta_paid_this_run:
@@ -514,6 +535,14 @@ func _input(event: InputEvent) -> void:
         if menu_page == "achievements":
             menu_page = "main"
             return
+        if menu_page == "talents":
+            if menu_click.y >= 300.0 and menu_click.y < 345.0:
+                buy_talent("hero")
+            elif menu_click.y >= 350.0 and menu_click.y < 395.0:
+                buy_talent("necro")
+            elif menu_click.y >= 400.0 and menu_click.y < 495.0:
+                menu_page = "legacy"
+            return
         if menu_click.y >= 300.0 and menu_click.y < 345.0:
             if menu_page == "main":
                 start_run()
@@ -532,7 +561,7 @@ func _input(event: InputEvent) -> void:
             else:
                 menu_page = "legacy"
         elif menu_click.y >= 450.0 and menu_click.y < 495.0:
-            menu_page = "achievements" if menu_page == "main" else "main"
+            menu_page = "talents" if menu_page == "legacy" else "achievements"
         return
     if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed and phase == "night":
         var attack_target: Vector2 = get_global_mouse_position()
@@ -860,7 +889,7 @@ func update_day(delta: float) -> void:
         if tower["type"] == "necro":
             if tower["cooldown"] <= 0.0 and tower["disabled"] <= 0.0:
                 var summon_level: int = int(tower.get("level", 1))
-                skeletons.append({"x": float(tower["x"]) + 55.0, "lane": int(tower.get("lane", 1)), "hp": 65.0 + 30.0 * float(summon_level - 1) + (90.0 if legendary_boon == 2 else 0.0), "life": 10.0 if legendary_boon == 2 else 6.0})
+                skeletons.append({"x": float(tower["x"]) + 55.0, "lane": int(tower.get("lane", 1)), "hp": 65.0 + 30.0 * float(summon_level - 1) + 20.0 * float(legacy_necro_level) + (90.0 if legendary_boon == 2 else 0.0), "life": 10.0 if legendary_boon == 2 else 6.0})
                 tower["flash"] = 0.18
                 tower["flash_target_x"] = float(tower["x"]) + 55.0
                 tower["cooldown"] = maxf(4.0, 7.0 - float(summon_level - 1))
@@ -1098,17 +1127,18 @@ func attack() -> void:
     swing_timer = 0.16
     play_cue("hit")
     var reach := 88.0
+    var hero_damage: float = 24.0 + 3.0 * float(legacy_hero_level)
     for e in night_enemies:
         if (e["x"] - player.x) * facing >= -10.0 and (e["x"] - player.x) * facing < reach and absf(player.y - (FLOOR - 22.0)) < 75.0:
-            e["hp"] -= 24.0
+            e["hp"] -= hero_damage
             var enemy_hit_pos := Vector2(float(e["x"]), FLOOR - 25.0)
-            spawn_damage_popup(enemy_hit_pos, 24.0, Color("d7b0fa"))
+            spawn_damage_popup(enemy_hit_pos, hero_damage, Color("d7b0fa"))
             emit_impact(enemy_hit_pos, Color("d7b0fa"), 19.0)
             burst_particles(Vector2(float(e["x"]), FLOOR - 25.0), Color("bc8cec"), 5)
     if mage["hp"] > 0.0 and (mage["x"] - player.x) * facing >= -10.0 and (mage["x"] - player.x) * facing < reach and absf(player.y - (FLOOR - 60.0)) < 95.0:
-        mage["hp"] -= 24.0
+        mage["hp"] -= hero_damage
         var mage_hit_pos := Vector2(float(mage["x"]), FLOOR - 55.0)
-        spawn_damage_popup(mage_hit_pos, 24.0, Color("b4eaff"))
+        spawn_damage_popup(mage_hit_pos, hero_damage, Color("b4eaff"))
         emit_impact(mage_hit_pos, Color("d7b0fa"), 22.0)
         burst_particles(Vector2(float(mage["x"]), FLOOR - 55.0), Color("b4eaff"), 7)
         if mage["hp"] <= 0.0:
@@ -1117,8 +1147,8 @@ func attack() -> void:
             burst_particles(Vector2(float(mage["x"]), FLOOR - 54.0), Color("8acfff"), 17)
             show_notice("Маг Света повержен!")
     if boss_hp > 0.0 and (boss_pos.x - player.x) * facing >= -10.0 and (boss_pos.x - player.x) * facing < reach and absf(player.y - boss_pos.y) < 85.0:
-        boss_hp -= 18.0
-        spawn_damage_popup(boss_pos, 18.0, Color("ff9db9"))
+        boss_hp -= hero_damage * 0.75
+        spawn_damage_popup(boss_pos, hero_damage * 0.75, Color("ff9db9"))
         emit_impact(boss_pos, Color("f67ba2"), 28.0)
         burst_particles(boss_pos, Color("fb97bd"), 10)
         if boss_hp <= 0.0:
@@ -1340,7 +1370,12 @@ func _draw() -> void:
             label("СЛОЖНОСТЬ: %d / 4   [НАЖАТЬ]" % difficulty, 355, 330, 21, Color("ffdcae"))
             label("ПОВЫСИТЬ НАСЛЕДИЕ: %d оск." % (2 + legacy_level * 2), 355, 380, 21)
             label("УРОН БАШЕН: %d/5  •  %d оск." % [legacy_damage_level, 4 + legacy_damage_level * 3], 355, 430, 19)
-            label("НАЗАД  •  Осколки: %d" % legacy_shards, 390, 478, 19)
+            label("ТАЛАНТЫ ГЕРОЯ  •  Осколки: %d" % legacy_shards, 370, 478, 18)
+        elif menu_page == "talents":
+            label("ТЁМНЫЙ КЛИНОК: %d/5  •  %d оск." % [legacy_hero_level, 3 + legacy_hero_level * 3], 355, 330, 19, Color("ffdcae"))
+            label("КОСТЯНАЯ СТРАЖА: %d/5  •  %d оск." % [legacy_necro_level, 5 + legacy_necro_level * 3], 355, 380, 19)
+            label("НАЗАД К НАСЛЕДИЮ", 407, 430, 19)
+            label("+3 урона герою / +20 HP скелетам", 355, 478, 17)
         else:
             label("ПОБЕД: %d  •  ЛУЧШИЙ ДЕНЬ: %d/5" % [achievement_wins, achievement_best_day], 348, 337, 20, Color("ffdcae"))
             label("ПОКОРИТЕЛЬ КОШМАРА: %s" % ("ОТКРЫТО" if achievement_nightmare else "ЗАКРЫТО"), 352, 385, 19)
