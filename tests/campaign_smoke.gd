@@ -19,6 +19,7 @@ func run_tests() -> void:
         return
     var game := packed.instantiate()
     root.add_child(game)
+    game.save_path = "user://campaign_smoke_test.json"
     game.reset_all()
     check(game.current_day == 1, "initial day")
     game.phase = "ritual"
@@ -86,22 +87,22 @@ func run_tests() -> void:
     check(game.phase == "ritual" and game.current_day == 2 and game.stones_collected == 2, "checkpoint phase and progress")
     check(game.mana == 93 and game.souls == 11 and game.wall_hp == 78.0, "checkpoint resources")
     check(game.towers.size() == 1 and game.towers[0]["type"] == "fire", "checkpoint tower")
-    var corrupt := FileAccess.open("user://campaign_v1.json", FileAccess.WRITE)
+    var corrupt := FileAccess.open("user://campaign_smoke_test.json", FileAccess.WRITE)
     corrupt.store_string("{not valid json")
     corrupt.close()
     check(not game.load_campaign(), "corrupt save is rejected")
     var invalid := {"version": 1, "day": 2, "stones": 2, "mana": 90, "souls": 10, "wall_hp": 90, "tower_power": 0, "wall_ward": 0, "towers": [{"x": 400.0, "type": "bone"}, {"x": 420.0, "type": "bone"}]}
-    var bad_file := FileAccess.open("user://campaign_v1.json", FileAccess.WRITE)
+    var bad_file := FileAccess.open("user://campaign_smoke_test.json", FileAccess.WRITE)
     bad_file.store_string(JSON.stringify(invalid))
     bad_file.close()
     check(not game.load_campaign(), "overlapping saved towers rejected")
     invalid["towers"] = []
     invalid["stones"] = 1.5
-    bad_file = FileAccess.open("user://campaign_v1.json", FileAccess.WRITE)
+    bad_file = FileAccess.open("user://campaign_smoke_test.json", FileAccess.WRITE)
     bad_file.store_string(JSON.stringify(invalid))
     bad_file.close()
     check(not game.load_campaign(), "fractional stone count rejected")
-    DirAccess.remove_absolute(ProjectSettings.globalize_path("user://campaign_v1.json"))
+    DirAccess.remove_absolute(ProjectSettings.globalize_path("user://campaign_smoke_test.json"))
     game.queue_free()
     print("Failures: ", failures)
     quit(1 if failures > 0 else 0)
