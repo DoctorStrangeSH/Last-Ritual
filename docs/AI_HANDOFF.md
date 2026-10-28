@@ -179,3 +179,6 @@ Godot ещё не запускался в этой сессии. Существ�
 
 ## v2.1 RC50
 `apply_tower_shot()` централизует эффекты попаданий: bone ставит `slow_timer` и `slow_factor=0.62`; fire использует поле `critical`, множитель x1.8, splash 35% в пределах 78+4*(level-1) пикселей и только в пределах той же линии. В `update_day` создаются выстрелы с критическим шансом 18% + 4% за уровень. `tower_ability_description()` используется в HUD. Smoke tests добавлены для замедления, splash и crit.
+
+## v2.1 RC51
+`necro` tower, `skeletons` collection and `assets/towers/necromancer_tower.svg` added. Necro spawns a six-second skeletal blocker at x+55 on its lane every 7/6/5 seconds for levels 1/2/3. Enemy melee damages blocking skeleton before a tower. Summons clear at nightfall. Three tower cards are available in mouse toolbar, with key 6 also selecting necro. Smoke test verifies summon/absorption/reset. Review CI and gameplay balancing.
