@@ -22,6 +22,21 @@ func run_tests() -> void:
     game.save_path = "user://campaign_smoke_test.json"
     game.reset_all()
     check(game.current_day == 1, "initial day")
+    game.phase = "reward"
+    game.mana = 100
+    game.choose_reward(1)
+    check(game.phase == "ritual" and game.mana == 135 and game.reward_mana_bonus == 1, "mana boon applies once and opens altar")
+    game.choose_reward(1)
+    check(game.mana == 135, "reward cannot be selected twice")
+    game.phase = "reward"
+    game.choose_reward(0)
+    check(game.reward_bone_bonus == 1, "tower damage boon persists within run")
+    game.phase = "reward"
+    game.wall_hp = 45.0
+    game.choose_reward(2)
+    check(game.wall_hp == 80.0 and game.reward_ward_bonus == 1, "wall restoration boon")
+    game.reset_all()
+    check(game.reward_mana_bonus == 0 and game.reward_bone_bonus == 0 and game.reward_ward_bonus == 0, "boons reset between runs")
     game.legacy_shards = 8
     game.legacy_level = 0
     game.buy_legacy()
