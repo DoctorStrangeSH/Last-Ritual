@@ -49,7 +49,7 @@ var kills_today := 0
 var campaign_kills := 0
 var towers_built := 0
 var repairs_today := 0
-var selected_build := "bone"
+var selected_build := ""
 var selected_lane := 1
 const LANE_OFFSETS := [-110.0, -55.0, 0.0]
 var selected_tower_index := -1
@@ -91,7 +91,7 @@ func reset_all() -> void:
     campaign_kills = 0
     towers_built = 0
     repairs_today = 0
-    selected_build = "bone"
+    selected_build = ""
     selected_lane = 1
     selected_tower_index = -1
     day_elapsed = 0.0
@@ -422,7 +422,10 @@ func _input(event: InputEvent) -> void:
                 return
         selected_tower_index = -1
         dragging_tower = false
-        build_tower(selected_build, mouse.x, lane)
+        if selected_build == "":
+            show_notice("Сначала выбери башню в нижней панели")
+        else:
+            build_tower(selected_build, mouse.x, lane)
     else:
         if dragging_tower:
             dragging_tower = false
