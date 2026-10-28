@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.0-rc4: state transition safeguards, Godot 4.2+
+## Last Ritual v2.0-rc5: day statistics and saboteur regression, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -185,6 +185,8 @@ func resolve_altar() -> void:
         day_elapsed = 0.0
         spawn_timer = 1.0
         wave_count = 0
+        kills_today = 0
+        repairs_today = 0
         enemies.clear()
         shots.clear()
         player_hp = 100.0
