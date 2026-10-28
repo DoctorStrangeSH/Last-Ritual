@@ -1,5 +1,5 @@
 extends Node2D
-## Last Ritual v2.0-rc41: gothic gameplay HUD, Godot 4.2+
+## Last Ritual v2.0-rc42: gothic title and ritual UI, Godot 4.2+
 const W := 1152.0
 const H := 648.0
 const FLOOR := 550.0
@@ -901,11 +901,18 @@ func _draw() -> void:
             var sx: float = fmod(float(spark * 83) + atmosphere_clock * (5.0 + float(spark % 4)), W)
             var sy: float = 145.0 + float((spark * 47) % 310) + sin(atmosphere_clock * 1.2 + float(spark)) * 9.0
             draw_circle(Vector2(sx, sy), 2.0, Color(0.86, 0.59, 0.96, 0.3 + 0.2 * title_pulse))
+        # Dark ornamental title card preserves readability over animated silhouettes.
+        box(Rect2(164, 183, 824, 344), Color(0.09, 0.065, 0.14, 0.78))
+        draw_rect(Rect2(164, 183, 824, 344), Color("96739c"), false, 3.0)
+        draw_line(Vector2(194, 198), Vector2(958, 198), Color("d2a1b4"), 2.0)
+        draw_line(Vector2(194, 511), Vector2(958, 511), Color("866487"), 2.0)
+        for ornament in [192.0, 960.0]:
+            draw_colored_polygon(PackedVector2Array([Vector2(ornament, 208), Vector2(ornament + 10, 221), Vector2(ornament, 234), Vector2(ornament - 10, 221)]), Color("bb86b4"))
         label("ПОСЛЕДНИЙ РИТУАЛ", 225, 255, 52, Color(0.78 + 0.12 * title_pulse, 0.56 + 0.15 * title_pulse, 0.86 + 0.10 * title_pulse))
         label("Тёмный Лорд • Осада • Камень Бездны", 315, 320, 23)
         label("ENTER — начать новую игру | L — загрузить сохранение", 290, 415, 24, Color("f5cf84"))
         label("M — атмосфера: %d/4  |  N — эффекты: %d/4" % [music_volume, effects_volume], 375, 463, 19, Color("d5bfda"))
-        label("Версия 2.0 RC41: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
+        label("Версия 2.0 RC42: пять дней, пять ночей, пять камней", 325, 501, 18, Color("aaaaaa"))
         return
     if phase == "win" or phase == "lose":
         if phase == "win":
@@ -941,6 +948,13 @@ func _draw() -> void:
         draw_circle(Vector2(575, 340), 161.0 + altar_glow * 11.0, Color(0.65, 0.24, 0.86, 0.07 + altar_glow * 0.07))
         draw_circle(Vector2(575, 340), 140, Color("382347"))
         draw_colored_polygon(PackedVector2Array([Vector2(575, 215), Vector2(640, 340), Vector2(575, 465), Vector2(510, 340)]), Color("a950d1"))
+        # Altar UI frame and upgrade slate are drawn behind controls.
+        box(Rect2(182, 90, 790, 78), Color(0.13, 0.075, 0.20, 0.91))
+        draw_rect(Rect2(182, 90, 790, 78), Color("9660aa"), false, 3.0)
+        box(Rect2(278, 387, 616, 77), Color(0.11, 0.08, 0.17, 0.90))
+        draw_rect(Rect2(278, 387, 616, 77), Color("80628f"), false, 2.0)
+        box(Rect2(200, 479, 755, 105), Color(0.11, 0.08, 0.17, 0.89))
+        draw_rect(Rect2(200, 479, 755, 105), Color("80628f"), false, 2.0)
         label("АЛТАРЬ БЕЗДНЫ", 398, 145, 39, Color("e9b5fb"))
         label("Камней: %d / 5. %s" % [stones_collected, "ENTER — продолжить осаду" if stones_collected < 5 else "Для ритуала нужно 50 маны и 8 душ"], 230, 515, 23)
         label("Мана: %d  |  Души: %d" % [mana, souls], 435, 554, 24, Color("edc477"))
