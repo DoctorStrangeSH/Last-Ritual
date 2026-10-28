@@ -16,6 +16,7 @@ var souls := 0
 var enemies: Array[Dictionary] = []
 var towers: Array[Dictionary] = []
 var shots: Array[Dictionary] = []
+var skeletons: Array[Dictionary] = []
 var spawn_timer := 0.0
 var wave_count := 0
 var player := Vector2(95, FLOOR - 25)
@@ -114,6 +115,7 @@ func reset_all() -> void:
     enemies.clear()
     towers.clear()
     shots.clear()
+    skeletons.clear()
     wave_count = 0
     spawn_timer = 1.0
     player = Vector2(95, FLOOR - 25)
@@ -210,6 +212,9 @@ func _unhandled_input(event: InputEvent) -> void:
             elif event.keycode == KEY_2:
                 selected_build = "fire"
                 show_notice("Выбрана адская баллиста: щёлкни мышью, чтобы построить")
+            elif event.keycode == KEY_6:
+                selected_build = "necro"
+                show_notice("Выбрана некромантская башня")
             elif event.keycode == KEY_3:
                 selected_lane = 0
                 show_notice("Линия 1: верхняя")
@@ -253,6 +258,7 @@ func resolve_altar() -> void:
         repairs_today = 0
         enemies.clear()
         shots.clear()
+        skeletons.clear()
         player_hp = 100.0
         towers.clear()
         selected_tower_index = -1
@@ -265,6 +271,7 @@ func resolve_altar() -> void:
         final_timer = 45.0
         enemies.clear()
         shots.clear()
+        skeletons.clear()
         spawn_timer = 0.3
         for tower in towers:
             tower["disabled"] = 0.0
@@ -342,7 +349,7 @@ func load_campaign() -> bool:
             return false
         if not item["x"] is float or not is_finite(float(item["x"])) or item["x"] < 245.0 or item["x"] > 1020.0:
             return false
-        if item["type"] != "bone" and item["type"] != "fire":
+        if item["type"] != "bone" and item["type"] != "fire" and item["type"] != "necro":
             return false
         var saved_lane: int = int(item.get("lane", 1))
         var saved_level: int = int(item.get("level", 1))
@@ -405,6 +412,10 @@ func _input(event: InputEvent) -> void:
                 selected_build = "fire"
                 selected_tower_index = -1
                 dragging_tower = true
+            elif mouse.x >= 420.0 and mouse.x <= 606.0:
+                selected_build = "necro"
+                selected_tower_index = -1
+                dragging_tower = true
             elif mouse.x >= 735.0 and mouse.x <= 955.0 and selected_tower_index >= 0 and selected_tower_index < towers.size():
                 var tower: Dictionary = towers[selected_tower_index]
                 upgrade_tower(float(tower["x"]), int(tower.get("lane", 1)))
@@ -463,7 +474,7 @@ func show_notice(message: String) -> void:
     notice_timer = 2.7
 
 func tower_max_hp(tower: Dictionary) -> float:
-    return (120.0 if tower["type"] == "bone" else 165.0) + float(int(tower.get("level", 1)) - 1) * 55.0
+    return (120.0 if tower["type"] == "bone" else (165.0 if tower["type"] == "fire" else 140.0)) + float(int(tower.get("level", 1)) - 1) * 55.0
 
 func lane_for_y(y: float) -> int:
     var best_lane: int = 0
@@ -476,7 +487,7 @@ func lane_for_y(y: float) -> int:
     return best_lane
 
 func tower_sell_refund(tower: Dictionary) -> int:
-    var invested: int = 30 if tower["type"] == "bone" else 55
+    var invested: int = 30 if tower["type"] == "bone" else (55 if tower["type"] == "fire" else 65)
     var level: int = int(tower.get("level", 1))
     for upgrade_step in range(1, level):
         invested += 25 * upgrade_step
@@ -488,7 +499,7 @@ func sell_selected_tower() -> void:
         return
     var tower: Dictionary = towers[selected_tower_index]
     var refund: int = tower_sell_refund(tower)
-    var tower_name: String = "Костяная башня" if tower["type"] == "bone" else "Адская баллиста"
+    var tower_name: String = "Костяная башня" if tower["type"] == "bone" else ("Адская баллиста" if tower["type"] == "fire" else "Некромантская башня")
     burst_particles(Vector2(float(tower["x"]), FLOOR + float(LANE_OFFSETS[int(tower.get("lane", 1))]) - 55.0), Color("e3c1a0"), 8)
     towers.remove_at(selected_tower_index)
     selected_tower_index = -1
@@ -514,7 +525,7 @@ func upgrade_tower(mx: float, lane: int) -> void:
     show_notice("Нет башни для улучшения на выбранной линии")
 
 func build_tower(kind: String, mx: float, lane: int = 1) -> void:
-    var cost := 30 if kind == "bone" else 55
+    var cost := 30 if kind == "bone" else (55 if kind == "fire" else 65)
     if mx < 245 or mx > 1020:
         show_notice("Ставь башни между крепостью и врагом")
         return
@@ -526,7 +537,7 @@ func build_tower(kind: String, mx: float, lane: int = 1) -> void:
             show_notice("Слишком близко: оставь между башнями не меньше 65 шагов")
             return
     mana -= cost
-    towers.append({"x": mx, "type": kind, "lane": lane, "level": 1, "hp": 120.0 if kind == "bone" else 165.0, "cooldown": 0.0})
+    towers.append({"x": mx, "type": kind, "lane": lane, "level": 1, "hp": 120.0 if kind == "bone" else (165.0 if kind == "fire" else 140.0), "cooldown": 0.0})
     selected_tower_index = towers.size() - 1
     towers_built += 1
     show_notice("Построено: " + ("Костяная башня" if kind == "bone" else "Адская баллиста"))
@@ -549,6 +560,7 @@ func begin_night() -> void:
     phase = "night"
     selected_tower_index = -1
     towers.clear()
+    skeletons.clear()
     stone_taken = false
     player = Vector2(95, FLOOR - 25)
     vel = Vector2.ZERO
@@ -600,6 +612,8 @@ func begin_night() -> void:
 func tower_ability_description(kind: String, level: int = 1) -> String:
     if kind == "bone":
         return "Замедление %.1f с" % (2.5 + 0.35 * float(level - 1))
+    if kind == "necro":
+        return "Скелет: %.0f HP / 6 с" % (65.0 + float(level - 1) * 30.0)
     return "Крит %.0f%% + взрыв" % ((0.18 + 0.04 * float(level - 1)) * 100.0)
 
 func apply_tower_shot(shot: Dictionary, target_index: int) -> void:
@@ -657,6 +671,12 @@ func update_day(delta: float) -> void:
     for tower in towers:
         tower["disabled"] = maxf(0.0, float(tower.get("disabled", 0.0)) - delta)
         tower["cooldown"] -= delta
+        if tower["type"] == "necro":
+            if tower["cooldown"] <= 0.0 and tower["disabled"] <= 0.0:
+                var summon_level: int = int(tower.get("level", 1))
+                skeletons.append({"x": float(tower["x"]) + 55.0, "lane": int(tower.get("lane", 1)), "hp": 65.0 + 30.0 * float(summon_level - 1), "life": 6.0})
+                tower["cooldown"] = maxf(4.0, 7.0 - float(summon_level - 1))
+            continue
         if tower["cooldown"] <= 0.0 and tower["disabled"] <= 0.0:
             var target_x := INF
             for enemy in enemies:
@@ -678,6 +698,8 @@ func update_day(delta: float) -> void:
         if closest_index >= 0:
             apply_tower_shot(shot, closest_index)
     shots.clear()
+    for sk in skeletons:
+        sk["life"] = float(sk["life"]) - delta
     for i in range(enemies.size() - 1, -1, -1):
         var enemy := enemies[i]
         if enemy["hp"] <= 0.0:
@@ -698,11 +720,17 @@ func update_day(delta: float) -> void:
                     show_notice("Диверсант отключил башню на 4,5 секунды!")
                     break
         var blocked_by_tower := false
-        for tower in towers:
-            if int(tower.get("lane", 1)) == int(enemy.get("lane", 1)) and absf(float(tower["x"]) - float(enemy["x"])) < 31.0 and float(tower.get("hp", tower_max_hp(tower))) > 0.0:
-                tower["hp"] = float(tower.get("hp", tower_max_hp(tower))) - float(enemy["damage"]) * delta * 1.5
+        for sk in skeletons:
+            if int(sk["lane"]) == int(enemy.get("lane", 1)) and absf(float(sk["x"]) - float(enemy["x"])) < 35.0 and float(sk["hp"]) > 0.0:
+                sk["hp"] = float(sk["hp"]) - float(enemy["damage"]) * delta * 2.0
                 blocked_by_tower = true
                 break
+        if not blocked_by_tower:
+            for tower in towers:
+                if int(tower.get("lane", 1)) == int(enemy.get("lane", 1)) and absf(float(tower["x"]) - float(enemy["x"])) < 31.0 and float(tower.get("hp", tower_max_hp(tower))) > 0.0:
+                    tower["hp"] = float(tower.get("hp", tower_max_hp(tower))) - float(enemy["damage"]) * delta * 1.5
+                    blocked_by_tower = true
+                    break
         enemy["slow_timer"] = maxf(0.0, float(enemy.get("slow_timer", 0.0)) - delta)
         var slow_factor: float = float(enemy.get("slow_factor", 1.0)) if float(enemy.get("slow_timer", 0.0)) > 0.0 else 1.0
         if enemy["x"] > 191.0 and not blocked_by_tower:
@@ -712,6 +740,9 @@ func update_day(delta: float) -> void:
             if enemy["hit_cd"] <= 0.0:
                 wall_hp -= enemy["damage"] * (0.75 if wall_ward_level > 0 else 1.0)
                 enemy["hit_cd"] = 1.3
+    for sk_index in range(skeletons.size() - 1, -1, -1):
+        if float(skeletons[sk_index]["life"]) <= 0.0 or float(skeletons[sk_index]["hp"]) <= 0.0:
+            skeletons.remove_at(sk_index)
     for tower_index in range(towers.size() - 1, -1, -1):
         if float(towers[tower_index].get("hp", 1.0)) <= 0.0:
             burst_particles(Vector2(float(towers[tower_index]["x"]), FLOOR - 68.0), Color("f5a47d"), 12)
