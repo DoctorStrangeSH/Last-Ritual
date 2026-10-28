@@ -165,7 +165,7 @@ func _process(delta: float) -> void:
             impacts.remove_at(i)
     for i in range(damage_popups.size() - 1, -1, -1):
         damage_popups[i]["life"] = float(damage_popups[i]["life"]) - delta
-        damage_popups[i]["pos"] = Vector2(damage_popups[i]["pos"]) + Vector2(0.0, -34.0 * delta)
+        damage_popups[i]["pos"] = damage_popups[i]["pos"] + Vector2(0.0, -34.0 * delta)
         if damage_popups[i]["life"] <= 0.0:
             damage_popups.remove_at(i)
     if phase == "day":
