@@ -48,7 +48,7 @@ func finish_phase(won: bool) -> void:
     else:
         completed_phases += 1
         phase_count += 1
-        phase = "victory" if phase_count >= 4 else "reward"
+        phase = "victory" if phase_count >= 6 else "reward"
     queue_redraw()
 
 func choose_run_reward(kind: String) -> bool:
@@ -122,7 +122,7 @@ func _draw() -> void:
     draw_string(ThemeDB.fallback_font, Vector2(360, 105), "LAST RITUAL", HORIZONTAL_ALIGNMENT_LEFT, -1, 42, Color("#e7d3a8"))
     match phase:
         "hub":
-            draw_string(ThemeDB.fallback_font, Vector2(360, 210), "RUN %d / 4  |  Choose the next phase" % (phase_count + 1), HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color.WHITE)
+            draw_string(ThemeDB.fallback_font, Vector2(360, 210), "RUN %d / 6  |  Choose the next phase" % (phase_count + 1), HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color.WHITE)
             var next_phase := expected_phase()
             draw_rect(DAY_BUTTON, Color("#527d70") if next_phase == "day" else Color("#343b47"))
             draw_rect(NIGHT_BUTTON, Color("#594d78") if next_phase == "night" else Color("#343b47"))
