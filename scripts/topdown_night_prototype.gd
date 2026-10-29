@@ -2,6 +2,7 @@ extends Node2D
 ## Isolated P1 top-down combat prototype; no save data or classic scene dependencies.
 const ARENA := Rect2(48.0, 68.0, 1056.0, 520.0)
 const SFX_SCRIPT = preload("res://scripts/procedural_sfx.gd")
+const FLOOR_SCRIPT = preload("res://scripts/dungeon_floor_graph.gd")
 var sfx: Node
 const SPEED := 240.0
 const ATTACK_RANGE := 155.0
@@ -20,6 +21,11 @@ const CHAMPION_ARMOR := 1
 const HERO_RADIUS := 16.0
 const ENEMY_RADIUS := 19.0
 var room_index := 0
+var exploration_enabled := false
+var floor_data: Dictionary = {}
+var visited_rooms: Dictionary = {}
+var cleared_rooms: Dictionary = {}
+const DOOR_POINTS := {Vector2i.RIGHT: Vector2(1080, 325), Vector2i.LEFT: Vector2(70, 325), Vector2i.UP: Vector2(576, 91), Vector2i.DOWN: Vector2(576, 562)}
 var difficulty := 0 # 0 normal, 1 hard, 2 nightmare
 var dungeon_seed := 0
 var room_variant := 0
@@ -64,7 +70,7 @@ func _ready() -> void:
     open_room(0)
 
 func open_room(index: int, override_variant: int = -1) -> void:
-    room_index = clampi(index, 0, 2)
+    room_index = index if exploration_enabled else clampi(index, 0, 2)
     player_pos = Vector2(160.0, 325.0)
     reward_available = false
     shop_open = false
@@ -79,6 +85,9 @@ func open_room(index: int, override_variant: int = -1) -> void:
     room_variant = override_variant if override_variant >= 0 else posmod(dungeon_seed + index, ROOM_KINDS.size())
     var mirror := 1.0 if posmod(dungeon_seed + room_index, 2) == 0 else -1.0
     build_room_cover()
+    if exploration_enabled and cleared_rooms.has(room_index):
+        queue_redraw()
+        return
     match room_variant:
         0:
             # Crypt: predictable melee + a ranged shooter with room to learn dodge.
@@ -236,8 +245,10 @@ func choose_relic(kind: String) -> bool:
         return false
     reward_available = false
     rewards_taken += 1
-    if room_index == 2:
+    if (exploration_enabled and room_index == int(floor_data["boss"])) or (not exploration_enabled and room_index == 2):
         run_state = "won"
+    if exploration_enabled:
+        cleared_rooms[room_index] = true
     relics.append(kind)
     reward_notice = "RELIC ACQUIRED: %s" % kind.to_upper()
     reward_notice_time = 1.4
@@ -254,7 +265,54 @@ func choose_relic(kind: String) -> bool:
     return true
 
 func door_available() -> bool:
+    if exploration_enabled:
+        return run_state == "playing" and not shop_open and enemies.is_empty() and not reward_available
     return run_state == "playing" and not shop_open and enemies.is_empty() and not reward_available and room_index < 2
+
+func enable_floor_exploration(seed_value: int = 0) -> void:
+    exploration_enabled = true
+    dungeon_seed = seed_value
+    floor_data = FLOOR_SCRIPT.generate_floor(seed_value)
+    visited_rooms.clear()
+    cleared_rooms.clear()
+    visited_rooms[0] = true
+    open_room(0)
+
+func door_neighbors() -> Dictionary:
+    var doors := {}
+    if not exploration_enabled or floor_data.is_empty():
+        return doors
+    var current: Dictionary = floor_data["rooms"][room_index]
+    var origin: Vector2i = current["grid"]
+    for id in current["neighbors"]:
+        var neighbor_id: int = int(id)
+        var delta: Vector2i = floor_data["rooms"][neighbor_id]["grid"] - origin
+        doors[delta] = neighbor_id
+    return doors
+
+func travel_through_door(direction: Vector2i) -> bool:
+    if not exploration_enabled or not door_available():
+        return false
+    var destinations := door_neighbors()
+    if not destinations.has(direction):
+        return false
+    var previous_room := room_index
+    if not cleared_rooms.has(previous_room):
+        cleared_rooms[previous_room] = true
+    var destination: int = int(destinations[direction])
+    visited_rooms[destination] = true
+    open_room(destination)
+    # Appear inside the opposite doorway, not on top of a wall.
+    if direction == Vector2i.RIGHT:
+        player_pos = Vector2(128, 325)
+    elif direction == Vector2i.LEFT:
+        player_pos = Vector2(1020, 325)
+    elif direction == Vector2i.UP:
+        player_pos = Vector2(576, 510)
+    else:
+        player_pos = Vector2(576, 137)
+    queue_redraw()
+    return true
 
 func next_room() -> bool:
     return choose_route(0)
@@ -336,6 +394,8 @@ func restart_run() -> void:
     reward_notice_time = 0.0
     run_state = "playing"
     open_room(0)
+    if exploration_enabled:
+        enable_floor_exploration(dungeon_seed)
 
 func take_damage(amount: int) -> void:
     if run_state != "playing" or invulnerable_time > 0.0 or amount <= 0:
@@ -519,7 +579,12 @@ func _unhandled_input(event: InputEvent) -> void:
             if not reward_available and not shop_open:
                 attack(get_global_mouse_position())
         elif event.button_index == MOUSE_BUTTON_RIGHT:
-            if player_pos.distance_to(Vector2(1080.0, 325.0)) < 85.0:
+            if exploration_enabled:
+                for direction in door_neighbors():
+                    if player_pos.distance_to(DOOR_POINTS[direction]) < 85.0 and event.position.distance_to(DOOR_POINTS[direction]) < 100.0:
+                        travel_through_door(direction)
+                        break
+            elif player_pos.distance_to(Vector2(1080.0, 325.0)) < 85.0:
                 next_room()
 
 # Процедурное оформление подземелья. Не влияет на стены и столкновения.
@@ -618,7 +683,7 @@ func _draw() -> void:
         for i in range(SHOP_RECTS.size()):
             draw_rect(SHOP_RECTS[i], Color("#4e8373") if i < 2 else Color("#775e6d"))
             draw_label("+1 УРОН / 2" if i == 0 else "+20 ЗДОРОВЬЯ / 1" if i == 1 else "УЙТИ", SHOP_RECTS[i].position + Vector2(10, 37), 17)
-    if door_available():
+    if door_available() and not exploration_enabled:
         draw_label("ВЫБЕРИТЕ ПУТЬ", Vector2(450, 473), 22)
         for i in range(ROUTE_RECTS.size()):
             var variant := posmod(dungeon_seed + room_index + 1 + i, ROOM_KINDS.size())
@@ -629,6 +694,26 @@ func _draw() -> void:
     else:
         draw_rect(Rect2(1058.0, 275.0, 46.0, 96.0), Color("#59495b"))
 
+    if exploration_enabled:
+        # Маленькая карта открытых комнат: неизвестные помещения скрыты.
+        var rooms: Array = floor_data["rooms"]
+        var here: Vector2i = rooms[room_index]["grid"]
+        for room in rooms:
+            var id: int = int(room["id"])
+            if not visited_rooms.has(id):
+                continue
+            var grid: Vector2i = room["grid"]
+            var point := Vector2(938.0 + float(grid.x - here.x) * 17.0, 162.0 + float(grid.y - here.y) * 17.0)
+            var tile := Rect2(point, Vector2(13, 13))
+            draw_rect(tile, Color("#e6d7a6") if id == room_index else Color("#5f927f") if cleared_rooms.has(id) else Color("#6a647e"))
+            draw_rect(tile, Color("#1a2630"), false, 1.0)
+        draw_label("КАРТА", Vector2(927, 151), 13, Color("#e6d7a6"))
+    if exploration_enabled:
+        draw_label("ЭТАЖ: %d/10  ИССЛЕДОВАНО: %d" % [room_index + 1, visited_rooms.size()], Vector2(390, 63), 15, Color("#e7d3a8"))
+        for direction in door_neighbors():
+            var door_point: Vector2 = DOOR_POINTS[direction]
+            draw_circle(door_point, 17.0, Color("#4b8b78") if door_available() else Color("#643e4b"))
+            draw_circle(door_point, 10.0, Color("#c4dbba") if door_available() else Color("#a58c90"))
     draw_rect(DASH_BUTTON, Color("#497b80") if dash_cooldown <= 0.0 and run_state == "playing" and not reward_available and not shop_open else Color("#353c46"))
     draw_label("РЫВОК / ПРОБЕЛ" if dash_cooldown <= 0.0 else "РЫВОК %.1f С" % dash_cooldown, DASH_BUTTON.position + Vector2(14, 26), 16, Color("#fff2c5"))
     draw_rect(HELP_BUTTON, Color("#526d9b") if help_visible else Color("#343b47"))
