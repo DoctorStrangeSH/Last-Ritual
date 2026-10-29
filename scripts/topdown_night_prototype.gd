@@ -467,6 +467,7 @@ func _process(delta: float) -> void:
     if Input.is_key_pressed(KEY_S): direction.y += 1.0
     move_player(direction, delta)
     update_enemy_attacks(delta)
+    update_guardian_boss(delta)
     for shot in hostile_shots.duplicate():
         var old_pos: Vector2 = shot["pos"]
         var new_pos: Vector2 = old_pos + shot["velocity"] * delta
@@ -495,6 +496,30 @@ func _process(delta: float) -> void:
                 moved = clipped_position(pos, pos - sideways, ENEMY_RADIUS)
         enemy["pos"] = moved
     queue_redraw()
+
+func update_guardian_boss(delta: float) -> void:
+    if run_state != "playing":
+        return
+    for enemy in enemies:
+        if enemy.get("role", "") != "boss":
+            continue
+        var enraged: bool = int(enemy["hp"]) <= 15
+        var cooldown: float = maxf(0.0, float(enemy.get("ritual_cooldown", 1.8)) - delta)
+        var warning: float = maxf(0.0, float(enemy.get("ritual_warning", 0.0)) - delta)
+        if float(enemy.get("ritual_warning", 0.0)) > 0.0:
+            enemy["ritual_warning"] = warning
+            if warning <= 0.0:
+                var strike_at: Vector2 = enemy.get("ritual_target", player_pos)
+                if player_pos.distance_to(strike_at) <= (76.0 if enraged else 58.0):
+                    take_damage(15 if enraged else 11)
+                enemy["ritual_cooldown"] = 2.1 if enraged else 3.2
+            continue
+        if cooldown <= 0.0:
+            enemy["ritual_target"] = player_pos
+            enemy["ritual_warning"] = 0.65 if enraged else 0.95
+            enemy["ritual_cooldown"] = 0.0
+        else:
+            enemy["ritual_cooldown"] = cooldown
 
 func update_enemy_attacks(delta: float) -> void:
     # Ranged units lock their aim during a visible windup rather than firing instantly.
@@ -682,6 +707,13 @@ func _draw() -> void:
             var attack_at: Vector2 = enemy["attack_target"]
             var melee_charge: float = 1.0 - melee_remaining / float(enemy.get("melee_warning_duration", MELEE_WARNING))
             draw_arc(attack_at, MELEE_HIT_RADIUS, -PI / 2.0, -PI / 2.0 + TAU * melee_charge, 32, Color("#ff7b89"), 5.0)
+        if enemy.get("role", "") == "boss" and float(enemy.get("ritual_warning", 0.0)) > 0.0:
+            var ritual_target: Vector2 = enemy.get("ritual_target", player_pos)
+            var second_phase: bool = int(enemy["hp"]) <= 15
+            var ritual_radius := 76.0 if second_phase else 58.0
+            draw_circle(ritual_target, ritual_radius, Color("#bb5264", 0.25))
+            draw_arc(ritual_target, ritual_radius, 0.0, TAU, 48, Color("#ffd495"), 4.0)
+            draw_label("РИТУАЛЬНЫЙ УДАР — УКЛОНИСЬ!", ritual_target + Vector2(-143, -91), 14, Color("#ffe3a8"))
         var enemy_color: Color = Color("#fff1d1") if float(enemy.get("hit_flash", 0.0)) > 0.0 else (Color("#aa70d6") if enemy["ranged"] else Color("#e3b967") if enemy.get("role", "") == "flanker" else Color("#b46773") if enemy.get("role", "") == "champion" else Color("#cf646c"))
         var enemy_radius: float = 34.0 if enemy.get("role", "") == "boss" else 25.0 if enemy.get("role", "") == "champion" else 16.0 if enemy.get("role", "") == "flanker" else 19.0
         draw_circle(enemy["pos"], 23.0 if float(enemy.get("hit_flash", 0.0)) > 0.0 else enemy_radius, enemy_color)
