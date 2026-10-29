@@ -8,7 +8,7 @@ var phase := "hub" # hub, day, night, reward, victory, defeat
 var phase_count := 0
 var difficulty := 0 # 0 normal, 1 hard, 2 nightmare
 const DIFFICULTY_NAMES := ["NORMAL", "HARD", "NIGHTMARE"]
-const DIFFICULTY_BUTTONS := [Rect2(240, 252, 200, 55), Rect2(475, 252, 200, 55), Rect2(710, 252, 200, 55)]
+const DIFFICULTY_BUTTONS := [Rect2(210, 242, 220, 55), Rect2(466, 242, 220, 55), Rect2(722, 242, 220, 55)]
 var completed_phases := 0
 var run_damage_bonus := 0
 var run_speed_bonus := 0.0
@@ -18,10 +18,10 @@ var run_bone_tower_bonus := 0
 var run_necro_kill_bonus := 0
 var active_game: Node2D
 var last_phase := "day"
-const META_HERO_BUTTON := Rect2(270, 510, 260, 65)
-const META_TREASURY_BUTTON := Rect2(620, 510, 260, 65)
-const DAY_BUTTON := Rect2(240, 330, 280, 90)
-const NIGHT_BUTTON := Rect2(630, 330, 280, 90)
+const META_HERO_BUTTON := Rect2(210, 510, 300, 65)
+const META_TREASURY_BUTTON := Rect2(642, 510, 300, 65)
+const DAY_BUTTON := Rect2(210, 338, 300, 82)
+const NIGHT_BUTTON := Rect2(642, 338, 300, 82)
 const REWARD_BUTTONS := [Rect2(80, 370, 225, 100), Rect2(350, 370, 225, 100), Rect2(620, 370, 225, 100), Rect2(890, 370, 225, 100)]
 
 func _ready() -> void:
@@ -169,23 +169,37 @@ func reset_run() -> void:
     queue_redraw()
 
 func _draw() -> void:
-    draw_rect(Rect2(0, 0, 1152, 648), Color("#141927"))
-    draw_string(ThemeDB.fallback_font, Vector2(360, 105), "LAST RITUAL", HORIZONTAL_ALIGNMENT_LEFT, -1, 42, Color("#e7d3a8"))
+    draw_rect(Rect2(0, 0, 1152, 648), Color("#101521"))
+    draw_rect(Rect2(72, 32, 1008, 112), Color("#20283a"))
+    draw_string(ThemeDB.fallback_font, Vector2(386, 83), "LAST RITUAL", HORIZONTAL_ALIGNMENT_LEFT, -1, 38, Color("#e7d3a8"))
+    draw_string(ThemeDB.fallback_font, Vector2(355, 116), "A TOP-DOWN ROGUELITE", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#9da9bf"))
     match phase:
         "hub":
-            draw_string(ThemeDB.fallback_font, Vector2(360, 210), "RUN %d / 6  |  Choose the next phase" % (phase_count + 1), HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color.WHITE)
+            draw_rect(Rect2(72, 160, 1008, 300), Color("#1a2232"))
+            draw_string(ThemeDB.fallback_font, Vector2(104, 198), "RUN %d / 6" % (phase_count + 1), HORIZONTAL_ALIGNMENT_LEFT, -1, 21, Color.WHITE)
+            draw_string(ThemeDB.fallback_font, Vector2(300, 198), "CHOOSE DIFFICULTY", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#9da9bf"))
             var next_phase := expected_phase()
             for i in range(DIFFICULTY_BUTTONS.size()):
                 draw_rect(DIFFICULTY_BUTTONS[i], Color("#906a3d") if difficulty == i else Color("#343b47"))
-                draw_string(ThemeDB.fallback_font, DIFFICULTY_BUTTONS[i].position + Vector2(16, 36), DIFFICULTY_NAMES[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 19, Color.WHITE)
-            draw_string(ThemeDB.fallback_font, Vector2(350, 318), "DIFFICULTY: %s    FRAGMENTS PER PHASE: %d" % [DIFFICULTY_NAMES[difficulty], 1 + difficulty], HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#e7d3a8"))
+                draw_string(ThemeDB.fallback_font, DIFFICULTY_BUTTONS[i].position + Vector2(18, 35), DIFFICULTY_NAMES[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color.WHITE)
+            var difficulty_help := ["Steady pace • 1 fragment / phase", "Stronger enemies • 2 fragments / phase", "Deadly enemies • 3 fragments / phase"]
+            draw_string(ThemeDB.fallback_font, Vector2(280, 318), difficulty_help[difficulty], HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#e7d3a8"))
             draw_rect(DAY_BUTTON, Color("#527d70") if next_phase == "day" else Color("#343b47"))
             draw_rect(NIGHT_BUTTON, Color("#594d78") if next_phase == "night" else Color("#343b47"))
-            draw_string(ThemeDB.fallback_font, Vector2(290, 382), "DAY: DEFEND" if next_phase == "day" else "DAY: COMPLETE", HORIZONTAL_ALIGNMENT_LEFT, -1, 24, Color.WHITE)
-            draw_string(ThemeDB.fallback_font, Vector2(665, 382), "NIGHT: EXPLORE" if next_phase == "night" else "NIGHT: LOCKED", HORIZONTAL_ALIGNMENT_LEFT, -1, 24, Color.WHITE)
-            draw_string(ThemeDB.fallback_font, Vector2(120, 455), "Run relics: +%d damage, +%d gold, +%d fire, +%d bone, +%d necro gold" % [run_damage_bonus, run_gold_bonus, run_fire_bonus, run_bone_tower_bonus, run_necro_kill_bonus], HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color("#c7c9d1"))
-            draw_string(ThemeDB.fallback_font, Vector2(390, 485), "SOUL FRAGMENTS: %d  (difficulty bonus per phase)" % meta.fragments, HORIZONTAL_ALIGNMENT_LEFT, -1, 19, Color("#e7d3a8"))
-            draw_string(ThemeDB.fallback_font, Vector2(270, 602), "RUNS %d   WINS %d   LOSSES %d   CLEARED %d" % [meta.runs_started, meta.runs_won, meta.runs_lost, meta.phases_cleared], HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#c7c9d1"))
+            draw_string(ThemeDB.fallback_font, DAY_BUTTON.position + Vector2(30, 35), "DAY: DEFEND" if next_phase == "day" else "DAY: COMPLETE", HORIZONTAL_ALIGNMENT_LEFT, -1, 21, Color.WHITE)
+            draw_string(ThemeDB.fallback_font, DAY_BUTTON.position + Vector2(30, 59), "Build towers • Protect the altar", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#c7d5d0"))
+            draw_string(ThemeDB.fallback_font, NIGHT_BUTTON.position + Vector2(30, 35), "NIGHT: EXPLORE" if next_phase == "night" else "NIGHT: LOCKED", HORIZONTAL_ALIGNMENT_LEFT, -1, 21, Color.WHITE)
+            draw_string(ThemeDB.fallback_font, NIGHT_BUTTON.position + Vector2(30, 59), "Fight • Find relics • Choose routes", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#d2c9e4"))
+            draw_string(ThemeDB.fallback_font, Vector2(104, 447), "RUN RELICS", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#9da9bf"))
+            draw_string(ThemeDB.fallback_font, Vector2(220, 447), "DMG +%d   GOLD +%d   FIRE +%d   BONE +%d   NECRO +%d" % [run_damage_bonus, run_gold_bonus, run_fire_bonus, run_bone_tower_bonus, run_necro_kill_bonus], HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#c7c9d1"))
+            draw_rect(Rect2(72, 474, 1008, 105), Color("#1a2232"))
+            draw_string(ThemeDB.fallback_font, Vector2(100, 500), "PERMANENT UPGRADES", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#9da9bf"))
+            draw_string(ThemeDB.fallback_font, Vector2(820, 500), "FRAGMENTS: %d" % meta.fragments, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#e7d3a8"))
+            draw_rect(META_HERO_BUTTON, Color("#526d9b") if meta.hero_level < 3 and meta.fragments >= meta.hero_level + 1 else Color("#343b47"))
+            draw_rect(META_TREASURY_BUTTON, Color("#527d70") if meta.treasury_level < 3 and meta.fragments >= meta.treasury_level + 1 else Color("#343b47"))
+            draw_string(ThemeDB.fallback_font, META_HERO_BUTTON.position + Vector2(12, 39), "HERO +1 DMG  Lv%d/3  COST %d" % [meta.hero_level, meta.hero_level + 1], HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
+            draw_string(ThemeDB.fallback_font, META_TREASURY_BUTTON.position + Vector2(12, 39), "DAY +10 GOLD  Lv%d/3  COST %d" % [meta.treasury_level, meta.treasury_level + 1], HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
+            draw_string(ThemeDB.fallback_font, Vector2(104, 606), "RUNS %d   WINS %d   LOSSES %d   PHASES %d" % [meta.runs_started, meta.runs_won, meta.runs_lost, meta.phases_cleared], HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#c7c9d1"))
             var badges := []
             if meta.achievement_unlocked("first_steps"):
                 badges.append("FIRST STEPS")
@@ -193,11 +207,7 @@ func _draw() -> void:
                 badges.append("SURVIVOR")
             if meta.achievement_unlocked("ritual_master"):
                 badges.append("RITUAL MASTER")
-            draw_string(ThemeDB.fallback_font, Vector2(270, 629), "ACHIEVEMENTS: " + (", ".join(badges) if not badges.is_empty() else "LOCKED"), HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#e7d3a8"))
-            draw_rect(META_HERO_BUTTON, Color("#526d9b") if meta.hero_level < 3 and meta.fragments >= meta.hero_level + 1 else Color("#343b47"))
-            draw_rect(META_TREASURY_BUTTON, Color("#527d70") if meta.treasury_level < 3 and meta.fragments >= meta.treasury_level + 1 else Color("#343b47"))
-            draw_string(ThemeDB.fallback_font, META_HERO_BUTTON.position + Vector2(9, 39), "HERO +1 DMG  Lv%d/3  %d FR" % [meta.hero_level, meta.hero_level + 1], HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
-            draw_string(ThemeDB.fallback_font, META_TREASURY_BUTTON.position + Vector2(9, 39), "DAY +10 GOLD  Lv%d/3  %d FR" % [meta.treasury_level, meta.treasury_level + 1], HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
+            draw_string(ThemeDB.fallback_font, Vector2(104, 630), "ACHIEVEMENTS: " + (", ".join(badges) if not badges.is_empty() else "Complete phases to unlock"), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#e7d3a8"))
         "reward":
             draw_string(ThemeDB.fallback_font, Vector2(410, 235), "CHOOSE A RUN RELIC", HORIZONTAL_ALIGNMENT_LEFT, -1, 26, Color.WHITE)
             var names := ["BONE: +1 HERO/TOWER", "EMBER: SPEED + FIRE", "GOLD: +30 START GOLD", "NECRO: +3 KILL GOLD"]
