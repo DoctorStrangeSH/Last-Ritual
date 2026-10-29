@@ -275,6 +275,14 @@ func run_tests() -> void:
     check(game.reward_card_at(Vector2(760.0, 300.0)) == 2, "reward card hitbox selects third card")
     check(game.reward_card_at(Vector2(425.0, 300.0)) == -1, "reward card gap is not clickable")
     check(game.reward_card_at(Vector2(150.0, 460.0)) == -1, "outside reward panel does not choose card")
+    game.reset_all()
+    game.towers.append({"x": 480.0, "type": "bone", "lane": 1, "level": 1, "hp": 120.0, "cooldown": 0.0})
+    var tower_center_y: float = game.FLOOR + float(game.LANE_OFFSETS[1]) - 50.0
+    check(game.tower_at_point(Vector2(480.0, tower_center_y)) == 0, "tower hover matches center of clickable sprite")
+    check(game.tower_at_point(Vector2(515.0, tower_center_y)) == 0, "tower hover includes clickable sprite edge")
+    check(game.tower_at_point(Vector2(516.0, tower_center_y)) == -1, "tower hover excludes outside edge")
+    check(game.tower_at_point(Vector2(480.0, game.FLOOR + 30.0)) == -1, "tower hover excludes bottom HUD")
+    game.reset_all()
     check(game.current_day == 1, "initial day")
     game.dungeon_route = 1
     game.platforms = [Rect2(200.0, 420.0, 135.0, 16.0)]
