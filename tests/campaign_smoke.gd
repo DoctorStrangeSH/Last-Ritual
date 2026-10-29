@@ -370,6 +370,21 @@ func run_tests() -> void:
     bad_file.store_string(JSON.stringify(invalid))
     bad_file.close()
     check(not game.load_campaign(), "overlapping saved towers rejected")
+    invalid["towers"] = [{"x": 400.0, "type": "bone", "lane": 1.5}]
+    bad_file = FileAccess.open("user://campaign_smoke_test.json", FileAccess.WRITE)
+    bad_file.store_string(JSON.stringify(invalid))
+    bad_file.close()
+    check(not game.load_campaign(), "fractional saved tower lane rejected")
+    invalid["towers"] = [{"x": 400.0, "type": "bone", "level": "2"}]
+    bad_file = FileAccess.open("user://campaign_smoke_test.json", FileAccess.WRITE)
+    bad_file.store_string(JSON.stringify(invalid))
+    bad_file.close()
+    check(not game.load_campaign(), "non-numeric saved tower level rejected")
+    invalid["towers"] = [{"x": 400.0, "type": "bone", "hp": "90"}]
+    bad_file = FileAccess.open("user://campaign_smoke_test.json", FileAccess.WRITE)
+    bad_file.store_string(JSON.stringify(invalid))
+    bad_file.close()
+    check(not game.load_campaign(), "non-numeric saved tower HP rejected")
     invalid["towers"] = []
     invalid["stones"] = 1.5
     bad_file = FileAccess.open("user://campaign_smoke_test.json", FileAccess.WRITE)
