@@ -299,6 +299,14 @@ func run_tests() -> void:
     game.towers[0]["level"] = 3
     check(not game.selected_tower_can_upgrade(), "upgrade button disabled at max level")
     game.reset_all()
+    game.reset_all()
+    check(not game.selected_tower_can_sell(), "sell button disabled with no selection")
+    game.towers.append({"x": 480.0, "type": "bone", "lane": 1, "level": 1, "hp": 120.0})
+    game.selected_tower_index = 0
+    check(game.selected_tower_can_sell(), "sell button enabled for selected tower")
+    game.selected_tower_index = 1
+    check(not game.selected_tower_can_sell(), "sell button disabled when selection index out of bounds")
+    game.reset_all()
     check(game.current_day == 1, "initial day")
     game.dungeon_route = 1
     game.platforms = [Rect2(200.0, 420.0, 135.0, 16.0)]

@@ -1212,6 +1212,9 @@ func apply_dungeon_route() -> void:
             platforms[i] = Rect2(p.position + Vector2(-18.0 if i % 2 == 0 else 18.0, 10.0), p.size)
     secret_cache_pos = Vector2(575.0 if dungeon_route == 0 else (610.0 if dungeon_route == 1 else 535.0), FLOOR - 27.0)
 
+func selected_tower_can_sell() -> bool:
+    return selected_tower_index >= 0 and selected_tower_index < towers.size()
+
 func selected_tower_can_upgrade() -> bool:
     if selected_tower_index < 0 or selected_tower_index >= towers.size():
         return false
@@ -2038,8 +2041,10 @@ func _draw() -> void:
             else:
                 label("УЛУЧШИТЬ", 908.0, 588.0, 13, Color("8e8497"))
                 label("Выбери башню", 906.0, 614.0, 11, Color("8e8497"))
-            box(Rect2(1020.0, 557.0, 118.0, 85.0), Color("49303f") if selected_tower_index >= 0 and selected_tower_index < towers.size() else Color("24222f"))
-            draw_rect(Rect2(1020.0, 557.0, 118.0, 85.0), Color("cf9d9d") if selected_tower_index >= 0 and selected_tower_index < towers.size() else Color("51485c"), false, 1.5)
+            var sell_available := selected_tower_can_sell()
+            var sell_hovered := Rect2(1020.0, 557.0, 118.0, 85.0).has_point(get_global_mouse_position())
+            box(Rect2(1020.0, 557.0, 118.0, 85.0), Color("67404a") if sell_available and sell_hovered else (Color("49303f") if sell_available else Color("24222f")))
+            draw_rect(Rect2(1020.0, 557.0, 118.0, 85.0), Color("ffbdba") if sell_available and sell_hovered else (Color("cf9d9d") if sell_available else Color("51485c")), false, 2.0 if sell_available and sell_hovered else 1.5)
             if selected_tower_index >= 0 and selected_tower_index < towers.size():
                 label("ПРОДАТЬ", 1040.0, 588.0, 15, Color("f3c1bb"))
                 label("+%d маны" % tower_sell_refund(towers[selected_tower_index]), 1036.0, 614.0, 14)
