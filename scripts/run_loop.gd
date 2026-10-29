@@ -6,6 +6,9 @@ const META_SCRIPT = preload("res://scripts/meta_progression.gd")
 var meta = META_SCRIPT.new()
 var phase := "hub" # hub, day, night, reward, victory, defeat
 var phase_count := 0
+var difficulty := 0 # 0 normal, 1 hard, 2 nightmare
+const DIFFICULTY_NAMES := ["NORMAL", "HARD", "NIGHTMARE"]
+const DIFFICULTY_BUTTONS := [Rect2(240, 252, 200, 55), Rect2(475, 252, 200, 55), Rect2(710, 252, 200, 55)]
 var completed_phases := 0
 var run_damage_bonus := 0
 var run_speed_bonus := 0.0
@@ -25,6 +28,13 @@ func _ready() -> void:
     meta.load_profile()
     queue_redraw()
 
+func set_difficulty(level: int) -> bool:
+    if phase != "hub" or phase_count != 0 or level < 0 or level > 2:
+        return false
+    difficulty = level
+    queue_redraw()
+    return true
+
 func expected_phase() -> String:
     return "day" if phase_count % 2 == 0 else "night"
 
@@ -38,6 +48,7 @@ func start_phase(kind: String) -> bool:
         meta.save_profile()
     last_phase = kind
     active_game = TD_SCENE.instantiate() if kind == "day" else NIGHT_SCENE.instantiate()
+    active_game.difficulty = difficulty
     add_child(active_game)
     if kind == "day":
         active_game.coins += run_gold_bonus + meta.treasury_level * 10
@@ -63,7 +74,7 @@ func finish_phase(won: bool) -> void:
     else:
         completed_phases += 1
         meta.record_phase_clear()
-        meta.award(1)
+        meta.award(1 + difficulty)
         phase_count += 1
         phase = "victory" if phase_count >= 6 else "reward"
         if phase == "victory":
@@ -110,6 +121,10 @@ func _input(event: InputEvent) -> void:
         return
     var point: Vector2 = event.position
     if phase == "hub":
+        for i in range(DIFFICULTY_BUTTONS.size()):
+            if DIFFICULTY_BUTTONS[i].has_point(point) and set_difficulty(i):
+                get_viewport().set_input_as_handled()
+                return
         if META_HERO_BUTTON.has_point(point) and meta.buy_upgrade("hero"):
             meta.save_profile()
             queue_redraw()
@@ -143,6 +158,7 @@ func reset_run() -> void:
         active_game = null
     phase = "hub"
     phase_count = 0
+    difficulty = 0
     completed_phases = 0
     run_damage_bonus = 0
     run_speed_bonus = 0.0
@@ -159,12 +175,16 @@ func _draw() -> void:
         "hub":
             draw_string(ThemeDB.fallback_font, Vector2(360, 210), "RUN %d / 6  |  Choose the next phase" % (phase_count + 1), HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color.WHITE)
             var next_phase := expected_phase()
+            for i in range(DIFFICULTY_BUTTONS.size()):
+                draw_rect(DIFFICULTY_BUTTONS[i], Color("#906a3d") if difficulty == i else Color("#343b47"))
+                draw_string(ThemeDB.fallback_font, DIFFICULTY_BUTTONS[i].position + Vector2(16, 36), DIFFICULTY_NAMES[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 19, Color.WHITE)
+            draw_string(ThemeDB.fallback_font, Vector2(350, 318), "DIFFICULTY: %s    FRAGMENTS PER PHASE: %d" % [DIFFICULTY_NAMES[difficulty], 1 + difficulty], HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#e7d3a8"))
             draw_rect(DAY_BUTTON, Color("#527d70") if next_phase == "day" else Color("#343b47"))
             draw_rect(NIGHT_BUTTON, Color("#594d78") if next_phase == "night" else Color("#343b47"))
             draw_string(ThemeDB.fallback_font, Vector2(290, 382), "DAY: DEFEND" if next_phase == "day" else "DAY: COMPLETE", HORIZONTAL_ALIGNMENT_LEFT, -1, 24, Color.WHITE)
             draw_string(ThemeDB.fallback_font, Vector2(665, 382), "NIGHT: EXPLORE" if next_phase == "night" else "NIGHT: LOCKED", HORIZONTAL_ALIGNMENT_LEFT, -1, 24, Color.WHITE)
             draw_string(ThemeDB.fallback_font, Vector2(120, 455), "Run relics: +%d damage, +%d gold, +%d fire, +%d bone, +%d necro gold" % [run_damage_bonus, run_gold_bonus, run_fire_bonus, run_bone_tower_bonus, run_necro_kill_bonus], HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color("#c7c9d1"))
-            draw_string(ThemeDB.fallback_font, Vector2(390, 485), "SOUL FRAGMENTS: %d  (1 per completed phase)" % meta.fragments, HORIZONTAL_ALIGNMENT_LEFT, -1, 19, Color("#e7d3a8"))
+            draw_string(ThemeDB.fallback_font, Vector2(390, 485), "SOUL FRAGMENTS: %d  (difficulty bonus per phase)" % meta.fragments, HORIZONTAL_ALIGNMENT_LEFT, -1, 19, Color("#e7d3a8"))
             draw_string(ThemeDB.fallback_font, Vector2(270, 602), "RUNS %d   WINS %d   LOSSES %d   CLEARED %d" % [meta.runs_started, meta.runs_won, meta.runs_lost, meta.phases_cleared], HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#c7c9d1"))
             var badges := []
             if meta.achievement_unlocked("first_steps"):
