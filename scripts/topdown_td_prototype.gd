@@ -33,6 +33,8 @@ const HERO_SPEED := 215.0
 const HERO_ATTACK_RANGE := 150.0
 var hero_pos := Vector2(560.0, 420.0)
 var hero_attack_cooldown := 0.0
+var boss_feedback_time := 0.0
+var boss_feedback_text := ""
 
 func move_hero(direction: Vector2, delta: float) -> void:
     hero_pos += direction.limit_length(1.0) * HERO_SPEED * delta
@@ -62,6 +64,8 @@ func hero_attack(target: Vector2) -> bool:
             best["boss_charge"] = 0.0
             best["boss_warning"] = false
             best["interrupt_hits"] = 0
+            boss_feedback_text = "ATTACK INTERRUPTED!"
+            boss_feedback_time = 1.4
     hero_attack_cooldown = 0.28
     if best["hp"] <= 0:
         enemies.erase(best)
@@ -121,6 +125,8 @@ func tick_boss(delta: float) -> void:
             enemy["boss_warning"] = false
             enemy["interrupt_hits"] = 0
             altar_hp = maxi(0, altar_hp - (8 + difficulty * 4))
+            boss_feedback_text = "ALTAR HIT! -%d HP" % (8 + difficulty * 4)
+            boss_feedback_time = 1.2
             if altar_hp == 0:
                 defense_state = "lost"
     queue_redraw()
@@ -244,6 +250,10 @@ func restart_defense() -> void:
     coins = 150
     hero_pos = Vector2(560, 420)
     hero_attack_cooldown = 0.0
+    boss_feedback_time = 0.0
+    boss_feedback_text = ""
+    necro_kill_streak = 0
+    summoned_spirits.clear()
     selected_type = ""
     selected_slot = -1
     enemies.clear()
@@ -262,6 +272,7 @@ func _process(delta: float) -> void:
         queue_redraw()
         return
     hero_attack_cooldown = maxf(0.0, hero_attack_cooldown - delta)
+    boss_feedback_time = maxf(0.0, boss_feedback_time - delta)
     var move_direction := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
     if Input.is_key_pressed(KEY_A): move_direction.x -= 1.0
     if Input.is_key_pressed(KEY_D): move_direction.x += 1.0
@@ -405,10 +416,17 @@ func _draw() -> void:
                 draw_circle(enemy["pos"], 29.0, Color("#9a4268"))
                 draw_circle(enemy["pos"], 19.0, Color("#df96ba"))
                 if enemy.get("boss_warning", false):
-                    draw_arc(enemy["pos"], 45.0, 0.0, TAU, 48, Color("#ffde80"), 4.0)
+                    var warning_progress: float = clampf(float(enemy.get("boss_charge", 3.0)) - 3.0, 0.0, 1.0)
+                    draw_arc(enemy["pos"], 45.0, -PI / 2.0, -PI / 2.0 + TAU, 48, Color("#694e36"), 4.0)
+                    draw_arc(enemy["pos"], 45.0, -PI / 2.0, -PI / 2.0 + TAU * warning_progress, 48, Color("#ffde80"), 6.0)
+                    draw_string(ThemeDB.fallback_font, enemy["pos"] + Vector2(-55, -61), "ALTAR BLAST", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#ffde80"))
+                    draw_string(ThemeDB.fallback_font, enemy["pos"] + Vector2(-53, 61), "HERO: HIT 2x (%d/2)" % int(enemy.get("interrupt_hits", 0)), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#f6e6c4"))
                 draw_rect(Rect2(enemy["pos"] + Vector2(-28.0, -43.0), Vector2(56.0 * clampf(float(enemy["hp"]) / float(55 + difficulty * 15), 0.0, 1.0), 5.0)), Color("#df7b94"))
             else:
                 draw_circle(enemy["pos"], 16.0 if enemy.get("role", "grunt") == "brute" else 10.0 if enemy.get("role", "grunt") == "runner" else 12.0, Color("#8591b8") if enemy.get("role", "grunt") == "brute" else Color("#efc36f") if enemy.get("role", "grunt") == "runner" else Color("#c67f64"))
+    if boss_feedback_time > 0.0:
+        draw_rect(Rect2(385, 71, 382, 42), Color("#314f47") if boss_feedback_text == "ATTACK INTERRUPTED!" else Color("#683c46"))
+        draw_string(ThemeDB.fallback_font, Vector2(407, 98), boss_feedback_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 21, Color("#fff0cf"))
     for spirit in summoned_spirits:
         draw_circle(spirit["pos"], 10.0, Color("#6de6b2"))
         draw_circle(spirit["pos"], 5.0, Color("#d8fff0"))

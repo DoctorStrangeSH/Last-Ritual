@@ -55,6 +55,7 @@ func run_tests() -> void:
             check(boss["boss_warning"] and td.altar_hp == altar_before_blast, "Boss telegraphs attack without immediate altar damage")
             td.tick_boss(0.9)
             check(not boss["boss_warning"] and td.altar_hp == altar_before_blast - 8, "Boss blast damages altar after warning")
+            check(td.boss_feedback_time > 0.0 and td.boss_feedback_text.begins_with("ALTAR HIT!"), "Altar blast shows temporary damage notice")
             boss["pos"] = Vector2(350, 285)
             td.hero_pos = Vector2(345, 360)
             td.tick_boss(3.2)
@@ -63,6 +64,7 @@ func run_tests() -> void:
             check(td.hero_attack(boss["pos"]) and boss["interrupt_hits"] == 1, "First hero strike pressures boss during telegraph")
             td.hero_attack_cooldown = 0.0
             check(td.hero_attack(boss["pos"]) and not boss["boss_warning"] and boss["boss_charge"] == 0.0, "Second hero strike interrupts boss blast")
+            check(td.boss_feedback_time > 0.0 and td.boss_feedback_text == "ATTACK INTERRUPTED!", "Interrupted boss blast shows readable confirmation")
             td.tick_boss(0.9)
             check(td.altar_hp == altar_before_interrupt, "Interrupted blast does not damage altar")
             td.tick_boss(2.2)
@@ -92,6 +94,7 @@ func run_tests() -> void:
         check(td.enemies.is_empty() and td.enemies_defeated == hero_kills_before + 1, "TD hero kills enemy and earns gold")
         check(not td.hero_attack(Vector2(420, 350)), "TD hero attack respects cooldown and empty targets")
         td.restart_defense()
+        check(td.boss_feedback_time == 0.0 and td.boss_feedback_text == "" and td.summoned_spirits.is_empty(), "Defense restart clears boss feedback and necro summons")
         check(td.defense_state == "playing" and td.wave_number == 0 and td.altar_hp == 100, "TD restart resets wave and altar")
         check(td.slots[0]["tower"] == "" and td.coins == 150, "TD restart clears towers and restores economy")
         td.wave_number = 3
