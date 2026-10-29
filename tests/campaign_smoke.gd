@@ -164,6 +164,26 @@ func run_tests() -> void:
     check(game.boss_strike_hits(Vector2(800.0, game.FLOOR - 22.0)), "late shockwave reaches 100 pixels")
     check(not game.boss_strike_hits(Vector2(831.0, game.FLOOR - 22.0)), "late shockwave has dodgeable edge")
     game.reset_all()
+    # Exercise every night and all three dungeon route variations.
+    for night in range(1, 6):
+        for route in range(3):
+            game.reset_all()
+            game.current_day = night
+            game.begin_night()
+            game.dungeon_route = route
+            # Rebuild the base geometry before applying a different route on this night.
+            if route != 0:
+                game.reset_all()
+                game.current_day = night
+                game.begin_night()
+                game.dungeon_route = route
+                game.apply_dungeon_route()
+            check(game.platforms.size() == 4, "night %d route %d has four platforms" % [night, route])
+            check(game.secret_cache_pos.x >= 530.0 and game.secret_cache_pos.x <= 615.0, "night %d route %d keeps secret cache on map" % [night, route])
+            for platform in game.platforms:
+                check(platform.position.x > 0.0 and platform.end.x < game.W and platform.position.y > 250.0 and platform.end.y <= game.FLOOR, "night %d route %d platform stays in bounds" % [night, route])
+            check(game.trap_positions.size() >= 2, "night %d route %d contains hazards" % [night, route])
+    game.reset_all()
     check(game.current_day == 1, "initial day")
     game.dungeon_route = 1
     game.platforms = [Rect2(200.0, 420.0, 135.0, 16.0)]
