@@ -17,7 +17,10 @@ func run_tests() -> void:
     if packed == null:
         quit(1)
         return
+    if FileAccess.file_exists("user://meta_smoke_test.json"):
+        DirAccess.remove_absolute(ProjectSettings.globalize_path("user://meta_smoke_test.json"))
     var game := packed.instantiate()
+    game.meta_path = "user://meta_smoke_test.json"
     root.add_child(game)
     game.save_path = "user://campaign_smoke_test.json"
     game.reset_all()
@@ -416,6 +419,41 @@ func run_tests() -> void:
     bad_file.close()
     check(not game.load_campaign(), "oversized save rejected")
     check(game.current_day == 2 and game.mana == 93, "rejected save preserves existing state")
+
+    game.difficulty = 3
+    game.legacy_shards = 42
+    game.achievement_wins = 6
+    game.achievement_nightmare = true
+    game.save_meta()
+    game.difficulty = 1
+    game.legacy_shards = 0
+    game.achievement_wins = 0
+    game.achievement_nightmare = false
+    game.load_meta()
+    check(game.difficulty == 3 and game.legacy_shards == 42 and game.achievement_wins == 6 and game.achievement_nightmare, "valid persistent progress round-trips")
+
+    var bad_meta := FileAccess.open("user://meta_smoke_test.json", FileAccess.WRITE)
+    bad_meta.store_string(JSON.stringify({"difficulty": 4, "shards": "100", "wins": 99}))
+    bad_meta.close()
+    game.difficulty = 2
+    game.legacy_shards = 17
+    game.achievement_wins = 3
+    game.load_meta()
+    check(game.difficulty == 2 and game.legacy_shards == 17 and game.achievement_wins == 3, "malformed persistent progress rejected atomically")
+
+    bad_meta = FileAccess.open("user://meta_smoke_test.json", FileAccess.WRITE)
+    bad_meta.store_string(JSON.stringify({"difficulty": 2.5, "shards": 100}))
+    bad_meta.close()
+    game.load_meta()
+    check(game.difficulty == 2 and game.legacy_shards == 17, "fractional persistent difficulty rejected")
+
+    bad_meta = FileAccess.open("user://meta_smoke_test.json", FileAccess.WRITE)
+    bad_meta.store_string(JSON.stringify({"nightmare": "true"}))
+    bad_meta.close()
+    game.load_meta()
+    check(game.difficulty == 2 and game.legacy_shards == 17, "non-boolean persistent achievement rejected")
+
+    DirAccess.remove_absolute(ProjectSettings.globalize_path("user://meta_smoke_test.json"))
     DirAccess.remove_absolute(ProjectSettings.globalize_path("user://campaign_smoke_test.json"))
     game.queue_free()
     print("Failures: ", failures)
