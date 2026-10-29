@@ -7,6 +7,7 @@ const DAY_LENGTH := 56.0
 const MAX_WALL := 100.0
 const SAVE_PATH := "user://campaign_v1.json"
 const META_PATH := "user://ritual_legacy.json"
+var meta_path := META_PATH
 var difficulty := 1
 var legacy_shards := 0
 var legacy_level := 0
@@ -115,28 +116,51 @@ func _ready() -> void:
     load_meta()
 
 func save_meta() -> void:
-    var file := FileAccess.open(META_PATH, FileAccess.WRITE)
+    var file := FileAccess.open(meta_path, FileAccess.WRITE)
     if file != null:
         file.store_string(JSON.stringify({"difficulty": difficulty, "shards": legacy_shards, "level": legacy_level, "wins": achievement_wins, "best_day": achievement_best_day, "damage_level": legacy_damage_level, "hero_level": legacy_hero_level, "necro_level": legacy_necro_level, "nightmare": achievement_nightmare}))
 
 func load_meta() -> void:
-    if not FileAccess.file_exists(META_PATH):
+    if not FileAccess.file_exists(meta_path):
         return
-    var file := FileAccess.open(META_PATH, FileAccess.READ)
+    var file := FileAccess.open(meta_path, FileAccess.READ)
     if file == null or file.get_length() > 4096:
         return
     var data: Variant = JSON.parse_string(file.get_as_text())
     if not data is Dictionary:
         return
-    difficulty = clampi(int(data.get("difficulty", 1)), 0, 4)
-    legacy_shards = clampi(int(data.get("shards", 0)), 0, 99999)
-    legacy_level = clampi(int(data.get("level", 0)), 0, 10)
-    achievement_wins = clampi(int(data.get("wins", 0)), 0, 99999)
-    achievement_best_day = clampi(int(data.get("best_day", 1)), 1, 5)
-    legacy_damage_level = clampi(int(data.get("damage_level", 0)), 0, 5)
-    legacy_hero_level = clampi(int(data.get("hero_level", 0)), 0, 5)
-    legacy_necro_level = clampi(int(data.get("necro_level", 0)), 0, 5)
-    achievement_nightmare = bool(data.get("nightmare", false))
+    var numeric_ranges := {
+        "difficulty": Vector2i(0, 4),
+        "shards": Vector2i(0, 99999),
+        "level": Vector2i(0, 10),
+        "wins": Vector2i(0, 99999),
+        "best_day": Vector2i(1, 5),
+        "damage_level": Vector2i(0, 5),
+        "hero_level": Vector2i(0, 5),
+        "necro_level": Vector2i(0, 5)
+    }
+    for key in numeric_ranges:
+        if not data.has(key):
+            continue
+        var value: Variant = data[key]
+        if not (value is float or value is int) or not is_finite(float(value)):
+            return
+        if float(value) != floorf(float(value)):
+            return
+        var bounds: Vector2i = numeric_ranges[key]
+        if float(value) < bounds.x or float(value) > bounds.y:
+            return
+    if data.has("nightmare") and not data["nightmare"] is bool:
+        return
+    difficulty = int(data.get("difficulty", 1))
+    legacy_shards = int(data.get("shards", 0))
+    legacy_level = int(data.get("level", 0))
+    achievement_wins = int(data.get("wins", 0))
+    achievement_best_day = int(data.get("best_day", 1))
+    legacy_damage_level = int(data.get("damage_level", 0))
+    legacy_hero_level = int(data.get("hero_level", 0))
+    legacy_necro_level = int(data.get("necro_level", 0))
+    achievement_nightmare = data.get("nightmare", false)
 
 func start_run() -> void:
     reset_all()
