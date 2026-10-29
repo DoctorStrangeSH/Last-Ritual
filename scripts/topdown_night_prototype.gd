@@ -443,13 +443,13 @@ func _draw() -> void:
         var melee_remaining: float = float(enemy.get("melee_warning", 0.0))
         if ranged_remaining > 0.0:
             var aim: Vector2 = enemy["attack_target"]
-            var charge: float = 1.0 - ranged_remaining / RANGED_WARNING
-            draw_line(enemy["pos"], aim, Color("#ffbc76", 0.45 + charge * 0.55), 3.0)
-            draw_arc(aim, 24.0, -PI / 2.0, -PI / 2.0 + TAU * charge, 32, Color("#ffbc76"), 4.0)
+            var ranged_charge: float = 1.0 - ranged_remaining / RANGED_WARNING
+            draw_line(enemy["pos"], aim, Color("#ffbc76", 0.45 + ranged_charge * 0.55), 3.0)
+            draw_arc(aim, 24.0, -PI / 2.0, -PI / 2.0 + TAU * ranged_charge, 32, Color("#ffbc76"), 4.0)
         elif melee_remaining > 0.0:
             var attack_at: Vector2 = enemy["attack_target"]
-            var charge: float = 1.0 - melee_remaining / MELEE_WARNING
-            draw_arc(attack_at, MELEE_HIT_RADIUS, -PI / 2.0, -PI / 2.0 + TAU * charge, 32, Color("#ff7b89"), 5.0)
+            var melee_charge: float = 1.0 - melee_remaining / MELEE_WARNING
+            draw_arc(attack_at, MELEE_HIT_RADIUS, -PI / 2.0, -PI / 2.0 + TAU * melee_charge, 32, Color("#ff7b89"), 5.0)
         var enemy_color: Color = Color("#fff1d1") if float(enemy.get("hit_flash", 0.0)) > 0.0 else (Color("#aa70d6") if enemy["ranged"] else Color("#cf646c"))
         draw_circle(enemy["pos"], 23.0 if float(enemy.get("hit_flash", 0.0)) > 0.0 else 19.0, enemy_color)
     for burst in death_bursts:
