@@ -65,6 +65,17 @@ func run_tests() -> void:
     game.night_enemies[2]["hp"] = 0.0
     game.update_night(0.0)
     check(game.relic_choice_pending and not game.blood_mantle, "elite opens relic selection instead of auto-granting")
+    var relic_pause_key := InputEventKey.new()
+    relic_pause_key.keycode = KEY_P
+    relic_pause_key.pressed = true
+    game._unhandled_input(relic_pause_key)
+    check(not game.paused and game.relic_choice_pending, "pause key cannot block active relic selection")
+    var relic_heal_key := InputEventKey.new()
+    relic_heal_key.keycode = KEY_H
+    relic_heal_key.pressed = true
+    var mana_during_choice: int = game.mana
+    game._unhandled_input(relic_heal_key)
+    check(game.mana == mana_during_choice, "night skill hotkeys ignored while choosing relic")
     game.choose_relic(0)
     check(game.relic_choice_pending, "already-owned relic cannot be chosen")
     game.choose_relic(1)
