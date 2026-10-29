@@ -522,13 +522,40 @@ func _unhandled_input(event: InputEvent) -> void:
             if player_pos.distance_to(Vector2(1080.0, 325.0)) < 85.0:
                 next_room()
 
+# Процедурное оформление подземелья. Не влияет на стены и столкновения.
+func draw_crypt_environment() -> void:
+    draw_rect(Rect2(Vector2.ZERO, Vector2(1152, 648)), Color("#10151d"))
+    draw_rect(ARENA.grow(15.0), Color("#121a22"))
+    draw_rect(ARENA.grow(7.0), Color("#596069"))
+    draw_rect(ARENA, Color("#283036"))
+    for row in range(10):
+        for col in range(22):
+            var offset := 22.0 if row % 2 == 1 else 0.0
+            var tile := Rect2(ARENA.position + Vector2(8.0 + 47.0 * col + offset, 8.0 + 50.0 * row), Vector2(44, 47))
+            if tile.end.x >= ARENA.end.x or tile.end.y >= ARENA.end.y:
+                continue
+            var tint := Color("#32383f") if (col * 3 + row * 5 + room_variant) % 7 == 0 else Color("#2d343b")
+            draw_rect(tile, tint)
+            draw_rect(tile, Color("#202830"), false, 1.0)
+    for x in range(90, 1050, 160):
+        draw_rect(Rect2(x, 66, 40, 14), Color("#545c65"))
+        draw_rect(Rect2(x, 576, 40, 14), Color("#545c65"))
+        draw_circle(Vector2(x + 20, 84), 5.0, Color("#af8262"))
+    # Свет факелов и каменная арка на восточной стене.
+    for torch_pos in [Vector2(100, 170), Vector2(100, 460), Vector2(1015, 165), Vector2(1015, 465)]:
+        draw_circle(torch_pos, 19.0, Color("#a96d45", 0.12))
+        draw_rect(Rect2(torch_pos + Vector2(-4, -4), Vector2(8, 18)), Color("#665747"))
+        draw_circle(torch_pos + Vector2(0, -8), 6.0, Color("#ffc77f"))
+    draw_rect(Rect2(1049, 258, 59, 112), Color("#161f28"))
+    draw_rect(Rect2(1050, 264, 10, 100), Color("#7a7780"))
+    draw_rect(Rect2(1097, 264, 10, 100), Color("#7a7780"))
+
 func _draw() -> void:
-    draw_rect(Rect2(Vector2.ZERO, Vector2(1152, 648)), Color("#111521"))
-    draw_rect(ARENA, Color("#242936"))
-    draw_rect(ARENA, Color("#7d7798"), false, 4.0)
+    draw_crypt_environment()
     for wall in obstacles:
-        draw_rect(wall, Color("#3f4653"))
-        draw_rect(wall.grow(-4.0), Color("#657180"), false, 3.0)
+        draw_rect(Rect2(wall.position + Vector2(3, 5), wall.size), Color("#151c24"))
+        draw_rect(wall, Color("#515665"))
+        draw_rect(wall.grow(-5.0), Color("#78818a"), false, 3.0)
         draw_line(wall.position + Vector2(7, 8), wall.position + Vector2(wall.size.x - 7, 8), Color("#a3a9a9", 0.45), 2.0)
     if dash_flash_time > 0.0:
         draw_line(dash_origin, player_pos, Color("#83e4ed", dash_flash_time / 0.18), 8.0)
