@@ -264,11 +264,11 @@ func _draw() -> void:
             draw_string(ThemeDB.fallback_font, Vector2(104, 606), "RUNS %d   WINS %d   LOSSES %d   PHASES %d" % [meta.runs_started, meta.runs_won, meta.runs_lost, meta.phases_cleared], HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#c7c9d1"))
             var badges := []
             if meta.achievement_unlocked("first_steps"):
-                badges.append("FIRST STEPS")
+                badges.append("FIRST STEPS +2 FR")
             if meta.achievement_unlocked("survivor"):
-                badges.append("SURVIVOR")
+                badges.append("SURVIVOR +4 FR")
             if meta.achievement_unlocked("ritual_master"):
-                badges.append("RITUAL MASTER")
+                badges.append("RITUAL MASTER +6 FR")
             draw_string(ThemeDB.fallback_font, Vector2(104, 630), "ACHIEVEMENTS: " + (", ".join(badges) if not badges.is_empty() else "Complete phases to unlock"), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#e7d3a8"))
         "reward":
             draw_string(ThemeDB.fallback_font, Vector2(410, 235), "CHOOSE A RUN RELIC", HORIZONTAL_ALIGNMENT_LEFT, -1, 26, Color.WHITE)
