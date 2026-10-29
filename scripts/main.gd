@@ -1,5 +1,6 @@
 extends Node2D
 const RewardCatalog = preload("res://scripts/reward_catalog.gd")
+const TowerDescription = preload("res://scripts/tower_description.gd")
 ## Last Ritual v2.2-rc57: enemy hit reactions, lane-aligned health bars and combat feedback
 const W := 1152.0
 const H := 648.0
@@ -946,11 +947,7 @@ func begin_night() -> void:
     show_notice("Ночь %d: победи хранителя, забери камень и вернись к порталу слева!" % current_day)
 
 func tower_ability_description(kind: String, level: int = 1) -> String:
-    if kind == "bone":
-        return "Замедление %.1f с" % (2.5 + 0.35 * float(level - 1))
-    if kind == "necro":
-        return "Скелет: %.0f HP / 6 с" % (65.0 + float(level - 1) * 30.0)
-    return "Крит %.0f%% + взрыв" % ((0.18 + 0.04 * float(level - 1)) * 100.0)
+    return TowerDescription.ability_description(kind, level)
 
 func apply_tower_shot(shot: Dictionary, target_index: int) -> void:
     if target_index < 0 or target_index >= enemies.size():
