@@ -27,6 +27,8 @@ var reward_ward_bonus := 0
 var legendary_boon := -1
 # First run-long relic, earned by defeating the optional elite warden.
 var shadow_relic := false
+# Second run-long relic, awarded on later optional elite encounters.
+var blood_mantle := false
 # Three unique choices generated when a night ends. Never persisted mid-selection.
 var reward_offers: Array[int] = [0, 1, 2]
 var menu_page := "main"
@@ -237,6 +239,7 @@ func reset_all() -> void:
     reward_ward_bonus = 0
     legendary_boon = -1
     shadow_relic = false
+    blood_mantle = false
     reward_offers = [0, 1, 2]
     selected_build = ""
     selected_lane = 1
@@ -505,7 +508,7 @@ func save_campaign() -> bool:
         "tower_power": tower_power_level, "wall_ward": wall_ward_level,
         "towers": saved_towers,
         "campaign_kills": campaign_kills, "towers_built": maxi(towers_built, towers.size()),
-        "reward_bone": reward_bone_bonus, "reward_mana": reward_mana_bonus, "reward_ward": reward_ward_bonus, "legendary_boon": legendary_boon, "shadow_relic": shadow_relic
+        "reward_bone": reward_bone_bonus, "reward_mana": reward_mana_bonus, "reward_ward": reward_ward_bonus, "legendary_boon": legendary_boon, "shadow_relic": shadow_relic, "blood_mantle": blood_mantle
     }
     var temp_path := save_path + ".tmp"
     var file := FileAccess.open(temp_path, FileAccess.WRITE)
@@ -616,6 +619,8 @@ func load_campaign() -> bool:
             return false
     if data.has("shadow_relic") and not data["shadow_relic"] is bool:
         return false
+    if data.has("blood_mantle") and not data["blood_mantle"] is bool:
+        return false
     reset_all()
     campaign_kills = loaded_kills
     towers_built = loaded_builds
@@ -631,6 +636,7 @@ func load_campaign() -> bool:
     reward_ward_bonus = int(data.get("reward_ward", 0))
     legendary_boon = int(data.get("legendary_boon", -1))
     shadow_relic = bool(data.get("shadow_relic", false))
+    blood_mantle = bool(data.get("blood_mantle", false))
     towers = []
     phase = "ritual"
     stone_taken = true
@@ -1303,12 +1309,17 @@ func update_night(delta: float) -> void:
                 if not shadow_relic:
                     shadow_relic = true
                     show_notice("Реликвия «Пепельный шаг»: рывок восстанавливается вдвое быстрее!")
+                elif current_day >= 4 and not blood_mantle:
+                    blood_mantle = true
+                    show_notice("Реликвия «Кровавый покров»: +6 HP за обычного ночного врага!")
                 else:
                     show_notice("Элитный страж повержен: +45 маны, +5 душ!")
                 burst_particles(Vector2(float(e["x"]), FLOOR - 24.0), Color("ffd18a"), 22)
             else:
                 mana += 10
                 souls += 2
+                if blood_mantle:
+                    player_hp = minf(100.0, player_hp + 6.0)
                 burst_particles(Vector2(float(e["x"]), FLOOR - 24.0), Color("a6c8a2"), 10)
             night_enemies.remove_at(i)
     if mage["hp"] > 0.0:
