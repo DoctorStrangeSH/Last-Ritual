@@ -6,6 +6,7 @@ const ATTACK_RANGE := 155.0
 var room_index := 0
 var dungeon_seed := 0
 var room_variant := 0
+var route_boon := ""
 const ROOM_KINDS := ["CRYPT", "AMBUSH", "ELITE"]
 const ROUTE_RECTS := [Rect2(340.0, 490.0, 210.0, 65.0), Rect2(605.0, 490.0, 210.0, 65.0)]
 var player_pos := Vector2(160.0, 325.0)
@@ -109,11 +110,24 @@ func choose_route(choice: int) -> bool:
     if not door_available() or choice < 0 or choice >= ROUTE_RECTS.size():
         return false
     var variant := posmod(dungeon_seed + room_index + 1 + choice, ROOM_KINDS.size())
+    if choice == 0:
+        # Treasury route: recover health before the next encounter.
+        player_hp = mini(100, player_hp + 18)
+        route_boon = "TREASURE: +18 HP"
+    else:
+        # Risk route: trade health for run-long damage and fight an elite room.
+        if player_hp <= 12:
+            return false
+        player_hp -= 12
+        attack_damage += 1
+        variant = 2
+        route_boon = "RISK: -12 HP / +1 DAMAGE"
     open_room(room_index + 1, variant)
     return true
 
 func restart_run() -> void:
     player_hp = 100
+    route_boon = ""
     rewards_taken = 0
     relics.clear()
     attack_damage = 1
@@ -230,6 +244,8 @@ func _draw() -> void:
     draw_rect(Rect2(48.0, 25.0, 220.0, 18.0), Color("#442c37"))
     draw_rect(Rect2(48.0, 25.0, 220.0 * float(player_hp) / 100.0, 18.0), Color("#cf657a"))
     draw_label("HP %d / 100     ROOM %d / 3     %s     RELICS %d" % [player_hp, room_index + 1, ROOM_KINDS[room_variant], relics.size()], Vector2(280, 41), 17)
+    if route_boon != "":
+        draw_label(route_boon, Vector2(300, 65), 14, Color("#d5c592"))
     if run_state == "won":
         draw_rect(Rect2(350.0, 190.0, 452.0, 180.0), Color("#295343"))
         draw_label("VICTORY", Vector2(510, 245), 30)
@@ -258,7 +274,7 @@ func _draw() -> void:
         for i in range(ROUTE_RECTS.size()):
             var variant := posmod(dungeon_seed + room_index + 1 + i, ROOM_KINDS.size())
             draw_rect(ROUTE_RECTS[i], Color("#496c74") if i == 0 else Color("#81556e"))
-            draw_label(ROOM_KINDS[variant], ROUTE_RECTS[i].position + Vector2(48, 40), 20)
+            draw_label("TREASURE +18 HP" if i == 0 else "RISK -12 HP/+1 ATK", ROUTE_RECTS[i].position + Vector2(10, 39), 17)
         draw_rect(Rect2(1058.0, 275.0, 46.0, 96.0), Color("#72b59b"))
     else:
         draw_rect(Rect2(1058.0, 275.0, 46.0, 96.0), Color("#59495b"))
