@@ -33,6 +33,10 @@ static func generate_floor(seed_value: int) -> Dictionary:
             kind = "СОКРОВИЩНИЦА"
         elif id == positions.size() - 3:
             kind = "МАГАЗИН"
+        elif id == 2:
+            kind = "ТАЙНИК"
+        elif id == 3:
+            kind = "СОБЫТИЕ"
         elif id % 4 == 0:
             kind = "ЭЛИТА"
         rooms.append({"id": id, "grid": positions[id], "kind": kind, "neighbors": []})

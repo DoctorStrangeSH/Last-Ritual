@@ -90,6 +90,28 @@ func open_room(index: int, override_variant: int = -1) -> void:
             queue_redraw()
             return
         var room_kind: String = str(floor_data["rooms"][room_index]["kind"])
+        if room_kind == "ТАЙНИК":
+            night_souls += 2
+            attack_damage += 1
+            cleared_rooms[room_index] = true
+            reward_notice = "ТАЙНИК: +2 ДУШИ И +1 УРОН"
+            reward_notice_time = 3.5
+            queue_redraw()
+            return
+        if room_kind == "СОБЫТИЕ":
+            var event_choice: int = posmod(dungeon_seed + room_index, 2)
+            if event_choice == 0:
+                player_hp = mini(100, player_hp + 15)
+                route_boon = "АЛТАРЬ: +15 ЗДОРОВЬЯ"
+            else:
+                player_hp = maxi(1, player_hp - 10)
+                attack_damage += 1
+                route_boon = "ТЁМНЫЙ ДОГОВОР: -10 ЗДОРОВЬЯ, +1 УРОН"
+            cleared_rooms[room_index] = true
+            reward_notice = route_boon
+            reward_notice_time = 3.5
+            queue_redraw()
+            return
         if room_kind == "СОКРОВИЩНИЦА":
             player_hp = mini(100, player_hp + 25)
             night_souls += 3
