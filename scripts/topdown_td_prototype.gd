@@ -23,6 +23,7 @@ var enemies: Array[Dictionary] = []
 var wave_number := 0
 var altar_hp := 100
 var defense_state := "playing" # playing, won, lost
+var help_visible := false
 const RESTART_BUTTON := Rect2(455, 350, 242, 58)
 var enemies_spawned := 0
 var enemies_escaped := 0
@@ -271,7 +272,7 @@ func restart_defense() -> void:
     queue_redraw()
 
 func _process(delta: float) -> void:
-    if defense_state != "playing":
+    if help_visible or defense_state != "playing":
         return
     if wave_number == 3 and enemies.is_empty():
         defense_state = "won"
@@ -362,7 +363,16 @@ func sell_selected() -> bool:
     queue_redraw()
     return true
 
+func toggle_controls_help() -> void:
+    help_visible = not help_visible
+    queue_redraw()
+
 func _unhandled_input(event: InputEvent) -> void:
+    if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_H:
+        toggle_controls_help()
+        return
+    if help_visible:
+        return
     if event is InputEventKey and event.pressed and event.keycode == KEY_R and defense_state != "playing":
         restart_defense()
         return
