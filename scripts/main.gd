@@ -29,6 +29,7 @@ var legendary_boon := -1
 var shadow_relic := false
 # Second run-long relic, awarded on later optional elite encounters.
 var blood_mantle := false
+var relic_choice_pending := false
 # Three unique choices generated when a night ends. Never persisted mid-selection.
 var reward_offers: Array[int] = [0, 1, 2]
 var menu_page := "main"
@@ -240,6 +241,7 @@ func reset_all() -> void:
     legendary_boon = -1
     shadow_relic = false
     blood_mantle = false
+    relic_choice_pending = false
     reward_offers = [0, 1, 2]
     selected_build = ""
     selected_lane = 1
@@ -330,6 +332,9 @@ func _process(delta: float) -> void:
         damage_popups[i]["pos"] = damage_popups[i]["pos"] + Vector2(0.0, -34.0 * delta)
         if damage_popups[i]["life"] <= 0.0:
             damage_popups.remove_at(i)
+    if relic_choice_pending:
+        queue_redraw()
+        return
     if phase == "day":
         update_day(delta)
     elif phase == "night":
@@ -684,6 +689,15 @@ func _input(event: InputEvent) -> void:
                 menu_page = "legacy"
         elif menu_click.y >= 450.0 and menu_click.y < 495.0:
             menu_page = "talents" if menu_page == "legacy" else "achievements"
+        return
+    if relic_choice_pending:
+        if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
+            var relic_click := get_global_mouse_position()
+            if relic_click.y >= 260.0 and relic_click.y <= 415.0:
+                if relic_click.x >= 265.0 and relic_click.x <= 557.0:
+                    choose_relic(0)
+                elif relic_click.x >= 595.0 and relic_click.x <= 887.0:
+                    choose_relic(1)
         return
     if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT and event.pressed and phase == "night":
         var skill_target: Vector2 = get_global_mouse_position()
@@ -1145,6 +1159,19 @@ func heal_player() -> void:
         play_cue("magic")
         show_notice("Тёмная магия восстановила 30 здоровья (+30 HP, -20 маны)")
 
+func choose_relic(kind: int) -> void:
+    if not relic_choice_pending:
+        return
+    if kind == 0 and not shadow_relic:
+        shadow_relic = true
+        show_notice("Пепельный шаг: рывок восстанавливается вдвое быстрее!")
+    elif kind == 1 and not blood_mantle:
+        blood_mantle = true
+        show_notice("Кровавый покров: +6 HP за обычного ночного врага!")
+    else:
+        return
+    relic_choice_pending = false
+
 func shadow_dash() -> void:
     if dash_cooldown > 0.0:
         show_notice("Рывок ещё недоступен: осталось %.1f с" % dash_cooldown)
@@ -1306,12 +1333,9 @@ func update_night(delta: float) -> void:
             if is_elite:
                 mana += 45
                 souls += 5
-                if not shadow_relic:
-                    shadow_relic = true
-                    show_notice("Реликвия «Пепельный шаг»: рывок восстанавливается вдвое быстрее!")
-                elif current_day >= 4 and not blood_mantle:
-                    blood_mantle = true
-                    show_notice("Реликвия «Кровавый покров»: +6 HP за обычного ночного врага!")
+                if not shadow_relic or not blood_mantle:
+                    relic_choice_pending = true
+                    show_notice("Элитный страж повержен! Выбери реликвию мышью.")
                 else:
                     show_notice("Элитный страж повержен: +45 маны, +5 душ!")
                 burst_particles(Vector2(float(e["x"]), FLOOR - 24.0), Color("ffd18a"), 22)
@@ -2196,6 +2220,18 @@ func _draw() -> void:
     if notice_timer > 0.0:
         box(Rect2(190, 97, 775, 50), Color("39283d"))
         label(notice, 215, 131, 19, Color("f5dcaf"))
+    if relic_choice_pending and not paused:
+        box(Rect2(195, 178, 762, 320), Color("171425"))
+        draw_rect(Rect2(195, 178, 762, 320), Color("d6ad6b"), false, 3.0)
+        label("ВЫБЕРИ РЕЛИКВИЮ", 337, 240, 31, Color("ffe0ac"))
+        for i in range(2):
+            var relic_rect := Rect2(265.0 + float(i) * 330.0, 260.0, 292.0, 155.0)
+            var unavailable := (i == 0 and shadow_relic) or (i == 1 and blood_mantle)
+            box(relic_rect, Color("302a36") if unavailable else Color("43304b"))
+            draw_rect(relic_rect, Color("6b626d") if unavailable else Color("d0a66a"), false, 3.0)
+            label("УЖЕ ПОЛУЧЕНО" if unavailable else ("ПЕПЕЛЬНЫЙ ШАГ" if i == 0 else "КРОВАВЫЙ ПОКРОВ"), relic_rect.position.x + 13.0, 319.0, 18, Color("afa5af") if unavailable else Color("f6dab2"))
+            label("Рывок: -50% кулдауна" if i == 0 else "+6 HP за обычного врага", relic_rect.position.x + 13.0, 359.0, 16)
+        label("Выбери доступную карточку левой кнопкой мыши", 300, 459, 17, Color("e4d0e9"))
     if paused:
         box(Rect2(190, 155, 775, 340), Color("171425"))
         box(Rect2(201, 166, 753, 318), Color("30253f"))
