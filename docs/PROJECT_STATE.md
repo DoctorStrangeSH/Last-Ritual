@@ -138,3 +138,6 @@ PR #40 после успешного CI в main. PR #41 делает состо�
 
 ## Optional blood shrine (new)
 Night dungeon routes now feature a risk/reward blood shrine at x=530 near the ground. After choosing a route, walk within 85 pixels, then left-click the shrine: trade 25 HP for 55 mana and 2 souls. Requires more than 25 HP and can only be claimed once per night; it disappears after use or when the ritual stone is collected. An unobtrusive contextual mouse hint appears only when nearby. `tests/campaign_smoke.gd` covers activation, one-time reward and run reset. Old saves are unaffected.
+
+## RC — Спектральный патруль в подземельях
+На сложности 2–4 (либо начиная с третьей ночи) в подземельях появляется циклический призрачный патруль. Перед появлением справа виден короткий янтарный предупредительный круг; затем призрак пересекает арену справа налево, причиняя контактный урон герою. Есть безопасный интервал между проходами. Ловушка не закрывает экран и не требует дополнительных кнопок. Урон зависит от сложности; smoke-тесты проверяют опасный и безопасный интервалы и отключение на ранней обычной сложности. Существующие пути, тайники и сохранения не затронуты.
