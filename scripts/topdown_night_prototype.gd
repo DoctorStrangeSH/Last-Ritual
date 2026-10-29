@@ -33,6 +33,7 @@ var death_bursts: Array[Dictionary] = []
 var reward_notice := ""
 var reward_notice_time := 0.0
 var run_state := "playing" # playing, won, lost
+var help_visible := false
 
 func _ready() -> void:
     sfx = SFX_SCRIPT.new()
@@ -221,7 +222,7 @@ func take_damage(amount: int) -> void:
     queue_redraw()
 
 func _process(delta: float) -> void:
-    if run_state != "playing":
+    if help_visible or run_state != "playing":
         return
     attack_cooldown = maxf(0.0, attack_cooldown - delta)
     invulnerable_time = maxf(0.0, invulnerable_time - delta)
@@ -310,7 +311,16 @@ func click_ui(point: Vector2) -> bool:
 func draw_label(value: String, point: Vector2, font_size: int = 18, color: Color = Color.WHITE) -> void:
     draw_string(ThemeDB.fallback_font, point, value, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
 
+func toggle_controls_help() -> void:
+    help_visible = not help_visible
+    queue_redraw()
+
 func _unhandled_input(event: InputEvent) -> void:
+    if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_H:
+        toggle_controls_help()
+        return
+    if help_visible:
+        return
     if event is InputEventKey and event.pressed and event.keycode == KEY_R and run_state != "playing":
         restart_run()
         return
@@ -385,3 +395,17 @@ func _draw() -> void:
         draw_rect(Rect2(1058.0, 275.0, 46.0, 96.0), Color("#72b59b"))
     else:
         draw_rect(Rect2(1058.0, 275.0, 46.0, 96.0), Color("#59495b"))
+
+    draw_label("H: CONTROLS", Vector2(1000, 43), 14, Color("#d5c592"))
+    if help_visible:
+        var help_panel := Rect2(306, 144, 540, 360)
+        draw_rect(help_panel, Color(0.055, 0.07, 0.11, 0.97))
+        draw_rect(help_panel, Color("#d5c592"), false, 2.0)
+        draw_label("NIGHT CONTROLS", Vector2(435, 190), 27, Color("#e7d3a8"))
+        draw_label("WASD / ARROWS  -  Move", Vector2(354, 238), 18)
+        draw_label("LEFT CLICK enemy  -  Attack in range", Vector2(354, 273), 18)
+        draw_label("CLICK a relic card  -  Choose your reward", Vector2(354, 308), 17)
+        draw_label("CLICK a route card  -  Choose the next room", Vector2(354, 343), 17)
+        draw_label("RIGHT CLICK near the open door  -  Advance", Vector2(354, 378), 16)
+        draw_label("H  -  Close this help panel", Vector2(354, 420), 17, Color("#d5c592"))
+        draw_label("The action pauses while help is open.", Vector2(354, 460), 15, Color("#9da9bf"))

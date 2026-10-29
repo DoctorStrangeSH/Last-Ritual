@@ -23,6 +23,7 @@ var enemies: Array[Dictionary] = []
 var wave_number := 0
 var altar_hp := 100
 var defense_state := "playing" # playing, won, lost
+var help_visible := false
 const RESTART_BUTTON := Rect2(455, 350, 242, 58)
 var enemies_spawned := 0
 var enemies_escaped := 0
@@ -271,7 +272,7 @@ func restart_defense() -> void:
     queue_redraw()
 
 func _process(delta: float) -> void:
-    if defense_state != "playing":
+    if help_visible or defense_state != "playing":
         return
     if wave_number == 3 and enemies.is_empty():
         defense_state = "won"
@@ -362,7 +363,16 @@ func sell_selected() -> bool:
     queue_redraw()
     return true
 
+func toggle_controls_help() -> void:
+    help_visible = not help_visible
+    queue_redraw()
+
 func _unhandled_input(event: InputEvent) -> void:
+    if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_H:
+        toggle_controls_help()
+        return
+    if help_visible:
+        return
     if event is InputEventKey and event.pressed and event.keycode == KEY_R and defense_state != "playing":
         restart_defense()
         return
@@ -454,3 +464,18 @@ func _draw() -> void:
         draw_rect(Rect2(260.0 + i * 210.0, 550.0, 180.0, 64.0), Color("#876c58"))
     draw_rect(Rect2(880, 545, 110, 55), Color("#518b78"))
     draw_rect(Rect2(1010, 545, 110, 55), Color("#914c59"))
+
+    draw_string(ThemeDB.fallback_font, Vector2(1010, 45), "H: HELP", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#d5c592"))
+    if help_visible:
+        var help_panel := Rect2(286, 116, 580, 410)
+        draw_rect(help_panel, Color(0.055, 0.07, 0.11, 0.97))
+        draw_rect(help_panel, Color("#d5c592"), false, 2.0)
+        draw_string(ThemeDB.fallback_font, Vector2(430, 160), "DAY DEFENSE CONTROLS", HORIZONTAL_ALIGNMENT_LEFT, -1, 25, Color("#e7d3a8"))
+        draw_string(ThemeDB.fallback_font, Vector2(326, 207), "WASD / ARROWS  -  Move the hero", HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color.WHITE)
+        draw_string(ThemeDB.fallback_font, Vector2(326, 247), "Choose BONE / FIRE / NECRO below, then click a pad", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
+        draw_string(ThemeDB.fallback_font, Vector2(326, 287), "Click a built tower to select it", HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color.WHITE)
+        draw_string(ThemeDB.fallback_font, Vector2(326, 327), "UPGRADE / SELL manage the selected tower", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
+        draw_string(ThemeDB.fallback_font, Vector2(326, 367), "Click open ground  -  Hero attacks toward cursor", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
+        draw_string(ThemeDB.fallback_font, Vector2(326, 407), "RIGHT CLICK or ESC  -  Cancel tower selection", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
+        draw_string(ThemeDB.fallback_font, Vector2(326, 447), "START WAVE  -  Send the next wave", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
+        draw_string(ThemeDB.fallback_font, Vector2(326, 490), "H  -  Close help (action pauses while open)", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#d5c592"))
