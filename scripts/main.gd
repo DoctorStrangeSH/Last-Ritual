@@ -890,7 +890,14 @@ func begin_night() -> void:
     grounded = true
     jump_was_down = false
     player_hp = 100.0
+    attack_cooldown = 0.0
+    hurt_cooldown = 0.0
+    swing_timer = 0.0
+    dash_cooldown = 0.0
+    dash_trail = 0.0
     cleave_cooldown = 0.0
+    cleave_flash_timer = 0.0
+    cleave_flash_facing = facing
     empowered_strike = false
     boss_hp = 140.0 if current_day == 1 else (190.0 if current_day == 2 else (230.0 if current_day == 3 else (270.0 if current_day == 4 else 340.0)))
     boss_hp *= 0.8 + float(difficulty) * 0.2
