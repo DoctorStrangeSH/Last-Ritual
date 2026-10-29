@@ -248,6 +248,18 @@ func run_tests() -> void:
     game.cleave_cooldown = 0.0
     check(is_equal_approx(game.cleave_charge_ratio(), 1.0), "cleave HUD meter full when ready")
     game.reset_all()
+    game.reset_all()
+    game.phase = "night"
+    game.player_hp = 26.0
+    check(not game.night_low_hp_warning_visible(), "critical HP warning hidden above threshold")
+    game.player_hp = 25.0
+    check(game.night_low_hp_warning_visible(), "critical HP warning shown at threshold")
+    game.player_hp = 0.0
+    check(not game.night_low_hp_warning_visible(), "critical HP warning hidden when defeated")
+    game.phase = "day"
+    game.player_hp = 20.0
+    check(not game.night_low_hp_warning_visible(), "night HP warning hidden outside dungeon")
+    game.reset_all()
     check(game.current_day == 1, "initial day")
     game.dungeon_route = 1
     game.platforms = [Rect2(200.0, 420.0, 135.0, 16.0)]

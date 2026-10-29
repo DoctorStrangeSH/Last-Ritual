@@ -1216,6 +1216,9 @@ func apply_dungeon_route() -> void:
 func cleave_charge_ratio() -> float:
     return 1.0 - clampf(cleave_cooldown / 6.0, 0.0, 1.0)
 
+func night_low_hp_warning_visible() -> bool:
+    return phase == "night" and player_hp > 0.0 and player_hp <= 25.0
+
 func night_controls_hint_visible() -> bool:
     return phase == "night" and current_day == 1 and trap_clock < 8.0 and not stone_taken
 
@@ -2229,10 +2232,11 @@ func _draw() -> void:
                 label("ЦЕЛЬ: забери светящийся камень справа!", 25, 145, 17, Color("f4d29a"))
             elif stone_taken:
                 label("ЦЕЛЬ: вернись с камнем к ПОРТАЛУ слева.", 25, 145, 17, Color("a8e9d0"))
-            if player_hp > 0.0 and player_hp <= 25.0:
+            if night_low_hp_warning_visible():
+                # Short notice beside the HUD, leaving the middle of the arena clear.
                 var danger_blink: float = 0.60 + 0.40 * sin(atmosphere_clock * 8.0)
-                box(Rect2(310, 212, 530, 43), Color(0.54, 0.09, 0.18, 0.40 + danger_blink * 0.40))
-                label("КРИТИЧЕСКОЕ ЗДОРОВЬЕ! H — ЛЕЧЕНИЕ", 332, 240, 21, Color("ffe0dd"))
+                box(Rect2(321, 90, 232, 29), Color(0.54, 0.09, 0.18, 0.40 + danger_blink * 0.40))
+                label("МАЛО HP • H: ЛЕЧИТЬ", 333, 111, 16, Color("ffe0dd"))
             # Compact ability chip: one line of status and a narrow cooldown meter.
             box(Rect2(879, 581, 156, 27), Color(0.10, 0.08, 0.17, 0.82))
             draw_rect(Rect2(879, 581, 156, 27), Color("6e557f"), false, 1.0)
