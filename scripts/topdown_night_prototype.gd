@@ -27,6 +27,9 @@ var attack_cooldown := 0.0
 var invulnerable_time := 0.0
 var player_hit_flash := 0.0
 var floating_combat_texts: Array[Dictionary] = []
+var death_bursts: Array[Dictionary] = []
+var reward_notice := ""
+var reward_notice_time := 0.0
 var run_state := "playing" # playing, won, lost
 
 func _ready() -> void:
@@ -40,6 +43,10 @@ func open_room(index: int, override_variant: int = -1) -> void:
     enemies.clear()
     hostile_shots.clear()
     ranged_fire_clock = 0.0
+    death_bursts.clear()
+    floating_combat_texts.clear()
+    reward_notice = ""
+    reward_notice_time = 0.0
     room_variant = override_variant if override_variant >= 0 else posmod(dungeon_seed + index, ROOM_KINDS.size())
     var offsets := [Vector2.ZERO, Vector2(-90.0, 65.0), Vector2(40.0, -65.0)]
     var offset: Vector2 = offsets[room_variant]
@@ -80,6 +87,7 @@ func attack(target: Vector2) -> bool:
     enemies[hit]["hit_flash"] = 0.12
     floating_combat_texts.append({"pos": enemies[hit]["pos"] + Vector2(0, -22), "text": "-%d" % attack_damage, "time": 0.65, "color": Color("#fff0b0")})
     if enemies[hit]["hp"] <= 0:
+        death_bursts.append({"pos": enemies[hit]["pos"], "time": 0.4})
         enemies.remove_at(hit)
         night_souls += 1
     if enemies.is_empty():
@@ -99,6 +107,8 @@ func choose_relic(kind: String) -> bool:
     if room_index == 2:
         run_state = "won"
     relics.append(kind)
+    reward_notice = "RELIC ACQUIRED: %s" % kind.to_upper()
+    reward_notice_time = 1.4
     match kind:
         "bone":
             attack_damage += 1
@@ -182,6 +192,11 @@ func restart_run() -> void:
     attack_speed_multiplier = 1.0
     attack_cooldown = 0.0
     invulnerable_time = 0.0
+    player_hit_flash = 0.0
+    floating_combat_texts.clear()
+    death_bursts.clear()
+    reward_notice = ""
+    reward_notice_time = 0.0
     run_state = "playing"
     open_room(0)
 
@@ -203,6 +218,11 @@ func _process(delta: float) -> void:
     attack_cooldown = maxf(0.0, attack_cooldown - delta)
     invulnerable_time = maxf(0.0, invulnerable_time - delta)
     player_hit_flash = maxf(0.0, player_hit_flash - delta)
+    reward_notice_time = maxf(0.0, reward_notice_time - delta)
+    for burst in death_bursts.duplicate():
+        burst["time"] = float(burst["time"]) - delta
+        if float(burst["time"]) <= 0.0:
+            death_bursts.erase(burst)
     for combat_text in floating_combat_texts.duplicate():
         combat_text["time"] = float(combat_text["time"]) - delta
         combat_text["pos"] = combat_text["pos"] + Vector2(0, -24.0 * delta)
@@ -321,10 +341,16 @@ func _draw() -> void:
     for enemy in enemies:
         var enemy_color: Color = Color("#fff1d1") if float(enemy.get("hit_flash", 0.0)) > 0.0 else (Color("#aa70d6") if enemy["ranged"] else Color("#cf646c"))
         draw_circle(enemy["pos"], 23.0 if float(enemy.get("hit_flash", 0.0)) > 0.0 else 19.0, enemy_color)
+    for burst in death_bursts:
+        var progress: float = 1.0 - float(burst["time"]) / 0.4
+        draw_arc(burst["pos"], 20.0 + progress * 24.0, 0.0, TAU, 24, Color("#f0a0b1", 1.0 - progress), 3.0)
     for shot in hostile_shots:
         draw_circle(shot["pos"], 7.0, Color("#ffbd77"))
     for combat_text in floating_combat_texts:
         draw_label(str(combat_text["text"]), combat_text["pos"], 16, combat_text["color"])
+    if reward_notice_time > 0.0:
+        draw_rect(Rect2(387, 91, 380, 44), Color("#314f47"))
+        draw_label(reward_notice, Vector2(414, 119), 19, Color("#fff1c8"))
     if reward_available:
         draw_circle(Vector2(576, 325), 24.0, Color("#f4d78c"))
         draw_label("CHOOSE ONE RELIC", Vector2(480, 425), 23)
