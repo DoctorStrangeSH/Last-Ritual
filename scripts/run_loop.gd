@@ -8,6 +8,7 @@ var completed_phases := 0
 var run_damage_bonus := 0
 var run_speed_bonus := 0.0
 var run_gold_bonus := 0
+var run_fire_bonus := 0
 var active_game: Node2D
 var last_phase := "day"
 const DAY_BUTTON := Rect2(240, 330, 280, 90)
@@ -30,6 +31,7 @@ func start_phase(kind: String) -> bool:
     add_child(active_game)
     if kind == "day":
         active_game.coins += run_gold_bonus
+        active_game.fire_synergy_bonus = run_fire_bonus
     else:
         active_game.attack_damage += run_damage_bonus
         active_game.attack_speed_multiplier += run_speed_bonus
@@ -46,7 +48,7 @@ func finish_phase(won: bool) -> void:
     else:
         completed_phases += 1
         phase_count += 1
-        phase = "victory" if phase_count >= 4 else "reward"
+        phase = "victory" if phase_count >= 6 else "reward"
     queue_redraw()
 
 func choose_run_reward(kind: String) -> bool:
@@ -57,6 +59,7 @@ func choose_run_reward(kind: String) -> bool:
             run_damage_bonus += 1
         "ember":
             run_speed_bonus += 0.25
+            run_fire_bonus += 1
         "gold":
             run_gold_bonus += 30
         _:
@@ -111,6 +114,7 @@ func reset_run() -> void:
     run_damage_bonus = 0
     run_speed_bonus = 0.0
     run_gold_bonus = 0
+    run_fire_bonus = 0
     queue_redraw()
 
 func _draw() -> void:
@@ -118,16 +122,16 @@ func _draw() -> void:
     draw_string(ThemeDB.fallback_font, Vector2(360, 105), "LAST RITUAL", HORIZONTAL_ALIGNMENT_LEFT, -1, 42, Color("#e7d3a8"))
     match phase:
         "hub":
-            draw_string(ThemeDB.fallback_font, Vector2(360, 210), "RUN %d / 4  |  Choose the next phase" % (phase_count + 1), HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color.WHITE)
+            draw_string(ThemeDB.fallback_font, Vector2(360, 210), "RUN %d / 6  |  Choose the next phase" % (phase_count + 1), HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color.WHITE)
             var next_phase := expected_phase()
             draw_rect(DAY_BUTTON, Color("#527d70") if next_phase == "day" else Color("#343b47"))
             draw_rect(NIGHT_BUTTON, Color("#594d78") if next_phase == "night" else Color("#343b47"))
             draw_string(ThemeDB.fallback_font, Vector2(290, 382), "DAY: DEFEND" if next_phase == "day" else "DAY: COMPLETE", HORIZONTAL_ALIGNMENT_LEFT, -1, 24, Color.WHITE)
             draw_string(ThemeDB.fallback_font, Vector2(665, 382), "NIGHT: EXPLORE" if next_phase == "night" else "NIGHT: LOCKED", HORIZONTAL_ALIGNMENT_LEFT, -1, 24, Color.WHITE)
-            draw_string(ThemeDB.fallback_font, Vector2(300, 490), "Relics carried: +%d damage, +%d gold" % [run_damage_bonus, run_gold_bonus], HORIZONTAL_ALIGNMENT_LEFT, -1, 19, Color("#c7c9d1"))
+            draw_string(ThemeDB.fallback_font, Vector2(300, 490), "Relics: +%d damage, +%d gold, +%d fire" % [run_damage_bonus, run_gold_bonus, run_fire_bonus], HORIZONTAL_ALIGNMENT_LEFT, -1, 19, Color("#c7c9d1"))
         "reward":
             draw_string(ThemeDB.fallback_font, Vector2(410, 235), "CHOOSE A RUN RELIC", HORIZONTAL_ALIGNMENT_LEFT, -1, 26, Color.WHITE)
-            var names := ["BONE: +1 DAMAGE", "EMBER: +25% SPEED", "GOLD: +30 START GOLD"]
+            var names := ["BONE: +1 DAMAGE", "EMBER: +25% SPEED + FIRE", "GOLD: +30 START GOLD"]
             for i in range(REWARD_BUTTONS.size()):
                 draw_rect(REWARD_BUTTONS[i], [Color("#526d9b"), Color("#a16a36"), Color("#927447")][i])
                 draw_string(ThemeDB.fallback_font, REWARD_BUTTONS[i].position + Vector2(12, 55), names[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color.WHITE)
