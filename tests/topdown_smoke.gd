@@ -293,6 +293,7 @@ func run_tests() -> void:
         game.attack_cooldown = 0.0
         check(game.attack(Vector2(570.0, 240.0)), "Hero can attack first enemy")
     check(game.enemies.size() == 1 and game.night_souls == 1, "First enemy defeated and awards a soul")
+    check(game.death_bursts.size() == 1 and game.death_bursts[0]["time"] > 0.0, "Defeated enemy creates temporary death-ring effect")
     game.player_pos = Vector2(710.0, 370.0)
     for i in range(3):
         game.attack_cooldown = 0.0
@@ -300,6 +301,7 @@ func run_tests() -> void:
     check(game.reward_available and game.night_souls == 2 and not game.door_available(), "Defeating room earns souls but reward blocks exit")
     check(not game.choose_relic("invalid"), "Invalid relic is rejected")
     check(game.choose_relic("bone"), "Bone relic can be chosen")
+    check(game.reward_notice_time > 0.0 and game.reward_notice == "RELIC ACQUIRED: BONE", "Relic pickup shows named confirmation")
     check(game.attack_damage == 2 and game.relics == ["bone"], "Bone relic increases damage")
     check(not game.choose_relic("blood"), "Room reward cannot be taken twice")
     check(not game.choose_route(4), "Invalid route choice is rejected")
@@ -366,6 +368,7 @@ func run_tests() -> void:
     game.restart_run()
     check(game.run_state == "playing" and game.player_hp == 100 and game.room_index == 0, "Restart restores health and room")
     check(game.relics.is_empty() and game.rewards_taken == 0 and game.attack_damage == 1, "Restart clears run-only relic upgrades")
+    check(game.death_bursts.is_empty() and game.floating_combat_texts.is_empty() and game.reward_notice_time == 0.0, "Restart clears transient combat effects and relic notices")
     game.room_index = 2
     game.enemies.clear()
     game.reward_available = true
