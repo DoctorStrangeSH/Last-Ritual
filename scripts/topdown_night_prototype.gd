@@ -8,6 +8,11 @@ const ATTACK_RANGE := 155.0
 const DASH_DISTANCE := 170.0
 const DASH_COOLDOWN := 2.5
 const DASH_INVULNERABILITY := 0.22
+const RANGED_WARNING := 0.65
+const MELEE_WARNING := 0.45
+const MELEE_RECHARGE := 1.15
+const MELEE_REACH := 60.0
+const MELEE_HIT_RADIUS := 32.0
 var room_index := 0
 var difficulty := 0 # 0 normal, 1 hard, 2 nightmare
 var dungeon_seed := 0
@@ -279,12 +284,7 @@ func _process(delta: float) -> void:
     if Input.is_key_pressed(KEY_W): direction.y -= 1.0
     if Input.is_key_pressed(KEY_S): direction.y += 1.0
     move_player(direction, delta)
-    ranged_fire_clock += delta
-    if ranged_fire_clock >= 1.7:
-        ranged_fire_clock = 0.0
-        for enemy in enemies:
-            if enemy["ranged"]:
-                shoot_hostile(enemy["pos"])
+    update_enemy_attacks(delta)
     for shot in hostile_shots.duplicate():
         shot["pos"] += shot["velocity"] * delta
         if not ARENA.has_point(shot["pos"]):
@@ -298,13 +298,45 @@ func _process(delta: float) -> void:
         var step: Vector2 = (player_pos - pos).normalized() * float(enemy["speed"]) * delta
         if enemy["ranged"] and player_pos.distance_to(pos) < 230.0:
             step = Vector2.ZERO
+        if not enemy["ranged"] and float(enemy.get("melee_warning", 0.0)) > 0.0:
+            step = Vector2.ZERO
         enemy["pos"] = (pos + step).clamp(ARENA.position, ARENA.end)
-        if player_pos.distance_to(enemy["pos"]) < 25.0 and invulnerable_time <= 0.0:
-            take_damage(10)
     queue_redraw()
 
-func shoot_hostile(origin: Vector2) -> void:
-    var direction := (player_pos - origin).normalized()
+func update_enemy_attacks(delta: float) -> void:
+    # Ranged units lock their aim during a visible windup rather than firing instantly.
+    ranged_fire_clock += delta
+    if ranged_fire_clock >= 1.7:
+        ranged_fire_clock = fmod(ranged_fire_clock, 1.7)
+        for enemy in enemies:
+            if enemy["ranged"] and float(enemy.get("ranged_warning", 0.0)) <= 0.0:
+                enemy["ranged_warning"] = RANGED_WARNING
+                enemy["attack_target"] = player_pos
+    for enemy in enemies:
+        if enemy["ranged"]:
+            var ranged_remaining: float = float(enemy.get("ranged_warning", 0.0))
+            if ranged_remaining > 0.0:
+                enemy["ranged_warning"] = maxf(0.0, ranged_remaining - delta)
+                if float(enemy["ranged_warning"]) <= 0.0:
+                    shoot_hostile(enemy["pos"], enemy["attack_target"])
+            continue
+        var recovery: float = maxf(0.0, float(enemy.get("melee_recharge", 0.0)) - delta)
+        enemy["melee_recharge"] = recovery
+        var melee_remaining: float = float(enemy.get("melee_warning", 0.0))
+        if melee_remaining > 0.0:
+            enemy["melee_warning"] = maxf(0.0, melee_remaining - delta)
+            if float(enemy["melee_warning"]) <= 0.0:
+                # The target was locked before the strike: dodging out avoids it.
+                if player_pos.distance_to(enemy["attack_target"]) <= MELEE_HIT_RADIUS:
+                    take_damage(10)
+                enemy["melee_recharge"] = MELEE_RECHARGE
+        elif recovery <= 0.0 and enemy["pos"].distance_to(player_pos) <= MELEE_REACH:
+            enemy["melee_warning"] = MELEE_WARNING
+            enemy["attack_target"] = player_pos
+
+func shoot_hostile(origin: Vector2, target: Vector2 = Vector2.ZERO) -> void:
+    var aimed: Vector2 = player_pos if target == Vector2.ZERO else target
+    var direction := (aimed - origin).normalized()
     if direction == Vector2.ZERO:
         return
     hostile_shots.append({"pos": origin, "velocity": direction * 180.0})
@@ -407,6 +439,17 @@ func _draw() -> void:
         draw_rect(RESTART_BUTTON, Color("#739bb0"))
         draw_label("RESTART RUN", Vector2(488, 337), 22)
     for enemy in enemies:
+        var ranged_remaining: float = float(enemy.get("ranged_warning", 0.0))
+        var melee_remaining: float = float(enemy.get("melee_warning", 0.0))
+        if ranged_remaining > 0.0:
+            var aim: Vector2 = enemy["attack_target"]
+            var ranged_charge: float = 1.0 - ranged_remaining / RANGED_WARNING
+            draw_line(enemy["pos"], aim, Color("#ffbc76", 0.45 + ranged_charge * 0.55), 3.0)
+            draw_arc(aim, 24.0, -PI / 2.0, -PI / 2.0 + TAU * ranged_charge, 32, Color("#ffbc76"), 4.0)
+        elif melee_remaining > 0.0:
+            var attack_at: Vector2 = enemy["attack_target"]
+            var melee_charge: float = 1.0 - melee_remaining / MELEE_WARNING
+            draw_arc(attack_at, MELEE_HIT_RADIUS, -PI / 2.0, -PI / 2.0 + TAU * melee_charge, 32, Color("#ff7b89"), 5.0)
         var enemy_color: Color = Color("#fff1d1") if float(enemy.get("hit_flash", 0.0)) > 0.0 else (Color("#aa70d6") if enemy["ranged"] else Color("#cf646c"))
         draw_circle(enemy["pos"], 23.0 if float(enemy.get("hit_flash", 0.0)) > 0.0 else 19.0, enemy_color)
     for burst in death_bursts:
@@ -460,7 +503,7 @@ func _draw() -> void:
         draw_label("LEFT CLICK enemy  -  Attack in range", Vector2(354, 273), 18)
         draw_label("CLICK a relic card  -  Choose your reward", Vector2(354, 308), 17)
         draw_label("CLICK a route card  -  Choose the next room", Vector2(354, 343), 17)
-        draw_label("SPACE or DASH button  -  Evade (2.5s cooldown)", Vector2(354, 378), 16)
+        draw_label("SPACE / DASH  -  Evade warning circles and aim lines", Vector2(354, 378), 15)
         draw_label("RIGHT CLICK near the door  -  Advance", Vector2(354, 409), 16)
         draw_label("H  -  Close this help panel", Vector2(354, 438), 16, Color("#d5c592"))
         draw_label("The action pauses while help is open.", Vector2(354, 469), 14, Color("#9da9bf"))

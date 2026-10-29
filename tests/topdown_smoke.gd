@@ -337,6 +337,50 @@ func run_tests() -> void:
     if packed == null:
         quit(1)
         return
+    var ranged_probe = packed.instantiate()
+    root.add_child(ranged_probe)
+    ranged_probe.enemies.clear()
+    ranged_probe.player_pos = Vector2(500.0, 325.0)
+    ranged_probe.enemies.append({"pos": Vector2(800.0, 325.0), "hp": 10, "speed": 0.0, "ranged": true})
+    ranged_probe.ranged_fire_clock = 1.65
+    ranged_probe._process(0.1)
+    check(ranged_probe.hostile_shots.is_empty() and float(ranged_probe.enemies[0].get("ranged_warning", 0.0)) > 0.0, "Ranged enemy warns before projectile appears")
+    check(ranged_probe.enemies[0]["attack_target"] == Vector2(500.0, 325.0), "Ranged warning locks the player's current position")
+    ranged_probe.toggle_controls_help()
+    var ranged_warning_frozen: float = ranged_probe.enemies[0]["ranged_warning"]
+    ranged_probe._process(2.0)
+    check(is_equal_approx(float(ranged_probe.enemies[0]["ranged_warning"]), ranged_warning_frozen) and ranged_probe.hostile_shots.is_empty(), "Help pause freezes ranged attack warning")
+    ranged_probe.toggle_controls_help()
+    ranged_probe.last_move_direction = Vector2.UP
+    check(ranged_probe.dash(), "Dash moves player out of ranged aim line")
+    ranged_probe._process(0.56)
+    check(ranged_probe.hostile_shots.size() == 1 and ranged_probe.hostile_shots[0]["velocity"] == Vector2.LEFT * 180.0, "Ranged shot uses locked target after windup")
+    ranged_probe._process(1.0)
+    check(ranged_probe.player_hp == 100 and ranged_probe.hostile_shots.size() == 1, "Dodging an aimed ranged shot avoids damage without relying on invulnerability")
+    ranged_probe.restart_run()
+    check(ranged_probe.hostile_shots.is_empty() and is_zero_approx(ranged_probe.ranged_fire_clock) and is_zero_approx(float(ranged_probe.enemies[1].get("ranged_warning", 0.0))), "Room restart clears projectiles and warnings")
+    ranged_probe.queue_free()
+
+    var melee_probe = packed.instantiate()
+    root.add_child(melee_probe)
+    melee_probe.enemies.clear()
+    melee_probe.player_pos = Vector2(160.0, 325.0)
+    melee_probe.enemies.append({"pos": Vector2(210.0, 325.0), "hp": 10, "speed": 0.0, "ranged": false})
+    melee_probe._process(0.1)
+    check(melee_probe.player_hp == 100 and float(melee_probe.enemies[0].get("melee_warning", 0.0)) > 0.0, "Melee enemy telegraphs instead of dealing instant contact damage")
+    check(melee_probe.enemies[0]["attack_target"] == Vector2(160.0, 325.0), "Melee warning locks the danger zone")
+    melee_probe.last_move_direction = Vector2.UP
+    check(melee_probe.dash(), "Dash moves out of melee warning zone")
+    melee_probe.invulnerable_time = 0.0
+    melee_probe._process(0.46)
+    check(melee_probe.player_hp == 100 and float(melee_probe.enemies[0]["melee_recharge"]) > 0.0, "Melee telegraph misses player outside its warning circle")
+    melee_probe.player_pos = Vector2(160.0, 325.0)
+    melee_probe._process(1.2)
+    check(float(melee_probe.enemies[0]["melee_warning"]) > 0.0, "Melee can warn again after recovery")
+    melee_probe._process(0.46)
+    check(melee_probe.player_hp == 90, "Staying in melee warning circle causes 10 damage after windup")
+    melee_probe.queue_free()
+
     var dash_probe = packed.instantiate()
     root.add_child(dash_probe)
     var dash_start: Vector2 = dash_probe.player_pos
