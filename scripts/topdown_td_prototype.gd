@@ -21,6 +21,40 @@ var tower_cooldowns: Dictionary = {}
 var shot_trails: Array[Dictionary] = []
 const TOWER_RANGE := {"bone": 135.0, "fire": 160.0, "necro": 125.0}
 const TOWER_DAMAGE := {"bone": 2, "fire": 1, "necro": 3}
+const HERO_SPEED := 215.0
+const HERO_ATTACK_RANGE := 150.0
+var hero_pos := Vector2(560.0, 420.0)
+var hero_attack_cooldown := 0.0
+
+func move_hero(direction: Vector2, delta: float) -> void:
+    hero_pos += direction.limit_length(1.0) * HERO_SPEED * delta
+    hero_pos = hero_pos.clamp(Vector2(42, 75), Vector2(1110, 520))
+    queue_redraw()
+
+func hero_attack(target: Vector2) -> bool:
+    if hero_attack_cooldown > 0.0 or altar_hp <= 0:
+        return false
+    var best: Dictionary = {}
+    var best_distance := INF
+    for enemy in enemies:
+        if enemy["delay"] > 0.0:
+            continue
+        var enemy_pos: Vector2 = enemy["pos"]
+        var distance := hero_pos.distance_to(enemy_pos)
+        if distance <= HERO_ATTACK_RANGE and enemy_pos.distance_to(target) <= 42.0 and distance < best_distance:
+            best = enemy
+            best_distance = distance
+    if best.is_empty():
+        return false
+    shot_trails.append({"from": hero_pos, "to": best["pos"], "time": 0.18})
+    best["hp"] -= 2
+    hero_attack_cooldown = 0.28
+    if best["hp"] <= 0:
+        enemies.erase(best)
+        enemies_defeated += 1
+        coins += 5
+    queue_redraw()
+    return true
 
 func start_wave() -> bool:
     if not enemies.is_empty() or wave_number >= 3 or altar_hp <= 0:
@@ -85,6 +119,13 @@ func attack_with_towers(delta: float) -> void:
     queue_redraw()
 
 func _process(delta: float) -> void:
+    hero_attack_cooldown = maxf(0.0, hero_attack_cooldown - delta)
+    var move_direction := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
+    if Input.is_key_pressed(KEY_A): move_direction.x -= 1.0
+    if Input.is_key_pressed(KEY_D): move_direction.x += 1.0
+    if Input.is_key_pressed(KEY_W): move_direction.y -= 1.0
+    if Input.is_key_pressed(KEY_S): move_direction.y += 1.0
+    move_hero(move_direction, delta)
     advance_enemies(delta)
     attack_with_towers(delta)
     for trail in shot_trails.duplicate():
@@ -186,8 +227,10 @@ func _unhandled_input(event: InputEvent) -> void:
             var id := slot_at(point)
             if selected_type != "":
                 build_tower(id)
-            else:
+            elif id != -1:
                 select_slot(id)
+            else:
+                hero_attack(point)
 
 func _draw() -> void:
     draw_rect(Rect2(Vector2.ZERO, Vector2(1152, 648)), Color("#131827"))
@@ -202,6 +245,7 @@ func _draw() -> void:
             draw_circle(enemy["pos"], 12.0, Color("#c67f64"))
     for trail in shot_trails:
         draw_line(trail["from"], trail["to"], Color("#ffda8e"), 4.0)
+    draw_circle(hero_pos, 15.0, Color("#72cbd9"))
     for i in range(slots.size()):
         var pos: Vector2 = slots[i]["pos"]
         var occupied: bool = slots[i]["tower"] != ""

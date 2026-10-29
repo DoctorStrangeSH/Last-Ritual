@@ -54,6 +54,17 @@ func run_tests() -> void:
         td.enemies.append({"lane": 0, "pos": Vector2(1050, 330), "waypoint": 2, "hp": 5, "delay": 0.0})
         td.attack_with_towers(2.0)
         check(td.enemies.size() == 1 and td.enemies[0]["hp"] == 5, "TD tower ignores enemies beyond range")
+        td.hero_pos = Vector2(400, 400)
+        td.move_hero(Vector2(1, 0), 1.0)
+        check(td.hero_pos.x > 400, "TD defender hero moves")
+        td.hero_pos = Vector2(400, 350)
+        td.enemies.clear()
+        td.enemies.append({"lane": 0, "pos": Vector2(420, 350), "waypoint": 1, "hp": 2, "delay": 0.0})
+        td.hero_attack_cooldown = 0.0
+        var hero_kills_before: int = td.enemies_defeated
+        check(td.hero_attack(Vector2(420, 350)), "TD hero attacks selected enemy")
+        check(td.enemies.is_empty() and td.enemies_defeated == hero_kills_before + 1, "TD hero kills enemy and earns gold")
+        check(not td.hero_attack(Vector2(420, 350)), "TD hero attack respects cooldown and empty targets")
         td.queue_free()
     var packed := load("res://scenes/topdown_night_prototype.tscn") as PackedScene
     check(packed != null, "Top-down entry scene loads")
