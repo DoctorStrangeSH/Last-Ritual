@@ -270,6 +270,11 @@ func run_tests() -> void:
     game.trap_clock = 1.9
     check(game.trap_is_dangerous(), "night HUD hazard indicator uses active trap state")
     game.reset_all()
+    check(game.reward_card_at(Vector2(150.0, 300.0)) == 0, "reward card hitbox selects first card")
+    check(game.reward_card_at(Vector2(450.0, 300.0)) == 1, "reward card hitbox selects middle card")
+    check(game.reward_card_at(Vector2(760.0, 300.0)) == 2, "reward card hitbox selects third card")
+    check(game.reward_card_at(Vector2(425.0, 300.0)) == -1, "reward card gap is not clickable")
+    check(game.reward_card_at(Vector2(150.0, 460.0)) == -1, "outside reward panel does not choose card")
     check(game.current_day == 1, "initial day")
     game.dungeon_route = 1
     game.platforms = [Rect2(200.0, 420.0, 135.0, 16.0)]
