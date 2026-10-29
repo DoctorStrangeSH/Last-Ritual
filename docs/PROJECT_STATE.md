@@ -1,3 +1,7 @@
+> **АКТУАЛЬНЫЙ СТАТУС — 29.10.2026:** приведённый ниже журнал описывает *архивную платформенную кампанию* и не является состоянием текущего проекта. Текущий main: PR #101 merged, commit b1dbed0e6fc46148605ea292e951feeb38d7f8d2, post-merge Windows CI run 40912423173: success. Игра теперь Godot 4.4.1 top-down, main scene `scenes/run_loop.tscn`, скрипты `scripts/run_loop.gd`, `scripts/topdown_td_prototype.gd`, `scripts/topdown_night_prototype.gd`, tests `tests/topdown_smoke.gd`. Открытых PR на момент аудита нет. Новый главный продуктовый план — [GAMEPLAY_OVERHAUL.md](GAMEPLAY_OVERHAUL.md), первая кодовая задача G1 — маршруты крепости. Ручная проверка визуала и баланса не проводилась в этом аудите.
+
+---
+
 # Состояние проекта
 
 **Снимок:** 2026-10-29.  

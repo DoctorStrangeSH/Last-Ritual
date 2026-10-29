@@ -1,3 +1,7 @@
+> **Актуальная архитектура (29.10.2026):** Godot 4.4.1; главная сцена `scenes/run_loop.tscn`, скрипт `scripts/run_loop.gd`; дневной режим `scenes/topdown_td_prototype.tscn` + `scripts/topdown_td_prototype.gd`; ночной `scenes/topdown_night_prototype.tscn` + `scripts/topdown_night_prototype.gd`; прогресс `scripts/meta_progression.gd`; smoke `tests/topdown_smoke.gd`. Все три основных скрипта рисуют большую часть HUD через `Node2D._draw()`; план выделения TileMapLayer и Control — [GAMEPLAY_OVERHAUL.md](GAMEPLAY_OVERHAUL.md). Архитектура ниже — историческая, от удалённой платформенной версии.
+
+---
+
 # Архитектура
 
 ## Текущая реализация
