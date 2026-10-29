@@ -209,7 +209,7 @@ func run_tests() -> void:
     check(game.choose_relic("bone"), "Bone relic can be chosen")
     check(game.attack_damage == 2 and game.relics == ["bone"], "Bone relic increases damage")
     check(not game.choose_relic("blood"), "Room reward cannot be taken twice")
-    check(not game.choose_route(2), "Invalid route choice is rejected")
+    check(not game.choose_route(3), "Invalid route choice is rejected")
     check(game.door_available() and game.click_ui(game.ROUTE_RECTS[1].get_center()), "Mouse chooses alternate night route")
     check(game.room_variant == 2 and game.room_index == 1, "Alternate route changes the next room variant")
     check(game.route_boon == "RISK: -12 HP / +1 DAMAGE" and game.player_hp == 88 and game.attack_damage == 3, "Risk route trades 12 HP for damage and elite fight")
@@ -226,6 +226,17 @@ func run_tests() -> void:
     risk_probe.player_hp = 12
     check(not risk_probe.choose_route(1) and risk_probe.room_index == 0, "Risk route cannot kill hero on entry")
     risk_probe.queue_free()
+    var curse_probe = packed.instantiate()
+    root.add_child(curse_probe)
+    curse_probe.enemies.clear()
+    check(curse_probe.click_ui(curse_probe.ROUTE_RECTS[2].get_center()), "Cursed altar event selectable by mouse")
+    check(curse_probe.player_hp == 80 and is_equal_approx(curse_probe.attack_speed_multiplier, 1.35) and curse_probe.room_variant == 1, "Cursed altar trades health for attack speed and ambush encounter")
+    curse_probe.restart_run()
+    check(curse_probe.player_hp == 100 and is_equal_approx(curse_probe.attack_speed_multiplier, 1.0) and curse_probe.route_boon == "", "Restart clears cursed altar upgrades")
+    curse_probe.enemies.clear()
+    curse_probe.player_hp = 20
+    check(not curse_probe.choose_route(2) and curse_probe.room_index == 0 and curse_probe.player_hp == 20, "Cursed altar sacrifice is blocked at low HP")
+    curse_probe.queue_free()
     check(game.room_index == 1 and game.hostile_shots.is_empty(), "New room resets projectiles")
     game.enemies.clear()
     game.reward_available = true
