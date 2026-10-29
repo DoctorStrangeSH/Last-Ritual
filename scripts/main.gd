@@ -551,16 +551,27 @@ func load_campaign() -> bool:
             return false
         if item["type"] != "bone" and item["type"] != "fire" and item["type"] != "necro":
             return false
-        var saved_lane: int = int(item.get("lane", 1))
-        var saved_level: int = int(item.get("level", 1))
+        var saved_lane_value: Variant = item.get("lane", 1.0)
+        var saved_level_value: Variant = item.get("level", 1.0)
+        if not (saved_lane_value is float or saved_lane_value is int) or not (saved_level_value is float or saved_level_value is int):
+            return false
+        if not is_finite(float(saved_lane_value)) or not is_finite(float(saved_level_value)):
+            return false
+        if float(saved_lane_value) != floorf(float(saved_lane_value)) or float(saved_level_value) != floorf(float(saved_level_value)):
+            return false
+        var saved_lane: int = int(saved_lane_value)
+        var saved_level: int = int(saved_level_value)
         if saved_lane < 0 or saved_lane > 2 or saved_level < 1 or saved_level > 3:
             return false
         for placed in checked_towers:
             if int(placed.get("lane", 1)) == saved_lane and absf(float(placed["x"]) - float(item["x"])) < 65.0:
                 return false
         var loaded_tower: Dictionary = {"x": float(item["x"]), "type": item["type"], "lane": saved_lane, "level": saved_level, "cooldown": 0.0}
-        loaded_tower["hp"] = float(item.get("hp", tower_max_hp(loaded_tower)))
-        if not is_finite(float(loaded_tower["hp"])) or loaded_tower["hp"] <= 0.0 or loaded_tower["hp"] > tower_max_hp(loaded_tower):
+        var saved_hp_value: Variant = item.get("hp", tower_max_hp(loaded_tower))
+        if not (saved_hp_value is float or saved_hp_value is int) or not is_finite(float(saved_hp_value)):
+            return false
+        loaded_tower["hp"] = float(saved_hp_value)
+        if loaded_tower["hp"] <= 0.0 or loaded_tower["hp"] > tower_max_hp(loaded_tower):
             return false
         checked_towers.append(loaded_tower)
     var loaded_kills := 0
