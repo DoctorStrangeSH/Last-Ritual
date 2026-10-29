@@ -212,6 +212,20 @@ func run_tests() -> void:
     check(not game.choose_route(2), "Invalid route choice is rejected")
     check(game.door_available() and game.click_ui(game.ROUTE_RECTS[1].get_center()), "Mouse chooses alternate night route")
     check(game.room_variant == 2 and game.room_index == 1, "Alternate route changes the next room variant")
+    check(game.route_boon == "RISK: -12 HP / +1 DAMAGE" and game.player_hp == 88 and game.attack_damage == 3, "Risk route trades 12 HP for damage and elite fight")
+    var treasury_probe = packed.instantiate()
+    root.add_child(treasury_probe)
+    treasury_probe.enemies.clear()
+    treasury_probe.player_hp = 64
+    check(treasury_probe.choose_route(0) and treasury_probe.player_hp == 82 and treasury_probe.route_boon == "TREASURE: +18 HP", "Treasure route heals before next room")
+    check(treasury_probe.enemies.size() >= 2, "Treasury route still leads to an encounter")
+    treasury_probe.queue_free()
+    var risk_probe = packed.instantiate()
+    root.add_child(risk_probe)
+    risk_probe.enemies.clear()
+    risk_probe.player_hp = 12
+    check(not risk_probe.choose_route(1) and risk_probe.room_index == 0, "Risk route cannot kill hero on entry")
+    risk_probe.queue_free()
     check(game.room_index == 1 and game.hostile_shots.is_empty(), "New room resets projectiles")
     game.enemies.clear()
     game.reward_available = true
@@ -222,7 +236,7 @@ func run_tests() -> void:
     game.reward_available = true
     var hp_before: int = game.player_hp
     check(game.choose_relic("blood"), "Blood relic chosen")
-    check(game.attack_damage == 4 and game.player_hp < hp_before, "Blood relic trades HP for damage")
+    check(game.attack_damage == 5 and game.player_hp < hp_before, "Blood relic stacks with risk-route damage")
     check(not game.next_room(), "Cannot go beyond final room")
     game.move_player(Vector2(-1, -1), 100.0)
     check(game.player_pos.x >= 64.0 and game.player_pos.y >= 84.0, "Player stays inside arena")
