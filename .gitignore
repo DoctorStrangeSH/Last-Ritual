@@ -1,5 +1,12 @@
-# Godot generated caches
+# Godot-generated files
 .godot/
 .import/
+
+# Temporary and local build outputs
 *.tmp
 *.bak
+*.log
+build/
+exported/
+.DS_Store
+Thumbs.db
