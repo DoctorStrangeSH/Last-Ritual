@@ -82,6 +82,23 @@ func run_tests() -> void:
         td.restart_defense()
         check(td.defense_state == "playing" and td.altar_hp == 100 and td.enemies.is_empty(), "TD restart after defeat succeeds")
         td.queue_free()
+    var run_scene := load("res://scenes/run_loop.tscn") as PackedScene
+    check(run_scene != null, "Unified day-night run scene loads")
+    if run_scene != null:
+        var run = run_scene.instantiate()
+        root.add_child(run)
+        check(run.phase == "hub", "Run starts at phase selection hub")
+        check(run.start_phase("day") and run.phase == "day", "Run can start day defense")
+        run.finish_phase(true)
+        check(run.phase == "reward" and run.completed_phases == 1, "Winning a phase grants run reward")
+        check(run.choose_run_reward("bone") and run.run_damage_bonus == 1, "Run relic persists damage bonus")
+        check(run.start_phase("night") and run.phase == "night", "Run can transition to night")
+        check(run.active_game.attack_damage >= 2, "Night inherits run damage relic")
+        run.finish_phase(false)
+        check(run.phase == "defeat", "Losing a phase ends run")
+        run.reset_run()
+        check(run.phase == "hub" and run.phase_count == 0 and run.run_damage_bonus == 0, "New run resets run-only relics")
+        run.queue_free()
     var packed := load("res://scenes/topdown_night_prototype.tscn") as PackedScene
     check(packed != null, "Top-down entry scene loads")
     if packed == null:
