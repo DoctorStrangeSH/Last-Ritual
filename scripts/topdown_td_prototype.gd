@@ -153,6 +153,9 @@ func attack_with_towers(delta: float) -> void:
     queue_redraw()
 
 func spawn_necro_spirit(origin: Vector2) -> void:
+    # Keep the summon build useful without allowing an unlimited spirit army.
+    if summoned_spirits.size() >= 2:
+        return
     summoned_spirits.append({"pos": origin, "life": 4.0, "cooldown": 0.0, "damage": 2})
 
 func tick_necro_spirits(delta: float) -> void:
