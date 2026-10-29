@@ -13,6 +13,24 @@ func _initialize() -> void:
     call_deferred("run_tests")
 
 func run_tests() -> void:
+    var td_scene := load("res://scenes/topdown_td_prototype.tscn") as PackedScene
+    check(td_scene != null, "Top-down TD scene loads")
+    if td_scene != null:
+        var td = td_scene.instantiate()
+        root.add_child(td)
+        check(td.slots.size() == 8, "TD has eight fixed construction slots")
+        check(td.slot_at(Vector2(0, 0)) == -1, "No construction slot outside designated areas")
+        check(td.choose_tower("bone"), "Select bone tower")
+        check(not td.build_tower(-1), "Cannot build off slot")
+        check(td.build_tower(0) and td.coins == 120, "Build bone tower at fixed slot")
+        check(not td.build_tower(0), "Occupied slot rejects duplicate building")
+        check(td.choose_tower("necro") and td.build_tower(1), "Different tower uses its own build slot")
+        check(td.select_slot(0) and td.upgrade_selected(), "Click selected tower to upgrade")
+        check(td.sell_selected() and td.slots[0]["tower"] == "", "Sold tower frees slot")
+        check(td.choose_tower("fire") and td.build_tower(0), "Freed slot can be built again")
+        td.coins = 0
+        check(td.choose_tower("fire") and not td.build_tower(2), "Insufficient gold prevents building")
+        td.queue_free()
     var packed := load("res://scenes/topdown_night_prototype.tscn") as PackedScene
     check(packed != null, "Top-down entry scene loads")
     if packed == null:
