@@ -20,6 +20,25 @@ func _initialize() -> void:
     call_deferred("run_tests")
 
 func run_tests() -> void:
+    var floor_generator = load("res://scripts/dungeon_floor_graph.gd")
+    check(floor_generator != null, "Dungeon topology generator loads")
+    if floor_generator != null:
+        var first_floor: Dictionary = floor_generator.generate_floor(42)
+        var same_floor: Dictionary = floor_generator.generate_floor(42)
+        check(first_floor == same_floor, "Dungeon room graph is reproducible by seed")
+        check(first_floor["rooms"].size() == 10, "Dungeon contains ten connected rooms")
+        check(floor_generator.reachable(first_floor), "Dungeon rooms and boss are reachable")
+        var found_roles := {}
+        for room in first_floor["rooms"]:
+            found_roles[room["kind"]] = true
+            for adjacent in room["neighbors"]:
+                var target = first_floor["rooms"][adjacent]
+                check(target["neighbors"].has(room["id"]), "Dungeon doorway links are bidirectional")
+                check((target["grid"] - room["grid"]).length_squared() == 1, "Dungeon doors connect adjacent grid cells")
+        check(found_roles.has("ВХОД") and found_roles.has("БОСС") and found_roles.has("МАГАЗИН") and found_roles.has("СОКРОВИЩНИЦА"), "Dungeon guarantees essential room roles")
+        for dungeon_seed in range(20):
+            var generated: Dictionary = floor_generator.generate_floor(dungeon_seed)
+            check(generated["rooms"].size() == 10 and floor_generator.reachable(generated), "Generated floor stays connected across seeds")
     var td_scene := load("res://scenes/topdown_td_prototype.tscn") as PackedScene
     check(td_scene != null, "Top-down TD scene loads")
     if td_scene != null:
