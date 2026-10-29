@@ -1212,6 +1212,12 @@ func apply_dungeon_route() -> void:
             platforms[i] = Rect2(p.position + Vector2(-18.0 if i % 2 == 0 else 18.0, 10.0), p.size)
     secret_cache_pos = Vector2(575.0 if dungeon_route == 0 else (610.0 if dungeon_route == 1 else 535.0), FLOOR - 27.0)
 
+func build_card_at(pos: Vector2) -> int:
+    for i in range(3):
+        if Rect2(14.0 + float(i) * 178.0, 557.0, 170.0, 85.0).has_point(pos):
+            return i
+    return -1
+
 func tower_at_point(pos: Vector2) -> int:
     for i in range(towers.size() - 1, -1, -1):
         var tower_lane: int = int(towers[i].get("lane", 1))
@@ -1992,8 +1998,9 @@ func _draw() -> void:
             for card_index in range(3):
                 var card_x: float = 14.0 + float(card_index) * 178.0
                 var card_kind: String = "bone" if card_index == 0 else ("fire" if card_index == 1 else "necro")
-                box(Rect2(card_x, 557.0, 170.0, 85.0), Color("4a394f") if selected_build == card_kind else Color("282536"))
-                draw_rect(Rect2(card_x, 557.0, 170.0, 85.0), Color("d0b1d4") if selected_build == card_kind else Color("66586f"), false, 1.5)
+                var card_hovered := build_card_at(get_global_mouse_position()) == card_index
+                box(Rect2(card_x, 557.0, 170.0, 85.0), Color("4a394f") if selected_build == card_kind else (Color("373044") if card_hovered else Color("282536")))
+                draw_rect(Rect2(card_x, 557.0, 170.0, 85.0), Color("d0b1d4") if selected_build == card_kind else (Color("e1b986") if card_hovered else Color("66586f")), false, 2.0 if card_hovered or selected_build == card_kind else 1.5)
                 var card_art: Texture2D = preload("res://assets/towers/bone_tower.svg") if card_index == 0 else (preload("res://assets/towers/infernal_ballista.svg") if card_index == 1 else preload("res://assets/towers/necromancer_tower.svg"))
                 draw_texture_rect(card_art, Rect2(card_x + 6.0, 565.0, 30.0, 48.0), false)
                 label("КОСТЯНАЯ" if card_index == 0 else ("БАЛЛИСТА" if card_index == 1 else "НЕКРОМАНТ"), card_x + 42.0, 579.0, 15, Color("f4d2af"))
