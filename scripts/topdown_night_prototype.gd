@@ -33,6 +33,7 @@ var death_bursts: Array[Dictionary] = []
 var reward_notice := ""
 var reward_notice_time := 0.0
 var run_state := "playing" # playing, won, lost
+var help_visible := false
 
 func _ready() -> void:
     sfx = SFX_SCRIPT.new()
@@ -221,7 +222,7 @@ func take_damage(amount: int) -> void:
     queue_redraw()
 
 func _process(delta: float) -> void:
-    if run_state != "playing":
+    if help_visible or run_state != "playing":
         return
     attack_cooldown = maxf(0.0, attack_cooldown - delta)
     invulnerable_time = maxf(0.0, invulnerable_time - delta)
@@ -310,7 +311,16 @@ func click_ui(point: Vector2) -> bool:
 func draw_label(value: String, point: Vector2, font_size: int = 18, color: Color = Color.WHITE) -> void:
     draw_string(ThemeDB.fallback_font, point, value, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
 
+func toggle_controls_help() -> void:
+    help_visible = not help_visible
+    queue_redraw()
+
 func _unhandled_input(event: InputEvent) -> void:
+    if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_H:
+        toggle_controls_help()
+        return
+    if help_visible:
+        return
     if event is InputEventKey and event.pressed and event.keycode == KEY_R and run_state != "playing":
         restart_run()
         return
