@@ -307,6 +307,12 @@ func run_tests() -> void:
     game.selected_tower_index = 1
     check(not game.selected_tower_can_sell(), "sell button disabled when selection index out of bounds")
     game.reset_all()
+    check(game.title_menu_row_at(Vector2(350.0, 320.0)) == 0, "main menu first row hover")
+    check(game.title_menu_row_at(Vector2(350.0, 370.0)) == 1, "main menu second row hover")
+    check(game.title_menu_row_at(Vector2(350.0, 420.0)) == 2, "main menu third row hover")
+    check(game.title_menu_row_at(Vector2(350.0, 470.0)) == 3, "main menu fourth row hover")
+    check(game.title_menu_row_at(Vector2(350.0, 346.0)) == -1, "main menu gap not highlighted")
+    check(game.title_menu_row_at(Vector2(330.0, 320.0)) == -1, "main menu outside not highlighted")
     check(game.current_day == 1, "initial day")
     game.phase = "night"
     game.difficulty = 2
