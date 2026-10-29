@@ -164,6 +164,18 @@ func _input(event: InputEvent) -> void:
         return
     var point: Vector2 = event.position
     if phase == "hub":
+        if AUDIO_MUTE_BUTTON.has_point(point):
+            toggle_audio_mute()
+            get_viewport().set_input_as_handled()
+            return
+        if AUDIO_DOWN_BUTTON.has_point(point):
+            adjust_audio_volume(-0.1)
+            get_viewport().set_input_as_handled()
+            return
+        if AUDIO_UP_BUTTON.has_point(point):
+            adjust_audio_volume(0.1)
+            get_viewport().set_input_as_handled()
+            return
         for i in range(DIFFICULTY_BUTTONS.size()):
             if DIFFICULTY_BUTTONS[i].has_point(point) and set_difficulty(i):
                 get_viewport().set_input_as_handled()
