@@ -50,3 +50,6 @@ Workflow: .github/workflows/windows-build.yml. Он импортирует ре�
 
 ## Ночные знамения — очередной этап roguelite
 Каждую ночь случайно выбирается знамение. «Тихая гробница» — обычный баланс; «Осквернённый зал» — +22% здоровья начальным врагам и дополнительная ловушка; «Сокровищница теней» — +10% HP начальным врагам, зато секретный тайник даёт +50 маны и +3 души вместо +25/+1. Знамение показывается на экране выбора маршрута; сам выбор маршрута, обязательный Камень Бездны и портал сохраняются. Изменения только в рамках ночи, отдельного формата сохранения не требуется. Smoke-тесты проверяют оба варианта.
+
+## Optional blood shrine (new)
+Night dungeon routes now feature a risk/reward blood shrine at x=530 near the ground. After choosing a route, walk within 85 pixels, then left-click the shrine: trade 25 HP for 55 mana and 2 souls. Requires more than 25 HP and can only be claimed once per night; it disappears after use or when the ritual stone is collected. An unobtrusive contextual mouse hint appears only when nearby. `tests/campaign_smoke.gd` covers activation, one-time reward and run reset. Old saves are unaffected.
