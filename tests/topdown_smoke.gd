@@ -35,6 +35,7 @@ func run_tests() -> void:
         check(td.enemies[0]["lane"] == 0 and td.enemies[1]["lane"] == 1, "TD enemies use two distinct paths")
         td.advance_enemies(20.0)
         td.advance_enemies(20.0)
+        td.advance_enemies(20.0)
         check(td.enemies.is_empty() and td.altar_hp == 70 and td.enemies_escaped == 3, "TD escaped enemies reduce altar HP")
         check(td.start_wave() and td.wave_number == 2, "TD second wave starts")
         td.enemies.clear()
