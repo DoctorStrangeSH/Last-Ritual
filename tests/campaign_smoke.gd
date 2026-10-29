@@ -288,6 +288,17 @@ func run_tests() -> void:
     check(game.build_card_at(Vector2(380.0, 580.0)) == 2, "third build card highlights within its bounds")
     check(game.build_card_at(Vector2(188.0, 580.0)) == -1, "build card gap has no hover highlight")
     check(game.build_card_at(Vector2(20.0, 550.0)) == -1, "arena does not highlight palette")
+    game.reset_all()
+    check(not game.selected_tower_can_upgrade(), "upgrade button disabled without tower")
+    game.towers.append({"x": 480.0, "type": "bone", "lane": 1, "level": 1, "hp": 120.0})
+    game.selected_tower_index = 0
+    game.mana = 24
+    check(not game.selected_tower_can_upgrade(), "upgrade button disabled without enough mana")
+    game.mana = 25
+    check(game.selected_tower_can_upgrade(), "upgrade button active when affordable")
+    game.towers[0]["level"] = 3
+    check(not game.selected_tower_can_upgrade(), "upgrade button disabled at max level")
+    game.reset_all()
     check(game.current_day == 1, "initial day")
     game.dungeon_route = 1
     game.platforms = [Rect2(200.0, 420.0, 135.0, 16.0)]
