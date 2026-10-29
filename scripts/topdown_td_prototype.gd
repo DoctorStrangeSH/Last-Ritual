@@ -18,8 +18,8 @@ var necro_kill_bonus := 0
 var necro_kill_streak := 0
 var summoned_spirits: Array[Dictionary] = []
 const PATHS := [
-    [Vector2(65, 285), Vector2(560, 285), Vector2(1070, 285)],
-    [Vector2(65, 345), Vector2(560, 345), Vector2(1070, 345)]
+    [Vector2(65, 285), Vector2(205, 285), Vector2(300, 260), Vector2(375, 302), Vector2(490, 263), Vector2(625, 292), Vector2(780, 260), Vector2(900, 295), Vector2(1070, 285)],
+    [Vector2(65, 345), Vector2(200, 355), Vector2(325, 382), Vector2(425, 344), Vector2(550, 384), Vector2(705, 340), Vector2(845, 380), Vector2(950, 347), Vector2(1070, 345)]
 ]
 var enemies: Array[Dictionary] = []
 var wave_number := 0
@@ -70,7 +70,7 @@ func hero_attack(target: Vector2) -> bool:
             best["boss_charge"] = 0.0
             best["boss_warning"] = false
             best["interrupt_hits"] = 0
-            boss_feedback_text = "ATTACK INTERRUPTED!"
+            boss_feedback_text = "АТАКА ПРЕРВАНА!"
             sfx.play_effect("interrupt")
             boss_feedback_time = 1.4
     hero_attack_cooldown = 0.28
@@ -106,20 +106,29 @@ func advance_enemies(delta: float) -> void:
             enemy["delay"] = maxf(0.0, float(enemy["delay"]) - delta)
             continue
         var path: Array = PATHS[int(enemy["lane"])]
-        var waypoint: int = enemy["waypoint"]
-        var target: Vector2 = path[waypoint]
+        var waypoint: int = int(enemy["waypoint"])
         var position: Vector2 = enemy["pos"]
-        enemy["pos"] = position.move_toward(target, float(enemy.get("speed", 85.0)) * delta)
-        if enemy["pos"].distance_to(target) < 0.1:
-            waypoint += 1
-            if waypoint >= path.size():
-                enemies.erase(enemy)
-                enemies_escaped += 1
-                altar_hp = maxi(0, altar_hp - 10)
-                if altar_hp == 0:
-                    defense_state = "lost"
+        # Полный остаток движения за кадр проходит все достигнутые повороты.
+        # Без этого враг задерживается на каждой точке и зависит от FPS.
+        var remaining := float(enemy.get("speed", 85.0)) * delta
+        while remaining > 0.0 and waypoint < path.size():
+            var target: Vector2 = path[waypoint]
+            var distance := position.distance_to(target)
+            if distance > remaining:
+                position = position.move_toward(target, remaining)
+                remaining = 0.0
             else:
-                enemy["waypoint"] = waypoint
+                position = target
+                remaining -= distance
+                waypoint += 1
+        enemy["pos"] = position
+        enemy["waypoint"] = waypoint
+        if waypoint >= path.size():
+            enemies.erase(enemy)
+            enemies_escaped += 1
+            altar_hp = maxi(0, altar_hp - 10)
+            if altar_hp == 0:
+                defense_state = "lost"
     queue_redraw()
 
 func tick_boss(delta: float) -> void:
@@ -133,7 +142,7 @@ func tick_boss(delta: float) -> void:
             enemy["boss_warning"] = false
             enemy["interrupt_hits"] = 0
             altar_hp = maxi(0, altar_hp - (8 + difficulty * 4))
-            boss_feedback_text = "ALTAR HIT! -%d HP" % (8 + difficulty * 4)
+            boss_feedback_text = "АЛТАРЬ ПОВРЕЖДЁН! -%d ОЗ" % (8 + difficulty * 4)
             sfx.play_effect("blast")
             boss_feedback_time = 1.2
             if altar_hp == 0:
@@ -478,12 +487,12 @@ func _draw() -> void:
     draw_fortress_ground()
     if defense_state != "playing":
         draw_rect(Rect2(345, 225, 460, 210), Color("#285849") if defense_state == "won" else Color("#693943"))
-        draw_string(ThemeDB.fallback_font, Vector2(485, 301), "VICTORY" if defense_state == "won" else "ALTAR FALLEN", HORIZONTAL_ALIGNMENT_LEFT, -1, 28, Color.WHITE)
+        draw_string(ThemeDB.fallback_font, Vector2(485, 301), "ПОБЕДА" if defense_state == "won" else "АЛТАРЬ ПАЛ", HORIZONTAL_ALIGNMENT_LEFT, -1, 28, Color.WHITE)
         draw_rect(RESTART_BUTTON, Color("#8ca9bc"))
-        draw_string(ThemeDB.fallback_font, Vector2(480, 386), "RESTART DEFENSE", HORIZONTAL_ALIGNMENT_LEFT, -1, 20, Color.WHITE)
-    draw_string(ThemeDB.fallback_font, Vector2(66, 45), "ALTAR %d / 100     WAVE %d / 3     GOLD %d" % [altar_hp, wave_number, coins], HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color.WHITE)
+        draw_string(ThemeDB.fallback_font, Vector2(480, 386), "НАЧАТЬ ЗАНОВО", HORIZONTAL_ALIGNMENT_LEFT, -1, 20, Color.WHITE)
+    draw_string(ThemeDB.fallback_font, Vector2(66, 45), "АЛТАРЬ %d / 100     ВОЛНА %d / 3     ЗОЛОТО %d" % [altar_hp, wave_number, coins], HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color.WHITE)
     draw_rect(WAVE_BUTTON, Color("#487d6b") if enemies.is_empty() and wave_number < 3 and altar_hp > 0 else Color("#454b54"))
-    draw_string(ThemeDB.fallback_font, Vector2(78, 581), "START WAVE", HORIZONTAL_ALIGNMENT_LEFT, -1, 19, Color.WHITE)
+    draw_string(ThemeDB.fallback_font, Vector2(78, 581), "НАЧАТЬ ВОЛНУ", HORIZONTAL_ALIGNMENT_LEFT, -1, 19, Color.WHITE)
     for path in PATHS:
         draw_fortress_road(path)
     for enemy in enemies:
@@ -495,13 +504,13 @@ func _draw() -> void:
                     var warning_progress: float = clampf(float(enemy.get("boss_charge", 3.0)) - 3.0, 0.0, 1.0)
                     draw_arc(enemy["pos"], 45.0, -PI / 2.0, -PI / 2.0 + TAU, 48, Color("#694e36"), 4.0)
                     draw_arc(enemy["pos"], 45.0, -PI / 2.0, -PI / 2.0 + TAU * warning_progress, 48, Color("#ffde80"), 6.0)
-                    draw_string(ThemeDB.fallback_font, enemy["pos"] + Vector2(-55, -61), "ALTAR BLAST", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#ffde80"))
-                    draw_string(ThemeDB.fallback_font, enemy["pos"] + Vector2(-53, 61), "HERO: HIT 2x (%d/2)" % int(enemy.get("interrupt_hits", 0)), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#f6e6c4"))
+                    draw_string(ThemeDB.fallback_font, enemy["pos"] + Vector2(-55, -61), "УДАР ПО АЛТАРЮ", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#ffde80"))
+                    draw_string(ThemeDB.fallback_font, enemy["pos"] + Vector2(-53, 61), "ГЕРОЙ: 2 УДАРА (%d/2)" % int(enemy.get("interrupt_hits", 0)), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#f6e6c4"))
                 draw_rect(Rect2(enemy["pos"] + Vector2(-28.0, -43.0), Vector2(56.0 * clampf(float(enemy["hp"]) / float(55 + difficulty * 15), 0.0, 1.0), 5.0)), Color("#df7b94"))
             else:
                 draw_circle(enemy["pos"], 16.0 if enemy.get("role", "grunt") == "brute" else 10.0 if enemy.get("role", "grunt") == "runner" else 12.0, Color("#8591b8") if enemy.get("role", "grunt") == "brute" else Color("#efc36f") if enemy.get("role", "grunt") == "runner" else Color("#c67f64"))
     if boss_feedback_time > 0.0:
-        draw_rect(Rect2(385, 71, 382, 42), Color("#314f47") if boss_feedback_text == "ATTACK INTERRUPTED!" else Color("#683c46"))
+        draw_rect(Rect2(385, 71, 382, 42), Color("#314f47") if boss_feedback_text == "АТАКА ПРЕРВАНА!" else Color("#683c46"))
         draw_string(ThemeDB.fallback_font, Vector2(407, 98), boss_feedback_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 21, Color("#fff0cf"))
     for spirit in summoned_spirits:
         draw_circle(spirit["pos"], 10.0, Color("#6de6b2"))
@@ -523,26 +532,34 @@ func _draw() -> void:
             draw_arc(pos, 39, 0, TAU, 32, Color("#d8d0a1"), 3)
         if selected_type != "" and not occupied and pos.distance_to(get_global_mouse_position()) < 36:
             draw_arc(pos, 80, 0, TAU, 48, Color("#78b8b4"), 2)
+    var tower_names := ["КОСТЯНАЯ", "ОГНЕННАЯ", "НЕКРОМАНТ"]
+    var tower_ids := ["bone", "fire", "necro"]
     for i in range(3):
-        draw_rect(Rect2(260.0 + i * 210.0, 550.0, 180.0, 64.0), Color("#876c58"))
+        var card := Rect2(260.0 + i * 210.0, 550.0, 180.0, 64.0)
+        draw_rect(card, Color("#4f746f") if selected_type == tower_ids[i] else Color("#514b52"))
+        draw_rect(card, Color("#e5c985") if selected_type == tower_ids[i] else Color("#796b65"), false, 2.0)
+        draw_string(ThemeDB.fallback_font, card.position + Vector2(9, 23), tower_names[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
+        draw_string(ThemeDB.fallback_font, card.position + Vector2(9, 49), "%d ЗОЛОТА" % COSTS[tower_ids[i]], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#e5c985"))
     draw_rect(Rect2(880, 545, 110, 55), Color("#518b78"))
+    draw_string(ThemeDB.fallback_font, Vector2(883, 579), "УЛУЧШИТЬ", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color.WHITE)
     draw_rect(Rect2(1010, 545, 110, 55), Color("#914c59"))
+    draw_string(ThemeDB.fallback_font, Vector2(1020, 579), "ПРОДАТЬ", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color.WHITE)
 
     draw_rect(HELP_BUTTON, Color("#526d9b") if help_visible else Color("#343b47"))
     draw_rect(HELP_BUTTON, Color("#d5c592"), false, 1.5)
-    draw_string(ThemeDB.fallback_font, HELP_BUTTON.position + Vector2(23.0, 30.0), "HELP / H", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#fff2c5"))
+    draw_string(ThemeDB.fallback_font, HELP_BUTTON.position + Vector2(23.0, 30.0), "ПОМОЩЬ / H", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#fff2c5"))
     if help_visible:
         var help_panel := Rect2(286, 116, 580, 410)
         draw_rect(help_panel, Color(0.055, 0.07, 0.11, 0.97))
         draw_rect(help_panel, Color("#d5c592"), false, 2.0)
-        draw_string(ThemeDB.fallback_font, Vector2(430, 160), "DAY DEFENSE CONTROLS", HORIZONTAL_ALIGNMENT_LEFT, -1, 25, Color("#e7d3a8"))
-        draw_string(ThemeDB.fallback_font, Vector2(326, 207), "WASD / ARROWS  -  Move the hero", HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color.WHITE)
-        draw_string(ThemeDB.fallback_font, Vector2(326, 247), "Choose BONE / FIRE / NECRO below, then click a pad", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
-        draw_string(ThemeDB.fallback_font, Vector2(326, 287), "Click a built tower to select it", HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color.WHITE)
-        draw_string(ThemeDB.fallback_font, Vector2(326, 327), "UPGRADE / SELL manage the selected tower", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
-        draw_string(ThemeDB.fallback_font, Vector2(326, 367), "Click open ground  -  Hero attacks toward cursor", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
-        draw_string(ThemeDB.fallback_font, Vector2(326, 407), "RIGHT CLICK or ESC  -  Cancel tower selection", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
-        draw_string(ThemeDB.fallback_font, Vector2(326, 447), "START WAVE  -  Send the next wave", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
-        draw_string(ThemeDB.fallback_font, Vector2(326, 490), "Action paused - press H or click Continue", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#d5c592"))
+        draw_string(ThemeDB.fallback_font, Vector2(430, 160), "УПРАВЛЕНИЕ ОБОРОНОЙ", HORIZONTAL_ALIGNMENT_LEFT, -1, 25, Color("#e7d3a8"))
+        draw_string(ThemeDB.fallback_font, Vector2(326, 207), "WASD / СТРЕЛКИ — движение героя", HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color.WHITE)
+        draw_string(ThemeDB.fallback_font, Vector2(326, 247), "Выбери башню внизу, затем нажми на площадку", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
+        draw_string(ThemeDB.fallback_font, Vector2(326, 287), "Нажми на башню, чтобы выбрать её", HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color.WHITE)
+        draw_string(ThemeDB.fallback_font, Vector2(326, 327), "УЛУЧШИТЬ / ПРОДАТЬ — действия с башней", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
+        draw_string(ThemeDB.fallback_font, Vector2(326, 367), "Клик по полю — атака героя по курсору", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
+        draw_string(ThemeDB.fallback_font, Vector2(326, 407), "ПКМ / Esc — отменить выбор башни", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
+        draw_string(ThemeDB.fallback_font, Vector2(326, 447), "НАЧАТЬ ВОЛНУ — запустить врагов", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
+        draw_string(ThemeDB.fallback_font, Vector2(326, 490), "Игра на паузе — H или «Продолжить»", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#d5c592"))
         draw_rect(HELP_CLOSE_BUTTON, Color("#527d70"))
-        draw_string(ThemeDB.fallback_font, HELP_CLOSE_BUTTON.position + Vector2(11.0, 29.0), "CONTINUE", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
+        draw_string(ThemeDB.fallback_font, HELP_CLOSE_BUTTON.position + Vector2(11.0, 29.0), "ПРОДОЛЖИТЬ", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
