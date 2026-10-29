@@ -50,6 +50,8 @@ var boss_windup := 0.0
 var potions_used := 0
 var dash_cooldown := 0.0
 var cleave_cooldown := 0.0
+var cleave_flash_timer := 0.0
+var cleave_flash_facing := 1.0
 var empowered_strike := false
 var dash_trail := 0.0
 var platforms := [Rect2(205, 473, 135, 16), Rect2(415, 413, 145, 16), Rect2(640, 462, 130, 16), Rect2(830, 396, 135, 16)]
@@ -248,6 +250,8 @@ func reset_all() -> void:
     potions_used = 0
     dash_cooldown = 0.0
     cleave_cooldown = 0.0
+    cleave_flash_timer = 0.0
+    cleave_flash_facing = 1.0
     empowered_strike = false
     dash_trail = 0.0
     player_hp = 100.0
@@ -1106,6 +1110,7 @@ func update_night(delta: float) -> void:
     swing_timer = maxf(0.0, swing_timer - delta)
     dash_cooldown = maxf(0.0, dash_cooldown - delta)
     cleave_cooldown = maxf(0.0, cleave_cooldown - delta)
+    cleave_flash_timer = maxf(0.0, cleave_flash_timer - delta)
     dash_trail = maxf(0.0, dash_trail - delta)
     trap_clock += delta
     var direction := Input.get_axis("ui_left", "ui_right")
@@ -1230,6 +1235,8 @@ func shadow_cleave() -> void:
         return
     mana -= 20
     cleave_cooldown = 6.0
+    cleave_flash_timer = 0.32
+    cleave_flash_facing = facing
     empowered_strike = true
     attack()
     empowered_strike = false
@@ -1933,7 +1940,21 @@ func _draw() -> void:
             draw_dark_lord(player)
             if hurt_cooldown > 0.0 and sin(atmosphere_clock * 26.0) > 0.15:
                 draw_rect(Rect2(player.x - 31.0, player.y - 57.0, 62.0, 83.0), Color(1.0, 0.29, 0.38, 0.35), false, 3.0)
-            if swing_timer > 0.0:
+            if cleave_flash_timer > 0.0:
+                var cleave_progress: float = 1.0 - cleave_flash_timer / 0.32
+                var cleave_alpha: float = clampf(cleave_flash_timer / 0.32, 0.0, 1.0)
+                var cleave_start: float = -1.18 + cleave_progress * 0.22 if cleave_flash_facing > 0.0 else PI - 0.82 + cleave_progress * 0.22
+                var cleave_end: float = 0.98 + cleave_progress * 0.22 if cleave_flash_facing > 0.0 else PI + 1.34 + cleave_progress * 0.22
+                var cleave_center: Vector2 = player + Vector2(cleave_flash_facing * 30.0, -16.0)
+                draw_arc(cleave_center, 96.0, cleave_start, cleave_end, 28, Color(0.52, 0.22, 0.91, cleave_alpha * 0.82), 13.0)
+                draw_arc(cleave_center, 88.0, cleave_start + 0.10, cleave_end - 0.08, 24, Color(0.78, 0.62, 1.0, cleave_alpha * 0.95), 5.0)
+                draw_arc(cleave_center, 108.0, cleave_start + 0.22, cleave_end - 0.18, 20, Color(0.52, 0.86, 1.0, cleave_alpha * 0.68), 2.5)
+                for shard in range(4):
+                    var shard_angle: float = cleave_start + 0.25 + float(shard) * 0.34
+                    var shard_start: Vector2 = cleave_center + Vector2(cos(shard_angle), sin(shard_angle)) * 65.0
+                    var shard_end: Vector2 = cleave_center + Vector2(cos(shard_angle), sin(shard_angle)) * (105.0 + float(shard % 2) * 8.0)
+                    draw_line(shard_start, shard_end, Color(0.81, 0.73, 1.0, cleave_alpha * 0.8), 2.0)
+            elif swing_timer > 0.0:
                 var swing_progress: float = 1.0 - swing_timer / 0.16
                 var start_angle: float = -1.2 + swing_progress * 1.8 if facing > 0.0 else PI + 0.5 - swing_progress * 1.8
                 draw_arc(player + Vector2(facing * 24.0, -14.0), 62.0, start_angle, start_angle + 1.0, 22, Color(0.85, 0.62, 1.0, 0.85), 7.0)
@@ -1956,6 +1977,13 @@ func _draw() -> void:
                 var danger_blink: float = 0.60 + 0.40 * sin(atmosphere_clock * 8.0)
                 box(Rect2(310, 212, 530, 43), Color(0.54, 0.09, 0.18, 0.40 + danger_blink * 0.40))
                 label("КРИТИЧЕСКОЕ ЗДОРОВЬЕ! H — ЛЕЧЕНИЕ", 332, 240, 21, Color("ffe0dd"))
+            box(Rect2(790, 570, 244, 43), Color(0.10, 0.08, 0.17, 0.88))
+            draw_rect(Rect2(790, 570, 244, 43), Color("6e557f"), false, 1.2)
+            label("ТЕНЕВОЙ РАССЕКАТЕЛЬ", 803, 587, 14, Color("d7c3ff"))
+            box(Rect2(803, 594, 218, 7), Color("35283f"))
+            var cleave_ready_ratio: float = 1.0 - clampf(cleave_cooldown / 6.0, 0.0, 1.0)
+            box(Rect2(803, 594, 218.0 * cleave_ready_ratio, 7), Color("a87af0") if cleave_cooldown <= 0.0 else Color("70549d"))
+            label("ГОТОВ • ПКМ" if cleave_cooldown <= 0.0 else "%.1f с" % cleave_cooldown, 937, 587, 13, Color("b7f0d3") if cleave_cooldown <= 0.0 else Color("dfc8f7"))
             label("ЛКМ: атака  •  ПКМ: рассекатель (20 маны)  •  A/D: ходьба  •  W/Space: прыжок", 20, 625, 17)
     for particle in particles:
         var alpha: float = clampf(float(particle["life"]) / 0.55, 0.0, 1.0)
