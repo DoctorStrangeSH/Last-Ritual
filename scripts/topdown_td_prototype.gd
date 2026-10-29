@@ -135,6 +135,8 @@ func attack_with_towers(delta: float) -> void:
         for hit_target in hit_targets:
             shot_trails.append({"from": tower["pos"], "to": hit_target["pos"], "time": 0.18})
             hit_target["hp"] -= damage
+            if kind == "fire" and hit_target["hp"] > 0:
+                apply_burn(hit_target)
             if hit_target["hp"] <= 0:
                 enemies.erase(hit_target)
                 enemies_defeated += 1
@@ -143,6 +145,26 @@ func attack_with_towers(delta: float) -> void:
                     coins += necro_kill_bonus
         tower_cooldowns[slot_id] = 0.8
     queue_redraw()
+
+func apply_burn(enemy: Dictionary) -> void:
+    enemy["burn_time"] = 3.0
+    enemy["burn_tick"] = 0.5
+    enemy["burn_damage"] = 1 + fire_synergy_bonus
+
+func tick_burning(delta: float) -> void:
+    for enemy in enemies.duplicate():
+        if float(enemy.get("burn_time", 0.0)) <= 0.0:
+            continue
+        enemy["burn_time"] = maxf(0.0, float(enemy["burn_time"]) - delta)
+        enemy["burn_tick"] = float(enemy.get("burn_tick", 0.5)) - delta
+        while float(enemy["burn_tick"]) <= 0.0 and float(enemy["burn_time"]) > 0.0:
+            enemy["hp"] -= int(enemy.get("burn_damage", 1))
+            enemy["burn_tick"] = float(enemy["burn_tick"]) + 0.5
+            if enemy["hp"] <= 0:
+                enemies.erase(enemy)
+                enemies_defeated += 1
+                coins += 5
+                break
 
 func restart_defense() -> void:
     defense_state = "playing"
@@ -179,6 +201,7 @@ func _process(delta: float) -> void:
     if Input.is_key_pressed(KEY_S): move_direction.y += 1.0
     move_hero(move_direction, delta)
     advance_enemies(delta)
+    tick_burning(delta)
     attack_with_towers(delta)
     for trail in shot_trails.duplicate():
         trail["time"] -= delta
