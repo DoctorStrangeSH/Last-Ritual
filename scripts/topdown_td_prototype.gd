@@ -317,6 +317,35 @@ func _ready() -> void:
         slots.append({"id": i, "pos": SLOT_POSITIONS[i], "tower": "", "level": 0})
     queue_redraw()
 
+func export_fortress_state() -> Dictionary:
+    var buildings: Array[Dictionary] = []
+    for slot in slots:
+        buildings.append({"tower": str(slot["tower"]), "level": int(slot["level"])})
+    return {"buildings": buildings, "coins": coins, "altar_hp": altar_hp}
+
+func import_fortress_state(state: Dictionary) -> bool:
+    var buildings: Array = state.get("buildings", [])
+    if buildings.size() != slots.size():
+        return false
+    for i in range(slots.size()):
+        var building: Dictionary = buildings[i]
+        var kind: String = str(building.get("tower", ""))
+        var level: int = int(building.get("level", 0))
+        if kind != "" and not COSTS.has(kind):
+            return false
+        if level < 0 or level > 3 or (kind == "" and level != 0) or (kind != "" and level == 0):
+            return false
+    for i in range(slots.size()):
+        slots[i]["tower"] = str(buildings[i]["tower"])
+        slots[i]["level"] = int(buildings[i]["level"])
+    coins = maxi(0, int(state.get("coins", coins)))
+    altar_hp = clampi(int(state.get("altar_hp", altar_hp)), 1, 100)
+    tower_cooldowns.clear()
+    selected_slot = -1
+    selected_type = ""
+    queue_redraw()
+    return true
+
 func slot_at(point: Vector2) -> int:
     for i in range(slots.size()):
         if point.distance_to(slots[i]["pos"]) <= 30.0:

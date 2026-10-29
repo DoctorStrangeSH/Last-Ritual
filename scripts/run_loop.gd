@@ -19,6 +19,7 @@ var run_gold_bonus := 0
 var run_fire_bonus := 0
 var run_bone_tower_bonus := 0
 var run_necro_kill_bonus := 0
+var fortress_state: Dictionary = {}
 var active_game: Node2D
 var last_phase := "day"
 const META_HERO_BUTTON := Rect2(210, 510, 300, 65)
@@ -94,6 +95,8 @@ func start_phase(kind: String) -> bool:
     active_game.difficulty = difficulty
     add_child(active_game)
     if kind == "day":
+        if not fortress_state.is_empty():
+            active_game.import_fortress_state(fortress_state)
         active_game.coins += run_gold_bonus + meta.treasury_level * 10
         active_game.fire_synergy_bonus = run_fire_bonus
         active_game.bone_synergy_bonus = run_bone_tower_bonus
@@ -110,6 +113,8 @@ func finish_phase(won: bool) -> void:
     if phase != "day" and phase != "night":
         return
     if active_game != null:
+        if won and phase == "day":
+            fortress_state = active_game.export_fortress_state()
         active_game.queue_free()
         active_game = null
     if not won:
@@ -222,6 +227,7 @@ func reset_run() -> void:
     run_fire_bonus = 0
     run_bone_tower_bonus = 0
     run_necro_kill_bonus = 0
+    fortress_state.clear()
     queue_redraw()
 
 func _draw() -> void:

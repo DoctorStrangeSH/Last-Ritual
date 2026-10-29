@@ -181,6 +181,26 @@ func run_tests() -> void:
         click_night.player_pos = click_point + Vector2(-20, 0)
         check(click_night.click_open_door(click_point), "Left-click on nearby open door changes room")
         click_night.queue_free()
+    var persistent_td_scene = load("res://scenes/topdown_td_prototype.tscn")
+    if persistent_td_scene != null:
+        var first_day = persistent_td_scene.instantiate()
+        root.add_child(first_day)
+        check(first_day.choose_tower("bone") and first_day.build_tower(0), "Build first permanent tower")
+        first_day.coins = 100
+        first_day.select_slot(0)
+        check(first_day.upgrade_selected(), "Upgrade permanent tower")
+        first_day.altar_hp = 79
+        var saved_fortress: Dictionary = first_day.export_fortress_state()
+        var next_day = persistent_td_scene.instantiate()
+        root.add_child(next_day)
+        check(next_day.import_fortress_state(saved_fortress), "Fortress state restores on next day")
+        check(next_day.slots[0]["tower"] == "bone" and int(next_day.slots[0]["level"]) == 2, "Tower and upgrade persist")
+        check(next_day.coins == 80 and next_day.altar_hp == 79, "Treasury and altar health persist")
+        var bad_state := saved_fortress.duplicate(true)
+        bad_state["buildings"][0]["tower"] = "invalid"
+        check(not next_day.import_fortress_state(bad_state), "Invalid tower snapshot is rejected")
+        first_day.queue_free()
+        next_day.queue_free()
     var td_scene := load("res://scenes/topdown_td_prototype.tscn") as PackedScene
     check(td_scene != null, "Top-down TD scene loads")
     if td_scene != null:
