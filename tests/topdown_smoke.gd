@@ -201,6 +201,25 @@ func run_tests() -> void:
         check(not next_day.import_fortress_state(bad_state), "Invalid tower snapshot is rejected")
         first_day.queue_free()
         next_day.queue_free()
+    var spec_scene = load("res://scenes/topdown_td_prototype.tscn")
+    if spec_scene != null:
+        var spec_game = spec_scene.instantiate()
+        root.add_child(spec_game)
+        spec_game.choose_tower("bone")
+        spec_game.build_tower(0)
+        spec_game.coins = 100
+        spec_game.select_slot(0)
+        check(spec_game.upgrade_selected(), "Tower reaches specialization threshold")
+        check(spec_game.specialization_open, "Specialization choice opens at level two")
+        check(spec_game.choose_specialization("siege"), "Player can choose siege specialization")
+        check(spec_game.slots[0]["specialization"] == "siege", "Specialization stored on tower")
+        var spec_snapshot: Dictionary = spec_game.export_fortress_state()
+        var spec_next = spec_scene.instantiate()
+        root.add_child(spec_next)
+        check(spec_next.import_fortress_state(spec_snapshot), "Specialization persists across day scenes")
+        check(spec_next.slots[0]["specialization"] == "siege", "Restored tower keeps specialization")
+        spec_game.queue_free()
+        spec_next.queue_free()
     var td_scene := load("res://scenes/topdown_td_prototype.tscn") as PackedScene
     check(td_scene != null, "Top-down TD scene loads")
     if td_scene != null:
