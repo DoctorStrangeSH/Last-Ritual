@@ -283,6 +283,11 @@ func run_tests() -> void:
     check(game.tower_at_point(Vector2(516.0, tower_center_y)) == -1, "tower hover excludes outside edge")
     check(game.tower_at_point(Vector2(480.0, game.FLOOR + 30.0)) == -1, "tower hover excludes bottom HUD")
     game.reset_all()
+    check(game.build_card_at(Vector2(20.0, 580.0)) == 0, "first build card highlights within its bounds")
+    check(game.build_card_at(Vector2(200.0, 580.0)) == 1, "second build card highlights within its bounds")
+    check(game.build_card_at(Vector2(380.0, 580.0)) == 2, "third build card highlights within its bounds")
+    check(game.build_card_at(Vector2(188.0, 580.0)) == -1, "build card gap has no hover highlight")
+    check(game.build_card_at(Vector2(20.0, 550.0)) == -1, "arena does not highlight palette")
     check(game.current_day == 1, "initial day")
     game.dungeon_route = 1
     game.platforms = [Rect2(200.0, 420.0, 135.0, 16.0)]
