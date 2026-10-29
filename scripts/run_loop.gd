@@ -99,6 +99,7 @@ func start_phase(kind: String) -> bool:
         active_game.bone_synergy_bonus = run_bone_tower_bonus
         active_game.necro_kill_bonus = run_necro_kill_bonus
     else:
+        active_game.enable_floor_exploration(1000 + phase_count * 101 + difficulty * 13)
         active_game.attack_damage += run_damage_bonus + meta.hero_level
         active_game.attack_speed_multiplier += run_speed_bonus
     phase = kind
