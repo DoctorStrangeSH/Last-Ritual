@@ -154,6 +154,16 @@ func run_tests() -> void:
     game.update_night(0.0)
     check(game.stones_collected == 1, "Abyss Stone cannot be collected twice")
     game.reset_all()
+    game.reset_all()
+    game.current_day = 3
+    game.boss_pos = Vector2(700.0, game.FLOOR - 46.0)
+    check(game.boss_strike_half_width() == 87.0 and is_equal_approx(game.boss_windup_duration(), 0.75), "early guardians retain existing strike geometry and timing")
+    check(not game.boss_strike_hits(Vector2(800.0, game.FLOOR - 22.0)), "early guardian strike misses at 100 pixels")
+    game.current_day = 4
+    check(game.boss_strike_half_width() == 130.0 and is_equal_approx(game.boss_windup_duration(), 1.1), "late guardians telegraph wider, slower shockwave")
+    check(game.boss_strike_hits(Vector2(800.0, game.FLOOR - 22.0)), "late shockwave reaches 100 pixels")
+    check(not game.boss_strike_hits(Vector2(831.0, game.FLOOR - 22.0)), "late shockwave has dodgeable edge")
+    game.reset_all()
     check(game.current_day == 1, "initial day")
     game.dungeon_route = 1
     game.platforms = [Rect2(200.0, 420.0, 135.0, 16.0)]
