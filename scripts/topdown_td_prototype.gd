@@ -483,6 +483,35 @@ func draw_fortress_road(path: Array) -> void:
     for point in path:
         draw_circle(point, 13.0, Color("#a18a76"))
 
+# Distinct readable silhouettes; no gameplay logic or external asset dependency.
+func draw_tower_figure(pos: Vector2, kind: String, level: int) -> void:
+    draw_rect(Rect2(pos + Vector2(-16, -21), Vector2(32, 35)), Color("#18242b"))
+    draw_rect(Rect2(pos + Vector2(-13, -24), Vector2(26, 30)), Color("#667482"))
+    draw_rect(Rect2(pos + Vector2(-10, 1), Vector2(20, 13)), Color("#303942"))
+    match kind:
+        "bone":
+            draw_line(pos + Vector2(-12, -16), pos + Vector2(12, -16), Color("#e8dfc1"), 5.0)
+            draw_line(pos + Vector2(-8, -23), pos + Vector2(-8, -7), Color("#e8dfc1"), 4.0)
+            draw_line(pos + Vector2(8, -23), pos + Vector2(8, -7), Color("#e8dfc1"), 4.0)
+            draw_circle(pos + Vector2(0, -15), 5.0, Color("#a8eee0"))
+        "fire":
+            draw_colored_polygon(PackedVector2Array([pos + Vector2(-9, -12), pos + Vector2(-3, -34), pos + Vector2(2, -24), pos + Vector2(9, -39), pos + Vector2(11, -11)]), Color("#ee844c"))
+            draw_circle(pos + Vector2(1, -15), 7.0, Color("#ffe5a1"))
+        "necro":
+            draw_line(pos + Vector2(0, -9), pos + Vector2(0, -40), Color("#c9c5dd"), 4.0)
+            draw_circle(pos + Vector2(0, -42), 9.0, Color("#6ad7bc"))
+            draw_circle(pos + Vector2(0, -42), 4.0, Color("#d8fff2"))
+    if level > 1:
+        draw_arc(pos, 32.0, -PI / 2.0, -PI / 2.0 + TAU * float(level - 1) / 3.0, 28, Color("#f5dc8c"), 3.0)
+
+func draw_defender_figure(pos: Vector2) -> void:
+    draw_circle(pos + Vector2(2, 12), 16.0, Color("#142029"))
+    draw_colored_polygon(PackedVector2Array([pos + Vector2(0, -24), pos + Vector2(-17, 9), pos + Vector2(17, 9)]), Color("#34496d"))
+    draw_circle(pos + Vector2(0, -13), 10.0, Color("#a8d9dc"))
+    draw_circle(pos + Vector2(-4, -14), 2.5, Color("#142229"))
+    draw_circle(pos + Vector2(4, -14), 2.5, Color("#142229"))
+    draw_line(pos + Vector2(13, -4), pos + Vector2(25, -25), Color("#c6d7df"), 4.0)
+
 func _draw() -> void:
     draw_fortress_ground()
     if defense_state != "playing":
@@ -517,7 +546,7 @@ func _draw() -> void:
         draw_circle(spirit["pos"], 5.0, Color("#d8fff0"))
     for trail in shot_trails:
         draw_line(trail["from"], trail["to"], Color("#ffda8e"), 4.0)
-    draw_circle(hero_pos, 15.0, Color("#72cbd9"))
+    draw_defender_figure(hero_pos)
     for i in range(slots.size()):
         var pos: Vector2 = slots[i]["pos"]
         var occupied: bool = slots[i]["tower"] != ""
@@ -525,6 +554,8 @@ func _draw() -> void:
         draw_circle(pos, 33.0, Color("#64706a") if not occupied else Color("#b48153"))
         draw_circle(pos, 27.0, Color("#1e353b") if not occupied else Color("#e0bb76"))
         draw_arc(pos, 23.0, -PI / 2.0, PI * 1.5, 24, Color("#89b6ab") if not occupied else Color("#724b45"), 2.0)
+        if occupied:
+            draw_tower_figure(pos, str(slots[i]["tower"]), int(slots[i]["level"]))
         if not occupied:
             draw_line(pos + Vector2(-8, 0), pos + Vector2(8, 0), Color("#9fc9b9"), 2.0)
             draw_line(pos + Vector2(0, -8), pos + Vector2(0, 8), Color("#9fc9b9"), 2.0)
