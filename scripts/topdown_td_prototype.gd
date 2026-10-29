@@ -370,6 +370,9 @@ func _draw() -> void:
     for enemy in enemies:
         if enemy["delay"] <= 0.0:
             draw_circle(enemy["pos"], 12.0, Color("#c67f64"))
+    for spirit in summoned_spirits:
+        draw_circle(spirit["pos"], 10.0, Color("#6de6b2"))
+        draw_circle(spirit["pos"], 5.0, Color("#d8fff0"))
     for trail in shot_trails:
         draw_line(trail["from"], trail["to"], Color("#ffda8e"), 4.0)
     draw_circle(hero_pos, 15.0, Color("#72cbd9"))
