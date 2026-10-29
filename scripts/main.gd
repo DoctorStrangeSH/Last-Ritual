@@ -362,6 +362,9 @@ func _unhandled_input(event: InputEvent) -> void:
             save_audio_settings()
             show_notice("Эффекты: %d/4" % effects_volume)
             return
+        # Keep the relic modal interactive: pausing here would block card clicks.
+        if relic_choice_pending:
+            return
         if event.keycode == KEY_P and phase != "title" and phase != "win" and phase != "lose":
             paused = not paused
             queue_redraw()
