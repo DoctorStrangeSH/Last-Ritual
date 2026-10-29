@@ -1392,7 +1392,7 @@ func update_night(delta: float) -> void:
             boss_strike_timer = 2.8
         if boss_windup > 0.0:
             boss_windup -= delta
-            if boss_windup <= 0.0 and absf(player.x - boss_pos.x) < 87.0 and player.y > FLOOR - 100.0:
+            if boss_windup <= 0.0 and boss_strike_hits(player):
                 hurt(24.0)
     if boss_hp <= 0.0 and not stone_taken and player.distance_to(Vector2(1010, 465)) < 43.0:
         stone_taken = true
@@ -1402,6 +1402,9 @@ func update_night(delta: float) -> void:
         roll_reward_offers()
         phase = "reward"
         show_notice("Выбери один из трёх даров Бездны!")
+
+func boss_strike_hits(target: Vector2) -> bool:
+    return absf(target.x - boss_pos.x) < 87.0 and target.y > FLOOR - 100.0
 
 func hurt(amount: float) -> void:
     if hurt_cooldown > 0.0:
@@ -2141,9 +2144,12 @@ func _draw() -> void:
                 draw_circle(hex_bolt["pos"], 14.0, Color(0.62, 0.36, 1.0, 0.22))
             if boss_hp > 0.0:
                 if boss_windup > 0.0:
-                    box(Rect2(boss_pos.x - 85, FLOOR - 10, 170, 10), Color("eb5c60"))
-                    label("УДАР!", boss_pos.x - 30, 405, 20, Color("f4a2a2"))
-                    draw_arc(boss_pos, 94.0 + sin(atmosphere_clock * 17.0) * 3.0, 0.0, TAU, 40, Color(1.0, 0.27, 0.34, 0.47), 4.0)
+                    # Match the actual 174px-wide hit zone, instead of a misleading circle.
+                    var strike_zone := Rect2(boss_pos.x - 87.0, FLOOR - 100.0, 174.0, 100.0)
+                    box(strike_zone, Color(0.94, 0.23, 0.25, 0.18 + 0.08 * sin(atmosphere_clock * 16.0)))
+                    draw_rect(strike_zone, Color("ff777f"), false, 3.0)
+                    box(Rect2(boss_pos.x - 87.0, FLOOR - 10.0, 174.0, 10.0), Color("eb5c60"))
+                    label("УДАР ЧЕРЕЗ %.1f с" % maxf(0.0, boss_windup), boss_pos.x - 86.0, FLOOR - 112.0, 16, Color("ffe2b2"))
                 draw_texture_rect(preload("res://assets/enemies/abyss_guardian.svg"), Rect2(boss_pos.x - 52.0, boss_pos.y - 89.0, 104.0, 133.0), false)
                 box(Rect2(boss_pos.x - 45, boss_pos.y - 65, 90 * boss_hp / (140.0 if current_day == 1 else (190.0 if current_day == 2 else (230.0 if current_day == 3 else (270.0 if current_day == 4 else 340.0)))), 7), Color("ed6975"))
                 label("ХРАНИТЕЛЬ", 935, 380, 17)
