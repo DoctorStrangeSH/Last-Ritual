@@ -9,6 +9,7 @@ var run_damage_bonus := 0
 var run_speed_bonus := 0.0
 var run_gold_bonus := 0
 var run_fire_bonus := 0
+var run_bone_tower_bonus := 0
 var active_game: Node2D
 var last_phase := "day"
 const DAY_BUTTON := Rect2(240, 330, 280, 90)
@@ -32,6 +33,7 @@ func start_phase(kind: String) -> bool:
     if kind == "day":
         active_game.coins += run_gold_bonus
         active_game.fire_synergy_bonus = run_fire_bonus
+        active_game.bone_synergy_bonus = run_bone_tower_bonus
     else:
         active_game.attack_damage += run_damage_bonus
         active_game.attack_speed_multiplier += run_speed_bonus
@@ -57,6 +59,7 @@ func choose_run_reward(kind: String) -> bool:
     match kind:
         "bone":
             run_damage_bonus += 1
+            run_bone_tower_bonus += 1
         "ember":
             run_speed_bonus += 0.25
             run_fire_bonus += 1
@@ -115,6 +118,7 @@ func reset_run() -> void:
     run_speed_bonus = 0.0
     run_gold_bonus = 0
     run_fire_bonus = 0
+    run_bone_tower_bonus = 0
     queue_redraw()
 
 func _draw() -> void:
@@ -128,7 +132,7 @@ func _draw() -> void:
             draw_rect(NIGHT_BUTTON, Color("#594d78") if next_phase == "night" else Color("#343b47"))
             draw_string(ThemeDB.fallback_font, Vector2(290, 382), "DAY: DEFEND" if next_phase == "day" else "DAY: COMPLETE", HORIZONTAL_ALIGNMENT_LEFT, -1, 24, Color.WHITE)
             draw_string(ThemeDB.fallback_font, Vector2(665, 382), "NIGHT: EXPLORE" if next_phase == "night" else "NIGHT: LOCKED", HORIZONTAL_ALIGNMENT_LEFT, -1, 24, Color.WHITE)
-            draw_string(ThemeDB.fallback_font, Vector2(300, 490), "Relics: +%d damage, +%d gold, +%d fire" % [run_damage_bonus, run_gold_bonus, run_fire_bonus], HORIZONTAL_ALIGNMENT_LEFT, -1, 19, Color("#c7c9d1"))
+            draw_string(ThemeDB.fallback_font, Vector2(300, 490), "Relics: +%d damage, +%d gold, +%d fire, +%d bone" % [run_damage_bonus, run_gold_bonus, run_fire_bonus, run_bone_tower_bonus], HORIZONTAL_ALIGNMENT_LEFT, -1, 19, Color("#c7c9d1"))
         "reward":
             draw_string(ThemeDB.fallback_font, Vector2(410, 235), "CHOOSE A RUN RELIC", HORIZONTAL_ALIGNMENT_LEFT, -1, 26, Color.WHITE)
             var names := ["BONE: +1 DAMAGE", "EMBER: +25% SPEED + FIRE", "GOLD: +30 START GOLD"]

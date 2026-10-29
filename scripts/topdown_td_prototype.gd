@@ -8,6 +8,7 @@ var selected_type := ""
 var selected_slot := -1
 var coins := 150
 var fire_synergy_bonus := 0
+var bone_synergy_bonus := 0
 const PATHS := [
     [Vector2(65, 285), Vector2(560, 285), Vector2(1070, 285)],
     [Vector2(65, 345), Vector2(560, 345), Vector2(1070, 345)]
@@ -118,6 +119,8 @@ func attack_with_towers(delta: float) -> void:
         var damage: int = int(TOWER_DAMAGE[kind]) * int(tower["level"])
         if kind == "fire":
             damage += fire_synergy_bonus
+        elif kind == "bone":
+            damage += bone_synergy_bonus
         target["hp"] -= damage
         tower_cooldowns[slot_id] = 0.8
         if target["hp"] <= 0:
