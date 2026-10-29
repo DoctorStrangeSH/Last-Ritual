@@ -7,6 +7,7 @@ var slots: Array[Dictionary] = []
 var selected_type := ""
 var selected_slot := -1
 var coins := 150
+var difficulty := 0 # 0 normal, 1 hard, 2 nightmare
 var fire_synergy_bonus := 0
 var bone_synergy_bonus := 0
 var necro_kill_bonus := 0
@@ -77,12 +78,12 @@ func start_wave() -> bool:
     var count := wave_number + 2
     for i in range(count):
         var role := "runner" if wave_number >= 2 and i % 3 == 0 else ("brute" if wave_number >= 2 and i % 3 == 1 else "grunt")
-        var hp := (7 + wave_number) if role == "brute" else (2 + wave_number if role == "runner" else 3 + wave_number)
-        var speed := 135.0 if role == "runner" else (55.0 if role == "brute" else 85.0)
+        var hp := ((7 + wave_number) if role == "brute" else (2 + wave_number if role == "runner" else 3 + wave_number)) + difficulty * 2
+        var speed := (135.0 if role == "runner" else (55.0 if role == "brute" else 85.0)) * (1.0 + 0.15 * difficulty)
         enemies.append({"lane": i % PATHS.size(), "pos": PATHS[i % PATHS.size()][0], "waypoint": 1, "hp": hp, "speed": speed, "role": role, "delay": float(i) * 0.7})
         enemies_spawned += 1
     if wave_number == 3:
-        enemies.append({"lane": 0, "pos": PATHS[0][0], "waypoint": 1, "hp": 55, "speed": 28.0, "role": "boss", "delay": 3.0, "boss_charge": 0.0, "boss_warning": false, "interrupt_hits": 0})
+        enemies.append({"lane": 0, "pos": PATHS[0][0], "waypoint": 1, "hp": 55 + difficulty * 15, "speed": 28.0 * (1.0 + 0.15 * difficulty), "role": "boss", "delay": 3.0, "boss_charge": 0.0, "boss_warning": false, "interrupt_hits": 0})
         enemies_spawned += 1
     queue_redraw()
     return true
@@ -119,7 +120,7 @@ func tick_boss(delta: float) -> void:
             enemy["boss_charge"] = 0.0
             enemy["boss_warning"] = false
             enemy["interrupt_hits"] = 0
-            altar_hp = maxi(0, altar_hp - 8)
+            altar_hp = maxi(0, altar_hp - (8 + difficulty * 4))
             if altar_hp == 0:
                 defense_state = "lost"
     queue_redraw()
@@ -405,7 +406,7 @@ func _draw() -> void:
                 draw_circle(enemy["pos"], 19.0, Color("#df96ba"))
                 if enemy.get("boss_warning", false):
                     draw_arc(enemy["pos"], 45.0, 0.0, TAU, 48, Color("#ffde80"), 4.0)
-                draw_rect(Rect2(enemy["pos"] + Vector2(-28.0, -43.0), Vector2(56.0 * clampf(float(enemy["hp"]) / 55.0, 0.0, 1.0), 5.0)), Color("#df7b94"))
+                draw_rect(Rect2(enemy["pos"] + Vector2(-28.0, -43.0), Vector2(56.0 * clampf(float(enemy["hp"]) / float(55 + difficulty * 15), 0.0, 1.0), 5.0)), Color("#df7b94"))
             else:
                 draw_circle(enemy["pos"], 16.0 if enemy.get("role", "grunt") == "brute" else 10.0 if enemy.get("role", "grunt") == "runner" else 12.0, Color("#8591b8") if enemy.get("role", "grunt") == "brute" else Color("#efc36f") if enemy.get("role", "grunt") == "runner" else Color("#c67f64"))
     for spirit in summoned_spirits:
