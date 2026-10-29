@@ -1,0 +1,1 @@
+[gd_scene load_steps=2 format=3]\n\n[ext_resource type="Script" path="res://scripts/run_loop.gd" id="1_run"]\n\n[node name="RunLoop" type="Node2D"]\nscript = ExtResource("1_run")\n
