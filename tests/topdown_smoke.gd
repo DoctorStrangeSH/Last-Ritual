@@ -140,7 +140,12 @@ func run_tests() -> void:
         events.open_room(secret_id)
         check(events.night_souls == 2, "Cache cannot be farmed by revisits")
         events.open_room(event_id)
-        check(events.cleared_rooms.has(event_id) and events.enemies.is_empty(), "Event resolves without combat")
+        check(events.shrine_open and not events.door_available(), "Shrine blocks travel until choice")
+        events.player_hp = 50
+        check(events.choose_shrine_blessing(0) and events.player_hp == 65, "Shrine heals upon choosing blessing")
+        check(events.cleared_rooms.has(event_id) and not events.shrine_open, "Shrine completes after choice")
+        events.open_room(event_id)
+        check(not events.shrine_open, "Shrine cannot be claimed twice")
         events.queue_free()
     var td_scene := load("res://scenes/topdown_td_prototype.tscn") as PackedScene
     check(td_scene != null, "Top-down TD scene loads")
