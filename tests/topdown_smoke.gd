@@ -52,6 +52,7 @@ func run_tests() -> void:
     check(not game.next_room(), "Cannot go beyond final room")
     game.move_player(Vector2(-1, -1), 100.0)
     check(game.player_pos.x >= 64.0 and game.player_pos.y >= 84.0, "Player stays inside arena")
+    game.restart_run()
     game.invulnerable_time = 0.0
     game.take_damage(999)
     check(game.run_state == "lost" and game.player_hp == 0, "Lethal damage ends run")
