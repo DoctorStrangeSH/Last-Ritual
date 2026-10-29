@@ -97,6 +97,8 @@ var wall_ward_level := 0
 var saboteurs_defeated := 0
 var trap_clock := 0.0
 var dungeon_route := 0
+var dungeon_omen := 0
+var omen_cache_bonus := false
 var dungeon_route_chosen := false
 var dungeon_route_reward := 0
 var secret_cache_taken := false
@@ -258,6 +260,8 @@ func reset_all() -> void:
     saboteurs_defeated = 0
     trap_clock = 0.0
     dungeon_route = 0
+    dungeon_omen = 0
+    omen_cache_bonus = false
     dungeon_route_chosen = false
     dungeon_route_reward = 0
     secret_cache_taken = false
@@ -940,6 +944,8 @@ func begin_night() -> void:
     relic_taken = false
     trap_clock = 0.0
     dungeon_route = 0
+    dungeon_omen = randi_range(0, 2)
+    omen_cache_bonus = false
     dungeon_route_chosen = false
     dungeon_route_reward = 0
     secret_cache_taken = false
@@ -973,6 +979,7 @@ func begin_night() -> void:
     else:
         platforms = [Rect2(205, 473, 135, 16), Rect2(415, 413, 145, 16), Rect2(640, 462, 130, 16), Rect2(830, 396, 135, 16)]
         trap_positions = [375.0, 775.0]
+    apply_dungeon_omen()
     if current_day >= 3:
         # The final tomb introduces a tougher optional Warden with a longer tell.
         var elite_hp := 240.0 if current_day == 5 else 155.0 + float(current_day - 3) * 25.0
@@ -1215,6 +1222,20 @@ func shadow_dash() -> void:
     play_cue("magic")
     show_notice("Теневой рывок!")
 
+func dungeon_omen_name() -> String:
+    return ["Тихая гробница", "Осквернённый зал", "Сокровищница теней"][clampi(dungeon_omen, 0, 2)]
+
+func apply_dungeon_omen() -> void:
+    # Different encounter rules without obstructing required portal and stone paths.
+    if dungeon_omen == 1:
+        for enemy in night_enemies:
+            enemy["hp"] = float(enemy["hp"]) * 1.22
+        trap_positions.append(585.0)
+    elif dungeon_omen == 2:
+        omen_cache_bonus = true
+        for enemy in night_enemies:
+            enemy["hp"] = float(enemy["hp"]) * 1.10
+
 func choose_dungeon_route(route: int) -> void:
     if phase != "night" or dungeon_route_chosen or route < 0 or route > 2:
         return
@@ -1348,11 +1369,11 @@ func update_night(delta: float) -> void:
         mana += 20
         souls += 3
         show_notice("Реликвия усыпальницы: +20 маны, +3 души")
-    if not secret_cache_taken and player.distance_to(secret_cache_pos) < 36.0:
+    if dungeon_route_chosen and not secret_cache_taken and player.distance_to(secret_cache_pos) < 36.0:
         secret_cache_taken = true
-        mana += 25
-        souls += 1
-        show_notice("Тайник маршрута: +25 маны и +1 душа!")
+        mana += 25 + (25 if omen_cache_bonus else 0)
+        souls += 1 + (2 if omen_cache_bonus else 0)
+        show_notice("Тайник маршрута: %s" % ("+50 маны и +3 души!" if omen_cache_bonus else "+25 маны и +1 душа!"))
     if trap_is_dangerous() and player.y + 21.0 >= FLOOR - 13.0:
         for tx in trap_positions:
             if absf(player.x - tx) < 29.0:
