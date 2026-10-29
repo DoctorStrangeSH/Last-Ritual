@@ -1211,6 +1211,21 @@ func apply_dungeon_route() -> void:
             platforms[i] = Rect2(p.position + Vector2(-18.0 if i % 2 == 0 else 18.0, 10.0), p.size)
     secret_cache_pos = Vector2(575.0 if dungeon_route == 0 else (610.0 if dungeon_route == 1 else 535.0), FLOOR - 27.0)
 
+func trap_cycle_duration() -> float:
+    return 2.7 if current_day >= 4 else 3.1
+
+func trap_warning_start() -> float:
+    return 1.2 if current_day >= 4 else 1.4
+
+func trap_danger_start() -> float:
+    return 1.8 if current_day >= 4 else 2.1
+
+func trap_phase() -> float:
+    return fmod(trap_clock, trap_cycle_duration())
+
+func trap_is_dangerous() -> bool:
+    return trap_phase() >= trap_danger_start()
+
 func update_night(delta: float) -> void:
     attack_cooldown = maxf(0.0, attack_cooldown - delta)
     hurt_cooldown = maxf(0.0, hurt_cooldown - delta)
@@ -1264,8 +1279,7 @@ func update_night(delta: float) -> void:
         mana += 25
         souls += 1
         show_notice("Тайник маршрута: +25 маны и +1 душа!")
-    var spike_phase := fmod(trap_clock, 3.1)
-    if spike_phase >= 2.1 and player.y + 21.0 >= FLOOR - 13.0:
+    if trap_is_dangerous() and player.y + 21.0 >= FLOOR - 13.0:
         for tx in trap_positions:
             if absf(player.x - tx) < 29.0:
                 hurt(20.0)
@@ -2080,11 +2094,11 @@ func _draw() -> void:
                 var stone_x: float = float(stone) * 63.0
                 box(Rect2(stone_x, FLOOR - 12.0, 61, 12), Color("494052"))
                 draw_line(Vector2(stone_x + 22.0, FLOOR - 9.0), Vector2(stone_x + 17.0, FLOOR - 2.0), Color("776779"), 1.0)
-            var spike_phase := fmod(trap_clock, 3.1)
+            var spike_phase := trap_phase()
             for tx in trap_positions:
-                var trap_color := Color("5c566a") if spike_phase < 1.4 else (Color("efa857") if spike_phase < 2.1 else Color("f05268"))
+                var trap_color := Color("5c566a") if spike_phase < trap_warning_start() else (Color("efa857") if spike_phase < trap_danger_start() else Color("f05268"))
                 box(Rect2(tx - 31.0, FLOOR - 8.0, 62, 8), trap_color)
-                if spike_phase >= 2.1:
+                if trap_is_dangerous():
                     for spike in range(4):
                         draw_colored_polygon(PackedVector2Array([Vector2(tx - 28 + spike * 16, FLOOR), Vector2(tx - 20 + spike * 16, FLOOR - 24), Vector2(tx - 12 + spike * 16, FLOOR)]), trap_color)
             var chest_at := Vector2(850, 314) if current_day == 2 else (Vector2(858, 358) if current_day == 5 else (Vector2(835, 378) if current_day == 4 else (Vector2(855, 314) if current_day == 3 else Vector2(899, 365))))
@@ -2198,9 +2212,9 @@ func _draw() -> void:
             box(Rect2(24, 78, 260, 9), Color("413345"))
             box(Rect2(24, 78, 260.0 * clampf(player_hp / 100.0, 0.0, 1.0), 9), Color("dc6e83") if player_hp <= 25.0 else Color("b37fd2"))
             label("HP %d/100    Мана %d    Души %d    Камень %s" % [maxi(0, ceili(player_hp)), mana, souls, "ДА" if stone_taken else "НЕТ"], 25, 71, 21)
-            label("ЛОВУШКИ", 25, 106, 15, Color("f38c95") if spike_phase >= 2.1 else Color("f1c780"))
+            label("ЛОВУШКИ", 25, 106, 15, Color("f38c95") if trap_is_dangerous() else Color("f1c780"))
             box(Rect2(105, 96, 180, 9), Color("383748"))
-            box(Rect2(105, 96, 180.0 * clampf(spike_phase / 3.1, 0.0, 1.0), 9), Color("e8797a") if spike_phase >= 2.1 else Color("d9b67b"))
+            box(Rect2(105, 96, 180.0 * clampf(spike_phase / trap_cycle_duration(), 0.0, 1.0), 9), Color("e8797a") if trap_is_dangerous() else Color("d9b67b"))
             if current_day == 1 and boss_hp > 0.0 and not stone_taken:
                 label("ЦЕЛЬ: победи хранителя справа и забери Камень Бездны.", 25, 145, 16, Color("f4d29a"))
             elif boss_hp <= 0.0 and not stone_taken:
