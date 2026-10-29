@@ -1310,6 +1310,12 @@ func selected_tower_can_upgrade() -> bool:
     var level: int = int(towers[selected_tower_index].get("level", 1))
     return level < 3 and mana >= 25 * level
 
+func title_menu_row_at(pos: Vector2) -> int:
+    for i in range(4):
+        if Rect2(340.0, 300.0 + float(i) * 50.0, 475.0, 43.0).has_point(pos):
+            return i
+    return -1
+
 func build_card_at(pos: Vector2) -> int:
     for i in range(3):
         if Rect2(14.0 + float(i) * 178.0, 557.0, 170.0, 85.0).has_point(pos):
@@ -1846,8 +1852,9 @@ func _draw() -> void:
             draw_colored_polygon(PackedVector2Array([Vector2(ornament, 208), Vector2(ornament + 10, 221), Vector2(ornament, 234), Vector2(ornament - 10, 221)]), Color("bb86b4"))
         for menu_i in range(4):
             var menu_y: float = 300.0 + float(menu_i) * 50.0
-            box(Rect2(340.0, menu_y, 475.0, 43.0), Color(0.22, 0.15, 0.30, 0.94))
-            draw_rect(Rect2(340.0, menu_y, 475.0, 43.0), Color("997da6"), false, 2.0)
+            var row_hovered := title_menu_row_at(get_global_mouse_position()) == menu_i
+            box(Rect2(340.0, menu_y, 475.0, 43.0), Color(0.31, 0.20, 0.39, 0.97) if row_hovered else Color(0.22, 0.15, 0.30, 0.94))
+            draw_rect(Rect2(340.0, menu_y, 475.0, 43.0), Color("e4b990") if row_hovered else Color("997da6"), false, 3.0 if row_hovered else 2.0)
         label("ПОСЛЕДНИЙ РИТУАЛ", 224, 245, 46, Color("e4b9ed"))
         if menu_page == "main":
             label("НОВАЯ ИГРА", 422, 330, 23, Color("ffdcae"))
