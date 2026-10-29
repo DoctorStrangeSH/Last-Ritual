@@ -1,6 +1,8 @@
 extends Node2D
 ## Isolated P1 top-down combat prototype; no save data or classic scene dependencies.
 const ARENA := Rect2(48.0, 68.0, 1056.0, 520.0)
+const SFX_SCRIPT = preload("res://scripts/procedural_sfx.gd")
+var sfx: Node
 const SPEED := 240.0
 const ATTACK_RANGE := 155.0
 var room_index := 0
@@ -33,6 +35,8 @@ var reward_notice_time := 0.0
 var run_state := "playing" # playing, won, lost
 
 func _ready() -> void:
+    sfx = SFX_SCRIPT.new()
+    add_child(sfx)
     open_room(0)
 
 func open_room(index: int, override_variant: int = -1) -> void:
@@ -84,10 +88,12 @@ func attack(target: Vector2) -> bool:
     if hit == -1:
         return false
     enemies[hit]["hp"] -= attack_damage
+    sfx.play_effect("hit")
     enemies[hit]["hit_flash"] = 0.12
     floating_combat_texts.append({"pos": enemies[hit]["pos"] + Vector2(0, -22), "text": "-%d" % attack_damage, "time": 0.65, "color": Color("#fff0b0")})
     if enemies[hit]["hp"] <= 0:
         death_bursts.append({"pos": enemies[hit]["pos"], "time": 0.4})
+        sfx.play_effect("kill")
         enemies.remove_at(hit)
         night_souls += 1
     if enemies.is_empty():
@@ -109,6 +115,7 @@ func choose_relic(kind: String) -> bool:
     relics.append(kind)
     reward_notice = "RELIC ACQUIRED: %s" % kind.to_upper()
     reward_notice_time = 1.4
+    sfx.play_effect("relic")
     match kind:
         "bone":
             attack_damage += 1
@@ -204,6 +211,7 @@ func take_damage(amount: int) -> void:
     if run_state != "playing" or invulnerable_time > 0.0 or amount <= 0:
         return
     player_hp = maxi(0, player_hp - amount)
+    sfx.play_effect("damage")
     player_hit_flash = 0.22
     floating_combat_texts.append({"pos": player_pos + Vector2(0, -26), "text": "-%d HP" % amount, "time": 0.8, "color": Color("#ff7c91")})
     invulnerable_time = 0.75

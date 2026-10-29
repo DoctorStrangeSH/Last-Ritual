@@ -1,5 +1,7 @@
 extends Node2D
 ## V2 independent top-down TD construction slice. No paths or wave spawning yet.
+const SFX_SCRIPT = preload("res://scripts/procedural_sfx.gd")
+var sfx: Node
 const SLOT_POSITIONS := [Vector2(280, 190), Vector2(430, 190), Vector2(590, 190), Vector2(750, 190), Vector2(280, 440), Vector2(430, 440), Vector2(590, 440), Vector2(750, 440)]
 const COSTS := {"bone": 30, "fire": 45, "necro": 60}
 const WAVE_BUTTON := Rect2(65, 545, 170, 60)
@@ -58,6 +60,7 @@ func hero_attack(target: Vector2) -> bool:
         return false
     shot_trails.append({"from": hero_pos, "to": best["pos"], "time": 0.18})
     best["hp"] -= 2
+    sfx.play_effect("hit")
     if best.get("role", "") == "boss" and best.get("boss_warning", false) and best["hp"] > 0:
         best["interrupt_hits"] = int(best.get("interrupt_hits", 0)) + 1
         if int(best["interrupt_hits"]) >= 2:
@@ -65,12 +68,14 @@ func hero_attack(target: Vector2) -> bool:
             best["boss_warning"] = false
             best["interrupt_hits"] = 0
             boss_feedback_text = "ATTACK INTERRUPTED!"
+            sfx.play_effect("interrupt")
             boss_feedback_time = 1.4
     hero_attack_cooldown = 0.28
     if best["hp"] <= 0:
         enemies.erase(best)
         enemies_defeated += 1
         coins += 5
+        sfx.play_effect("kill")
     queue_redraw()
     return true
 
@@ -126,6 +131,7 @@ func tick_boss(delta: float) -> void:
             enemy["interrupt_hits"] = 0
             altar_hp = maxi(0, altar_hp - (8 + difficulty * 4))
             boss_feedback_text = "ALTAR HIT! -%d HP" % (8 + difficulty * 4)
+            sfx.play_effect("blast")
             boss_feedback_time = 1.2
             if altar_hp == 0:
                 defense_state = "lost"
@@ -292,6 +298,8 @@ func _process(delta: float) -> void:
 
 
 func _ready() -> void:
+    sfx = SFX_SCRIPT.new()
+    add_child(sfx)
     for i in range(SLOT_POSITIONS.size()):
         slots.append({"id": i, "pos": SLOT_POSITIONS[i], "tower": "", "level": 0})
     queue_redraw()

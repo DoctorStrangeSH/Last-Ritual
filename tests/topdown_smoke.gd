@@ -18,6 +18,8 @@ func run_tests() -> void:
     if td_scene != null:
         var td = td_scene.instantiate()
         root.add_child(td)
+        check(td.sfx != null and td.sfx.has_effect("interrupt") and td.sfx.has_effect("blast"), "TD prototype loads boss combat audio effects")
+        check(not td.sfx.play_effect("unknown"), "Audio helper rejects unknown effects safely")
         check(td.slots.size() == 8, "TD has eight fixed construction slots")
         check(td.slot_at(Vector2(0, 0)) == -1, "No construction slot outside designated areas")
         check(td.choose_tower("bone"), "Select bone tower")
@@ -274,6 +276,7 @@ func run_tests() -> void:
         return
     var game = packed.instantiate()
     root.add_child(game)
+    check(game.sfx != null and game.sfx.has_effect("hit") and game.sfx.has_effect("relic"), "Night prototype loads synthesized combat and reward audio")
     check(game.room_index == 0 and game.enemies.size() == 2, "First room has two enemy archetypes")
     game.set_dungeon_seed(2)
     check(game.room_variant == 2 and game.enemies.size() == 3, "Elite seed adds a third enemy")
