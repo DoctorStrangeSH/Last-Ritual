@@ -2218,14 +2218,17 @@ func _draw() -> void:
                 var start_angle: float = -1.2 + swing_progress * 1.8 if facing > 0.0 else PI + 0.5 - swing_progress * 1.8
                 draw_arc(player + Vector2(facing * 24.0, -14.0), 62.0, start_angle, start_angle + 1.0, 22, Color(0.85, 0.62, 1.0, 0.85), 7.0)
                 draw_arc(player + Vector2(facing * 24.0, -14.0), 68.0, start_angle + 0.1, start_angle + 0.8, 18, Color(0.96, 0.87, 1.0, 0.48), 3.0)
-            draw_gothic_hud_panel(156.0)
-            label("НОЧЬ %d / 5  •  %s" % [current_day, "КАТАКОМБЫ" if current_day == 1 else ("ПРОКЛЯТАЯ УСЫПАЛЬНИЦА" if current_day == 2 else ("СОБОР СВЕТА" if current_day == 3 else ("КРОВАВЫЕ ШАХТЫ" if current_day == 4 else "ГРОБНИЦА ПЕРВОГО КОРОЛЯ")))], 25, 35, 27, Color("b9afea"))
-            box(Rect2(24, 78, 260, 9), Color("413345"))
-            box(Rect2(24, 78, 260.0 * clampf(player_hp / 100.0, 0.0, 1.0), 9), Color("dc6e83") if player_hp <= 25.0 else Color("b37fd2"))
-            label("HP %d/100    Мана %d    Души %d    Камень %s" % [maxi(0, ceili(player_hp)), mana, souls, "ДА" if stone_taken else "НЕТ"], 25, 71, 21)
-            label("ЛОВУШКИ", 25, 106, 15, Color("f38c95") if trap_is_dangerous() else Color("f1c780"))
-            box(Rect2(105, 96, 180, 9), Color("383748"))
-            box(Rect2(105, 96, 180.0 * clampf(spike_phase / trap_cycle_duration(), 0.0, 1.0), 9), Color("e8797a") if trap_is_dangerous() else Color("d9b67b"))
+            draw_gothic_hud_panel(117.0)
+            label("НОЧЬ %d/5  •  %s" % [current_day, "КАТАКОМБЫ" if current_day == 1 else ("УСЫПАЛЬНИЦА" if current_day == 2 else ("СОБОР СВЕТА" if current_day == 3 else ("КРОВАВЫЕ ШАХТЫ" if current_day == 4 else "ГРОБНИЦА КОРОЛЯ")))], 25, 35, 23, Color("b9afea"))
+            label("HP %d/100" % maxi(0, ceili(player_hp)), 25, 66, 18, Color("ffe2ef"))
+            box(Rect2(25, 73, 195, 7), Color("413345"))
+            box(Rect2(25, 73, 195.0 * clampf(player_hp / 100.0, 0.0, 1.0), 7), Color("dc6e83") if player_hp <= 25.0 else Color("b37fd2"))
+            label("МАНА %d" % mana, 246, 66, 18, Color("9edffa"))
+            label("ДУШИ %d" % souls, 395, 66, 18, Color("e9cda7"))
+            label("КАМЕНЬ ✓" if stone_taken else "КАМЕНЬ —", 537, 66, 18, Color("a8e9d0") if stone_taken else Color("afa5bf"))
+            label("ЛОВУШКИ", 25, 111, 14, Color("f38c95") if trap_is_dangerous() else Color("f1c780"))
+            box(Rect2(112, 100, 134, 7), Color("383748"))
+            box(Rect2(112, 100, 134.0 * clampf(spike_phase / trap_cycle_duration(), 0.0, 1.0), 7), Color("e8797a") if trap_is_dangerous() else Color("d9b67b"))
             if current_day == 1 and boss_hp > 0.0 and not stone_taken:
                 label("ЦЕЛЬ: победи хранителя справа и забери Камень Бездны.", 25, 145, 16, Color("f4d29a"))
             elif boss_hp <= 0.0 and not stone_taken:
@@ -2235,8 +2238,8 @@ func _draw() -> void:
             if night_low_hp_warning_visible():
                 # Short notice beside the HUD, leaving the middle of the arena clear.
                 var danger_blink: float = 0.60 + 0.40 * sin(atmosphere_clock * 8.0)
-                box(Rect2(321, 90, 232, 29), Color(0.54, 0.09, 0.18, 0.40 + danger_blink * 0.40))
-                label("МАЛО HP • H: ЛЕЧИТЬ", 333, 111, 16, Color("ffe0dd"))
+                box(Rect2(670, 46, 232, 29), Color(0.54, 0.09, 0.18, 0.40 + danger_blink * 0.40))
+                label("МАЛО HP • H: ЛЕЧИТЬ", 682, 67, 16, Color("ffe0dd"))
             # Compact ability chip: one line of status and a narrow cooldown meter.
             box(Rect2(879, 581, 156, 27), Color(0.10, 0.08, 0.17, 0.82))
             draw_rect(Rect2(879, 581, 156, 27), Color("6e557f"), false, 1.0)
