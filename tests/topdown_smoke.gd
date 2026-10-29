@@ -201,6 +201,20 @@ func run_tests() -> void:
         check(not next_day.import_fortress_state(bad_state), "Invalid tower snapshot is rejected")
         first_day.queue_free()
         next_day.queue_free()
+    var loop_script = load("res://scripts/run_loop.gd")
+    if loop_script != null:
+        var coordinator = loop_script.new()
+        root.add_child(coordinator)
+        coordinator.fortress_state = {"buildings": [], "coins": 100, "altar_hp": 100}
+        coordinator.pending_night_coins = 15
+        coordinator.phase = "hub"
+        coordinator.phase_count = 0
+        coordinator.start_phase("day")
+        check(coordinator.active_game.coins >= 115, "Night souls convert to next-day treasury")
+        check(coordinator.pending_night_coins == 0, "Night reward is granted only once")
+        coordinator.reset_run()
+        check(coordinator.fortress_state.is_empty() and coordinator.pending_night_coins == 0, "New run resets fortress and night rewards")
+        coordinator.queue_free()
     var td_scene := load("res://scenes/topdown_td_prototype.tscn") as PackedScene
     check(td_scene != null, "Top-down TD scene loads")
     if td_scene != null:
