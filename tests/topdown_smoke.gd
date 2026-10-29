@@ -123,6 +123,29 @@ func run_tests() -> void:
         restored.save_path = profile.save_path
         check(restored.load_profile() and restored.fragments == 1 and restored.hero_level == 1 and restored.treasury_level == 1, "Meta upgrades persist across instances")
         check(not restored.buy_upgrade("hero") and not restored.buy_upgrade("invalid"), "Meta rejects unaffordable and unknown upgrades")
+        check(not restored.achievement_unlocked("first_steps"), "Fresh profile starts with locked achievements")
+        restored.record_start()
+        restored.record_phase_clear()
+        check(restored.achievement_unlocked("first_steps") and not restored.achievement_unlocked("survivor"), "First clear unlocks only the first achievement")
+        for i in range(5):
+            restored.record_phase_clear()
+        restored.record_result(true)
+        check(restored.achievement_unlocked("survivor") and restored.achievement_unlocked("ritual_master"), "Six clears and win unlock milestones")
+        check(restored.save_profile(), "Statistics persist in profile")
+        var stats_copy = meta_script.new()
+        stats_copy.save_path = profile.save_path
+        check(stats_copy.load_profile() and stats_copy.runs_started == 1 and stats_copy.runs_won == 1 and stats_copy.runs_lost == 0 and stats_copy.phases_cleared == 6, "Run statistics restore from disk")
+        stats_copy.record_start()
+        stats_copy.record_result(false)
+        check(stats_copy.runs_lost == 1, "Defeats are tracked separately")
+        var legacy = meta_script.new()
+        legacy.save_path = "user://last_ritual_legacy_smoke.json"
+        var legacy_file := FileAccess.open(legacy.save_path, FileAccess.WRITE)
+        if legacy_file != null:
+            legacy_file.store_string(JSON.stringify({"version": 1, "fragments": 2, "hero_level": 1, "treasury_level": 0}))
+            legacy_file.close()
+        check(legacy.load_profile() and legacy.runs_started == 0 and legacy.phases_cleared == 0, "Old version-one saves load with zero statistics")
+        DirAccess.remove_absolute(ProjectSettings.globalize_path(legacy.save_path))
         restored.award(20)
         check(restored.buy_upgrade("hero") and restored.buy_upgrade("hero") and not restored.buy_upgrade("hero"), "Permanent upgrade obeys level cap")
         DirAccess.remove_absolute(ProjectSettings.globalize_path(profile.save_path))
@@ -134,8 +157,12 @@ func run_tests() -> void:
         check(run.phase == "hub", "Run starts at phase selection hub")
         check(run.expected_phase() == "day" and not run.start_phase("night"), "Run requires day as first phase")
         check(run.start_phase("day") and run.phase == "day", "Run can start day defense")
+        check(not run.start_phase("day"), "Cannot restart active phase to duplicate run starts")
         run.finish_phase(true)
         check(run.phase == "reward" and run.completed_phases == 1, "Winning a phase grants run reward")
+        var fragments_once: int = run.meta.fragments
+        run.finish_phase(true)
+        check(run.meta.fragments == fragments_once and run.completed_phases == 1, "Finished phase cannot grant duplicate fragments")
         check(run.choose_run_reward("bone") and run.run_damage_bonus == 1, "Run relic persists damage bonus")
         check(run.expected_phase() == "night" and not run.start_phase("day"), "Run requires night after day")
         check(run.start_phase("night") and run.phase == "night", "Run can transition to night")
