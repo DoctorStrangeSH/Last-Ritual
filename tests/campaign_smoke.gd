@@ -346,6 +346,13 @@ func run_tests() -> void:
     game.apply_dungeon_omen()
     check(game.omen_cache_bonus and is_equal_approx(float(game.night_enemies[0]["hp"]), 110.0), "treasure omen boosts optional cache and enemies")
     game.reset_all()
+    game.dungeon_omen = 3
+    game.night_enemies = [{"x": 360.0, "hp": 100.0, "dir": -1.0}]
+    game.boss_hp = 200.0
+    game.apply_dungeon_omen()
+    check(game.dungeon_omen_name() == "Лунное затмение", "lunar eclipse omen has its own name")
+    check(is_equal_approx(float(game.night_enemies[0]["hp"]), 130.0) and is_equal_approx(game.boss_hp, 250.0), "lunar eclipse scales regular enemy and boss HP")
+    game.reset_all()
 
     game.begin_night()
     check(not game.dungeon_route_chosen and game.secret_cache_pos.x > 0.0, "night opens route choice and initializes cache")
