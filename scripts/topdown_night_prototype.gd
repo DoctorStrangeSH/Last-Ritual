@@ -695,6 +695,20 @@ func _draw() -> void:
         draw_rect(Rect2(1058.0, 275.0, 46.0, 96.0), Color("#59495b"))
 
     if exploration_enabled:
+        # Маленькая карта открытых комнат: неизвестные помещения скрыты.
+        var rooms: Array = floor_data["rooms"]
+        var here: Vector2i = rooms[room_index]["grid"]
+        for room in rooms:
+            var id: int = int(room["id"])
+            if not visited_rooms.has(id):
+                continue
+            var grid: Vector2i = room["grid"]
+            var point := Vector2(938.0 + float(grid.x - here.x) * 17.0, 162.0 + float(grid.y - here.y) * 17.0)
+            var tile := Rect2(point, Vector2(13, 13))
+            draw_rect(tile, Color("#e6d7a6") if id == room_index else Color("#5f927f") if cleared_rooms.has(id) else Color("#6a647e"))
+            draw_rect(tile, Color("#1a2630"), false, 1.0)
+        draw_label("КАРТА", Vector2(927, 151), 13, Color("#e6d7a6"))
+    if exploration_enabled:
         draw_label("ЭТАЖ: %d/10  ИССЛЕДОВАНО: %d" % [room_index + 1, visited_rooms.size()], Vector2(390, 63), 15, Color("#e7d3a8"))
         for direction in door_neighbors():
             var door_point: Vector2 = DOOR_POINTS[direction]
