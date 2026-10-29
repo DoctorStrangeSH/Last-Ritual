@@ -17,6 +17,8 @@ const FLANKER_RECHARGE := 0.8
 const FLANKER_WARNING := 0.38
 const CHAMPION_WARNING := 0.7
 const CHAMPION_ARMOR := 1
+const HERO_RADIUS := 16.0
+const ENEMY_RADIUS := 19.0
 var room_index := 0
 var difficulty := 0 # 0 normal, 1 hard, 2 nightmare
 var dungeon_seed := 0
@@ -39,6 +41,7 @@ var dash_origin := Vector2.ZERO
 var player_hp := 100
 var enemies: Array[Dictionary] = []
 var hostile_shots: Array[Dictionary] = []
+var obstacles: Array[Rect2] = []
 var ranged_fire_clock := 0.0
 var reward_available := false
 var rewards_taken := 0
@@ -67,6 +70,7 @@ func open_room(index: int, override_variant: int = -1) -> void:
     shop_open = false
     enemies.clear()
     hostile_shots.clear()
+    obstacles.clear()
     ranged_fire_clock = 0.0
     death_bursts.clear()
     floating_combat_texts.clear()
@@ -74,6 +78,7 @@ func open_room(index: int, override_variant: int = -1) -> void:
     reward_notice_time = 0.0
     room_variant = override_variant if override_variant >= 0 else posmod(dungeon_seed + index, ROOM_KINDS.size())
     var mirror := 1.0 if posmod(dungeon_seed + room_index, 2) == 0 else -1.0
+    build_room_cover()
     match room_variant:
         0:
             # Crypt: predictable melee + a ranged shooter with room to learn dodge.
@@ -90,6 +95,69 @@ func open_room(index: int, override_variant: int = -1) -> void:
             spawn_enemy(Vector2(730.0, 370.0), 5, 90.0, true)
             spawn_enemy(Vector2(850.0, 450.0), 8, 75.0, false, "champion")
     queue_redraw()
+
+func build_room_cover() -> void:
+    # Keep spawn, relic cards and the eastern exit clear. Cover affects projectiles
+    # and both sides' movement, not just how the room looks.
+    match room_variant:
+        0:
+            obstacles.assign([Rect2(425, 345, 70, 70), Rect2(815, 170, 65, 75)])
+        1:
+            obstacles.assign([Rect2(365, 300, 75, 65), Rect2(685, 190, 75, 70)])
+        2:
+            obstacles.assign([Rect2(475, 355, 70, 85), Rect2(920, 255, 70, 90)])
+
+func first_cover_hit(from: Vector2, to: Vector2, radius: float = 0.0) -> Variant:
+    # Ray-vs-AABB slab intersection for finite segments. Godot 4.4's Rect2
+    # does not expose intersects_segment; use an explicit sweep for fast dashes.
+    var first: Variant = null
+    var best_distance := INF
+    var travel: Vector2 = to - from
+    for wall in obstacles:
+        var expanded: Rect2 = wall.grow(radius)
+        if expanded.has_point(from):
+            continue
+        var entry := 0.0
+        var exit := 1.0
+        var intersects := true
+        for axis in range(2):
+            var initial: float = from.x if axis == 0 else from.y
+            var delta_axis: float = travel.x if axis == 0 else travel.y
+            var low: float = expanded.position.x if axis == 0 else expanded.position.y
+            var high: float = expanded.end.x if axis == 0 else expanded.end.y
+            if absf(delta_axis) < 0.00001:
+                if initial < low or initial > high:
+                    intersects = false
+                    break
+                continue
+            var near_t: float = (low - initial) / delta_axis
+            var far_t: float = (high - initial) / delta_axis
+            entry = maxf(entry, minf(near_t, far_t))
+            exit = minf(exit, maxf(near_t, far_t))
+            if entry > exit:
+                intersects = false
+                break
+        if intersects and entry <= 1.0 and exit >= 0.0:
+            var hit: Vector2 = from + travel * entry
+            if from.distance_squared_to(hit) < best_distance:
+                first = hit
+                best_distance = from.distance_squared_to(hit)
+    return first
+
+func cover_blocks_line(from: Vector2, to: Vector2) -> bool:
+    return first_cover_hit(from, to) != null
+
+func clipped_position(from: Vector2, to: Vector2, radius: float) -> Vector2:
+    var legal_target: Vector2 = to.clamp(ARENA.position + Vector2(radius, radius), ARENA.end - Vector2(radius, radius))
+    var hit: Variant = first_cover_hit(from, legal_target, radius)
+    if hit == null:
+        return legal_target
+    var travel: Vector2 = legal_target - from
+    return from + travel.normalized() * maxf(0.0, from.distance_to(hit) - 1.0)
+
+func slide_around_cover(from: Vector2, travel: Vector2, radius: float) -> Vector2:
+    var horizontal := clipped_position(from, from + Vector2(travel.x, 0.0), radius)
+    return clipped_position(horizontal, horizontal + Vector2(0.0, travel.y), radius)
 
 func spawn_enemy(position: Vector2, hp: int, speed: float, ranged: bool, role: String = "regular") -> void:
     enemies.append({
@@ -112,8 +180,7 @@ func move_player(direction: Vector2, delta: float) -> void:
         direction = direction.normalized()
     if direction.length_squared() > 0.01:
         last_move_direction = direction.normalized()
-    player_pos += direction * SPEED * delta
-    player_pos = player_pos.clamp(ARENA.position + Vector2(16, 16), ARENA.end - Vector2(16, 16))
+    player_pos = slide_around_cover(player_pos, direction * SPEED * delta, HERO_RADIUS)
     queue_redraw()
 
 func dash() -> bool:
@@ -121,7 +188,7 @@ func dash() -> bool:
         return false
     if last_move_direction.length_squared() < 0.01:
         return false
-    var destination: Vector2 = (player_pos + last_move_direction.normalized() * DASH_DISTANCE).clamp(ARENA.position + Vector2(16, 16), ARENA.end - Vector2(16, 16))
+    var destination: Vector2 = clipped_position(player_pos, player_pos + last_move_direction.normalized() * DASH_DISTANCE, HERO_RADIUS)
     if player_pos.distance_squared_to(destination) < 1.0:
         return false
     dash_origin = player_pos
@@ -140,7 +207,7 @@ func attack(target: Vector2) -> bool:
     for i in range(enemies.size()):
         var p: Vector2 = enemies[i]["pos"]
         var dist := player_pos.distance_to(p)
-        if dist <= ATTACK_RANGE and p.distance_to(target) < 55.0 and dist < nearest:
+        if dist <= ATTACK_RANGE and p.distance_to(target) < 55.0 and dist < nearest and not cover_blocks_line(player_pos, p):
             nearest = dist
             hit = i
     if hit == -1:
@@ -311,10 +378,14 @@ func _process(delta: float) -> void:
     move_player(direction, delta)
     update_enemy_attacks(delta)
     for shot in hostile_shots.duplicate():
-        shot["pos"] += shot["velocity"] * delta
-        if not ARENA.has_point(shot["pos"]):
+        var old_pos: Vector2 = shot["pos"]
+        var new_pos: Vector2 = old_pos + shot["velocity"] * delta
+        var impact: Variant = first_cover_hit(old_pos, new_pos, 7.0)
+        if impact != null or not ARENA.has_point(new_pos):
             hostile_shots.erase(shot)
-        elif shot["pos"].distance_to(player_pos) <= 19.0:
+            continue
+        shot["pos"] = new_pos
+        if Geometry2D.get_closest_point_to_segment(player_pos, old_pos, new_pos).distance_to(player_pos) <= 19.0:
             if invulnerable_time <= 0.0:
                 take_damage(8)
             hostile_shots.erase(shot)
@@ -325,7 +396,14 @@ func _process(delta: float) -> void:
             step = Vector2.ZERO
         if not enemy["ranged"] and float(enemy.get("melee_warning", 0.0)) > 0.0:
             step = Vector2.ZERO
-        enemy["pos"] = (pos + step).clamp(ARENA.position, ARENA.end)
+        var moved := slide_around_cover(pos, step, ENEMY_RADIUS)
+        if pos.distance_squared_to(moved) < 0.01 and step.length_squared() > 0.01:
+            # Sidestep around cover rather than letting melee enemies stack on a pillar.
+            var sideways := Vector2(-step.y, step.x)
+            moved = clipped_position(pos, pos + sideways, ENEMY_RADIUS)
+            if pos.distance_squared_to(moved) < 0.01:
+                moved = clipped_position(pos, pos - sideways, ENEMY_RADIUS)
+        enemy["pos"] = moved
     queue_redraw()
 
 func update_enemy_attacks(delta: float) -> void:
@@ -448,6 +526,10 @@ func _draw() -> void:
     draw_rect(Rect2(Vector2.ZERO, Vector2(1152, 648)), Color("#111521"))
     draw_rect(ARENA, Color("#242936"))
     draw_rect(ARENA, Color("#7d7798"), false, 4.0)
+    for wall in obstacles:
+        draw_rect(wall, Color("#3f4653"))
+        draw_rect(wall.grow(-4.0), Color("#657180"), false, 3.0)
+        draw_line(wall.position + Vector2(7, 8), wall.position + Vector2(wall.size.x - 7, 8), Color("#a3a9a9", 0.45), 2.0)
     if dash_flash_time > 0.0:
         draw_line(dash_origin, player_pos, Color("#83e4ed", dash_flash_time / 0.18), 8.0)
     draw_circle(player_pos, 22.0 if player_hit_flash > 0.0 else 17.0, Color("#fff1d1") if player_hit_flash > 0.0 else (Color("#80dbed") if invulnerable_time <= 0.0 or int(invulnerable_time * 16.0) % 2 == 0 else Color("#4c657a")))
