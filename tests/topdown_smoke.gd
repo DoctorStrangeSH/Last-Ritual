@@ -113,7 +113,11 @@ func run_tests() -> void:
         td.enemies.clear()
         td.enemies.append({"lane": 0, "pos": td.slots[0]["pos"] + Vector2(20, 0), "waypoint": 1, "hp": 5, "delay": 0.0})
         td.attack_with_towers(1.0)
-        check(td.enemies[0]["hp"] == 3, "Ember bonus increases fire tower damage")
+        check(td.enemies[0]["hp"] == 3 and td.enemies[0].has("burn_time"), "Fire tower applies burn after direct hit")
+        td.tick_burning(0.5)
+        check(td.enemies[0]["hp"] == 1, "Ember burn deals periodic bonus damage")
+        td.tick_burning(0.5)
+        check(td.enemies.is_empty() and td.enemies_defeated > 0, "Burn can finish an enemy and count the kill")
         td.coins = 100
         td.choose_tower("bone")
         td.build_tower(1)
