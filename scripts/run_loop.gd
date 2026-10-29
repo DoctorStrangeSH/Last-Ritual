@@ -17,8 +17,11 @@ const REWARD_BUTTONS := [Rect2(170, 370, 250, 100), Rect2(450, 370, 250, 100), R
 func _ready() -> void:
     queue_redraw()
 
+func expected_phase() -> String:
+    return "day" if phase_count % 2 == 0 else "night"
+
 func start_phase(kind: String) -> bool:
-    if kind != "day" and kind != "night":
+    if kind != expected_phase():
         return false
     if active_game != null:
         active_game.queue_free()
@@ -81,10 +84,10 @@ func _input(event: InputEvent) -> void:
         return
     var point: Vector2 = event.position
     if phase == "hub":
-        if DAY_BUTTON.has_point(point):
+        if expected_phase() == "day" and DAY_BUTTON.has_point(point):
             start_phase("day")
             get_viewport().set_input_as_handled()
-        elif NIGHT_BUTTON.has_point(point):
+        elif expected_phase() == "night" and NIGHT_BUTTON.has_point(point):
             start_phase("night")
             get_viewport().set_input_as_handled()
     elif phase == "reward":
@@ -116,10 +119,11 @@ func _draw() -> void:
     match phase:
         "hub":
             draw_string(ThemeDB.fallback_font, Vector2(360, 210), "RUN %d / 4  |  Choose the next phase" % (phase_count + 1), HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color.WHITE)
-            draw_rect(DAY_BUTTON, Color("#527d70"))
-            draw_rect(NIGHT_BUTTON, Color("#594d78"))
-            draw_string(ThemeDB.fallback_font, Vector2(290, 382), "DAY: DEFEND", HORIZONTAL_ALIGNMENT_LEFT, -1, 24, Color.WHITE)
-            draw_string(ThemeDB.fallback_font, Vector2(665, 382), "NIGHT: EXPLORE", HORIZONTAL_ALIGNMENT_LEFT, -1, 24, Color.WHITE)
+            var next_phase := expected_phase()
+            draw_rect(DAY_BUTTON, Color("#527d70") if next_phase == "day" else Color("#343b47"))
+            draw_rect(NIGHT_BUTTON, Color("#594d78") if next_phase == "night" else Color("#343b47"))
+            draw_string(ThemeDB.fallback_font, Vector2(290, 382), "DAY: DEFEND" if next_phase == "day" else "DAY: COMPLETE", HORIZONTAL_ALIGNMENT_LEFT, -1, 24, Color.WHITE)
+            draw_string(ThemeDB.fallback_font, Vector2(665, 382), "NIGHT: EXPLORE" if next_phase == "night" else "NIGHT: LOCKED", HORIZONTAL_ALIGNMENT_LEFT, -1, 24, Color.WHITE)
             draw_string(ThemeDB.fallback_font, Vector2(300, 490), "Relics carried: +%d damage, +%d gold" % [run_damage_bonus, run_gold_bonus], HORIZONTAL_ALIGNMENT_LEFT, -1, 19, Color("#c7c9d1"))
         "reward":
             draw_string(ThemeDB.fallback_font, Vector2(410, 235), "CHOOSE A RUN RELIC", HORIZONTAL_ALIGNMENT_LEFT, -1, 26, Color.WHITE)
