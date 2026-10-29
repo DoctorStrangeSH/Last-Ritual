@@ -3,7 +3,7 @@
 **Снимок:** 2026-10-29.  
 **Репозиторий:** DoctorStrangeSH/Last-Ritual (private).  
 **Последний игровой merge в main:** RC68, commit 91f829a170ed3d14a88569b55dc1dee5ba109abd.  
-**Следующий обязательный шаг:** подтвердить post-merge Windows build для main и провести ручной игровой smoke-test, если доступен Godot.
+**Следующий обязательный шаг:** провести ручной игровой smoke-test, если доступен Godot; проверить визуальные ошибки и баланс.
 
 ## Реализовано
 
@@ -23,7 +23,7 @@
 - tests/campaign_smoke.gd проверяет множество правил кампании, сохранений, талантов, наград, врагов и переходов.
 - GitHub Actions использует Godot 4.4.1: headless import/script check, smoke tests и экспорт Windows EXE.
 - PR RC68 прошёл GitHub Actions до объединения.
-- Сразу после merge push-run main был запущен (workflow run 40816997661) и находился в процессе выполнения при подготовке этого снимка. Проверь его актуальный результат перед следующими изменениями.
+- Post-merge push workflow для main завершился успешно: [run #40816997661](https://github.com/DoctorStrangeSH/Last-Ritual/actions/runs/40816997661). Импорт, smoke tests и экспорт Windows EXE прошли в CI. Это не заменяет ручную проверку игры.
 
 ## Что НЕ подтверждено
 
