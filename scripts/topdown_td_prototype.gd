@@ -14,6 +14,8 @@ const PATHS := [
 var enemies: Array[Dictionary] = []
 var wave_number := 0
 var altar_hp := 100
+var defense_state := "playing" # playing, won, lost
+const RESTART_BUTTON := Rect2(455, 350, 242, 58)
 var enemies_spawned := 0
 var enemies_escaped := 0
 var enemies_defeated := 0
@@ -57,7 +59,7 @@ func hero_attack(target: Vector2) -> bool:
     return true
 
 func start_wave() -> bool:
-    if not enemies.is_empty() or wave_number >= 3 or altar_hp <= 0:
+    if defense_state != "playing" or not enemies.is_empty() or wave_number >= 3 or altar_hp <= 0:
         return false
     wave_number += 1
     enemies_spawned = 0
@@ -84,6 +86,8 @@ func advance_enemies(delta: float) -> void:
                 enemies.erase(enemy)
                 enemies_escaped += 1
                 altar_hp = maxi(0, altar_hp - 10)
+                if altar_hp == 0:
+                    defense_state = "lost"
             else:
                 enemy["waypoint"] = waypoint
     queue_redraw()
@@ -118,7 +122,33 @@ func attack_with_towers(delta: float) -> void:
             coins += 5
     queue_redraw()
 
+func restart_defense() -> void:
+    defense_state = "playing"
+    altar_hp = 100
+    wave_number = 0
+    enemies_spawned = 0
+    enemies_escaped = 0
+    enemies_defeated = 0
+    coins = 150
+    hero_pos = Vector2(560, 420)
+    hero_attack_cooldown = 0.0
+    selected_type = ""
+    selected_slot = -1
+    enemies.clear()
+    shot_trails.clear()
+    tower_cooldowns.clear()
+    for slot in slots:
+        slot["tower"] = ""
+        slot["level"] = 0
+    queue_redraw()
+
 func _process(delta: float) -> void:
+    if defense_state != "playing":
+        return
+    if wave_number == 3 and enemies.is_empty():
+        defense_state = "won"
+        queue_redraw()
+        return
     hero_attack_cooldown = maxf(0.0, hero_attack_cooldown - delta)
     var move_direction := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
     if Input.is_key_pressed(KEY_A): move_direction.x -= 1.0
@@ -199,6 +229,15 @@ func sell_selected() -> bool:
     return true
 
 func _unhandled_input(event: InputEvent) -> void:
+    if event is InputEventKey and event.pressed and event.keycode == KEY_R and defense_state != "playing":
+        restart_defense()
+        return
+    if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT and defense_state != "playing":
+        if RESTART_BUTTON.has_point(event.position):
+            restart_defense()
+        return
+    if defense_state != "playing":
+        return
     if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
         selected_type = ""
         selected_slot = -1
@@ -234,6 +273,11 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _draw() -> void:
     draw_rect(Rect2(Vector2.ZERO, Vector2(1152, 648)), Color("#131827"))
+    if defense_state != "playing":
+        draw_rect(Rect2(345, 225, 460, 210), Color("#285849") if defense_state == "won" else Color("#693943"))
+        draw_string(ThemeDB.fallback_font, Vector2(485, 301), "VICTORY" if defense_state == "won" else "ALTAR FALLEN", HORIZONTAL_ALIGNMENT_LEFT, -1, 28, Color.WHITE)
+        draw_rect(RESTART_BUTTON, Color("#8ca9bc"))
+        draw_string(ThemeDB.fallback_font, Vector2(480, 386), "RESTART DEFENSE", HORIZONTAL_ALIGNMENT_LEFT, -1, 20, Color.WHITE)
     draw_string(ThemeDB.fallback_font, Vector2(66, 45), "ALTAR %d / 100     WAVE %d / 3     GOLD %d" % [altar_hp, wave_number, coins], HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color.WHITE)
     draw_rect(WAVE_BUTTON, Color("#487d6b") if enemies.is_empty() and wave_number < 3 and altar_hp > 0 else Color("#454b54"))
     draw_string(ThemeDB.fallback_font, Vector2(78, 581), "START WAVE", HORIZONTAL_ALIGNMENT_LEFT, -1, 19, Color.WHITE)
