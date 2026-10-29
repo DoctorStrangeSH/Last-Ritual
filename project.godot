@@ -1,8 +1,8 @@
 config_version=5
 
 [application]
-config/name="Последний ритуал — Пролог"
-run/main_scene="res://scenes/main.tscn"
+config/name="Last Ritual 2.0 — Top Down"
+run/main_scene="res://scenes/topdown_night_prototype.tscn"
 config/features=PackedStringArray("4.2", "GL Compatibility")
 
 [display]
