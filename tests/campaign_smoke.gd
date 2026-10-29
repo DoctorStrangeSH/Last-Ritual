@@ -309,6 +309,19 @@ func run_tests() -> void:
     game.reset_all()
     check(game.current_day == 1, "initial day")
     game.phase = "night"
+    game.difficulty = 2
+    game.spectral_patrol_clock = 3.0
+    game.player = game.spectral_patrol_position()
+    check(game.spectral_patrol_active() and game.spectral_patrol_hits_player(), "spectral patrol activates and detects collision")
+    game.spectral_patrol_clock = 0.5
+    check(not game.spectral_patrol_active() and not game.spectral_patrol_hits_player(), "spectral patrol has a safe interval")
+    game.difficulty = 1
+    game.current_day = 1
+    game.spectral_patrol_clock = 3.0
+    check(not game.spectral_patrol_enabled(), "spectral patrol disabled on early normal nights")
+    game.reset_all()
+
+    game.phase = "night"
     game.dungeon_route_chosen = true
     game.blood_shrine_used = false
     game.stone_taken = false
