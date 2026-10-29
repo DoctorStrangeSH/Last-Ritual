@@ -842,6 +842,19 @@ func run_tests() -> void:
     check(not game.load_campaign(), "oversized save rejected")
     check(game.current_day == 2 and game.mana == 93, "rejected save preserves existing state")
 
+    # Legacy version=1 checkpoints predate optional run-only relic fields.
+    # They must load without inheriting relics from the previous run.
+    var legacy_checkpoint := {"version": 1, "day": 3, "stones": 3, "mana": 41, "souls": 6, "wall_hp": 70.0, "tower_power": 0, "wall_ward": 0, "towers": []}
+    var legacy_file := FileAccess.open(game.save_path, FileAccess.WRITE)
+    legacy_file.store_string(JSON.stringify(legacy_checkpoint))
+    legacy_file.close()
+    check(game.load_campaign(), "legacy version 1 checkpoint without optional relic fields loads")
+    check(game.phase == "ritual" and game.current_day == 3 and game.stones_collected == 3 and game.mana == 41, "legacy checkpoint restores campaign progress")
+    check(not game.shadow_relic and not game.blood_mantle and not game.rage_shard, "legacy checkpoint clears relics missing from old saves")
+    game.reset_all()
+    check(game.current_day == 1 and game.stones_collected == 0 and game.phase == "title", "fresh run clears legacy checkpoint progress")
+    check(not game.shadow_relic and not game.blood_mantle and not game.rage_shard, "fresh run has no carried relics")
+
     game.difficulty = 3
     game.legacy_shards = 42
     game.achievement_wins = 6
