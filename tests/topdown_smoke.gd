@@ -99,6 +99,27 @@ func run_tests() -> void:
                 check(int(foe["hp"]) >= 30, "Ritual guardian has boss-scale health")
         check(guardians == 1 and boss_game.enemies.size() == 3, "Boss chamber spawns guardian with escort")
         boss_game.queue_free()
+    var ritual_scene = load("res://scenes/topdown_night_prototype.tscn")
+    if ritual_scene != null:
+        var ritual_game = ritual_scene.instantiate()
+        root.add_child(ritual_game)
+        ritual_game.enable_floor_exploration(31)
+        ritual_game.open_room(int(ritual_game.floor_data["boss"]))
+        var guardian: Dictionary = {}
+        for enemy in ritual_game.enemies:
+            if enemy.get("role", "") == "boss":
+                guardian = enemy
+                break
+        check(not guardian.is_empty(), "Ritual guardian exists for phase tests")
+        if not guardian.is_empty():
+            ritual_game.update_guardian_boss(2.0)
+            check(float(guardian.get("ritual_warning", 0.0)) > 0.0, "Guardian telegraphs area attack")
+            guardian["hp"] = 14
+            guardian["ritual_warning"] = 0.0
+            guardian["ritual_cooldown"] = 0.0
+            ritual_game.update_guardian_boss(0.1)
+            check(float(guardian["ritual_warning"]) <= 0.65, "Enraged guardian accelerates warning")
+        ritual_game.queue_free()
     var td_scene := load("res://scenes/topdown_td_prototype.tscn") as PackedScene
     check(td_scene != null, "Top-down TD scene loads")
     if td_scene != null:
