@@ -4,6 +4,9 @@ const NIGHT_SCENE: PackedScene = preload("res://scenes/topdown_night_prototype.t
 const TD_SCENE: PackedScene = preload("res://scenes/topdown_td_prototype.tscn")
 const META_SCRIPT = preload("res://scripts/meta_progression.gd")
 var meta = META_SCRIPT.new()
+var audio_volume := 0.7
+var audio_muted := false
+var audio_settings_path := "user://last_ritual_audio.cfg"
 var phase := "hub" # hub, day, night, reward, victory, defeat
 var phase_count := 0
 var difficulty := 0 # 0 normal, 1 hard, 2 nightmare
@@ -23,6 +26,9 @@ const META_TREASURY_BUTTON := Rect2(642, 510, 300, 65)
 const DAY_BUTTON := Rect2(210, 338, 300, 82)
 const NIGHT_BUTTON := Rect2(642, 338, 300, 82)
 const REWARD_BUTTONS := [Rect2(80, 370, 225, 100), Rect2(350, 370, 225, 100), Rect2(620, 370, 225, 100), Rect2(890, 370, 225, 100)]
+const AUDIO_MUTE_BUTTON := Rect2(810, 52, 96, 42)
+const AUDIO_DOWN_BUTTON := Rect2(916, 52, 38, 42)
+const AUDIO_UP_BUTTON := Rect2(962, 52, 38, 42)
 
 func _ready() -> void:
     meta.load_profile()
