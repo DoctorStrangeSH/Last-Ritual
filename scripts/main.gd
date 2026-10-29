@@ -589,6 +589,19 @@ func load_campaign() -> bool:
         loaded_builds = int(data["towers_built"])
     if loaded_builds < checked_towers.size():
         return false
+    for reward_key in ["reward_bone", "reward_mana", "reward_ward"]:
+        if data.has(reward_key):
+            var reward_value: Variant = data[reward_key]
+            if not (reward_value is float or reward_value is int) or not is_finite(float(reward_value)):
+                return false
+            if float(reward_value) != floorf(float(reward_value)) or reward_value < 0 or reward_value > 5:
+                return false
+    if data.has("legendary_boon"):
+        var boon_value: Variant = data["legendary_boon"]
+        if not (boon_value is float or boon_value is int) or not is_finite(float(boon_value)):
+            return false
+        if float(boon_value) != floorf(float(boon_value)) or boon_value < -1 or boon_value > 2:
+            return false
     reset_all()
     campaign_kills = loaded_kills
     towers_built = loaded_builds
@@ -599,10 +612,10 @@ func load_campaign() -> bool:
     wall_hp = float(data["wall_hp"])
     tower_power_level = int(data["tower_power"])
     wall_ward_level = int(data["wall_ward"])
-    reward_bone_bonus = clampi(int(data.get("reward_bone", 0)), 0, 5)
-    reward_mana_bonus = clampi(int(data.get("reward_mana", 0)), 0, 5)
-    reward_ward_bonus = clampi(int(data.get("reward_ward", 0)), 0, 5)
-    legendary_boon = clampi(int(data.get("legendary_boon", -1)), -1, 2)
+    reward_bone_bonus = int(data.get("reward_bone", 0))
+    reward_mana_bonus = int(data.get("reward_mana", 0))
+    reward_ward_bonus = int(data.get("reward_ward", 0))
+    legendary_boon = int(data.get("legendary_boon", -1))
     towers = []
     phase = "ritual"
     stone_taken = true
