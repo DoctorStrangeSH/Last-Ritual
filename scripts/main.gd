@@ -102,6 +102,7 @@ var omen_cache_bonus := false
 var dungeon_route_chosen := false
 var dungeon_route_reward := 0
 var secret_cache_taken := false
+var blood_shrine_used := false
 var secret_cache_pos := Vector2.ZERO
 var trap_positions := [375.0, 775.0]
 var chest_taken := false
@@ -265,6 +266,7 @@ func reset_all() -> void:
     dungeon_route_chosen = false
     dungeon_route_reward = 0
     secret_cache_taken = false
+    blood_shrine_used = false
     chest_taken = false
     relic_taken = false
     final_timer = 45.0
@@ -733,6 +735,9 @@ func _input(event: InputEvent) -> void:
                         break
             return
         var attack_target: Vector2 = get_global_mouse_position()
+        if not blood_shrine_used and attack_target.distance_to(Vector2(530.0, FLOOR - 26.0)) < 46.0:
+            use_blood_shrine()
+            return
         if absf(attack_target.x - player.x) > 10.0:
             facing = signf(attack_target.x - player.x)
         attack()
@@ -949,6 +954,7 @@ func begin_night() -> void:
     dungeon_route_chosen = false
     dungeon_route_reward = 0
     secret_cache_taken = false
+    blood_shrine_used = false
     if current_day == 5:
         platforms = [Rect2(190, 450, 150, 16), Rect2(415, 390, 140, 16), Rect2(600, 345, 130, 16), Rect2(795, 390, 130, 16)]
         trap_positions = [325.0, 520.0, 755.0, 965.0]
@@ -1235,6 +1241,24 @@ func apply_dungeon_omen() -> void:
         omen_cache_bonus = true
         for enemy in night_enemies:
             enemy["hp"] = float(enemy["hp"]) * 1.10
+
+func use_blood_shrine() -> bool:
+    # Optional risk/reward encounter; it can only be activated once per night.
+    if phase != "night" or not dungeon_route_chosen or blood_shrine_used or stone_taken:
+        return false
+    if player.distance_to(Vector2(530.0, FLOOR - 26.0)) > 85.0:
+        show_notice("Подойди ближе к алтарю крови")
+        return false
+    if player_hp <= 25.0:
+        show_notice("Алтарь требует больше 25 здоровья")
+        return false
+    blood_shrine_used = true
+    player_hp -= 25.0
+    mana += 55
+    souls += 2
+    emit_impact(Vector2(530.0, FLOOR - 31.0), Color("f57a9e"), 32.0)
+    show_notice("Алтарь крови: -25 HP, +55 маны, +2 души")
+    return true
 
 func choose_dungeon_route(route: int) -> void:
     if phase != "night" or dungeon_route_chosen or route < 0 or route > 2:
@@ -2127,6 +2151,13 @@ func _draw() -> void:
                 var ex := fmod(float(ember * 157) + atmosphere_clock * (8.0 + float(ember % 3) * 4.0), W)
                 var ey := 170.0 + float((ember * 57) % 300) + sin(atmosphere_clock * 1.3 + float(ember)) * 13.0
                 draw_circle(Vector2(ex, ey), 2.5, Color(0.72, 0.52, 0.87, 0.26))
+            if dungeon_route_chosen and not blood_shrine_used and not stone_taken:
+                var shrine_center := Vector2(530.0, FLOOR - 26.0)
+                draw_circle(shrine_center, 29.0 + 3.0 * sin(atmosphere_clock * 2.0), Color(0.80, 0.18, 0.36, 0.18))
+                draw_arc(shrine_center, 25.0, 0.0, TAU, 28, Color("e97b9e"), 3.0)
+                draw_colored_polygon(PackedVector2Array([shrine_center + Vector2(0, -20), shrine_center + Vector2(17, 0), shrine_center + Vector2(0, 19), shrine_center + Vector2(-17, 0)]), Color("a43857"))
+                if player.distance_to(shrine_center) < 115.0:
+                    label("ЛКМ: алтарь крови (-25 HP / +55 маны)", 355.0, FLOOR - 72.0, 15, Color("f4bac7"))
             # Distinct architectural silhouettes and palettes for each night.
             var night_stone := Color("6c5c77")
             if current_day == 2:
