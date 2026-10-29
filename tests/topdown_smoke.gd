@@ -105,7 +105,7 @@ func run_tests() -> void:
         check(run.start_phase("night"), "Run continues into night after fire relic")
         run.finish_phase(true)
         check(run.choose_run_reward("bone") and run.run_bone_tower_bonus == 2, "Repeated Bone relic stacks bone tower synergy")
-        check(run.start_phase("day") and run.active_game.fire_synergy_bonus == 1 and run.active_game.bone_synergy_bonus == 1, "Fire and Bone synergies carry into defense")
+        check(run.start_phase("day") and run.active_game.fire_synergy_bonus == 1 and run.active_game.bone_synergy_bonus == 2, "Fire and stacked Bone synergies carry into defense")
         var td = run.active_game
         td.coins = 100
         td.choose_tower("fire")
