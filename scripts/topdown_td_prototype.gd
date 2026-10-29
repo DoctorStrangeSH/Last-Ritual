@@ -6,6 +6,51 @@ var slots: Array[Dictionary] = []
 var selected_type := ""
 var selected_slot := -1
 var coins := 150
+const PATHS := [
+    [Vector2(65, 285), Vector2(560, 285), Vector2(1070, 285)],
+    [Vector2(65, 345), Vector2(560, 345), Vector2(1070, 345)]
+]
+var enemies: Array[Dictionary] = []
+var wave_number := 0
+var altar_hp := 100
+var enemies_spawned := 0
+var enemies_escaped := 0
+
+func start_wave() -> bool:
+    if not enemies.is_empty() or wave_number >= 3 or altar_hp <= 0:
+        return false
+    wave_number += 1
+    enemies_spawned = 0
+    var count := wave_number + 2
+    for i in range(count):
+        enemies.append({"lane": i % PATHS.size(), "pos": PATHS[i % PATHS.size()][0], "waypoint": 1, "hp": 3 + wave_number, "delay": float(i) * 0.7})
+        enemies_spawned += 1
+    queue_redraw()
+    return true
+
+func advance_enemies(delta: float) -> void:
+    for enemy in enemies.duplicate():
+        if enemy["delay"] > 0.0:
+            enemy["delay"] = maxf(0.0, float(enemy["delay"]) - delta)
+            continue
+        var path: Array = PATHS[int(enemy["lane"])]
+        var waypoint: int = enemy["waypoint"]
+        var target: Vector2 = path[waypoint]
+        var position: Vector2 = enemy["pos"]
+        enemy["pos"] = position.move_toward(target, 85.0 * delta)
+        if enemy["pos"].distance_to(target) < 0.1:
+            waypoint += 1
+            if waypoint >= path.size():
+                enemies.erase(enemy)
+                enemies_escaped += 1
+                altar_hp = maxi(0, altar_hp - 10)
+            else:
+                enemy["waypoint"] = waypoint
+    queue_redraw()
+
+func _process(delta: float) -> void:
+    advance_enemies(delta)
+
 
 func _ready() -> void:
     for i in range(SLOT_POSITIONS.size()):
@@ -99,7 +144,12 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _draw() -> void:
     draw_rect(Rect2(Vector2.ZERO, Vector2(1152, 648)), Color("#131827"))
-    draw_rect(Rect2(60, 280, 1020, 65), Color("#594e50"))
+    for path in PATHS:
+        for i in range(path.size() - 1):
+            draw_line(path[i], path[i + 1], Color("#594e50"), 24.0)
+    for enemy in enemies:
+        if enemy["delay"] <= 0.0:
+            draw_circle(enemy["pos"], 12.0, Color("#c67f64"))
     for i in range(slots.size()):
         var pos: Vector2 = slots[i]["pos"]
         var occupied: bool = slots[i]["tower"] != ""
