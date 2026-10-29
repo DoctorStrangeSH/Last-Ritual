@@ -842,7 +842,19 @@ func _draw() -> void:
             draw_rect(tile, Color("#e6d7a6") if id == room_index else Color("#5f927f") if cleared_rooms.has(id) else Color("#6a647e"))
             draw_rect(tile, Color("#1a2630"), false, 1.0)
         draw_label("КАРТА", Vector2(927, 151), 13, Color("#e6d7a6"))
-        draw_label("E — ИСКАТЬ ТАЙНЫЙ ПРОХОД", Vector2(780, 198), 13, Color("#a9cbb6"))
+        if door_available():
+            var nearby_secret_direction := Vector2i.ZERO
+            var current_room: Dictionary = floor_data["rooms"][room_index]
+            for neighbor in current_room["neighbors"]:
+                var secret_id: int = int(neighbor)
+                if str(floor_data["rooms"][secret_id]["kind"]) == "ТАЙНИК" and not revealed_secrets.has(secret_id):
+                    nearby_secret_direction = floor_data["rooms"][secret_id]["grid"] - current_room["grid"]
+                    break
+            if nearby_secret_direction != Vector2i.ZERO:
+                var crack_center: Vector2 = DOOR_POINTS[nearby_secret_direction]
+                draw_line(crack_center + Vector2(-12, -10), crack_center + Vector2(3, 0), Color("#ba9f75"), 2.5)
+                draw_line(crack_center + Vector2(3, 0), crack_center + Vector2(-2, 17), Color("#ba9f75"), 2.5)
+                draw_label("ТРЕЩИНА В СТЕНЕ — E: ИССЛЕДОВАТЬ", Vector2(705, 198), 13, Color("#f1d29e"))
     if exploration_enabled:
         draw_label("ЭТАЖ: %d/10  ИССЛЕДОВАНО: %d" % [room_index + 1, visited_rooms.size()], Vector2(390, 63), 15, Color("#e7d3a8"))
         for direction in door_neighbors():
