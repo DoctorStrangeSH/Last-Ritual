@@ -701,25 +701,25 @@ func run_tests() -> void:
     check(game.current_day == 2 and game.phase == "day", "advance to day 2")
     check(game.towers.is_empty() and game.tower_power_level == 1, "towers reset but permanent upgrade persists")
     game.begin_night()
-    check(game.trap_positions.size() == 3, "second night traps")
+    check(game.trap_positions.size() == (4 if game.dungeon_omen == 1 else 3), "second night traps")
     game.phase = "ritual"
     game.stones_collected = 2
     game.resolve_altar()
     check(game.current_day == 3 and game.phase == "day", "advance to day 3")
     game.begin_night()
-    check(game.boss_hp == 230.0, "third night boss")
+    check(is_equal_approx(game.boss_hp, 230.0 * (1.25 if game.dungeon_omen == 3 else 1.0)), "third night boss")
     game.phase = "ritual"
     game.stones_collected = 3
     game.resolve_altar()
     check(game.phase == "day" and game.current_day == 4, "third stone advances to day 4")
     game.begin_night()
-    check(game.boss_hp == 270.0 and game.trap_positions.size() == 4, "Blood Mines layout and boss")
+    check(is_equal_approx(game.boss_hp, 270.0 * (1.25 if game.dungeon_omen == 3 else 1.0)) and game.trap_positions.size() == (5 if game.dungeon_omen == 1 else 4), "Blood Mines layout and boss")
     game.phase = "ritual"
     game.stones_collected = 4
     game.resolve_altar()
     check(game.phase == "day" and game.current_day == 5, "fourth stone advances to day five")
     game.begin_night()
-    check(game.boss_hp == 340.0 and game.trap_positions.size() == 4, "fifth night boss and traps")
+    check(is_equal_approx(game.boss_hp, 340.0 * (1.25 if game.dungeon_omen == 3 else 1.0)) and game.trap_positions.size() == (5 if game.dungeon_omen == 1 else 4), "fifth night boss and traps")
     game.phase = "ritual"
     game.stones_collected = 5
     game.mana = 49
