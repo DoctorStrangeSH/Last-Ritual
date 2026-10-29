@@ -7,6 +7,8 @@ var room_index := 0
 var player_pos := Vector2(160.0, 325.0)
 var player_hp := 100
 var enemies: Array[Dictionary] = []
+var hostile_shots: Array[Dictionary] = []
+var ranged_fire_clock := 0.0
 var reward_available := false
 var rewards_taken := 0
 var attack_cooldown := 0.0
@@ -20,8 +22,10 @@ func open_room(index: int) -> void:
     player_pos = Vector2(160.0, 325.0)
     reward_available = false
     enemies.clear()
+    hostile_shots.clear()
+    ranged_fire_clock = 0.0
     for i in range(2):
-        enemies.append({"pos": Vector2(570.0 + i * 160.0, 240.0 + i * 130.0), "hp": 3, "speed": 65.0 + i * 20.0})
+        enemies.append({"pos": Vector2(570.0 + i * 160.0, 240.0 + i * 130.0), "hp": 3, "speed": 65.0 + i * 20.0, "ranged": i == 1})
     queue_redraw()
 
 func move_player(direction: Vector2, delta: float) -> void:
@@ -79,13 +83,37 @@ func _process(delta: float) -> void:
     if Input.is_key_pressed(KEY_W): direction.y -= 1.0
     if Input.is_key_pressed(KEY_S): direction.y += 1.0
     move_player(direction, delta)
+    ranged_fire_clock += delta
+    if ranged_fire_clock >= 1.7:
+        ranged_fire_clock = 0.0
+        for enemy in enemies:
+            if enemy["ranged"]:
+                shoot_hostile(enemy["pos"])
+    for shot in hostile_shots.duplicate():
+        shot["pos"] += shot["velocity"] * delta
+        if not ARENA.has_point(shot["pos"]):
+            hostile_shots.erase(shot)
+        elif shot["pos"].distance_to(player_pos) <= 19.0:
+            if invulnerable_time <= 0.0:
+                player_hp = maxi(0, player_hp - 8)
+                invulnerable_time = 0.75
+            hostile_shots.erase(shot)
     for enemy in enemies:
         var pos: Vector2 = enemy["pos"]
         var step: Vector2 = (player_pos - pos).normalized() * float(enemy["speed"]) * delta
+        if enemy["ranged"] and player_pos.distance_to(pos) < 230.0:
+            step = Vector2.ZERO
         enemy["pos"] = (pos + step).clamp(ARENA.position, ARENA.end)
         if player_pos.distance_to(enemy["pos"]) < 25.0 and invulnerable_time <= 0.0:
             player_hp = maxi(0, player_hp - 10)
             invulnerable_time = 0.75
+    queue_redraw()
+
+func shoot_hostile(origin: Vector2) -> void:
+    var direction := (player_pos - origin).normalized()
+    if direction == Vector2.ZERO:
+        return
+    hostile_shots.append({"pos": origin, "velocity": direction * 180.0})
     queue_redraw()
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -105,7 +133,9 @@ func _draw() -> void:
     draw_rect(ARENA, Color("#7d7798"), false, 4.0)
     draw_circle(player_pos, 17.0, Color("#80dbed"))
     for enemy in enemies:
-        draw_circle(enemy["pos"], 19.0, Color("#cf646c"))
+        draw_circle(enemy["pos"], 19.0, Color("#aa70d6") if enemy["ranged"] else Color("#cf646c"))
+    for shot in hostile_shots:
+        draw_circle(shot["pos"], 7.0, Color("#ffbd77"))
     if reward_available:
         draw_circle(Vector2(576, 325), 24.0, Color("#f4d78c"))
     if door_available():

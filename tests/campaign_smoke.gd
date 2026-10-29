@@ -20,6 +20,10 @@ func run_tests() -> void:
         root.add_child(prototype)
         check(prototype.room_index == 0 and prototype.enemies.size() == 2, "P1 begins with two room enemies")
         check(not prototype.door_available() and not prototype.next_room(), "P1 room exit locked while enemies remain")
+        check(prototype.enemies[1]["ranged"], "P1 second enemy is a ranged attacker")
+        prototype.shoot_hostile(Vector2(730, 370))
+        check(prototype.hostile_shots.size() == 1, "P1 ranged enemy creates projectile")
+        check(prototype.hostile_shots[0]["velocity"].length() > 0.0, "P1 projectile moves toward hero")
         prototype.player_pos = Vector2(560, 240)
         for i in range(3):
             prototype.attack_cooldown = 0.0
@@ -34,6 +38,7 @@ func run_tests() -> void:
         check(prototype.claim_reward() and not prototype.claim_reward(), "P1 reward can be claimed once")
         check(prototype.door_available(), "P1 exit opens after collecting reward")
         check(prototype.next_room() and prototype.room_index == 1, "P1 moves to next room after reward")
+        check(prototype.hostile_shots.is_empty(), "P1 projectiles cleared between rooms")
         check(not prototype.door_available(), "P1 new room starts with locked exit")
         prototype.player_pos = Vector2(-200, -200)
         prototype.move_player(Vector2.ZERO, 0.0)
