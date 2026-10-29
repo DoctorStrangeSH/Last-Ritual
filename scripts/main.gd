@@ -883,6 +883,14 @@ func begin_night() -> void:
     else:
         platforms = [Rect2(205, 473, 135, 16), Rect2(415, 413, 145, 16), Rect2(640, 462, 130, 16), Rect2(830, 396, 135, 16)]
         trap_positions = [375.0, 775.0]
+    if current_day >= 2 and night_enemies.size() > 0:
+        var charger: Dictionary = night_enemies[0]
+        charger["kind"] = "charger"
+        charger["windup"] = 0.0
+        charger["charge_cd"] = 1.4
+        charger["charging"] = 0.0
+        charger["charge_dir"] = 1.0
+        night_enemies[0] = charger
     apply_dungeon_route()
     show_notice("Ночь %d: победи хранителя, забери камень и вернись к порталу слева!" % current_day)
 
@@ -1168,11 +1176,33 @@ func update_night(delta: float) -> void:
             gems.remove_at(i)
     for i in range(night_enemies.size() - 1, -1, -1):
         var e := night_enemies[i]
-        e["x"] += e["dir"] * 38.0 * delta
+        var is_charger: bool = str(e.get("kind", "")) == "charger"
+        if is_charger:
+            e["charge_cd"] = maxf(0.0, float(e.get("charge_cd", 0.0)) - delta)
+            var windup_before: float = float(e.get("windup", 0.0))
+            e["windup"] = maxf(0.0, windup_before - delta)
+            if windup_before > 0.0 and float(e["windup"]) <= 0.0:
+                e["charging"] = 0.42
+                e["charge_cd"] = 3.5
+            if float(e.get("windup", 0.0)) <= 0.0 and float(e.get("charging", 0.0)) <= 0.0 and float(e.get("charge_cd", 0.0)) <= 0.0 and absf(player.x - float(e["x"])) < 320.0:
+                e["windup"] = 0.72
+                e["charge_dir"] = signf(player.x - float(e["x"]))
+                if float(e["charge_dir"]) == 0.0:
+                    e["charge_dir"] = -float(e.get("dir", 1.0))
+            if float(e.get("charging", 0.0)) > 0.0:
+                e["x"] += float(e.get("charge_dir", 1.0)) * 270.0 * delta
+                e["charging"] = maxf(0.0, float(e["charging"]) - delta)
+                if float(e["x"]) < 280.0 or float(e["x"]) > 845.0:
+                    e["x"] = clampf(float(e["x"]), 280.0, 845.0)
+                    e["charging"] = 0.0
+            elif float(e.get("windup", 0.0)) <= 0.0:
+                e["x"] += float(e["dir"]) * 38.0 * delta
+        else:
+            e["x"] += e["dir"] * 38.0 * delta
         if e["x"] < 280.0 or e["x"] > 845.0:
             e["dir"] *= -1.0
         if e["hp"] > 0.0 and absf(player.x - e["x"]) < 30.0 and player.y > FLOOR - 55.0:
-            hurt(17.0)
+            hurt(24.0 if is_charger and float(e.get("charging", 0.0)) > 0.0 else (12.0 if is_charger else 17.0))
         if e["hp"] <= 0:
             mana += 10
             souls += 2
@@ -1904,12 +1934,25 @@ func _draw() -> void:
                     continue
                 var enemy_x: float = float(e["x"])
                 var bob: float = sin(atmosphere_clock * 7.0 + enemy_x * 0.04) * 3.0
-                box(Rect2(enemy_x - 15.0, FLOOR - 39.0 + bob, 30, 38), Color("557a66"))
-                draw_circle(Vector2(enemy_x, FLOOR - 43.0 + bob), 13, Color("9cc09b"))
-                draw_colored_polygon(PackedVector2Array([Vector2(enemy_x - 14, FLOOR - 48 + bob), Vector2(enemy_x - 20, FLOOR - 64 + bob), Vector2(enemy_x - 5, FLOOR - 53 + bob)]), Color("71917f"))
-                draw_colored_polygon(PackedVector2Array([Vector2(enemy_x + 14, FLOOR - 48 + bob), Vector2(enemy_x + 20, FLOOR - 64 + bob), Vector2(enemy_x + 5, FLOOR - 53 + bob)]), Color("71917f"))
-                box(Rect2(enemy_x - 8, FLOOR - 46 + bob, 5, 3), Color("f5c877"))
-                box(Rect2(enemy_x + 3, FLOOR - 46 + bob, 5, 3), Color("f5c877"))
+                var is_charger: bool = str(e.get("kind", "")) == "charger"
+                var is_winding: bool = is_charger and float(e.get("windup", 0.0)) > 0.0
+                var is_charging: bool = is_charger and float(e.get("charging", 0.0)) > 0.0
+                var body_color: Color = Color("9c4d59") if is_charger else Color("557a66")
+                var head_color: Color = Color("d47a79") if is_charger else Color("9cc09b")
+                if is_winding:
+                    var warning_pulse: float = 0.55 + 0.35 * sin(atmosphere_clock * 24.0)
+                    var warning_dir: float = float(e.get("charge_dir", 1.0))
+                    draw_line(Vector2(enemy_x, FLOOR - 25.0), Vector2(enemy_x + warning_dir * 170.0, FLOOR - 25.0), Color(1.0, 0.24, 0.28, warning_pulse), 5.0)
+                    draw_circle(Vector2(enemy_x, FLOOR - 18.0), 25.0 + 3.0 * sin(atmosphere_clock * 18.0), Color(1.0, 0.18, 0.24, 0.24))
+                    label("РЫВОК!", enemy_x - 35.0, FLOOR - 78.0, 15, Color("ff9a9f"))
+                elif is_charging:
+                    draw_line(Vector2(enemy_x - float(e.get("charge_dir", 1.0)) * 35.0, FLOOR - 24.0), Vector2(enemy_x, FLOOR - 24.0), Color("ff5d65"), 7.0)
+                box(Rect2(enemy_x - 15.0, FLOOR - 39.0 + bob, 30, 38), body_color)
+                draw_circle(Vector2(enemy_x, FLOOR - 43.0 + bob), 13, head_color)
+                draw_colored_polygon(PackedVector2Array([Vector2(enemy_x - 14, FLOOR - 48 + bob), Vector2(enemy_x - 20, FLOOR - 64 + bob), Vector2(enemy_x - 5, FLOOR - 53 + bob)]), Color("b75c66") if is_charger else Color("71917f"))
+                draw_colored_polygon(PackedVector2Array([Vector2(enemy_x + 14, FLOOR - 48 + bob), Vector2(enemy_x + 20, FLOOR - 64 + bob), Vector2(enemy_x + 5, FLOOR - 53 + bob)]), Color("b75c66") if is_charger else Color("71917f"))
+                box(Rect2(enemy_x - 8, FLOOR - 46 + bob, 5, 3), Color("ffe18a") if is_charger else Color("f5c877"))
+                box(Rect2(enemy_x + 3, FLOOR - 46 + bob, 5, 3), Color("ffe18a") if is_charger else Color("f5c877"))
             if mage["hp"] > 0.0:
                 var mage_x: float = float(mage["x"])
                 var mage_float: float = sin(atmosphere_clock * 3.2) * 4.0
