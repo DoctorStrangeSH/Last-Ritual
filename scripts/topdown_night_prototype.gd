@@ -15,6 +15,8 @@ var shop_open := false
 const ROOM_KINDS := ["CRYPT", "AMBUSH", "ELITE"]
 const ROUTE_RECTS := [Rect2(66.0, 490.0, 245.0, 65.0), Rect2(327.0, 490.0, 245.0, 65.0), Rect2(588.0, 490.0, 245.0, 65.0), Rect2(849.0, 490.0, 245.0, 65.0)]
 const SHOP_RECTS := [Rect2(340.0, 320.0, 155.0, 60.0), Rect2(500.0, 320.0, 155.0, 60.0), Rect2(660.0, 320.0, 155.0, 60.0)]
+const HELP_BUTTON := Rect2(984.0, 10.0, 153.0, 46.0)
+const HELP_CLOSE_BUTTON := Rect2(688.0, 441.0, 135.0, 48.0)
 var player_pos := Vector2(160.0, 325.0)
 var player_hp := 100
 var enemies: Array[Dictionary] = []
@@ -190,6 +192,7 @@ func leave_shop() -> bool:
     return true
 
 func restart_run() -> void:
+    help_visible = false
     player_hp = 100
     night_souls = 0
     shop_open = false
@@ -319,6 +322,14 @@ func _unhandled_input(event: InputEvent) -> void:
     if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_H:
         toggle_controls_help()
         return
+    if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+        if HELP_BUTTON.has_point(event.position):
+            toggle_controls_help()
+            return
+        if help_visible:
+            if HELP_CLOSE_BUTTON.has_point(event.position):
+                toggle_controls_help()
+            return
     if help_visible:
         return
     if event is InputEventKey and event.pressed and event.keycode == KEY_R and run_state != "playing":
@@ -396,7 +407,9 @@ func _draw() -> void:
     else:
         draw_rect(Rect2(1058.0, 275.0, 46.0, 96.0), Color("#59495b"))
 
-    draw_label("H: CONTROLS", Vector2(1000, 43), 14, Color("#d5c592"))
+    draw_rect(HELP_BUTTON, Color("#526d9b") if help_visible else Color("#343b47"))
+    draw_rect(HELP_BUTTON, Color("#d5c592"), false, 1.5)
+    draw_label("HELP / H", HELP_BUTTON.position + Vector2(24.0, 30.0), 16, Color("#fff2c5"))
     if help_visible:
         var help_panel := Rect2(306, 144, 540, 360)
         draw_rect(help_panel, Color(0.055, 0.07, 0.11, 0.97))
@@ -409,3 +422,5 @@ func _draw() -> void:
         draw_label("RIGHT CLICK near the open door  -  Advance", Vector2(354, 378), 16)
         draw_label("H  -  Close this help panel", Vector2(354, 420), 17, Color("#d5c592"))
         draw_label("The action pauses while help is open.", Vector2(354, 460), 15, Color("#9da9bf"))
+        draw_rect(HELP_CLOSE_BUTTON, Color("#527d70"))
+        draw_label("CONTINUE", HELP_CLOSE_BUTTON.position + Vector2(12.0, 31.0), 17, Color.WHITE)
