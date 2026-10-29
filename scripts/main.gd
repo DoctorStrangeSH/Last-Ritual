@@ -59,6 +59,7 @@ var gems: Array[Vector2] = []
 var night_enemies: Array[Dictionary] = []
 var mage: Dictionary = {}
 var mage_bolts: Array[Dictionary] = []
+var hex_bolts: Array[Dictionary] = []
 var boss_hp := 140.0
 var boss_pos := Vector2(1015, FLOOR - 46)
 var stone_taken := false
@@ -846,6 +847,7 @@ func begin_night() -> void:
     boss_windup = 0.0
     mage = {"x": 570.0, "hp": 60.0 if current_day == 1 else 85.0, "cooldown": 1.4}
     mage_bolts.clear()
+    hex_bolts.clear()
     night_enemies = [{"x": 350.0, "hp": 44.0, "dir": -1.0}, {"x": 700.0, "hp": 44.0 if current_day == 1 else 70.0, "dir": 1.0}]
     gems = [Vector2(250, 442), Vector2(460, 380), Vector2(689, 429), Vector2(879, 363), Vector2(535, 520)]
     chest_taken = false
@@ -883,6 +885,14 @@ func begin_night() -> void:
     else:
         platforms = [Rect2(205, 473, 135, 16), Rect2(415, 413, 145, 16), Rect2(640, 462, 130, 16), Rect2(830, 396, 135, 16)]
         trap_positions = [375.0, 775.0]
+    if current_day >= 3 and night_enemies.size() > 1:
+        var hexer: Dictionary = night_enemies[1]
+        hexer["kind"] = "hexer"
+        hexer["windup"] = 0.0
+        hexer["shot_cd"] = 1.8
+        hexer["aim_x"] = -1.0
+        hexer["aim_y"] = 0.0
+        night_enemies[1] = hexer
     if current_day >= 2 and night_enemies.size() > 0:
         var charger: Dictionary = night_enemies[0]
         charger["kind"] = "charger"
@@ -1177,6 +1187,7 @@ func update_night(delta: float) -> void:
     for i in range(night_enemies.size() - 1, -1, -1):
         var e := night_enemies[i]
         var is_charger: bool = str(e.get("kind", "")) == "charger"
+        var is_hexer: bool = str(e.get("kind", "")) == "hexer"
         if is_charger:
             e["charge_cd"] = maxf(0.0, float(e.get("charge_cd", 0.0)) - delta)
             var windup_before: float = float(e.get("windup", 0.0))
@@ -1197,12 +1208,35 @@ func update_night(delta: float) -> void:
                     e["charging"] = 0.0
             elif float(e.get("windup", 0.0)) <= 0.0:
                 e["x"] += float(e["dir"]) * 38.0 * delta
+        elif is_hexer:
+            var distance_to_player: float = player.x - float(e["x"])
+            if float(e.get("windup", 0.0)) > 0.0:
+                var windup_before: float = float(e["windup"])
+                e["windup"] = maxf(0.0, windup_before - delta)
+                if windup_before > 0.0 and float(e["windup"]) <= 0.0:
+                    var bolt_origin := Vector2(float(e["x"]), FLOOR - 48.0)
+                    var aim := Vector2(float(e.get("aim_x", -1.0)), float(e.get("aim_y", 0.0))).normalized()
+                    hex_bolts.append({"pos": bolt_origin, "velocity": aim * 255.0, "life": 3.0})
+                    e["shot_cd"] = 2.7
+                    emit_impact(bolt_origin, Color("b58cff"), 18.0)
+            else:
+                e["shot_cd"] = maxf(0.0, float(e.get("shot_cd", 0.0)) - delta)
+                if float(e["shot_cd"]) <= 0.0 and absf(distance_to_player) < 610.0:
+                    e["windup"] = 0.82
+                    var aim_at_cast := (player - Vector2(float(e["x"]), FLOOR - 48.0)).normalized()
+                    e["aim_x"] = aim_at_cast.x
+                    e["aim_y"] = aim_at_cast.y
+                elif absf(distance_to_player) < 210.0:
+                    e["x"] -= signf(distance_to_player) * 58.0 * delta
+                elif absf(distance_to_player) > 410.0:
+                    e["x"] += signf(distance_to_player) * 32.0 * delta
         else:
             e["x"] += e["dir"] * 38.0 * delta
         if e["x"] < 280.0 or e["x"] > 845.0:
+            e["x"] = clampf(float(e["x"]), 280.0, 845.0)
             e["dir"] *= -1.0
         if e["hp"] > 0.0 and absf(player.x - e["x"]) < 30.0 and player.y > FLOOR - 55.0:
-            hurt(24.0 if is_charger and float(e.get("charging", 0.0)) > 0.0 else (12.0 if is_charger else 17.0))
+            hurt(24.0 if is_charger and float(e.get("charging", 0.0)) > 0.0 else (12.0 if is_charger else (10.0 if is_hexer else 17.0)))
         if e["hp"] <= 0:
             mana += 10
             souls += 2
@@ -1225,6 +1259,16 @@ func update_night(delta: float) -> void:
             mage_bolts.remove_at(i)
         elif bolt["life"] <= 0.0:
             mage_bolts.remove_at(i)
+    for i in range(hex_bolts.size() - 1, -1, -1):
+        var hex_bolt := hex_bolts[i]
+        hex_bolt["pos"] += hex_bolt["velocity"] * delta
+        hex_bolt["life"] -= delta
+        if hex_bolt["pos"].distance_to(player) < 22.0:
+            hurt(12.0)
+            emit_impact(player, Color("c5a0ff"), 23.0)
+            hex_bolts.remove_at(i)
+        elif hex_bolt["life"] <= 0.0 or float(hex_bolt["pos"].x) < 0.0 or float(hex_bolt["pos"].x) > W:
+            hex_bolts.remove_at(i)
     if boss_hp > 0.0:
         boss_strike_timer -= delta
         if boss_strike_timer <= 0.0 and boss_windup <= 0.0:
@@ -1935,16 +1979,24 @@ func _draw() -> void:
                 var enemy_x: float = float(e["x"])
                 var bob: float = sin(atmosphere_clock * 7.0 + enemy_x * 0.04) * 3.0
                 var is_charger: bool = str(e.get("kind", "")) == "charger"
-                var is_winding: bool = is_charger and float(e.get("windup", 0.0)) > 0.0
+                var is_hexer: bool = str(e.get("kind", "")) == "hexer"
+                var is_winding: bool = float(e.get("windup", 0.0)) > 0.0
                 var is_charging: bool = is_charger and float(e.get("charging", 0.0)) > 0.0
-                var body_color: Color = Color("9c4d59") if is_charger else Color("557a66")
-                var head_color: Color = Color("d47a79") if is_charger else Color("9cc09b")
-                if is_winding:
+                var body_color: Color = Color("9c4d59") if is_charger else (Color("6b4c99") if is_hexer else Color("557a66"))
+                var head_color: Color = Color("d47a79") if is_charger else (Color("b69add") if is_hexer else Color("9cc09b"))
+                if is_winding and is_charger:
                     var warning_pulse: float = 0.55 + 0.35 * sin(atmosphere_clock * 24.0)
                     var warning_dir: float = float(e.get("charge_dir", 1.0))
                     draw_line(Vector2(enemy_x, FLOOR - 25.0), Vector2(enemy_x + warning_dir * 170.0, FLOOR - 25.0), Color(1.0, 0.24, 0.28, warning_pulse), 5.0)
                     draw_circle(Vector2(enemy_x, FLOOR - 18.0), 25.0 + 3.0 * sin(atmosphere_clock * 18.0), Color(1.0, 0.18, 0.24, 0.24))
                     label("РЫВОК!", enemy_x - 35.0, FLOOR - 78.0, 15, Color("ff9a9f"))
+                elif is_winding and is_hexer:
+                    var hex_warning: float = 0.55 + 0.35 * sin(atmosphere_clock * 19.0)
+                    var hex_aim := Vector2(float(e.get("aim_x", -1.0)), float(e.get("aim_y", 0.0))).normalized()
+                    var hex_origin := Vector2(enemy_x, FLOOR - 48.0)
+                    draw_line(hex_origin, hex_origin + hex_aim * 150.0, Color(0.70, 0.43, 1.0, hex_warning), 4.0)
+                    draw_circle(hex_origin, 19.0 + 3.0 * sin(atmosphere_clock * 16.0), Color(0.65, 0.35, 1.0, 0.24))
+                    label("ЗАРЯД!", enemy_x - 37.0, FLOOR - 80.0, 15, Color("d5b6ff"))
                 elif is_charging:
                     draw_line(Vector2(enemy_x - float(e.get("charge_dir", 1.0)) * 35.0, FLOOR - 24.0), Vector2(enemy_x, FLOOR - 24.0), Color("ff5d65"), 7.0)
                 box(Rect2(enemy_x - 15.0, FLOOR - 39.0 + bob, 30, 38), body_color)
@@ -1961,6 +2013,9 @@ func _draw() -> void:
                 box(Rect2(mage_x - 19, FLOOR - 96, 38.0 * clampf(float(mage["hp"]) / (60.0 if current_day == 1 else (120.0 if current_day == 4 else (145.0 if current_day == 5 else (105.0 if current_day == 3 else 85.0)))), 0.0, 1.0), 4), Color("71b7ff"))
             for bolt in mage_bolts:
                 draw_circle(bolt["pos"], 8.0, Color("7bd9ff"))
+            for hex_bolt in hex_bolts:
+                draw_circle(hex_bolt["pos"], 9.0, Color("bd91ff"))
+                draw_circle(hex_bolt["pos"], 14.0, Color(0.62, 0.36, 1.0, 0.22))
             if boss_hp > 0.0:
                 if boss_windup > 0.0:
                     box(Rect2(boss_pos.x - 85, FLOOR - 10, 170, 10), Color("eb5c60"))
