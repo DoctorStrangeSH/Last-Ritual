@@ -5,6 +5,8 @@ var sfx: Node
 const SLOT_POSITIONS := [Vector2(280, 190), Vector2(430, 190), Vector2(590, 190), Vector2(750, 190), Vector2(280, 440), Vector2(430, 440), Vector2(590, 440), Vector2(750, 440)]
 const COSTS := {"bone": 30, "fire": 45, "necro": 60}
 const WAVE_BUTTON := Rect2(65, 545, 170, 60)
+const HELP_BUTTON := Rect2(987.0, 10.0, 150.0, 46.0)
+const HELP_CLOSE_BUTTON := Rect2(720.0, 471.0, 130.0, 43.0)
 var slots: Array[Dictionary] = []
 var selected_type := ""
 var selected_slot := -1
@@ -248,6 +250,7 @@ func tick_burning(delta: float) -> void:
                 break
 
 func restart_defense() -> void:
+    help_visible = false
     defense_state = "playing"
     altar_hp = 100
     wave_number = 0
@@ -371,6 +374,14 @@ func _unhandled_input(event: InputEvent) -> void:
     if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_H:
         toggle_controls_help()
         return
+    if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+        if HELP_BUTTON.has_point(event.position):
+            toggle_controls_help()
+            return
+        if help_visible:
+            if HELP_CLOSE_BUTTON.has_point(event.position):
+                toggle_controls_help()
+            return
     if help_visible:
         return
     if event is InputEventKey and event.pressed and event.keycode == KEY_R and defense_state != "playing":
@@ -465,7 +476,9 @@ func _draw() -> void:
     draw_rect(Rect2(880, 545, 110, 55), Color("#518b78"))
     draw_rect(Rect2(1010, 545, 110, 55), Color("#914c59"))
 
-    draw_string(ThemeDB.fallback_font, Vector2(1010, 45), "H: HELP", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#d5c592"))
+    draw_rect(HELP_BUTTON, Color("#526d9b") if help_visible else Color("#343b47"))
+    draw_rect(HELP_BUTTON, Color("#d5c592"), false, 1.5)
+    draw_string(ThemeDB.fallback_font, HELP_BUTTON.position + Vector2(23.0, 30.0), "HELP / H", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#fff2c5"))
     if help_visible:
         var help_panel := Rect2(286, 116, 580, 410)
         draw_rect(help_panel, Color(0.055, 0.07, 0.11, 0.97))
@@ -478,4 +491,6 @@ func _draw() -> void:
         draw_string(ThemeDB.fallback_font, Vector2(326, 367), "Click open ground  -  Hero attacks toward cursor", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
         draw_string(ThemeDB.fallback_font, Vector2(326, 407), "RIGHT CLICK or ESC  -  Cancel tower selection", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
         draw_string(ThemeDB.fallback_font, Vector2(326, 447), "START WAVE  -  Send the next wave", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
-        draw_string(ThemeDB.fallback_font, Vector2(326, 490), "H  -  Close help (action pauses while open)", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#d5c592"))
+        draw_string(ThemeDB.fallback_font, Vector2(326, 490), "Action paused - press H or click Continue", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#d5c592"))
+        draw_rect(HELP_CLOSE_BUTTON, Color("#527d70"))
+        draw_string(ThemeDB.fallback_font, HELP_CLOSE_BUTTON.position + Vector2(11.0, 29.0), "CONTINUE", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
