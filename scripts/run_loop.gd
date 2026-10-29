@@ -10,7 +10,7 @@ var audio_settings_path := "user://last_ritual_audio.cfg"
 var phase := "hub" # hub, day, night, reward, victory, defeat
 var phase_count := 0
 var difficulty := 0 # 0 normal, 1 hard, 2 nightmare
-const DIFFICULTY_NAMES := ["NORMAL", "HARD", "NIGHTMARE"]
+const DIFFICULTY_NAMES := ["НОРМА", "СЛОЖНО", "КОШМАР"]
 const DIFFICULTY_BUTTONS := [Rect2(210, 242, 220, 55), Rect2(466, 242, 220, 55), Rect2(722, 242, 220, 55)]
 var completed_phases := 0
 var run_damage_bonus := 0
@@ -225,59 +225,63 @@ func reset_run() -> void:
 
 func _draw() -> void:
     draw_rect(Rect2(0, 0, 1152, 648), Color("#101521"))
+    for x in [35.0, 1117.0]:
+        draw_rect(Rect2(x - 14.0, 18, 28, 612), Color("#313946"))
+        for y in range(30, 620, 80):
+            draw_rect(Rect2(x - 19.0, y, 38, 13), Color("#646270"))
     draw_rect(Rect2(72, 32, 1008, 112), Color("#20283a"))
-    draw_string(ThemeDB.fallback_font, Vector2(386, 83), "LAST RITUAL", HORIZONTAL_ALIGNMENT_LEFT, -1, 38, Color("#e7d3a8"))
-    draw_string(ThemeDB.fallback_font, Vector2(355, 116), "A TOP-DOWN ROGUELITE", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#9da9bf"))
+    draw_string(ThemeDB.fallback_font, Vector2(386, 83), "ПОСЛЕДНИЙ РИТУАЛ", HORIZONTAL_ALIGNMENT_LEFT, -1, 38, Color("#e7d3a8"))
+    draw_string(ThemeDB.fallback_font, Vector2(355, 116), "ОБОРОНА КРЕПОСТИ И НОЧНЫЕ ВЫЛАЗКИ", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#9da9bf"))
     match phase:
         "hub":
             draw_rect(AUDIO_MUTE_BUTTON, Color("#526d9b") if not audio_muted else Color("#754452"))
-            draw_string(ThemeDB.fallback_font, AUDIO_MUTE_BUTTON.position + Vector2(8, 26), "SOUND ON" if not audio_muted else "SOUND OFF", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color.WHITE)
+            draw_string(ThemeDB.fallback_font, AUDIO_MUTE_BUTTON.position + Vector2(8, 26), "ЗВУК ВКЛ" if not audio_muted else "ЗВУК ВЫКЛ", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color.WHITE)
             draw_rect(AUDIO_DOWN_BUTTON, Color("#343b47"))
             draw_rect(AUDIO_UP_BUTTON, Color("#343b47"))
             draw_string(ThemeDB.fallback_font, AUDIO_DOWN_BUTTON.position + Vector2(13, 27), "-", HORIZONTAL_ALIGNMENT_LEFT, -1, 21, Color.WHITE)
             draw_string(ThemeDB.fallback_font, AUDIO_UP_BUTTON.position + Vector2(13, 27), "+", HORIZONTAL_ALIGNMENT_LEFT, -1, 21, Color.WHITE)
-            draw_string(ThemeDB.fallback_font, Vector2(810, 118), "VOLUME %d%%" % roundi(audio_volume * 100.0), HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#e7d3a8"))
+            draw_string(ThemeDB.fallback_font, Vector2(810, 118), "ГРОМКОСТЬ %d%%" % roundi(audio_volume * 100.0), HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#e7d3a8"))
             draw_rect(Rect2(72, 160, 1008, 300), Color("#1a2232"))
-            draw_string(ThemeDB.fallback_font, Vector2(104, 198), "RUN %d / 6" % (phase_count + 1), HORIZONTAL_ALIGNMENT_LEFT, -1, 21, Color.WHITE)
-            draw_string(ThemeDB.fallback_font, Vector2(300, 198), "CHOOSE DIFFICULTY", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#9da9bf"))
+            draw_string(ThemeDB.fallback_font, Vector2(104, 198), "ЭТАП %d / 6" % (phase_count + 1), HORIZONTAL_ALIGNMENT_LEFT, -1, 21, Color.WHITE)
+            draw_string(ThemeDB.fallback_font, Vector2(300, 198), "ВЫБЕРИТЕ СЛОЖНОСТЬ", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#9da9bf"))
             var next_phase := expected_phase()
             for i in range(DIFFICULTY_BUTTONS.size()):
                 draw_rect(DIFFICULTY_BUTTONS[i], Color("#906a3d") if difficulty == i else Color("#343b47"))
                 draw_string(ThemeDB.fallback_font, DIFFICULTY_BUTTONS[i].position + Vector2(18, 35), DIFFICULTY_NAMES[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color.WHITE)
-            var difficulty_help := ["Steady pace • 1 fragment / phase", "Stronger enemies • 2 fragments / phase", "Deadly enemies • 3 fragments / phase"]
+            var difficulty_help := ["Обычные враги - 1 осколок за этап", "Сильные враги - 2 осколка за этап", "Опасные враги - 3 осколка за этап"]
             draw_string(ThemeDB.fallback_font, Vector2(280, 318), difficulty_help[difficulty], HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#e7d3a8"))
             draw_rect(DAY_BUTTON, Color("#527d70") if next_phase == "day" else Color("#343b47"))
             draw_rect(NIGHT_BUTTON, Color("#594d78") if next_phase == "night" else Color("#343b47"))
-            draw_string(ThemeDB.fallback_font, DAY_BUTTON.position + Vector2(30, 35), "DAY: DEFEND" if next_phase == "day" else "DAY: COMPLETE", HORIZONTAL_ALIGNMENT_LEFT, -1, 21, Color.WHITE)
-            draw_string(ThemeDB.fallback_font, DAY_BUTTON.position + Vector2(30, 59), "Build towers • Protect the altar", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#c7d5d0"))
-            draw_string(ThemeDB.fallback_font, NIGHT_BUTTON.position + Vector2(30, 35), "NIGHT: EXPLORE" if next_phase == "night" else "NIGHT: LOCKED", HORIZONTAL_ALIGNMENT_LEFT, -1, 21, Color.WHITE)
-            draw_string(ThemeDB.fallback_font, NIGHT_BUTTON.position + Vector2(30, 59), "Fight • Find relics • Choose routes", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#d2c9e4"))
-            draw_string(ThemeDB.fallback_font, Vector2(104, 447), "RUN RELICS", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#9da9bf"))
-            draw_string(ThemeDB.fallback_font, Vector2(220, 447), "DMG +%d   GOLD +%d   FIRE +%d   BONE +%d   NECRO +%d" % [run_damage_bonus, run_gold_bonus, run_fire_bonus, run_bone_tower_bonus, run_necro_kill_bonus], HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#c7c9d1"))
+            draw_string(ThemeDB.fallback_font, DAY_BUTTON.position + Vector2(30, 35), "ДЕНЬ: ОБОРОНА" if next_phase == "day" else "ДЕНЬ: ПРОЙДЕН", HORIZONTAL_ALIGNMENT_LEFT, -1, 21, Color.WHITE)
+            draw_string(ThemeDB.fallback_font, DAY_BUTTON.position + Vector2(30, 59), "Стройте башни и защищайте алтарь", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#c7d5d0"))
+            draw_string(ThemeDB.fallback_font, NIGHT_BUTTON.position + Vector2(30, 35), "НОЧЬ: ПОИСК" if next_phase == "night" else "НОЧЬ: ЗАКРЫТА", HORIZONTAL_ALIGNMENT_LEFT, -1, 21, Color.WHITE)
+            draw_string(ThemeDB.fallback_font, NIGHT_BUTTON.position + Vector2(30, 59), "Сражайтесь и ищите реликвии", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#d2c9e4"))
+            draw_string(ThemeDB.fallback_font, Vector2(104, 447), "РЕЛИКВИИ", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#9da9bf"))
+            draw_string(ThemeDB.fallback_font, Vector2(220, 447), "УРОН +%d  ЗОЛОТО +%d  ОГОНЬ +%d  КОСТИ +%d  НЕКРО +%d" % [run_damage_bonus, run_gold_bonus, run_fire_bonus, run_bone_tower_bonus, run_necro_kill_bonus], HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#c7c9d1"))
             draw_rect(Rect2(72, 474, 1008, 105), Color("#1a2232"))
-            draw_string(ThemeDB.fallback_font, Vector2(100, 500), "PERMANENT UPGRADES", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#9da9bf"))
-            draw_string(ThemeDB.fallback_font, Vector2(820, 500), "FRAGMENTS: %d" % meta.fragments, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#e7d3a8"))
+            draw_string(ThemeDB.fallback_font, Vector2(100, 500), "ПОСТОЯННЫЕ УЛУЧШЕНИЯ", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#9da9bf"))
+            draw_string(ThemeDB.fallback_font, Vector2(820, 500), "ОСКОЛКИ: %d" % meta.fragments, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#e7d3a8"))
             draw_rect(META_HERO_BUTTON, Color("#526d9b") if meta.hero_level < 3 and meta.fragments >= meta.hero_level + 1 else Color("#343b47"))
             draw_rect(META_TREASURY_BUTTON, Color("#527d70") if meta.treasury_level < 3 and meta.fragments >= meta.treasury_level + 1 else Color("#343b47"))
-            draw_string(ThemeDB.fallback_font, META_HERO_BUTTON.position + Vector2(12, 39), "HERO +1 DMG  Lv%d/3  COST %d" % [meta.hero_level, meta.hero_level + 1], HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
-            draw_string(ThemeDB.fallback_font, META_TREASURY_BUTTON.position + Vector2(12, 39), "DAY +10 GOLD  Lv%d/3  COST %d" % [meta.treasury_level, meta.treasury_level + 1], HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
-            draw_string(ThemeDB.fallback_font, Vector2(104, 606), "RUNS %d   WINS %d   LOSSES %d   PHASES %d" % [meta.runs_started, meta.runs_won, meta.runs_lost, meta.phases_cleared], HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#c7c9d1"))
+            draw_string(ThemeDB.fallback_font, META_HERO_BUTTON.position + Vector2(12, 39), "ГЕРОЙ +1 УРОН  %d/3  ЦЕНА %d" % [meta.hero_level, meta.hero_level + 1], HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
+            draw_string(ThemeDB.fallback_font, META_TREASURY_BUTTON.position + Vector2(12, 39), "ДЕНЬ +10 ЗОЛОТА  %d/3  ЦЕНА %d" % [meta.treasury_level, meta.treasury_level + 1], HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
+            draw_string(ThemeDB.fallback_font, Vector2(104, 606), "ЗАБЕГИ %d  ПОБЕДЫ %d  СМЕРТИ %d  ЭТАПЫ %d" % [meta.runs_started, meta.runs_won, meta.runs_lost, meta.phases_cleared], HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#c7c9d1"))
             var badges := []
             if meta.achievement_unlocked("first_steps"):
-                badges.append("FIRST STEPS +2 FR")
+                badges.append("ПЕРВЫЕ ШАГИ +2")
             if meta.achievement_unlocked("survivor"):
-                badges.append("SURVIVOR +4 FR")
+                badges.append("ВЫЖИВШИЙ +4")
             if meta.achievement_unlocked("ritual_master"):
-                badges.append("RITUAL MASTER +6 FR")
-            draw_string(ThemeDB.fallback_font, Vector2(104, 630), "ACHIEVEMENTS: " + (", ".join(badges) if not badges.is_empty() else "Complete phases to unlock"), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#e7d3a8"))
+                badges.append("МАСТЕР РИТУАЛА +6")
+            draw_string(ThemeDB.fallback_font, Vector2(104, 630), "ДОСТИЖЕНИЯ: " + (", ".join(badges) if not badges.is_empty() else "Проходите этапы для открытия"), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#e7d3a8"))
         "reward":
-            draw_string(ThemeDB.fallback_font, Vector2(410, 235), "CHOOSE A RUN RELIC", HORIZONTAL_ALIGNMENT_LEFT, -1, 26, Color.WHITE)
-            var names := ["BONE: +1 HERO/TOWER", "EMBER: SPEED + FIRE", "GOLD: +30 START GOLD", "NECRO: +3 KILL GOLD"]
+            draw_string(ThemeDB.fallback_font, Vector2(410, 235), "ВЫБЕРИТЕ РЕЛИКВИЮ", HORIZONTAL_ALIGNMENT_LEFT, -1, 26, Color.WHITE)
+            var names := ["КОСТИ: +1 УРОН", "УГОЛЬ: СКОРОСТЬ И ОГОНЬ", "ЗОЛОТО: +30 В НАЧАЛЕ", "НЕКРО: +3 ЗОЛОТА"]
             for i in range(REWARD_BUTTONS.size()):
                 draw_rect(REWARD_BUTTONS[i], [Color("#526d9b"), Color("#a16a36"), Color("#927447"), Color("#4e7668")][i])
                 draw_string(ThemeDB.fallback_font, REWARD_BUTTONS[i].position + Vector2(12, 55), names[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color.WHITE)
         "defeat", "victory":
-            draw_string(ThemeDB.fallback_font, Vector2(400, 260), "RUN COMPLETE" if phase == "victory" else "RUN ENDED", HORIZONTAL_ALIGNMENT_LEFT, -1, 32, Color.WHITE)
-            draw_string(ThemeDB.fallback_font, Vector2(400, 320), "Phases survived: %d / 6" % completed_phases, HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color("#c7c9d1"))
+            draw_string(ThemeDB.fallback_font, Vector2(400, 260), "РИТУАЛ ЗАВЕРШЁН" if phase == "victory" else "ЗАБЕГ ОКОНЧЕН", HORIZONTAL_ALIGNMENT_LEFT, -1, 32, Color.WHITE)
+            draw_string(ThemeDB.fallback_font, Vector2(400, 320), "Пройдено этапов: %d / 6" % completed_phases, HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color("#c7c9d1"))
             draw_rect(Rect2(430, 480, 290, 70), Color("#527d70"))
-            draw_string(ThemeDB.fallback_font, Vector2(485, 523), "START NEW RUN", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color.WHITE)
+            draw_string(ThemeDB.fallback_font, Vector2(485, 523), "НОВЫЙ ЗАБЕГ", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color.WHITE)
