@@ -42,6 +42,16 @@ func run_tests() -> void:
         check(td.start_wave() and td.wave_number == 3, "TD third wave starts")
         td.enemies.clear()
         check(not td.start_wave(), "TD stops at three waves")
+        td.coins = 0
+        td.enemies.clear()
+        td.enemies.append({"lane": 0, "pos": td.slots[0]["pos"] + Vector2(20, 0), "waypoint": 1, "hp": 1, "delay": 0.0})
+        var kills_before: int = td.enemies_defeated
+        td.attack_with_towers(1.0)
+        check(td.enemies.is_empty() and td.enemies_defeated == kills_before + 1, "TD tower automatically kills enemy within range")
+        check(td.coins == 5, "TD defeated enemy grants gold")
+        td.enemies.append({"lane": 0, "pos": Vector2(1050, 330), "waypoint": 2, "hp": 5, "delay": 0.0})
+        td.attack_with_towers(2.0)
+        check(td.enemies.size() == 1 and td.enemies[0]["hp"] == 5, "TD tower ignores enemies beyond range")
         td.queue_free()
     var packed := load("res://scenes/topdown_night_prototype.tscn") as PackedScene
     check(packed != null, "Top-down entry scene loads")
