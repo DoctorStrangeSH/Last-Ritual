@@ -59,6 +59,32 @@ func run_tests() -> void:
         check(exploration.travel_through_door(-first_direction), "Backtracking through opposite door returns to original room")
         check(exploration.room_index == 0 and exploration.enemies.is_empty(), "Previously cleared room stays cleared")
         exploration.queue_free()
+    var special_scene = load("res://scenes/topdown_night_prototype.tscn")
+    if special_scene != null:
+        var special = special_scene.instantiate()
+        root.add_child(special)
+        special.enable_floor_exploration(42)
+        var treasury_id := -1
+        var shop_id := -1
+        for room in special.floor_data["rooms"]:
+            if room["kind"] == "СОКРОВИЩНИЦА":
+                treasury_id = int(room["id"])
+            elif room["kind"] == "МАГАЗИН":
+                shop_id = int(room["id"])
+        check(treasury_id >= 0 and shop_id >= 0, "Floor has playable treasury and shop")
+        special.player_hp = 50
+        special.night_souls = 0
+        special.open_room(treasury_id)
+        check(special.player_hp == 75 and special.night_souls == 3, "Treasury heals and grants souls")
+        special.open_room(treasury_id)
+        check(special.night_souls == 3, "Treasury reward is claimed only once")
+        special.open_room(shop_id)
+        check(special.shop_open and special.enemies.is_empty(), "Merchant room opens shop without battle")
+        check(special.buy_shop_offer(0) and special.night_souls == 1, "Merchant exchanges souls for damage")
+        check(special.leave_shop() and special.cleared_rooms.has(shop_id), "Leaving merchant clears room and unlocks doors")
+        special.open_room(shop_id)
+        check(not special.shop_open, "Merchant does not reset on revisit")
+        special.queue_free()
     var td_scene := load("res://scenes/topdown_td_prototype.tscn") as PackedScene
     check(td_scene != null, "Top-down TD scene loads")
     if td_scene != null:
