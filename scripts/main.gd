@@ -1212,6 +1212,12 @@ func apply_dungeon_route() -> void:
             platforms[i] = Rect2(p.position + Vector2(-18.0 if i % 2 == 0 else 18.0, 10.0), p.size)
     secret_cache_pos = Vector2(575.0 if dungeon_route == 0 else (610.0 if dungeon_route == 1 else 535.0), FLOOR - 27.0)
 
+func selected_tower_can_upgrade() -> bool:
+    if selected_tower_index < 0 or selected_tower_index >= towers.size():
+        return false
+    var level: int = int(towers[selected_tower_index].get("level", 1))
+    return level < 3 and mana >= 25 * level
+
 func build_card_at(pos: Vector2) -> int:
     for i in range(3):
         if Rect2(14.0 + float(i) * 178.0, 557.0, 170.0, 85.0).has_point(pos):
@@ -2021,12 +2027,14 @@ func _draw() -> void:
             else:
                 label("ВЫБЕРИ БАШНЮ НА ПОЛЕ", 565.0, 589.0, 16, Color("d0c3d8"))
                 label("HP • уровень • урон • способность", 565.0, 614.0, 13, Color("a59aaf"))
-            box(Rect2(900.0, 557.0, 115.0, 85.0), Color("3d354b") if selected_tower_index >= 0 and selected_tower_index < towers.size() else Color("24222f"))
-            draw_rect(Rect2(900.0, 557.0, 115.0, 85.0), Color("b89ac7") if selected_tower_index >= 0 and selected_tower_index < towers.size() else Color("51485c"), false, 1.5)
+            var upgrade_available := selected_tower_can_upgrade()
+            var upgrade_hovered := Rect2(900.0, 557.0, 115.0, 85.0).has_point(get_global_mouse_position())
+            box(Rect2(900.0, 557.0, 115.0, 85.0), Color("564466") if upgrade_available and upgrade_hovered else (Color("3d354b") if upgrade_available else Color("24222f")))
+            draw_rect(Rect2(900.0, 557.0, 115.0, 85.0), Color("e5c2ff") if upgrade_available and upgrade_hovered else (Color("b89ac7") if upgrade_available else Color("51485c")), false, 2.0 if upgrade_available and upgrade_hovered else 1.5)
             if selected_tower_index >= 0 and selected_tower_index < towers.size():
                 var level_for_button: int = int(towers[selected_tower_index].get("level", 1))
-                label("УЛУЧШИТЬ" if level_for_button < 3 else "МАКС. УР.", 909.0, 588.0, 14, Color("f1d8ff"))
-                label("%d маны" % (25 * level_for_button) if level_for_button < 3 else "3 / 3", 914.0, 614.0, 14)
+                label("УЛУЧШИТЬ" if level_for_button < 3 else "МАКС. УР.", 909.0, 588.0, 14, Color("f1d8ff") if upgrade_available else Color("8e8497"))
+                label("%d маны" % (25 * level_for_button) if level_for_button < 3 else "3 / 3", 914.0, 614.0, 14, Color("d8c3e8") if upgrade_available else Color("b78992"))
             else:
                 label("УЛУЧШИТЬ", 908.0, 588.0, 13, Color("8e8497"))
                 label("Выбери башню", 906.0, 614.0, 11, Color("8e8497"))
