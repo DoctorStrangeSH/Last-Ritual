@@ -55,6 +55,18 @@ func run_tests() -> void:
             check(boss["boss_warning"] and td.altar_hp == altar_before_blast, "Boss telegraphs attack without immediate altar damage")
             td.tick_boss(0.9)
             check(not boss["boss_warning"] and td.altar_hp == altar_before_blast - 8, "Boss blast damages altar after warning")
+            boss["pos"] = Vector2(350, 285)
+            td.hero_pos = Vector2(345, 360)
+            td.tick_boss(3.2)
+            var altar_before_interrupt: int = td.altar_hp
+            td.hero_attack_cooldown = 0.0
+            check(td.hero_attack(boss["pos"]) and boss["interrupt_hits"] == 1, "First hero strike pressures boss during telegraph")
+            td.hero_attack_cooldown = 0.0
+            check(td.hero_attack(boss["pos"]) and not boss["boss_warning"] and boss["boss_charge"] == 0.0, "Second hero strike interrupts boss blast")
+            td.tick_boss(0.9)
+            check(td.altar_hp == altar_before_interrupt, "Interrupted blast does not damage altar")
+            td.tick_boss(3.1)
+            check(boss["boss_warning"] and boss["interrupt_hits"] == 0, "Boss can charge again after interrupt")
         td.enemies.clear()
         check(not td.start_wave(), "TD stops at three waves")
         td.coins = 0
