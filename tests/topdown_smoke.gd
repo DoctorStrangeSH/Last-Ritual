@@ -9,6 +9,13 @@ func check(value: bool, description: String) -> void:
     else:
         print("PASS " + description)
 
+func left_click_event(point: Vector2) -> InputEventMouseButton:
+    var event := InputEventMouseButton.new()
+    event.button_index = MOUSE_BUTTON_LEFT
+    event.position = point
+    event.pressed = true
+    return event
+
 func _initialize() -> void:
     call_deferred("run_tests")
 
@@ -19,6 +26,13 @@ func run_tests() -> void:
         var td = td_scene.instantiate()
         root.add_child(td)
         check(td.sfx != null and td.sfx.has_effect("interrupt") and td.sfx.has_effect("blast"), "TD prototype loads boss combat audio effects")
+        check(td.HELP_BUTTON.has_point(Vector2(1040, 35)) and not td.HELP_BUTTON.intersects(td.WAVE_BUTTON), "TD mouse help button stays separate from wave control")
+        td._unhandled_input(left_click_event(td.HELP_BUTTON.get_center()))
+        check(td.help_visible, "Mouse opens TD help overlay")
+        td._unhandled_input(left_click_event(td.WAVE_BUTTON.get_center()))
+        check(td.help_visible and td.wave_number == 0, "TD help blocks wave starts underneath")
+        td._unhandled_input(left_click_event(td.HELP_CLOSE_BUTTON.get_center()))
+        check(not td.help_visible, "Mouse Continue closes TD help")
         td.toggle_controls_help()
         var td_wave_before_help: int = td.wave_number
         td._process(1.0)
@@ -326,6 +340,15 @@ func run_tests() -> void:
     var game = packed.instantiate()
     root.add_child(game)
     check(game.sfx != null and game.sfx.has_effect("hit") and game.sfx.has_effect("relic"), "Night prototype loads synthesized combat and reward audio")
+    check(game.HELP_BUTTON.has_point(Vector2(1040, 35)) and not game.HELP_BUTTON.intersects(game.RELIC_RECTS[0]), "Night mouse help button stays separate from relic choices")
+    game._unhandled_input(left_click_event(game.HELP_BUTTON.get_center()))
+    check(game.help_visible, "Mouse opens night help overlay")
+    game.reward_available = true
+    game._unhandled_input(left_click_event(game.RELIC_RECTS[0].get_center()))
+    check(game.help_visible and game.rewards_taken == 0 and game.relics.is_empty(), "Night help blocks relic choices underneath")
+    game.reward_available = false
+    game._unhandled_input(left_click_event(game.HELP_CLOSE_BUTTON.get_center()))
+    check(not game.help_visible, "Mouse Continue closes night help")
     game.toggle_controls_help()
     var night_pos_before_help: Vector2 = game.player_pos
     game._process(0.5)
