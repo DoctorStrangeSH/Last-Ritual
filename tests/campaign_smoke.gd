@@ -308,6 +308,19 @@ func run_tests() -> void:
     check(not game.selected_tower_can_sell(), "sell button disabled when selection index out of bounds")
     game.reset_all()
     check(game.current_day == 1, "initial day")
+    game.phase = "night"
+    game.dungeon_route_chosen = true
+    game.blood_shrine_used = false
+    game.stone_taken = false
+    game.player = Vector2(530.0, game.FLOOR - 26.0)
+    game.player_hp = 80.0
+    game.mana = 30
+    game.souls = 0
+    check(game.use_blood_shrine(), "blood shrine activation")
+    check(game.player_hp == 55.0 and game.mana == 85 and game.souls == 2, "blood shrine trade")
+    check(not game.use_blood_shrine() and game.mana == 85, "shrine can only be claimed once")
+    game.reset_all()
+    check(not game.blood_shrine_used, "shrine resets each run")
     game.reset_all()
     game.dungeon_omen = 1
     game.trap_positions = [375.0, 775.0]
