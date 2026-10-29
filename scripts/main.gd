@@ -1,6 +1,7 @@
 extends Node2D
 const RewardCatalog = preload("res://scripts/reward_catalog.gd")
 const TowerDescription = preload("res://scripts/tower_description.gd")
+const TowerEconomy = preload("res://scripts/tower_economy.gd")
 ## Last Ritual v2.2-rc57: enemy hit reactions, lane-aligned health bars and combat feedback
 const W := 1152.0
 const H := 648.0
@@ -794,11 +795,7 @@ func lane_for_y(y: float) -> int:
     return best_lane
 
 func tower_sell_refund(tower: Dictionary) -> int:
-    var invested: int = 30 if tower["type"] == "bone" else (55 if tower["type"] == "fire" else 65)
-    var level: int = int(tower.get("level", 1))
-    for upgrade_step in range(1, level):
-        invested += 25 * upgrade_step
-    return int(floor(float(invested) * 0.5))
+    return TowerEconomy.sell_refund(tower)
 
 func sell_selected_tower() -> void:
     if selected_tower_index < 0 or selected_tower_index >= towers.size():
