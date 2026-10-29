@@ -284,6 +284,7 @@ func run_tests() -> void:
     check(game.hex_bolts.size() == 1, "hexer fires a projectile after warning")
     check(float(game.hex_bolts[0]["velocity"].x) < 0.0 and locked_aim_x < 0.0, "hexer locks aim when telegraph starts")
     game.reset_all()
+    check(game.hex_bolts.is_empty(), "full reset clears cursed bolts")
     game.phase = "night"
     game.stone_taken = true
     game.stones_collected = 1
