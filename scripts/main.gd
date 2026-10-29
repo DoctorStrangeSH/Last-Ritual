@@ -1388,7 +1388,7 @@ func update_night(delta: float) -> void:
     if boss_hp > 0.0:
         boss_strike_timer -= delta
         if boss_strike_timer <= 0.0 and boss_windup <= 0.0:
-            boss_windup = 0.75
+            boss_windup = boss_windup_duration()
             boss_strike_timer = 2.8
         if boss_windup > 0.0:
             boss_windup -= delta
@@ -1403,8 +1403,14 @@ func update_night(delta: float) -> void:
         phase = "reward"
         show_notice("Выбери один из трёх даров Бездны!")
 
+func boss_strike_half_width() -> float:
+    return 130.0 if current_day >= 4 else 87.0
+
+func boss_windup_duration() -> float:
+    return 1.1 if current_day >= 4 else 0.75
+
 func boss_strike_hits(target: Vector2) -> bool:
-    return absf(target.x - boss_pos.x) < 87.0 and target.y > FLOOR - 100.0
+    return absf(target.x - boss_pos.x) < boss_strike_half_width() and target.y > FLOOR - 100.0
 
 func hurt(amount: float) -> void:
     if hurt_cooldown > 0.0:
@@ -2145,11 +2151,12 @@ func _draw() -> void:
             if boss_hp > 0.0:
                 if boss_windup > 0.0:
                     # Match the actual 174px-wide hit zone, instead of a misleading circle.
-                    var strike_zone := Rect2(boss_pos.x - 87.0, FLOOR - 100.0, 174.0, 100.0)
+                    var strike_half_width := boss_strike_half_width()
+                    var strike_zone := Rect2(boss_pos.x - strike_half_width, FLOOR - 100.0, strike_half_width * 2.0, 100.0)
                     box(strike_zone, Color(0.94, 0.23, 0.25, 0.18 + 0.08 * sin(atmosphere_clock * 16.0)))
                     draw_rect(strike_zone, Color("ff777f"), false, 3.0)
-                    box(Rect2(boss_pos.x - 87.0, FLOOR - 10.0, 174.0, 10.0), Color("eb5c60"))
-                    label("УДАР ЧЕРЕЗ %.1f с" % maxf(0.0, boss_windup), boss_pos.x - 86.0, FLOOR - 112.0, 16, Color("ffe2b2"))
+                    box(Rect2(boss_pos.x - strike_half_width, FLOOR - 10.0, strike_half_width * 2.0, 10.0), Color("eb5c60"))
+                    label("ШИРОКАЯ ВОЛНА: %.1f с" % maxf(0.0, boss_windup) if current_day >= 4 else "УДАР ЧЕРЕЗ %.1f с" % maxf(0.0, boss_windup), boss_pos.x - strike_half_width, FLOOR - 112.0, 16, Color("ffe2b2"))
                 draw_texture_rect(preload("res://assets/enemies/abyss_guardian.svg"), Rect2(boss_pos.x - 52.0, boss_pos.y - 89.0, 104.0, 133.0), false)
                 box(Rect2(boss_pos.x - 45, boss_pos.y - 65, 90 * boss_hp / (140.0 if current_day == 1 else (190.0 if current_day == 2 else (230.0 if current_day == 3 else (270.0 if current_day == 4 else 340.0)))), 7), Color("ed6975"))
                 label("ХРАНИТЕЛЬ", 935, 380, 17)
