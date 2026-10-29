@@ -15,6 +15,10 @@ var wave_number := 0
 var altar_hp := 100
 var enemies_spawned := 0
 var enemies_escaped := 0
+var enemies_defeated := 0
+var tower_cooldowns: Dictionary = {}
+const TOWER_RANGE := {"bone": 135.0, "fire": 160.0, "necro": 125.0}
+const TOWER_DAMAGE := {"bone": 2, "fire": 1, "necro": 3}
 
 func start_wave() -> bool:
     if not enemies.is_empty() or wave_number >= 3 or altar_hp <= 0:
@@ -48,8 +52,38 @@ func advance_enemies(delta: float) -> void:
                 enemy["waypoint"] = waypoint
     queue_redraw()
 
+func attack_with_towers(delta: float) -> void:
+    for slot_id in range(slots.size()):
+        var tower: Dictionary = slots[slot_id]
+        var kind: String = tower["tower"]
+        if kind == "":
+            continue
+        var cooldown: float = maxf(0.0, float(tower_cooldowns.get(slot_id, 0.0)) - delta)
+        tower_cooldowns[slot_id] = cooldown
+        if cooldown > 0.0:
+            continue
+        var target: Dictionary = {}
+        var nearest := INF
+        for enemy in enemies:
+            if enemy["delay"] > 0.0:
+                continue
+            var distance: float = tower["pos"].distance_to(enemy["pos"])
+            if distance < nearest and distance <= TOWER_RANGE[kind]:
+                nearest = distance
+                target = enemy
+        if target.is_empty():
+            continue
+        target["hp"] -= int(TOWER_DAMAGE[kind]) * int(tower["level"])
+        tower_cooldowns[slot_id] = 0.8
+        if target["hp"] <= 0:
+            enemies.erase(target)
+            enemies_defeated += 1
+            coins += 5
+    queue_redraw()
+
 func _process(delta: float) -> void:
     advance_enemies(delta)
+    attack_with_towers(delta)
 
 
 func _ready() -> void:
@@ -79,6 +113,7 @@ func build_tower(slot_id: int) -> bool:
     coins -= COSTS[selected_type]
     slots[slot_id]["tower"] = selected_type
     slots[slot_id]["level"] = 1
+    tower_cooldowns[slot_id] = 0.0
     selected_type = ""
     selected_slot = slot_id
     queue_redraw()
@@ -109,6 +144,7 @@ func sell_selected() -> bool:
     coins += 10 * int(slots[selected_slot]["level"])
     slots[selected_slot]["tower"] = ""
     slots[selected_slot]["level"] = 0
+    tower_cooldowns.erase(selected_slot)
     selected_slot = -1
     queue_redraw()
     return true
