@@ -308,6 +308,22 @@ func run_tests() -> void:
     check(not game.selected_tower_can_sell(), "sell button disabled when selection index out of bounds")
     game.reset_all()
     check(game.current_day == 1, "initial day")
+    game.begin_night()
+    check(not game.dungeon_route_chosen and game.secret_cache_pos.x > 0.0, "night opens route choice and initializes cache")
+    game.mana = 70
+    game.choose_dungeon_route(0)
+    check(game.dungeon_route_chosen and game.dungeon_route == 0 and game.mana == 90, "shadow route awards mana")
+    game.choose_dungeon_route(2)
+    check(game.dungeon_route == 0 and game.mana == 90, "route cannot be selected twice")
+    game.begin_night()
+    game.boss_hp = 200.0
+    game.choose_dungeon_route(1)
+    check(is_equal_approx(game.boss_hp, 170.0), "hunter route weakens boss")
+    game.begin_night()
+    game.souls = 0
+    game.choose_dungeon_route(2)
+    check(game.souls == 2 and game.dungeon_route == 2, "relic route awards souls")
+    game.reset_all()
     game.dungeon_route = 1
     game.platforms = [Rect2(200.0, 420.0, 135.0, 16.0)]
     game.apply_dungeon_route()
