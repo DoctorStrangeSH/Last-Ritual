@@ -121,10 +121,21 @@ func run_tests() -> void:
         td.enemies.append({"lane": 0, "pos": td.slots[1]["pos"] + Vector2(20, 0), "waypoint": 1, "hp": 5, "delay": 0.0})
         td.attack_with_towers(1.0)
         check(td.enemies[0]["hp"] == 1, "Stacked Bone relic increases bone tower damage")
+        td.restart_defense()
+        td.necro_kill_bonus = 3
+        td.choose_tower("necro")
+        td.build_tower(2)
+        var necro_coins_before: int = td.coins
+        td.enemies.append({"lane": 0, "pos": td.slots[2]["pos"] + Vector2(20, 0), "waypoint": 1, "hp": 3, "delay": 0.0})
+        td.attack_with_towers(1.0)
+        check(td.enemies.is_empty() and td.coins == necro_coins_before + 8, "Necro tower kill grants base and relic bonus gold")
         run.finish_phase(false)
         check(run.phase == "defeat", "Losing a phase ends run")
         run.reset_run()
         check(run.phase == "hub" and run.phase_count == 0 and run.run_damage_bonus == 0, "New run resets run-only relics")
+        run.phase = "reward"
+        check(run.choose_run_reward("necro") and run.run_necro_kill_bonus == 3, "Necro reward adds kill gold")
+        check(run.start_phase("day") and run.active_game.necro_kill_bonus == 3, "Necro reward carries into tower defense")
         run.queue_free()
     var packed := load("res://scenes/topdown_night_prototype.tscn") as PackedScene
     check(packed != null, "Top-down entry scene loads")

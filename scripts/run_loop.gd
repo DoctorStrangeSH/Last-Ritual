@@ -10,11 +10,12 @@ var run_speed_bonus := 0.0
 var run_gold_bonus := 0
 var run_fire_bonus := 0
 var run_bone_tower_bonus := 0
+var run_necro_kill_bonus := 0
 var active_game: Node2D
 var last_phase := "day"
 const DAY_BUTTON := Rect2(240, 330, 280, 90)
 const NIGHT_BUTTON := Rect2(630, 330, 280, 90)
-const REWARD_BUTTONS := [Rect2(170, 370, 250, 100), Rect2(450, 370, 250, 100), Rect2(730, 370, 250, 100)]
+const REWARD_BUTTONS := [Rect2(80, 370, 225, 100), Rect2(350, 370, 225, 100), Rect2(620, 370, 225, 100), Rect2(890, 370, 225, 100)]
 
 func _ready() -> void:
     queue_redraw()
@@ -34,6 +35,7 @@ func start_phase(kind: String) -> bool:
         active_game.coins += run_gold_bonus
         active_game.fire_synergy_bonus = run_fire_bonus
         active_game.bone_synergy_bonus = run_bone_tower_bonus
+        active_game.necro_kill_bonus = run_necro_kill_bonus
     else:
         active_game.attack_damage += run_damage_bonus
         active_game.attack_speed_multiplier += run_speed_bonus
@@ -65,6 +67,8 @@ func choose_run_reward(kind: String) -> bool:
             run_fire_bonus += 1
         "gold":
             run_gold_bonus += 30
+        "necro":
+            run_necro_kill_bonus += 3
         _:
             return false
     phase = "hub"
@@ -99,7 +103,7 @@ func _input(event: InputEvent) -> void:
     elif phase == "reward":
         for i in range(REWARD_BUTTONS.size()):
             if REWARD_BUTTONS[i].has_point(point):
-                choose_run_reward(["bone", "ember", "gold"][i])
+                choose_run_reward(["bone", "ember", "gold", "necro"][i])
                 get_viewport().set_input_as_handled()
                 return
     elif phase == "defeat" or phase == "victory":
@@ -119,6 +123,7 @@ func reset_run() -> void:
     run_gold_bonus = 0
     run_fire_bonus = 0
     run_bone_tower_bonus = 0
+    run_necro_kill_bonus = 0
     queue_redraw()
 
 func _draw() -> void:
@@ -132,15 +137,15 @@ func _draw() -> void:
             draw_rect(NIGHT_BUTTON, Color("#594d78") if next_phase == "night" else Color("#343b47"))
             draw_string(ThemeDB.fallback_font, Vector2(290, 382), "DAY: DEFEND" if next_phase == "day" else "DAY: COMPLETE", HORIZONTAL_ALIGNMENT_LEFT, -1, 24, Color.WHITE)
             draw_string(ThemeDB.fallback_font, Vector2(665, 382), "NIGHT: EXPLORE" if next_phase == "night" else "NIGHT: LOCKED", HORIZONTAL_ALIGNMENT_LEFT, -1, 24, Color.WHITE)
-            draw_string(ThemeDB.fallback_font, Vector2(300, 490), "Relics: +%d damage, +%d gold, +%d fire, +%d bone" % [run_damage_bonus, run_gold_bonus, run_fire_bonus, run_bone_tower_bonus], HORIZONTAL_ALIGNMENT_LEFT, -1, 19, Color("#c7c9d1"))
+            draw_string(ThemeDB.fallback_font, Vector2(300, 490), "Relics: +%d damage, +%d gold, +%d fire, +%d bone, +%d necro kill gold" % [run_damage_bonus, run_gold_bonus, run_fire_bonus, run_bone_tower_bonus, run_necro_kill_bonus], HORIZONTAL_ALIGNMENT_LEFT, -1, 19, Color("#c7c9d1"))
         "reward":
             draw_string(ThemeDB.fallback_font, Vector2(410, 235), "CHOOSE A RUN RELIC", HORIZONTAL_ALIGNMENT_LEFT, -1, 26, Color.WHITE)
-            var names := ["BONE: +1 DAMAGE", "EMBER: +25% SPEED + FIRE", "GOLD: +30 START GOLD"]
+            var names := ["BONE: +1 HERO/TOWER", "EMBER: SPEED + FIRE", "GOLD: +30 START GOLD", "NECRO: +3 KILL GOLD"]
             for i in range(REWARD_BUTTONS.size()):
-                draw_rect(REWARD_BUTTONS[i], [Color("#526d9b"), Color("#a16a36"), Color("#927447")][i])
+                draw_rect(REWARD_BUTTONS[i], [Color("#526d9b"), Color("#a16a36"), Color("#927447"), Color("#4e7668")][i])
                 draw_string(ThemeDB.fallback_font, REWARD_BUTTONS[i].position + Vector2(12, 55), names[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color.WHITE)
         "defeat", "victory":
             draw_string(ThemeDB.fallback_font, Vector2(400, 260), "RUN COMPLETE" if phase == "victory" else "RUN ENDED", HORIZONTAL_ALIGNMENT_LEFT, -1, 32, Color.WHITE)
-            draw_string(ThemeDB.fallback_font, Vector2(400, 320), "Phases survived: %d / 4" % completed_phases, HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color("#c7c9d1"))
+            draw_string(ThemeDB.fallback_font, Vector2(400, 320), "Phases survived: %d / 6" % completed_phases, HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color("#c7c9d1"))
             draw_rect(Rect2(430, 480, 290, 70), Color("#527d70"))
             draw_string(ThemeDB.fallback_font, Vector2(485, 523), "START NEW RUN", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color.WHITE)

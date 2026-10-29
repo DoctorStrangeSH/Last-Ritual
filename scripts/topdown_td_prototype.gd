@@ -9,6 +9,7 @@ var selected_slot := -1
 var coins := 150
 var fire_synergy_bonus := 0
 var bone_synergy_bonus := 0
+var necro_kill_bonus := 0
 const PATHS := [
     [Vector2(65, 285), Vector2(560, 285), Vector2(1070, 285)],
     [Vector2(65, 345), Vector2(560, 345), Vector2(1070, 345)]
@@ -127,6 +128,8 @@ func attack_with_towers(delta: float) -> void:
             enemies.erase(target)
             enemies_defeated += 1
             coins += 5
+            if kind == "necro":
+                coins += necro_kill_bonus
     queue_redraw()
 
 func restart_defense() -> void:
