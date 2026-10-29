@@ -30,6 +30,7 @@ func run_tests() -> void:
         check(td.choose_tower("fire") and td.build_tower(0), "Freed slot can be built again")
         td.coins = 0
         check(td.choose_tower("fire") and not td.build_tower(2), "Insufficient gold prevents building")
+        check(td.WAVE_BUTTON.has_point(Vector2(100, 570)), "TD wave button has reachable mouse target")
         check(td.start_wave() and td.wave_number == 1 and td.enemies.size() == 3, "TD first wave spawns three enemies")
         check(not td.start_wave(), "TD prevents overlapping waves")
         check(td.enemies[0]["lane"] == 0 and td.enemies[1]["lane"] == 1, "TD enemies use two distinct paths")
