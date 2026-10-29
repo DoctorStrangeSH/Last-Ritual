@@ -344,7 +344,8 @@ func _process(delta: float) -> void:
     if phase == "day":
         update_day(delta)
     elif phase == "night":
-        update_night(delta)
+        if dungeon_route_chosen:
+            update_night(delta)
     elif phase == "final_siege":
         final_timer = maxf(0.0, final_timer - delta)
         update_day(delta)
@@ -993,6 +994,7 @@ func begin_night() -> void:
         charger["charging"] = 0.0
         charger["charge_dir"] = 1.0
         night_enemies[0] = charger
+    apply_dungeon_route()
     show_notice("Выбери маршрут по катакомбам мышкой!")
 
 func tower_ability_description(kind: String, level: int = 1) -> String:
@@ -1299,8 +1301,6 @@ func trap_is_dangerous() -> bool:
     return trap_phase() >= trap_danger_start()
 
 func update_night(delta: float) -> void:
-    if not dungeon_route_chosen:
-        return
     attack_cooldown = maxf(0.0, attack_cooldown - delta)
     hurt_cooldown = maxf(0.0, hurt_cooldown - delta)
     swing_timer = maxf(0.0, swing_timer - delta)
