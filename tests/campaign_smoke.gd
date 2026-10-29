@@ -296,6 +296,34 @@ func run_tests() -> void:
     game.reset_all()
     game.current_day = 3
     game.begin_night()
+    check(game.night_enemies.size() == 3 and str(game.night_enemies[2].get("kind", "")) == "elite_warden", "third night adds optional elite warden")
+    game.player = Vector2(610.0, game.FLOOR - 22.0)
+    game.mage["hp"] = 0.0
+    game.boss_hp = 0.0
+    var elite_test: Dictionary = game.night_enemies[2]
+    elite_test["strike_cd"] = 0.0
+    game.night_enemies[2] = elite_test
+    game.update_night(0.02)
+    check(float(game.night_enemies[2].get("windup", 0.0)) > 0.9, "elite warden telegraphs area attack")
+    game.player.x = 900.0
+    elite_test = game.night_enemies[2]
+    elite_test["windup"] = 0.01
+    game.night_enemies[2] = elite_test
+    var hp_before_elite_dodge: float = game.player_hp
+    game.update_night(0.02)
+    check(game.player_hp == hp_before_elite_dodge, "elite warden area attack can be dodged")
+    elite_test = game.night_enemies[2]
+    elite_test["hp"] = 0.0
+    game.night_enemies[2] = elite_test
+    var mana_before_elite: int = game.mana
+    var souls_before_elite: int = game.souls
+    game.update_night(0.0)
+    check(game.mana == mana_before_elite + 45 and game.souls == souls_before_elite + 5, "optional elite pays unique reward")
+    game.update_night(0.0)
+    check(game.mana == mana_before_elite + 45 and game.souls == souls_before_elite + 5, "elite reward cannot be collected twice")
+    game.reset_all()
+    game.current_day = 3
+    game.begin_night()
     check(str(game.night_enemies[1].get("kind", "")) == "hexer", "night three introduces the Cursed Hexer")
     game.player = Vector2(500.0, game.FLOOR - 22.0)
     game.grounded = true
