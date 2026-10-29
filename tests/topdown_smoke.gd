@@ -65,7 +65,7 @@ func run_tests() -> void:
             check(td.hero_attack(boss["pos"]) and not boss["boss_warning"] and boss["boss_charge"] == 0.0, "Second hero strike interrupts boss blast")
             td.tick_boss(0.9)
             check(td.altar_hp == altar_before_interrupt, "Interrupted blast does not damage altar")
-            td.tick_boss(3.1)
+            td.tick_boss(2.2)
             check(boss["boss_warning"] and boss["interrupt_hits"] == 0, "Boss can charge again after interrupt")
         td.enemies.clear()
         check(not td.start_wave(), "TD stops at three waves")
