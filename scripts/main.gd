@@ -1,4 +1,5 @@
 extends Node2D
+const RewardCatalog = preload("res://scripts/reward_catalog.gd")
 ## Last Ritual v2.2-rc57: enemy hit reactions, lane-aligned health bars and combat feedback
 const W := 1152.0
 const H := 648.0
@@ -393,31 +394,13 @@ func roll_reward_offers() -> void:
     reward_offers = [pool[0], pool[1], pool[2]]
 
 func reward_name(kind: int) -> String:
-    match kind:
-        0: return "МОЩЬ БАШЕН"
-        1: return "ЗАПАС МАНЫ"
-        2: return "КРЕПОСТЬ"
-        3: return "ДАНЬ ДУШ"
-        4: return "ЗАПРЕТНЫЙ ОБМЕН"
-    return "НЕИЗВЕСТНЫЙ ДАР"
+    return RewardCatalog.name_for(kind)
 
 func reward_detail(kind: int) -> String:
-    match kind:
-        0: return "+12% урона башен"
-        1: return "+35 маны сейчас"
-        2: return "+35 здоровья стен"
-        3: return "+3 души сейчас"
-        4: return "+65 маны, -15 HP стен"
-    return ""
+    return RewardCatalog.detail_for(kind)
 
 func reward_note(kind: int) -> String:
-    match kind:
-        0: return "до конца забега"
-        1: return "+5 маны за врага"
-        2: return "восстановление стен"
-        3: return "на ритуал или улучшение"
-        4: return "риск ради силы"
-    return ""
+    return RewardCatalog.note_for(kind)
 
 # Synergy requires two different run-long gifts, never permanent upgrades.
 func has_blood_economy_synergy() -> bool:
