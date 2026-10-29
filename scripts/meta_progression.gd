@@ -97,7 +97,8 @@ func record_result(won: bool) -> void:
 
 func grant_achievement_rewards() -> Array[String]:
     var newly_claimed: Array[String] = []
-    for id in ACHIEVEMENT_REWARDS.keys():
+    for raw_id in ACHIEVEMENT_REWARDS.keys():
+        var id := str(raw_id)
         if achievement_unlocked(id) and not claimed_achievement_rewards.has(id):
             fragments += int(ACHIEVEMENT_REWARDS[id])
             claimed_achievement_rewards.append(id)
