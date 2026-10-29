@@ -184,6 +184,21 @@ func run_tests() -> void:
                 check(platform.position.x > 0.0 and platform.end.x < game.W and platform.position.y > 250.0 and platform.end.y <= game.FLOOR, "night %d route %d platform stays in bounds" % [night, route])
             check(game.trap_positions.size() >= 2, "night %d route %d contains hazards" % [night, route])
     game.reset_all()
+    # Every guardian must allow one stone pickup, with no duplicate on subsequent frames.
+    for guardian_night in range(1, 6):
+        game.reset_all()
+        game.current_day = guardian_night
+        game.stones_collected = guardian_night - 1
+        game.begin_night()
+        game.mage["hp"] = 0.0
+        game.night_enemies.clear()
+        game.boss_hp = 0.0
+        game.player = Vector2(1010.0, 465.0)
+        game.update_night(0.0)
+        check(game.stone_taken and game.stones_collected == guardian_night, "night %d guardian grants exactly one stone" % guardian_night)
+        game.update_night(0.0)
+        check(game.stones_collected == guardian_night, "night %d cannot award a duplicate stone" % guardian_night)
+    game.reset_all()
     check(game.current_day == 1, "initial day")
     game.dungeon_route = 1
     game.platforms = [Rect2(200.0, 420.0, 135.0, 16.0)]
