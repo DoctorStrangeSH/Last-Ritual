@@ -386,6 +386,23 @@ func run_tests() -> void:
     bad_file.close()
     check(not game.load_campaign(), "non-numeric saved tower HP rejected")
     invalid["towers"] = []
+    invalid["reward_bone"] = "2"
+    bad_file = FileAccess.open("user://campaign_smoke_test.json", FileAccess.WRITE)
+    bad_file.store_string(JSON.stringify(invalid))
+    bad_file.close()
+    check(not game.load_campaign(), "non-numeric saved reward rejected")
+    invalid["reward_bone"] = 1.5
+    bad_file = FileAccess.open("user://campaign_smoke_test.json", FileAccess.WRITE)
+    bad_file.store_string(JSON.stringify(invalid))
+    bad_file.close()
+    check(not game.load_campaign(), "fractional saved reward rejected")
+    invalid.erase("reward_bone")
+    invalid["legendary_boon"] = 3
+    bad_file = FileAccess.open("user://campaign_smoke_test.json", FileAccess.WRITE)
+    bad_file.store_string(JSON.stringify(invalid))
+    bad_file.close()
+    check(not game.load_campaign(), "out-of-range legendary boon rejected")
+    invalid.erase("legendary_boon")
     invalid["stones"] = 1.5
     bad_file = FileAccess.open("user://campaign_smoke_test.json", FileAccess.WRITE)
     bad_file.store_string(JSON.stringify(invalid))
