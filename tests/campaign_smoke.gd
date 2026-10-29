@@ -237,6 +237,29 @@ func run_tests() -> void:
     game.reset_all()
     check(game.cleave_cooldown == 0.0, "cleave cooldown resets between runs")
     game.reset_all()
+    game.current_day = 2
+    game.begin_night()
+    check(str(game.night_enemies[0].get("kind", "")) == "charger", "night two introduces the Cursed Charger")
+    game.player = Vector2(500.0, game.FLOOR - 22.0)
+    var charger_test: Dictionary = game.night_enemies[0]
+    charger_test["x"] = 350.0
+    charger_test["charge_cd"] = 0.01
+    charger_test["windup"] = 0.0
+    charger_test["charging"] = 0.0
+    game.night_enemies[0] = charger_test
+    game.update_night(0.02)
+    check(float(game.night_enemies[0].get("windup", 0.0)) > 0.6, "charger telegraphs before charging")
+    charger_test = game.night_enemies[0]
+    charger_test["windup"] = 0.01
+    charger_test["charge_cd"] = 2.0
+    charger_test["charge_dir"] = -1.0
+    charger_test["charging"] = 0.0
+    game.night_enemies[0] = charger_test
+    var charger_x_before: float = float(game.night_enemies[0]["x"])
+    game.update_night(0.02)
+    check(float(game.night_enemies[0].get("charging", 0.0)) > 0.0, "charger starts lunge after telegraph")
+    check(float(game.night_enemies[0]["x"]) < charger_x_before, "charger locks its attack direction at launch")
+    game.reset_all()
     game.phase = "night"
     game.stone_taken = true
     game.stones_collected = 1
