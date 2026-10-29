@@ -32,6 +32,43 @@ const AUDIO_UP_BUTTON := Rect2(962, 52, 38, 42)
 
 func _ready() -> void:
     meta.load_profile()
+    load_audio_settings()
+    queue_redraw()
+
+func load_audio_settings() -> void:
+    var config := ConfigFile.new()
+    if config.load(audio_settings_path) == OK:
+        audio_volume = clampf(float(config.get_value("audio", "volume", 0.7)), 0.0, 1.0)
+        audio_muted = bool(config.get_value("audio", "muted", false))
+    apply_audio_settings()
+
+func save_audio_settings() -> bool:
+    var config := ConfigFile.new()
+    config.set_value("audio", "volume", audio_volume)
+    config.set_value("audio", "muted", audio_muted)
+    return config.save(audio_settings_path) == OK
+
+func apply_audio_settings() -> void:
+    var master_bus := AudioServer.get_bus_index("Master")
+    if master_bus < 0:
+        return
+    AudioServer.set_bus_mute(master_bus, audio_muted)
+    AudioServer.set_bus_volume_db(master_bus, linear_to_db(maxf(audio_volume, 0.001)))
+
+func adjust_audio_volume(step: float) -> bool:
+    var next_volume := clampf(audio_volume + step, 0.0, 1.0)
+    if is_equal_approx(next_volume, audio_volume):
+        return false
+    audio_volume = next_volume
+    apply_audio_settings()
+    save_audio_settings()
+    queue_redraw()
+    return true
+
+func toggle_audio_mute() -> void:
+    audio_muted = not audio_muted
+    apply_audio_settings()
+    save_audio_settings()
     queue_redraw()
 
 func set_difficulty(level: int) -> bool:
