@@ -107,7 +107,7 @@ func run_tests() -> void:
         check(run.choose_run_reward("bone"), "Run can choose another reward")
         check(run.start_phase("day") and run.active_game.fire_synergy_bonus == 1, "Fire synergy carries into defense")
         var td = run.active_game
-        td.coins = 0
+        td.coins = 100
         td.choose_tower("fire")
         td.build_tower(0)
         td.enemies.clear()
