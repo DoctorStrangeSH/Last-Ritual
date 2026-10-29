@@ -169,6 +169,13 @@ func run_tests() -> void:
         check(hard_night.enemies[0]["hp"] == 5 and float(hard_night.enemies[0]["speed"]) > 65.0, "Hard night enemies get boosted HP and movement")
         hard_night.queue_free()
     var run_scene := load("res://scenes/run_loop.tscn") as PackedScene
+    if run_scene != null:
+        check(run_scene != null, "Unified day-night run scene loads")
+        var layout_probe = run_scene.instantiate()
+        check(layout_probe.DIFFICULTY_BUTTONS.size() == 3 and layout_probe.DAY_BUTTON.position.y > layout_probe.DIFFICULTY_BUTTONS[0].end.y, "Hub difficulty and phase controls have vertical separation")
+        check(layout_probe.META_HERO_BUTTON.position.y >= 474 and layout_probe.META_TREASURY_BUTTON.position.y >= 474, "Permanent upgrades sit in lower hub panel")
+        check(not layout_probe.META_HERO_BUTTON.intersects(layout_probe.META_TREASURY_BUTTON), "Permanent upgrade cards do not overlap")
+        layout_probe.queue_free()
     check(run_scene != null, "Unified day-night run scene loads")
     if run_scene != null:
         var run = run_scene.instantiate()
