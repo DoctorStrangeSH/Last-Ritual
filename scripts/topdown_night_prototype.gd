@@ -104,6 +104,14 @@ func open_room(index: int, override_variant: int = -1) -> void:
             reward_notice_time = 3.5
             queue_redraw()
             return
+    if exploration_enabled and str(floor_data["rooms"][room_index]["kind"]) == "БОСС":
+        spawn_enemy(Vector2(710, 315), 30, 52.0, false, "boss")
+        spawn_enemy(Vector2(520, 225), 4, 85.0, false)
+        spawn_enemy(Vector2(520, 425), 4, 85.0, false)
+        reward_notice = "СТРАЖ РИТУАЛА — ИСПОЛЬЗУЙТЕ РЫВОК!"
+        reward_notice_time = 3.0
+        queue_redraw()
+        return
     match room_variant:
         0:
             # Crypt: predictable melee + a ranged shooter with room to learn dodge.
@@ -237,7 +245,7 @@ func attack(target: Vector2) -> bool:
             hit = i
     if hit == -1:
         return false
-    var effective_damage: int = maxi(1, attack_damage - (CHAMPION_ARMOR if enemies[hit].get("role", "") == "champion" else 0))
+    var effective_damage: int = maxi(1, attack_damage - (CHAMPION_ARMOR if enemies[hit].get("role", "") in ["champion", "boss"] else 0))
     enemies[hit]["hp"] -= effective_damage
     sfx.play_effect("hit")
     enemies[hit]["hit_flash"] = 0.12
@@ -513,7 +521,7 @@ func update_enemy_attacks(delta: float) -> void:
             if float(enemy["melee_warning"]) <= 0.0:
                 # The target was locked before the strike: dodging out avoids it.
                 if player_pos.distance_to(enemy["attack_target"]) <= MELEE_HIT_RADIUS:
-                    take_damage(14 if enemy.get("role", "") == "champion" else 8 if enemy.get("role", "") == "flanker" else 10)
+                    take_damage(17 if enemy.get("role", "") == "boss" else 14 if enemy.get("role", "") == "champion" else 8 if enemy.get("role", "") == "flanker" else 10)
                 enemy["melee_recharge"] = FLANKER_RECHARGE if enemy.get("role", "") == "flanker" else MELEE_RECHARGE
         elif recovery <= 0.0 and enemy["pos"].distance_to(player_pos) <= MELEE_REACH:
             var warning_duration := FLANKER_WARNING if enemy.get("role", "") == "flanker" else CHAMPION_WARNING if enemy.get("role", "") == "champion" else MELEE_WARNING
@@ -675,8 +683,11 @@ func _draw() -> void:
             var melee_charge: float = 1.0 - melee_remaining / float(enemy.get("melee_warning_duration", MELEE_WARNING))
             draw_arc(attack_at, MELEE_HIT_RADIUS, -PI / 2.0, -PI / 2.0 + TAU * melee_charge, 32, Color("#ff7b89"), 5.0)
         var enemy_color: Color = Color("#fff1d1") if float(enemy.get("hit_flash", 0.0)) > 0.0 else (Color("#aa70d6") if enemy["ranged"] else Color("#e3b967") if enemy.get("role", "") == "flanker" else Color("#b46773") if enemy.get("role", "") == "champion" else Color("#cf646c"))
-        var enemy_radius: float = 25.0 if enemy.get("role", "") == "champion" else 16.0 if enemy.get("role", "") == "flanker" else 19.0
+        var enemy_radius: float = 34.0 if enemy.get("role", "") == "boss" else 25.0 if enemy.get("role", "") == "champion" else 16.0 if enemy.get("role", "") == "flanker" else 19.0
         draw_circle(enemy["pos"], 23.0 if float(enemy.get("hit_flash", 0.0)) > 0.0 else enemy_radius, enemy_color)
+        if enemy.get("role", "") == "boss":
+            draw_arc(enemy["pos"], 42.0, 0.0, TAU, 48, Color("#ffc47f"), 5.0)
+            draw_label("СТРАЖ РИТУАЛА", enemy["pos"] + Vector2(-72, -59), 16, Color("#ffe6bd"))
         if enemy.get("role", "") == "champion":
             draw_arc(enemy["pos"], 30.0, 0.0, TAU, 32, Color("#e7d3a8"), 3.0)
     for burst in death_bursts:
