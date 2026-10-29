@@ -8,7 +8,7 @@ var dungeon_seed := 0
 var room_variant := 0
 var route_boon := ""
 const ROOM_KINDS := ["CRYPT", "AMBUSH", "ELITE"]
-const ROUTE_RECTS := [Rect2(340.0, 490.0, 210.0, 65.0), Rect2(605.0, 490.0, 210.0, 65.0)]
+const ROUTE_RECTS := [Rect2(180.0, 490.0, 245.0, 65.0), Rect2(455.0, 490.0, 245.0, 65.0), Rect2(730.0, 490.0, 245.0, 65.0)]
 var player_pos := Vector2(160.0, 325.0)
 var player_hp := 100
 var enemies: Array[Dictionary] = []
@@ -114,7 +114,7 @@ func choose_route(choice: int) -> bool:
         # Treasury route: recover health before the next encounter.
         player_hp = mini(100, player_hp + 18)
         route_boon = "TREASURE: +18 HP"
-    else:
+    elif choice == 1:
         # Risk route: trade health for run-long damage and fight an elite room.
         if player_hp <= 12:
             return false
@@ -122,6 +122,14 @@ func choose_route(choice: int) -> bool:
         attack_damage += 1
         variant = 2
         route_boon = "RISK: -12 HP / +1 DAMAGE"
+    else:
+        # Cursed altar event: a larger sacrifice buys permanent speed this night.
+        if player_hp <= 20:
+            return false
+        player_hp -= 20
+        attack_speed_multiplier += 0.35
+        variant = 1
+        route_boon = "CURSED ALTAR: -20 HP / +35% SPEED"
     open_room(room_index + 1, variant)
     return true
 
@@ -273,8 +281,9 @@ func _draw() -> void:
         draw_label("CHOOSE YOUR NEXT ROUTE", Vector2(450, 473), 22)
         for i in range(ROUTE_RECTS.size()):
             var variant := posmod(dungeon_seed + room_index + 1 + i, ROOM_KINDS.size())
-            draw_rect(ROUTE_RECTS[i], Color("#496c74") if i == 0 else Color("#81556e"))
-            draw_label("TREASURE +18 HP" if i == 0 else "RISK -12 HP/+1 ATK", ROUTE_RECTS[i].position + Vector2(10, 39), 17)
+            draw_rect(ROUTE_RECTS[i], Color("#496c74") if i == 0 else Color("#81556e") if i == 1 else Color("#7a568b"))
+            var offer := "TREASURE +18 HP" if i == 0 else "RISK -12 HP / +1 ATK" if i == 1 else "CURSE -20 HP / +35% SPD"
+            draw_label(offer, ROUTE_RECTS[i].position + Vector2(10, 39), 16)
         draw_rect(Rect2(1058.0, 275.0, 46.0, 96.0), Color("#72b59b"))
     else:
         draw_rect(Rect2(1058.0, 275.0, 46.0, 96.0), Color("#59495b"))
