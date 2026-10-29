@@ -1213,6 +1213,9 @@ func apply_dungeon_route() -> void:
             platforms[i] = Rect2(p.position + Vector2(-18.0 if i % 2 == 0 else 18.0, 10.0), p.size)
     secret_cache_pos = Vector2(575.0 if dungeon_route == 0 else (610.0 if dungeon_route == 1 else 535.0), FLOOR - 27.0)
 
+func night_controls_hint_visible() -> bool:
+    return phase == "night" and current_day == 1 and trap_clock < 8.0 and not stone_taken
+
 func trap_cycle_duration() -> float:
     return 2.7 if current_day >= 4 else 3.1
 
@@ -2234,7 +2237,8 @@ func _draw() -> void:
             var cleave_ready_ratio: float = 1.0 - clampf(cleave_cooldown / 6.0, 0.0, 1.0)
             box(Rect2(803, 594, 218.0 * cleave_ready_ratio, 7), Color("a87af0") if cleave_cooldown <= 0.0 else Color("70549d"))
             label("ГОТОВ • ПКМ" if cleave_cooldown <= 0.0 else "%.1f с" % cleave_cooldown, 937, 587, 13, Color("b7f0d3") if cleave_cooldown <= 0.0 else Color("dfc8f7"))
-            label("ЛКМ: атака  •  ПКМ: рассекатель (20 маны)  •  A/D: ходьба  •  W/Space: прыжок", 20, 625, 17)
+            if night_controls_hint_visible():
+                label("ЛКМ: атака  •  ПКМ: рассекатель  •  A/D: движение  •  W/Space: прыжок", 20, 625, 17)
     for particle in particles:
         var alpha: float = clampf(float(particle["life"]) / 0.55, 0.0, 1.0)
         var tint: Color = particle["color"]
