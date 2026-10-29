@@ -260,6 +260,31 @@ func run_tests() -> void:
     check(float(game.night_enemies[0].get("charging", 0.0)) > 0.0, "charger starts lunge after telegraph")
     check(float(game.night_enemies[0]["x"]) < charger_x_before, "charger locks its attack direction at launch")
     game.reset_all()
+    game.current_day = 3
+    game.begin_night()
+    check(str(game.night_enemies[1].get("kind", "")) == "hexer", "night three introduces the Cursed Hexer")
+    game.player = Vector2(500.0, game.FLOOR - 22.0)
+    game.grounded = true
+    game.mage["hp"] = 0.0
+    game.boss_hp = 0.0
+    var hexer_test: Dictionary = game.night_enemies[1]
+    hexer_test["x"] = 700.0
+    hexer_test["shot_cd"] = 0.01
+    hexer_test["windup"] = 0.0
+    game.night_enemies[1] = hexer_test
+    game.update_night(0.02)
+    check(float(game.night_enemies[1].get("windup", 0.0)) > 0.7, "hexer telegraphs before firing")
+    hexer_test = game.night_enemies[1]
+    var locked_aim_x: float = float(hexer_test["aim_x"])
+    game.player.x = 800.0
+    hexer_test["windup"] = 0.01
+    hexer_test["shot_cd"] = 1.0
+    game.night_enemies[1] = hexer_test
+    game.update_night(0.02)
+    check(game.hex_bolts.size() == 1, "hexer fires a projectile after warning")
+    check(float(game.hex_bolts[0]["velocity"].x) < 0.0 and locked_aim_x < 0.0, "hexer locks aim when telegraph starts")
+    game.reset_all()
+    check(game.hex_bolts.is_empty(), "full reset clears cursed bolts")
     game.phase = "night"
     game.stone_taken = true
     game.stones_collected = 1
