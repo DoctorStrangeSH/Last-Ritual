@@ -96,7 +96,8 @@ func run_tests() -> void:
     game.phase = "night"
     game.mage = {"x": 1000.0, "hp": 0.0, "cooldown": 1.0}
     game.boss_hp = 0.0
-    game.night_enemies = [{"x": 140.0, "hp": 100.0, "dir": 1.0}]
+    game.night_enemies.clear()
+    game.night_enemies.append({"x": 140.0, "hp": 100.0, "dir": 1.0})
     game.player = Vector2(95.0, game.FLOOR - 22.0)
     game.facing = 1.0
     game.attack()
@@ -105,7 +106,8 @@ func run_tests() -> void:
     game.phase = "night"
     game.mage = {"x": 1000.0, "hp": 0.0, "cooldown": 1.0}
     game.boss_hp = 0.0
-    game.night_enemies = [{"x": 140.0, "hp": 100.0, "dir": 1.0}]
+    game.night_enemies.clear()
+    game.night_enemies.append({"x": 140.0, "hp": 100.0, "dir": 1.0})
     game.player = Vector2(95.0, game.FLOOR - 22.0)
     game.facing = 1.0
     game.relic_choice_pending = true
