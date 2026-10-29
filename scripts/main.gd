@@ -96,6 +96,7 @@ var tower_power_level := 0
 var wall_ward_level := 0
 var saboteurs_defeated := 0
 var trap_clock := 0.0
+var spectral_patrol_clock := 0.0
 var dungeon_route := 0
 var dungeon_omen := 0
 var omen_cache_bonus := false
@@ -260,6 +261,7 @@ func reset_all() -> void:
     wall_ward_level = 0
     saboteurs_defeated = 0
     trap_clock = 0.0
+    spectral_patrol_clock = 0.0
     dungeon_route = 0
     dungeon_omen = 0
     omen_cache_bonus = false
@@ -948,6 +950,7 @@ func begin_night() -> void:
     chest_taken = false
     relic_taken = false
     trap_clock = 0.0
+    spectral_patrol_clock = 0.0
     dungeon_route = 0
     dungeon_omen = randi_range(0, 2)
     omen_cache_bonus = false
@@ -1345,6 +1348,23 @@ func trap_phase() -> float:
 func trap_is_dangerous() -> bool:
     return trap_phase() >= trap_danger_start()
 
+func spectral_patrol_enabled() -> bool:
+    return difficulty >= 2 or current_day >= 3
+
+func spectral_patrol_phase() -> float:
+    return fmod(spectral_patrol_clock, 9.0)
+
+func spectral_patrol_active() -> bool:
+    return spectral_patrol_enabled() and spectral_patrol_phase() >= 2.4 and spectral_patrol_phase() < 6.8
+
+func spectral_patrol_position() -> Vector2:
+    var progress: float = clampf((spectral_patrol_phase() - 2.4) / 4.4, 0.0, 1.0)
+    var x: float = lerpf(970.0, 190.0, progress)
+    return Vector2(x, FLOOR - 35.0)
+
+func spectral_patrol_hits_player() -> bool:
+    return spectral_patrol_active() and player.distance_to(spectral_patrol_position()) < 43.0
+
 func update_night(delta: float) -> void:
     attack_cooldown = maxf(0.0, attack_cooldown - delta)
     hurt_cooldown = maxf(0.0, hurt_cooldown - delta)
@@ -1354,6 +1374,7 @@ func update_night(delta: float) -> void:
     cleave_flash_timer = maxf(0.0, cleave_flash_timer - delta)
     dash_trail = maxf(0.0, dash_trail - delta)
     trap_clock += delta
+    spectral_patrol_clock += delta
     var direction := Input.get_axis("ui_left", "ui_right")
     if Input.is_key_pressed(KEY_A):
         direction -= 1.0
@@ -1398,6 +1419,8 @@ func update_night(delta: float) -> void:
         mana += 25 + (25 if omen_cache_bonus else 0)
         souls += 1 + (2 if omen_cache_bonus else 0)
         show_notice("Тайник маршрута: %s" % ("+50 маны и +3 души!" if omen_cache_bonus else "+25 маны и +1 душа!"))
+    if spectral_patrol_hits_player():
+        hurt(13.0 + float(difficulty) * 2.0)
     if trap_is_dangerous() and player.y + 21.0 >= FLOOR - 13.0:
         for tx in trap_positions:
             if absf(player.x - tx) < 29.0:
@@ -2334,6 +2357,16 @@ func _draw() -> void:
             if not secret_cache_taken:
                 draw_circle(secret_cache_pos, 12.0, Color("efc77e", 0.55 + 0.15 * sin(atmosphere_clock * 3.0)))
                 draw_rect(Rect2(secret_cache_pos.x - 11.0, secret_cache_pos.y - 8.0, 22.0, 18.0), Color("c99460"), false, 2.0)
+            if spectral_patrol_enabled():
+                var spirit_phase: float = spectral_patrol_phase()
+                if spectral_patrol_active():
+                    var spirit_pos: Vector2 = spectral_patrol_position()
+                    draw_circle(spirit_pos, 32.0 + sin(atmosphere_clock * 9.0) * 3.0, Color(0.51, 0.82, 0.95, 0.17))
+                    draw_arc(spirit_pos, 25.0, 0.0, TAU, 32, Color("9bdff3"), 3.0)
+                    draw_circle(spirit_pos + Vector2(-7.0, -5.0), 4.0, Color("d4ffff"))
+                    draw_circle(spirit_pos + Vector2(7.0, -5.0), 4.0, Color("d4ffff"))
+                elif spirit_phase >= 1.5 and spirit_phase < 2.4:
+                    draw_arc(Vector2(970.0, FLOOR - 35.0), 30.0, 0.0, TAU, 24, Color("efc48a", 0.55), 2.0)
             draw_dark_lord(player)
             if hurt_cooldown > 0.0 and sin(atmosphere_clock * 26.0) > 0.15:
                 draw_rect(Rect2(player.x - 31.0, player.y - 57.0, 62.0, 83.0), Color(1.0, 0.29, 0.38, 0.35), false, 3.0)
