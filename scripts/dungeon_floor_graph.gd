@@ -14,8 +14,8 @@ static func generate_floor(seed_value: int) -> Dictionary:
         attempts += 1
         var parent_id := rng.randi_range(0, positions.size() - 1)
         var origin := positions[parent_id]
-        var direction := STEPS[rng.randi_range(0, STEPS.size() - 1)]
-        var destination := origin + direction
+        var direction: Vector2i = STEPS[rng.randi_range(0, STEPS.size() - 1)]
+        var destination: Vector2i = origin + direction
         if occupied.has(destination):
             continue
         var id := positions.size()
