@@ -283,7 +283,10 @@ func run_tests() -> void:
     check(game.enemies[1]["ranged"], "Ranged enemy is present")
     check(not game.next_room() and not game.choose_route(1), "Room routes remain locked while enemies live")
     game.player_pos = Vector2(560.0, 240.0)
-    for i in range(3):
+    game.attack_cooldown = 0.0
+    check(game.attack(Vector2(570.0, 240.0)), "Hero can attack first enemy")
+    check(game.floating_combat_texts.size() == 1 and game.enemies[0].get("hit_flash", 0.0) > 0.0, "Successful hit spawns damage number and enemy hit flash")
+    for i in range(2):
         game.attack_cooldown = 0.0
         check(game.attack(Vector2(570.0, 240.0)), "Hero can attack first enemy")
     check(game.enemies.size() == 1 and game.night_souls == 1, "First enemy defeated and awards a soul")
