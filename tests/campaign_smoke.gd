@@ -123,6 +123,37 @@ func run_tests() -> void:
     check(game.boss_strike_hits(Vector2(1099.0, game.FLOOR - 25.0)), "boss warning covers near edge")
     check(not game.boss_strike_hits(Vector2(1102.0, game.FLOOR - 25.0)), "boss attack misses outside horizontal warning")
     check(not game.boss_strike_hits(Vector2(1015.0, game.FLOOR - 110.0)), "boss attack misses above warning")
+    game.reset_all()
+    game.current_day = 1
+    game.begin_night()
+    game.mage["hp"] = 0.0
+    game.night_enemies.clear()
+    game.boss_hp = 120.0
+    game.boss_windup = 0.01
+    game.boss_strike_timer = 2.0
+    game.player = Vector2(game.boss_pos.x, game.FLOOR - 22.0)
+    var hp_before_boss_strike: float = game.player_hp
+    game.update_night(0.02)
+    check(game.player_hp == hp_before_boss_strike - 24.0, "boss windup expiration deals one telegraphed hit inside warning")
+    game.hurt_cooldown = 0.0
+    game.boss_windup = 0.01
+    game.boss_strike_timer = 2.0
+    game.player = Vector2(game.boss_pos.x - 120.0, game.FLOOR - 22.0)
+    var hp_before_boss_dodge: float = game.player_hp
+    game.update_night(0.02)
+    check(game.player_hp == hp_before_boss_dodge, "moving outside boss warning dodges strike")
+    game.reset_all()
+    game.current_day = 1
+    game.begin_night()
+    game.mage["hp"] = 0.0
+    game.night_enemies.clear()
+    game.boss_hp = 0.0
+    game.player = Vector2(1010.0, 465.0)
+    game.update_night(0.0)
+    check(game.stone_taken and game.stones_collected == 1, "defeated guardian grants one Abyss Stone")
+    game.update_night(0.0)
+    check(game.stones_collected == 1, "Abyss Stone cannot be collected twice")
+    game.reset_all()
     check(game.current_day == 1, "initial day")
     game.dungeon_route = 1
     game.platforms = [Rect2(200.0, 420.0, 135.0, 16.0)]
