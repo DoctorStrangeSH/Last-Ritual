@@ -211,7 +211,7 @@ func run_tests() -> void:
     check(not game.choose_relic("blood"), "Room reward cannot be taken twice")
     check(not game.choose_route(2), "Invalid route choice is rejected")
     check(game.door_available() and game.click_ui(game.ROUTE_RECTS[1].get_center()), "Mouse chooses alternate night route")
-    check(game.room_variant == 0 and game.room_index == 1, "Alternate route changes the next room variant")
+    check(game.room_variant == 2 and game.room_index == 1, "Alternate route changes the next room variant")
     check(game.room_index == 1 and game.hostile_shots.is_empty(), "New room resets projectiles")
     game.enemies.clear()
     game.reward_available = true
