@@ -117,6 +117,12 @@ func run_tests() -> void:
     check(is_equal_approx(float(game.night_enemies[0]["hp"]), 70.0), "Rage Shard increases hero melee damage by 25 percent")
     game.reset_all()
     check(not game.rage_shard, "Rage Shard resets between runs")
+    game.reset_all()
+    game.boss_pos = Vector2(1015.0, game.FLOOR - 46.0)
+    check(game.boss_strike_hits(Vector2(1015.0, game.FLOOR - 25.0)), "boss warning covers strike center")
+    check(game.boss_strike_hits(Vector2(1099.0, game.FLOOR - 25.0)), "boss warning covers near edge")
+    check(not game.boss_strike_hits(Vector2(1102.0, game.FLOOR - 25.0)), "boss attack misses outside horizontal warning")
+    check(not game.boss_strike_hits(Vector2(1015.0, game.FLOOR - 110.0)), "boss attack misses above warning")
     check(game.current_day == 1, "initial day")
     game.dungeon_route = 1
     game.platforms = [Rect2(200.0, 420.0, 135.0, 16.0)]
