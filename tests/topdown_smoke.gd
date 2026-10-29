@@ -410,6 +410,41 @@ func run_tests() -> void:
     check(is_zero_approx(dash_probe.dash_cooldown) and dash_probe.last_move_direction == Vector2.RIGHT, "Restart clears dash cooldown and facing")
     dash_probe.queue_free()
 
+    var cover_probe = packed.instantiate()
+    root.add_child(cover_probe)
+    check(cover_probe.obstacles.size() == 2 and cover_probe.ROOM_KINDS[cover_probe.room_variant] == "CRYPT", "Crypt has two recognizable cover pillars")
+    var crypt_wall: Rect2 = cover_probe.obstacles[0]
+    check(not crypt_wall.grow(cover_probe.HERO_RADIUS).has_point(cover_probe.player_pos), "Cover leaves the starting position clear")
+    cover_probe.player_pos = Vector2(350.0, 370.0)
+    cover_probe.move_player(Vector2.RIGHT, 1.0)
+    check(cover_probe.player_pos.x < crypt_wall.position.x - 16.0 and is_equal_approx(cover_probe.player_pos.y, 370.0), "Hero cannot walk through a stone pillar")
+    cover_probe.player_pos = Vector2(350.0, 370.0)
+    cover_probe.last_move_direction = Vector2.RIGHT
+    check(cover_probe.dash() and cover_probe.player_pos.x < crypt_wall.position.x - 16.0, "Dash stops safely at cover rather than teleporting through it")
+    cover_probe.dash_cooldown = 0.0
+    cover_probe.player_pos = Vector2(350.0, 370.0)
+    cover_probe.enemies.clear()
+    cover_probe.enemies.append({"pos": Vector2(500.0, 370.0), "hp": 3, "speed": 0.0, "ranged": false})
+    cover_probe.attack_cooldown = 0.0
+    check(not cover_probe.attack(Vector2(500.0, 370.0)), "Hero cannot damage an enemy through solid cover")
+    cover_probe.enemies.clear()
+    cover_probe.player_pos = Vector2(520.0, 370.0)
+    cover_probe.invulnerable_time = 0.0
+    cover_probe.hostile_shots.append({"pos": Vector2(350.0, 370.0), "velocity": Vector2.RIGHT * 180.0})
+    cover_probe._process(1.0)
+    check(cover_probe.hostile_shots.is_empty() and cover_probe.player_hp == 100, "Pillar catches a hostile shot before it reaches the hero")
+    cover_probe.enemies.append({"pos": Vector2(350.0, 370.0), "hp": 3, "speed": 120.0, "ranged": false})
+    cover_probe._process(0.5)
+    check(cover_probe.enemies[0]["pos"].x < crypt_wall.position.x - cover_probe.ENEMY_RADIUS, "Melee pursuers cannot pass straight through pillars")
+    cover_probe.open_room(1, 1)
+    check(cover_probe.obstacles.size() == 2 and cover_probe.obstacles[0] != crypt_wall, "Next room replaces crypt cover with ambush layout")
+    var ambush_cover: Array[Rect2] = cover_probe.obstacles.duplicate()
+    cover_probe.open_room(1, 1)
+    check(cover_probe.obstacles == ambush_cover and cover_probe.hostile_shots.is_empty(), "Room cover is deterministic and reentry clears shots")
+    cover_probe.open_room(2, 2)
+    check(cover_probe.obstacles.size() == 2 and not cover_probe.obstacles[0].has_point(Vector2(160, 325)), "Elite cover keeps hero spawn accessible")
+    cover_probe.queue_free()
+
     var patterns = packed.instantiate()
     root.add_child(patterns)
     patterns.set_dungeon_seed(1)
