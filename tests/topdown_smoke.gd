@@ -209,7 +209,7 @@ func run_tests() -> void:
     check(game.choose_relic("bone"), "Bone relic can be chosen")
     check(game.attack_damage == 2 and game.relics == ["bone"], "Bone relic increases damage")
     check(not game.choose_relic("blood"), "Room reward cannot be taken twice")
-    check(not game.choose_route(3), "Invalid route choice is rejected")
+    check(not game.choose_route(4), "Invalid route choice is rejected")
     check(game.door_available() and game.click_ui(game.ROUTE_RECTS[1].get_center()), "Mouse chooses alternate night route")
     check(game.room_variant == 2 and game.room_index == 1, "Alternate route changes the next room variant")
     check(game.route_boon == "RISK: -12 HP / +1 DAMAGE" and game.player_hp == 88 and game.attack_damage == 3, "Risk route trades 12 HP for damage and elite fight")
