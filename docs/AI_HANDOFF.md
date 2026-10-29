@@ -1,3 +1,7 @@
+> **СНАЧАЛА ЧИТАЙ ЭТО (29.10.2026):** старые записи ниже относятся к удалённому платформеру и историческим PR. Текущая игра — Godot 4.4.1 top-down TD + ночные комнаты. `main` на PR #101 merge b1dbed0e6fc46148605ea292e951feeb38d7f8d2, post-merge CI 40912423173 success. Текущая приоритетная задача **G1 — настоящие извилистые пути TD**; далее G2–G8 по [GAMEPLAY_OVERHAUL.md](GAMEPLAY_OVERHAUL.md) и [ROADMAP.md](ROADMAP.md). Сохранять текущие save schema и tests/topdown_smoke.gd. **Не считать написанный дизайн реализованной функцией**; проверять CI актуального HEAD и ручной QA отдельно. Не продолжать RC/S0 и не возвращать scripts/main.gd.
+
+---
+
 # AI Handoff — Last Ritual
 
 ## Главная задача
