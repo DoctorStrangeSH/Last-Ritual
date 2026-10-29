@@ -49,6 +49,8 @@ var boss_strike_timer := 2.0
 var boss_windup := 0.0
 var potions_used := 0
 var dash_cooldown := 0.0
+var cleave_cooldown := 0.0
+var empowered_strike := false
 var dash_trail := 0.0
 var platforms := [Rect2(205, 473, 135, 16), Rect2(415, 413, 145, 16), Rect2(640, 462, 130, 16), Rect2(830, 396, 135, 16)]
 var gems: Array[Vector2] = []
@@ -245,6 +247,8 @@ func reset_all() -> void:
     boss_windup = 0.0
     potions_used = 0
     dash_cooldown = 0.0
+    cleave_cooldown = 0.0
+    empowered_strike = false
     dash_trail = 0.0
     player_hp = 100.0
     boss_hp = 140.0
@@ -628,6 +632,12 @@ func _input(event: InputEvent) -> void:
         elif menu_click.y >= 450.0 and menu_click.y < 495.0:
             menu_page = "talents" if menu_page == "legacy" else "achievements"
         return
+    if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT and event.pressed and phase == "night":
+        var skill_target: Vector2 = get_global_mouse_position()
+        if absf(skill_target.x - player.x) > 10.0:
+            facing = signf(skill_target.x - player.x)
+        shadow_cleave()
+        return
     if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed and phase == "night":
         var attack_target: Vector2 = get_global_mouse_position()
         if absf(attack_target.x - player.x) > 10.0:
@@ -824,6 +834,8 @@ func begin_night() -> void:
     grounded = true
     jump_was_down = false
     player_hp = 100.0
+    cleave_cooldown = 0.0
+    empowered_strike = false
     boss_hp = 140.0 if current_day == 1 else (190.0 if current_day == 2 else (230.0 if current_day == 3 else (270.0 if current_day == 4 else 340.0)))
     boss_hp *= 0.8 + float(difficulty) * 0.2
     boss_strike_timer = 2.0
@@ -1093,6 +1105,7 @@ func update_night(delta: float) -> void:
     hurt_cooldown = maxf(0.0, hurt_cooldown - delta)
     swing_timer = maxf(0.0, swing_timer - delta)
     dash_cooldown = maxf(0.0, dash_cooldown - delta)
+    cleave_cooldown = maxf(0.0, cleave_cooldown - delta)
     dash_trail = maxf(0.0, dash_trail - delta)
     trap_clock += delta
     var direction := Input.get_axis("ui_left", "ui_right")
@@ -1206,14 +1219,30 @@ func hurt(amount: float) -> void:
         phase = "lose"
         award_run(false)
 
+func shadow_cleave() -> void:
+    if phase != "night" or attack_cooldown > 0.0:
+        return
+    if cleave_cooldown > 0.0:
+        show_notice("Теневой рассекатель: %.1f с" % cleave_cooldown)
+        return
+    if mana < 20:
+        show_notice("Для рассекателя нужно 20 маны")
+        return
+    mana -= 20
+    cleave_cooldown = 6.0
+    empowered_strike = true
+    attack()
+    empowered_strike = false
+    play_cue("magic")
+
 func attack() -> void:
     if attack_cooldown > 0.0:
         return
     attack_cooldown = 0.34
     swing_timer = 0.16
     play_cue("hit")
-    var reach := 88.0
-    var hero_damage: float = 24.0 + 3.0 * float(legacy_hero_level)
+    var reach := 145.0 if empowered_strike else 88.0
+    var hero_damage: float = (24.0 + 3.0 * float(legacy_hero_level)) * (2.0 if empowered_strike else 1.0)
     for e in night_enemies:
         if (e["x"] - player.x) * facing >= -10.0 and (e["x"] - player.x) * facing < reach and absf(player.y - (FLOOR - 22.0)) < 75.0:
             e["hp"] -= hero_damage
@@ -1927,7 +1956,7 @@ func _draw() -> void:
                 var danger_blink: float = 0.60 + 0.40 * sin(atmosphere_clock * 8.0)
                 box(Rect2(310, 212, 530, 43), Color(0.54, 0.09, 0.18, 0.40 + danger_blink * 0.40))
                 label("КРИТИЧЕСКОЕ ЗДОРОВЬЕ! H — ЛЕЧЕНИЕ", 332, 240, 21, Color("ffe0dd"))
-            label("ЛКМ: атака  •  A/D: движение  •  W/Space: прыжок  •  H: лечение  •  Shift: рывок", 20, 625, 17)
+            label("ЛКМ: атака  •  ПКМ: рассекатель (20 маны)  •  A/D: ходьба  •  W/Space: прыжок", 20, 625, 17)
     for particle in particles:
         var alpha: float = clampf(float(particle["life"]) / 0.55, 0.0, 1.0)
         var tint: Color = particle["color"]
@@ -1968,12 +1997,12 @@ func _draw() -> void:
             pause_controls = "Карточки мышью — башни  |  R — ремонт стен (20 маны)"
         elif phase == "night":
             pause_goal = "ЦЕЛЬ: вернись к порталу слева." if stone_taken else ("ЦЕЛЬ: забери камень справа." if boss_hp <= 0.0 else "ЦЕЛЬ: победи хранителя и забери камень.")
-            pause_controls = "ЛКМ — атака  |  A/D — ходить  |  W/Space — прыгать"
+            pause_controls = "ЛКМ — атака  |  ПКМ — рассекатель  |  A/D — ходить"
         else:
             pause_goal = "ЦЕЛЬ: усиливай крепость и продолжай ритуал."
             pause_controls = "ЛКМ — улучшение / продолжение  |  C — обмен маны"
         label(pause_goal, 235, 278, 21, Color("f5d39e"))
         label(pause_controls, 235, 328, 18)
         if phase == "night":
-            label("H — лечение (20 маны)  |  Shift — рывок (15 маны)", 235, 361, 18)
+            label("H — лечение (20 маны)  |  Shift — рывок (15 маны)  |  ПКМ — удар (20 маны)", 235, 361, 18)
         label("M — фон  |  N — эффекты  |  P — продолжить", 235, 414, 20, Color("c9addd"))
