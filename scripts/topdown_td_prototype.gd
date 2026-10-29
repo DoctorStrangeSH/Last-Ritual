@@ -70,7 +70,10 @@ func start_wave() -> bool:
     enemies_spawned = 0
     var count := wave_number + 2
     for i in range(count):
-        enemies.append({"lane": i % PATHS.size(), "pos": PATHS[i % PATHS.size()][0], "waypoint": 1, "hp": 3 + wave_number, "delay": float(i) * 0.7})
+        var role := "runner" if wave_number >= 2 and i % 3 == 0 else ("brute" if wave_number >= 2 and i % 3 == 1 else "grunt")
+        var hp := (7 + wave_number) if role == "brute" else (2 + wave_number if role == "runner" else 3 + wave_number)
+        var speed := 135.0 if role == "runner" else (55.0 if role == "brute" else 85.0)
+        enemies.append({"lane": i % PATHS.size(), "pos": PATHS[i % PATHS.size()][0], "waypoint": 1, "hp": hp, "speed": speed, "role": role, "delay": float(i) * 0.7})
         enemies_spawned += 1
     queue_redraw()
     return true
@@ -84,7 +87,7 @@ func advance_enemies(delta: float) -> void:
         var waypoint: int = enemy["waypoint"]
         var target: Vector2 = path[waypoint]
         var position: Vector2 = enemy["pos"]
-        enemy["pos"] = position.move_toward(target, 85.0 * delta)
+        enemy["pos"] = position.move_toward(target, float(enemy.get("speed", 85.0)) * delta)
         if enemy["pos"].distance_to(target) < 0.1:
             waypoint += 1
             if waypoint >= path.size():
@@ -372,7 +375,7 @@ func _draw() -> void:
             draw_line(path[i], path[i + 1], Color("#594e50"), 24.0)
     for enemy in enemies:
         if enemy["delay"] <= 0.0:
-            draw_circle(enemy["pos"], 12.0, Color("#c67f64"))
+            draw_circle(enemy["pos"], 16.0 if enemy.get("role", "grunt") == "brute" else 10.0 if enemy.get("role", "grunt") == "runner" else 12.0, Color("#8591b8") if enemy.get("role", "grunt") == "brute" else Color("#efc36f") if enemy.get("role", "grunt") == "runner" else Color("#c67f64"))
     for spirit in summoned_spirits:
         draw_circle(spirit["pos"], 10.0, Color("#6de6b2"))
         draw_circle(spirit["pos"], 5.0, Color("#d8fff0"))

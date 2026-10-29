@@ -39,6 +39,8 @@ func run_tests() -> void:
         td.advance_enemies(20.0)
         check(td.enemies.is_empty() and td.altar_hp == 70 and td.enemies_escaped == 3, "TD escaped enemies reduce altar HP")
         check(td.start_wave() and td.wave_number == 2, "TD second wave starts")
+        check(td.enemies[0]["role"] == "runner" and td.enemies[1]["role"] == "brute", "Second wave mixes runners and brutes")
+        check(float(td.enemies[0]["speed"]) > float(td.enemies[1]["speed"]) and int(td.enemies[0]["hp"]) < int(td.enemies[1]["hp"]), "Runner is faster but weaker than brute")
         td.enemies.clear()
         check(td.start_wave() and td.wave_number == 3, "TD third wave starts")
         td.enemies.clear()
