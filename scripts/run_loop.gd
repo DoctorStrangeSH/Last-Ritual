@@ -4,6 +4,9 @@ const NIGHT_SCENE: PackedScene = preload("res://scenes/topdown_night_prototype.t
 const TD_SCENE: PackedScene = preload("res://scenes/topdown_td_prototype.tscn")
 const META_SCRIPT = preload("res://scripts/meta_progression.gd")
 var meta = META_SCRIPT.new()
+var audio_volume := 0.7
+var audio_muted := false
+var audio_settings_path := "user://last_ritual_audio.cfg"
 var phase := "hub" # hub, day, night, reward, victory, defeat
 var phase_count := 0
 var difficulty := 0 # 0 normal, 1 hard, 2 nightmare
@@ -23,9 +26,49 @@ const META_TREASURY_BUTTON := Rect2(642, 510, 300, 65)
 const DAY_BUTTON := Rect2(210, 338, 300, 82)
 const NIGHT_BUTTON := Rect2(642, 338, 300, 82)
 const REWARD_BUTTONS := [Rect2(80, 370, 225, 100), Rect2(350, 370, 225, 100), Rect2(620, 370, 225, 100), Rect2(890, 370, 225, 100)]
+const AUDIO_MUTE_BUTTON := Rect2(810, 52, 96, 42)
+const AUDIO_DOWN_BUTTON := Rect2(916, 52, 38, 42)
+const AUDIO_UP_BUTTON := Rect2(962, 52, 38, 42)
 
 func _ready() -> void:
     meta.load_profile()
+    load_audio_settings()
+    queue_redraw()
+
+func load_audio_settings() -> void:
+    var config := ConfigFile.new()
+    if config.load(audio_settings_path) == OK:
+        audio_volume = clampf(float(config.get_value("audio", "volume", 0.7)), 0.0, 1.0)
+        audio_muted = bool(config.get_value("audio", "muted", false))
+    apply_audio_settings()
+
+func save_audio_settings() -> bool:
+    var config := ConfigFile.new()
+    config.set_value("audio", "volume", audio_volume)
+    config.set_value("audio", "muted", audio_muted)
+    return config.save(audio_settings_path) == OK
+
+func apply_audio_settings() -> void:
+    var master_bus := AudioServer.get_bus_index("Master")
+    if master_bus < 0:
+        return
+    AudioServer.set_bus_mute(master_bus, audio_muted)
+    AudioServer.set_bus_volume_db(master_bus, linear_to_db(maxf(audio_volume, 0.001)))
+
+func adjust_audio_volume(step: float) -> bool:
+    var next_volume := clampf(audio_volume + step, 0.0, 1.0)
+    if is_equal_approx(next_volume, audio_volume):
+        return false
+    audio_volume = next_volume
+    apply_audio_settings()
+    save_audio_settings()
+    queue_redraw()
+    return true
+
+func toggle_audio_mute() -> void:
+    audio_muted = not audio_muted
+    apply_audio_settings()
+    save_audio_settings()
     queue_redraw()
 
 func set_difficulty(level: int) -> bool:
@@ -121,6 +164,18 @@ func _input(event: InputEvent) -> void:
         return
     var point: Vector2 = event.position
     if phase == "hub":
+        if AUDIO_MUTE_BUTTON.has_point(point):
+            toggle_audio_mute()
+            get_viewport().set_input_as_handled()
+            return
+        if AUDIO_DOWN_BUTTON.has_point(point):
+            adjust_audio_volume(-0.1)
+            get_viewport().set_input_as_handled()
+            return
+        if AUDIO_UP_BUTTON.has_point(point):
+            adjust_audio_volume(0.1)
+            get_viewport().set_input_as_handled()
+            return
         for i in range(DIFFICULTY_BUTTONS.size()):
             if DIFFICULTY_BUTTONS[i].has_point(point) and set_difficulty(i):
                 get_viewport().set_input_as_handled()
@@ -175,6 +230,13 @@ func _draw() -> void:
     draw_string(ThemeDB.fallback_font, Vector2(355, 116), "A TOP-DOWN ROGUELITE", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#9da9bf"))
     match phase:
         "hub":
+            draw_rect(AUDIO_MUTE_BUTTON, Color("#526d9b") if not audio_muted else Color("#754452"))
+            draw_string(ThemeDB.fallback_font, AUDIO_MUTE_BUTTON.position + Vector2(8, 26), "SOUND ON" if not audio_muted else "SOUND OFF", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color.WHITE)
+            draw_rect(AUDIO_DOWN_BUTTON, Color("#343b47"))
+            draw_rect(AUDIO_UP_BUTTON, Color("#343b47"))
+            draw_string(ThemeDB.fallback_font, AUDIO_DOWN_BUTTON.position + Vector2(13, 27), "-", HORIZONTAL_ALIGNMENT_LEFT, -1, 21, Color.WHITE)
+            draw_string(ThemeDB.fallback_font, AUDIO_UP_BUTTON.position + Vector2(13, 27), "+", HORIZONTAL_ALIGNMENT_LEFT, -1, 21, Color.WHITE)
+            draw_string(ThemeDB.fallback_font, Vector2(810, 118), "VOLUME %d%%" % roundi(audio_volume * 100.0), HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#e7d3a8"))
             draw_rect(Rect2(72, 160, 1008, 300), Color("#1a2232"))
             draw_string(ThemeDB.fallback_font, Vector2(104, 198), "RUN %d / 6" % (phase_count + 1), HORIZONTAL_ALIGNMENT_LEFT, -1, 21, Color.WHITE)
             draw_string(ThemeDB.fallback_font, Vector2(300, 198), "CHOOSE DIFFICULTY", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#9da9bf"))
