@@ -29,6 +29,7 @@ var legendary_boon := -1
 var shadow_relic := false
 # Second run-long relic, awarded on later optional elite encounters.
 var blood_mantle := false
+var rage_shard := false
 var relic_choice_pending := false
 # Three unique choices generated when a night ends. Never persisted mid-selection.
 var reward_offers: Array[int] = [0, 1, 2]
@@ -241,6 +242,7 @@ func reset_all() -> void:
     legendary_boon = -1
     shadow_relic = false
     blood_mantle = false
+    rage_shard = false
     relic_choice_pending = false
     reward_offers = [0, 1, 2]
     selected_build = ""
@@ -516,7 +518,7 @@ func save_campaign() -> bool:
         "tower_power": tower_power_level, "wall_ward": wall_ward_level,
         "towers": saved_towers,
         "campaign_kills": campaign_kills, "towers_built": maxi(towers_built, towers.size()),
-        "reward_bone": reward_bone_bonus, "reward_mana": reward_mana_bonus, "reward_ward": reward_ward_bonus, "legendary_boon": legendary_boon, "shadow_relic": shadow_relic, "blood_mantle": blood_mantle
+        "reward_bone": reward_bone_bonus, "reward_mana": reward_mana_bonus, "reward_ward": reward_ward_bonus, "legendary_boon": legendary_boon, "shadow_relic": shadow_relic, "blood_mantle": blood_mantle, "rage_shard": rage_shard
     }
     var temp_path := save_path + ".tmp"
     var file := FileAccess.open(temp_path, FileAccess.WRITE)
@@ -629,6 +631,8 @@ func load_campaign() -> bool:
         return false
     if data.has("blood_mantle") and not data["blood_mantle"] is bool:
         return false
+    if data.has("rage_shard") and not data["rage_shard"] is bool:
+        return false
     reset_all()
     campaign_kills = loaded_kills
     towers_built = loaded_builds
@@ -645,6 +649,7 @@ func load_campaign() -> bool:
     legendary_boon = int(data.get("legendary_boon", -1))
     shadow_relic = bool(data.get("shadow_relic", false))
     blood_mantle = bool(data.get("blood_mantle", false))
+    rage_shard = bool(data.get("rage_shard", false))
     towers = []
     phase = "ritual"
     stone_taken = true
@@ -697,10 +702,11 @@ func _input(event: InputEvent) -> void:
         if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
             var relic_click := get_global_mouse_position()
             if relic_click.y >= 260.0 and relic_click.y <= 415.0:
-                if relic_click.x >= 265.0 and relic_click.x <= 557.0:
-                    choose_relic(0)
-                elif relic_click.x >= 595.0 and relic_click.x <= 887.0:
-                    choose_relic(1)
+                for relic_index in range(3):
+                    var relic_left: float = 104.0 + float(relic_index) * 319.0
+                    if relic_click.x >= relic_left and relic_click.x <= relic_left + 304.0:
+                        choose_relic(relic_index)
+                        break
         return
     if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT and event.pressed and phase == "night":
         var skill_target: Vector2 = get_global_mouse_position()
@@ -1171,6 +1177,9 @@ func choose_relic(kind: int) -> void:
     elif kind == 1 and not blood_mantle:
         blood_mantle = true
         show_notice("Кровавый покров: +6 HP за обычного ночного врага!")
+    elif kind == 2 and not rage_shard:
+        rage_shard = true
+        show_notice("Осколок ярости: атака героя наносит на 25% больше урона!")
     else:
         return
     relic_choice_pending = false
@@ -1336,7 +1345,7 @@ func update_night(delta: float) -> void:
             if is_elite:
                 mana += 45
                 souls += 5
-                if not shadow_relic or not blood_mantle:
+                if not shadow_relic or not blood_mantle or not rage_shard:
                     relic_choice_pending = true
                     show_notice("Элитный страж повержен! Выбери реликвию мышью.")
                 else:
@@ -1430,7 +1439,7 @@ func attack() -> void:
     swing_timer = 0.16
     play_cue("hit")
     var reach := 145.0 if empowered_strike else 88.0
-    var hero_damage: float = (24.0 + 3.0 * float(legacy_hero_level)) * (2.0 if empowered_strike else 1.0)
+    var hero_damage: float = (24.0 + 3.0 * float(legacy_hero_level)) * (2.0 if empowered_strike else 1.0) * (1.25 if rage_shard else 1.0)
     for e in night_enemies:
         if (e["x"] - player.x) * facing >= -10.0 and (e["x"] - player.x) * facing < reach and absf(player.y - (FLOOR - 22.0)) < 75.0:
             e["hp"] -= hero_damage
@@ -2224,16 +2233,18 @@ func _draw() -> void:
         box(Rect2(190, 97, 775, 50), Color("39283d"))
         label(notice, 215, 131, 19, Color("f5dcaf"))
     if relic_choice_pending and not paused:
-        box(Rect2(195, 178, 762, 320), Color("171425"))
-        draw_rect(Rect2(195, 178, 762, 320), Color("d6ad6b"), false, 3.0)
+        box(Rect2(76, 178, 1000, 320), Color("171425"))
+        draw_rect(Rect2(76, 178, 1000, 320), Color("d6ad6b"), false, 3.0)
         label("ВЫБЕРИ РЕЛИКВИЮ", 337, 240, 31, Color("ffe0ac"))
-        for i in range(2):
-            var relic_rect := Rect2(265.0 + float(i) * 330.0, 260.0, 292.0, 155.0)
-            var unavailable := (i == 0 and shadow_relic) or (i == 1 and blood_mantle)
+        for i in range(3):
+            var relic_rect := Rect2(104.0 + float(i) * 319.0, 260.0, 304.0, 155.0)
+            var unavailable := (i == 0 and shadow_relic) or (i == 1 and blood_mantle) or (i == 2 and rage_shard)
             box(relic_rect, Color("302a36") if unavailable else Color("43304b"))
             draw_rect(relic_rect, Color("6b626d") if unavailable else Color("d0a66a"), false, 3.0)
-            label("УЖЕ ПОЛУЧЕНО" if unavailable else ("ПЕПЕЛЬНЫЙ ШАГ" if i == 0 else "КРОВАВЫЙ ПОКРОВ"), relic_rect.position.x + 13.0, 319.0, 18, Color("afa5af") if unavailable else Color("f6dab2"))
-            label("Рывок: -50% кулдауна" if i == 0 else "+6 HP за обычного врага", relic_rect.position.x + 13.0, 359.0, 16)
+            var relic_title := "ПЕПЕЛЬНЫЙ ШАГ" if i == 0 else ("КРОВАВЫЙ ПОКРОВ" if i == 1 else "ОСКОЛОК ЯРОСТИ")
+            var relic_detail := "Рывок: -50% кулдауна" if i == 0 else ("+6 HP за обычного врага" if i == 1 else "+25% урона героя")
+            label("УЖЕ ПОЛУЧЕНО" if unavailable else relic_title, relic_rect.position.x + 13.0, 319.0, 17, Color("afa5af") if unavailable else Color("f6dab2"))
+            label(relic_detail, relic_rect.position.x + 13.0, 359.0, 16)
         label("Выбери доступную карточку левой кнопкой мыши", 300, 459, 17, Color("e4d0e9"))
     if paused:
         box(Rect2(190, 155, 775, 340), Color("171425"))
