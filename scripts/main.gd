@@ -722,8 +722,9 @@ func _input(event: InputEvent) -> void:
         return
     if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed and phase == "reward":
         var reward_click: Vector2 = get_global_mouse_position()
-        if reward_click.y >= 270.0 and reward_click.y <= 455.0:
-            choose_reward(int(floor((reward_click.x - 140.0) / 297.0)))
+        var chosen_card := reward_card_at(reward_click)
+        if chosen_card >= 0:
+            choose_reward(chosen_card)
         return
     if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed and phase == "ritual":
         var altar_click: Vector2 = get_global_mouse_position()
@@ -1212,6 +1213,12 @@ func apply_dungeon_route() -> void:
             var p: Rect2 = platforms[i]
             platforms[i] = Rect2(p.position + Vector2(-18.0 if i % 2 == 0 else 18.0, 10.0), p.size)
     secret_cache_pos = Vector2(575.0 if dungeon_route == 0 else (610.0 if dungeon_route == 1 else 535.0), FLOOR - 27.0)
+
+func reward_card_at(pos: Vector2) -> int:
+    for i in range(3):
+        if Rect2(140.0 + float(i) * 297.0, 270.0, 276.0, 185.0).has_point(pos):
+            return i
+    return -1
 
 func cleave_charge_ratio() -> float:
     return 1.0 - clampf(cleave_cooldown / 6.0, 0.0, 1.0)
@@ -1766,8 +1773,9 @@ func _draw() -> void:
         label("ЛЕГЕНДАРНЫЙ ДАР — выбери одно усиление" if legendary_choice else "Один дар после каждой ночи • до конца похода", 205, 250, 19, Color("cfc2dc"))
         for reward_i in range(3):
             var reward_x: float = 140.0 + float(reward_i) * 297.0
-            box(Rect2(reward_x, 270.0, 276.0, 185.0), Color("322442"))
-            draw_rect(Rect2(reward_x, 270.0, 276.0, 185.0), Color("a68bb9"), false, 2.0)
+            var card_hovered := reward_card_at(get_global_mouse_position()) == reward_i
+            box(Rect2(reward_x, 270.0, 276.0, 185.0), Color("493057") if card_hovered else Color("322442"))
+            draw_rect(Rect2(reward_x, 270.0, 276.0, 185.0), Color("f4c77a") if card_hovered else Color("a68bb9"), false, 3.0 if card_hovered else 2.0)
             if legendary_choice:
                 label("ЛЕДЯНАЯ БУРЯ" if reward_i == 0 else ("АДСКИЙ ВЗРЫВ" if reward_i == 1 else "ВЕЧНАЯ СТРАЖА"), reward_x + 18.0, 324.0, 19, Color("ffe0a8"))
                 label("Замедление 65%" if reward_i == 0 else ("Сильнее урон по площади" if reward_i == 1 else "+90 HP скелетам"), reward_x + 17.0, 370.0, 17)
@@ -1777,7 +1785,8 @@ func _draw() -> void:
                 label(reward_name(reward_kind), reward_x + 18.0, 324.0, 19, Color("f3dbba"))
                 label(reward_detail(reward_kind), reward_x + 18.0, 370.0, 17)
                 label(reward_note(reward_kind), reward_x + 18.0, 406.0, 17, Color("bbdfcc"))
-            label("НАЖМИ", reward_x + 87.0, 437.0, 17, Color("ffe1ad"))
+            if card_hovered:
+                label("ВЫБРАТЬ", reward_x + 79.0, 437.0, 17, Color("ffe1ad"))
         return
     if phase == "ritual":
         var altar_glow := 0.58 + 0.42 * sin(atmosphere_clock * 2.2)
