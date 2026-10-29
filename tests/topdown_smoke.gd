@@ -199,12 +199,12 @@ func run_tests() -> void:
     for i in range(3):
         game.attack_cooldown = 0.0
         check(game.attack(Vector2(570.0, 240.0)), "Hero can attack first enemy")
-    check(game.enemies.size() == 1, "First enemy defeated")
+    check(game.enemies.size() == 1 and game.night_souls == 1, "First enemy defeated and awards a soul")
     game.player_pos = Vector2(710.0, 370.0)
     for i in range(3):
         game.attack_cooldown = 0.0
         check(game.attack(Vector2(730.0, 370.0)), "Hero can attack ranged enemy")
-    check(game.reward_available and not game.door_available(), "Reward blocks exit until collected")
+    check(game.reward_available and game.night_souls == 2 and not game.door_available(), "Defeating room earns souls but reward blocks exit")
     check(not game.choose_relic("invalid"), "Invalid relic is rejected")
     check(game.choose_relic("bone"), "Bone relic can be chosen")
     check(game.attack_damage == 2 and game.relics == ["bone"], "Bone relic increases damage")
@@ -237,6 +237,20 @@ func run_tests() -> void:
     curse_probe.player_hp = 20
     check(not curse_probe.choose_route(2) and curse_probe.room_index == 0 and curse_probe.player_hp == 20, "Cursed altar sacrifice is blocked at low HP")
     curse_probe.queue_free()
+    var merchant_probe = packed.instantiate()
+    root.add_child(merchant_probe)
+    merchant_probe.enemies.clear()
+    check(merchant_probe.click_ui(merchant_probe.ROUTE_RECTS[3].get_center()) and merchant_probe.shop_open, "Mouse opens wandering merchant after clearing room")
+    check(not merchant_probe.buy_shop_offer(0) and merchant_probe.attack_damage == 1, "Merchant rejects unaffordable purchase")
+    merchant_probe.night_souls = 3
+    check(merchant_probe.click_ui(merchant_probe.SHOP_RECTS[0].get_center()) and merchant_probe.night_souls == 1 and merchant_probe.attack_damage == 2, "Merchant sells damage for two souls")
+    merchant_probe.player_hp = 60
+    check(merchant_probe.click_ui(merchant_probe.SHOP_RECTS[1].get_center()) and merchant_probe.night_souls == 0 and merchant_probe.player_hp == 80, "Merchant sells healing for one soul")
+    check(not merchant_probe.buy_shop_offer(0), "Spent souls cannot be reused")
+    check(merchant_probe.click_ui(merchant_probe.SHOP_RECTS[2].get_center()) and merchant_probe.room_index == 1 and not merchant_probe.shop_open, "Leaving merchant advances to next encounter")
+    merchant_probe.restart_run()
+    check(merchant_probe.night_souls == 0 and merchant_probe.attack_damage == 1 and not merchant_probe.shop_open, "Restart resets souls, purchases and merchant state")
+    merchant_probe.queue_free()
     check(game.room_index == 1 and game.hostile_shots.is_empty(), "New room resets projectiles")
     game.enemies.clear()
     game.reward_available = true
