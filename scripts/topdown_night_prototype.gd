@@ -11,6 +11,9 @@ var hostile_shots: Array[Dictionary] = []
 var ranged_fire_clock := 0.0
 var reward_available := false
 var rewards_taken := 0
+var relics: Array[String] = []
+var attack_damage := 1
+var attack_speed_multiplier := 1.0
 var attack_cooldown := 0.0
 var invulnerable_time := 0.0
 
@@ -48,20 +51,32 @@ func attack(target: Vector2) -> bool:
             hit = i
     if hit == -1:
         return false
-    enemies[hit]["hp"] -= 1
+    enemies[hit]["hp"] -= attack_damage
     if enemies[hit]["hp"] <= 0:
         enemies.remove_at(hit)
     if enemies.is_empty():
         reward_available = true
-    attack_cooldown = 0.20
+    attack_cooldown = 0.20 / attack_speed_multiplier
     queue_redraw()
     return true
 
 func claim_reward() -> bool:
-    if not reward_available:
+    return choose_relic("bone")
+
+func choose_relic(kind: String) -> bool:
+    if not reward_available or not kind in ["bone", "ember", "blood"]:
         return false
     reward_available = false
     rewards_taken += 1
+    relics.append(kind)
+    match kind:
+        "bone":
+            attack_damage += 1
+        "ember":
+            attack_speed_multiplier += 0.25
+        "blood":
+            player_hp = maxi(1, player_hp - 15)
+            attack_damage += 2
     queue_redraw()
     return true
 
@@ -119,8 +134,11 @@ func shoot_hostile(origin: Vector2) -> void:
 func _unhandled_input(event: InputEvent) -> void:
     if event is InputEventMouseButton and event.pressed:
         if event.button_index == MOUSE_BUTTON_LEFT:
-            if reward_available and player_pos.distance_to(Vector2(576, 325)) < 85.0:
-                claim_reward()
+            if reward_available and get_global_mouse_position().y >= 450.0 and get_global_mouse_position().y <= 520.0:
+                var mx := get_global_mouse_position().x
+                if mx >= 280.0 and mx < 460.0: choose_relic("bone")
+                elif mx >= 490.0 and mx < 670.0: choose_relic("ember")
+                elif mx >= 700.0 and mx < 880.0: choose_relic("blood")
             else:
                 attack(get_global_mouse_position())
         elif event.button_index == MOUSE_BUTTON_RIGHT:
@@ -138,6 +156,9 @@ func _draw() -> void:
         draw_circle(shot["pos"], 7.0, Color("#ffbd77"))
     if reward_available:
         draw_circle(Vector2(576, 325), 24.0, Color("#f4d78c"))
+        draw_rect(Rect2(280.0, 450.0, 180.0, 70.0), Color("#85a4c9"))
+        draw_rect(Rect2(490.0, 450.0, 180.0, 70.0), Color("#de974c"))
+        draw_rect(Rect2(700.0, 450.0, 180.0, 70.0), Color("#b65a72"))
     if door_available():
         draw_rect(Rect2(1058.0, 275.0, 46.0, 96.0), Color("#72b59b"))
     else:

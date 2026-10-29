@@ -36,6 +36,13 @@ func run_tests() -> void:
         check(prototype.reward_available and prototype.enemies.is_empty(), "P1 cleared room offers reward")
         check(not prototype.door_available() and not prototype.next_room(), "P1 reward cannot be skipped")
         check(prototype.claim_reward() and not prototype.claim_reward(), "P1 reward can be claimed once")
+        check(prototype.attack_damage == 2 and prototype.relics == ["bone"], "P1 bone relic improves attack damage")
+        check(not prototype.choose_relic("blood"), "P1 room reward cannot be duplicated")
+        prototype.reward_available = true
+        check(prototype.choose_relic("ember") and is_equal_approx(prototype.attack_speed_multiplier, 1.25), "P1 ember relic improves attack speed")
+        prototype.reward_available = true
+        var hp_before_relic: int = prototype.player_hp
+        check(prototype.choose_relic("blood") and prototype.player_hp < hp_before_relic and prototype.attack_damage == 4, "P1 blood relic trades health for damage")
         check(prototype.door_available(), "P1 exit opens after collecting reward")
         check(prototype.next_room() and prototype.room_index == 1, "P1 moves to next room after reward")
         check(prototype.hostile_shots.is_empty(), "P1 projectiles cleared between rooms")
