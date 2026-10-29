@@ -2,6 +2,7 @@ extends Node2D
 ## V2 independent top-down TD construction slice. No paths or wave spawning yet.
 const SLOT_POSITIONS := [Vector2(280, 190), Vector2(430, 190), Vector2(590, 190), Vector2(750, 190), Vector2(280, 440), Vector2(430, 440), Vector2(590, 440), Vector2(750, 440)]
 const COSTS := {"bone": 30, "fire": 45, "necro": 60}
+const WAVE_BUTTON := Rect2(65, 545, 170, 60)
 var slots: Array[Dictionary] = []
 var selected_type := ""
 var selected_slot := -1
@@ -168,6 +169,9 @@ func _unhandled_input(event: InputEvent) -> void:
             queue_redraw()
         elif event.button_index == MOUSE_BUTTON_LEFT:
             var point := get_global_mouse_position()
+            if WAVE_BUTTON.has_point(point):
+                start_wave()
+                return
             var types := ["bone", "fire", "necro"]
             for i in range(types.size()):
                 if Rect2(260.0 + i * 210.0, 550.0, 180.0, 64.0).has_point(point):
@@ -187,6 +191,9 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _draw() -> void:
     draw_rect(Rect2(Vector2.ZERO, Vector2(1152, 648)), Color("#131827"))
+    draw_string(ThemeDB.fallback_font, Vector2(66, 45), "ALTAR %d / 100     WAVE %d / 3     GOLD %d" % [altar_hp, wave_number, coins], HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color.WHITE)
+    draw_rect(WAVE_BUTTON, Color("#487d6b") if enemies.is_empty() and wave_number < 3 and altar_hp > 0 else Color("#454b54"))
+    draw_string(ThemeDB.fallback_font, Vector2(78, 581), "START WAVE", HORIZONTAL_ALIGNMENT_LEFT, -1, 19, Color.WHITE)
     for path in PATHS:
         for i in range(path.size() - 1):
             draw_line(path[i], path[i + 1], Color("#594e50"), 24.0)
