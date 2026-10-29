@@ -168,6 +168,19 @@ func run_tests() -> void:
             check(hidden.door_neighbors().has(delta), "Discovered secret opens its doorway")
             check(not hidden.reveal_adjacent_secret(), "Secret cannot be rediscovered repeatedly")
         hidden.queue_free()
+    var click_door_scene = load("res://scenes/topdown_night_prototype.tscn")
+    if click_door_scene != null:
+        var click_night = click_door_scene.instantiate()
+        root.add_child(click_night)
+        click_night.enable_floor_exploration(12)
+        click_night.enemies.clear()
+        click_night.reward_available = false
+        var click_direction: Vector2i = click_night.door_neighbors().keys()[0]
+        var click_point: Vector2 = click_night.DOOR_POINTS[click_direction]
+        check(not click_night.click_open_door(click_point), "Door click requires nearby hero")
+        click_night.player_pos = click_point + Vector2(-20, 0)
+        check(click_night.click_open_door(click_point), "Left-click on nearby open door changes room")
+        click_night.queue_free()
     var td_scene := load("res://scenes/topdown_td_prototype.tscn") as PackedScene
     check(td_scene != null, "Top-down TD scene loads")
     if td_scene != null:
