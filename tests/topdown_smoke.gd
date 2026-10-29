@@ -147,6 +147,27 @@ func run_tests() -> void:
         events.open_room(event_id)
         check(not events.shrine_open, "Shrine cannot be claimed twice")
         events.queue_free()
+    var hidden_scene = load("res://scenes/topdown_night_prototype.tscn")
+    if hidden_scene != null:
+        var hidden = hidden_scene.instantiate()
+        root.add_child(hidden)
+        hidden.enable_floor_exploration(42)
+        var stash_id := -1
+        for room in hidden.floor_data["rooms"]:
+            if room["kind"] == "ТАЙНИК":
+                stash_id = int(room["id"])
+        check(stash_id >= 0, "Generated floor includes hidden stash")
+        if stash_id >= 0:
+            var neighbor_id: int = int(hidden.floor_data["rooms"][stash_id]["neighbors"][0])
+            hidden.open_room(neighbor_id)
+            hidden.enemies.clear()
+            hidden.reward_available = false
+            var delta: Vector2i = hidden.floor_data["rooms"][stash_id]["grid"] - hidden.floor_data["rooms"][neighbor_id]["grid"]
+            check(not hidden.door_neighbors().has(delta), "Secret doorway stays invisible before discovery")
+            check(hidden.reveal_adjacent_secret(), "Player can discover secret next door")
+            check(hidden.door_neighbors().has(delta), "Discovered secret opens its doorway")
+            check(not hidden.reveal_adjacent_secret(), "Secret cannot be rediscovered repeatedly")
+        hidden.queue_free()
     var td_scene := load("res://scenes/topdown_td_prototype.tscn") as PackedScene
     check(td_scene != null, "Top-down TD scene loads")
     if td_scene != null:

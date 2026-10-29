@@ -25,6 +25,7 @@ var exploration_enabled := false
 var floor_data: Dictionary = {}
 var visited_rooms: Dictionary = {}
 var cleared_rooms: Dictionary = {}
+var revealed_secrets: Dictionary = {}
 const DOOR_POINTS := {Vector2i.RIGHT: Vector2(1080, 325), Vector2i.LEFT: Vector2(70, 325), Vector2i.UP: Vector2(576, 91), Vector2i.DOWN: Vector2(576, 562)}
 var difficulty := 0 # 0 normal, 1 hard, 2 nightmare
 var dungeon_seed := 0
@@ -335,6 +336,7 @@ func enable_floor_exploration(seed_value: int = 0) -> void:
     floor_data = FLOOR_SCRIPT.generate_floor(seed_value)
     visited_rooms.clear()
     cleared_rooms.clear()
+    revealed_secrets.clear()
     visited_rooms[0] = true
     open_room(0)
 
@@ -347,8 +349,24 @@ func door_neighbors() -> Dictionary:
     for id in current["neighbors"]:
         var neighbor_id: int = int(id)
         var delta: Vector2i = floor_data["rooms"][neighbor_id]["grid"] - origin
+        if str(floor_data["rooms"][neighbor_id]["kind"]) == "ТАЙНИК" and not revealed_secrets.has(neighbor_id):
+            continue
         doors[delta] = neighbor_id
     return doors
+
+func reveal_adjacent_secret() -> bool:
+    if not exploration_enabled or not door_available():
+        return false
+    var current: Dictionary = floor_data["rooms"][room_index]
+    for neighbor in current["neighbors"]:
+        var id: int = int(neighbor)
+        if str(floor_data["rooms"][id]["kind"]) == "ТАЙНИК" and not revealed_secrets.has(id):
+            revealed_secrets[id] = true
+            reward_notice = "ОБНАРУЖЕН ТАЙНЫЙ ПРОХОД!"
+            reward_notice_time = 3.0
+            queue_redraw()
+            return true
+    return false
 
 func travel_through_door(direction: Vector2i) -> bool:
     if not exploration_enabled or not door_available():
@@ -656,6 +674,9 @@ func _unhandled_input(event: InputEvent) -> void:
             return
     if help_visible:
         return
+    if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_E and exploration_enabled:
+        reveal_adjacent_secret()
+        return
     if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_SPACE:
         dash()
         return
@@ -821,6 +842,19 @@ func _draw() -> void:
             draw_rect(tile, Color("#e6d7a6") if id == room_index else Color("#5f927f") if cleared_rooms.has(id) else Color("#6a647e"))
             draw_rect(tile, Color("#1a2630"), false, 1.0)
         draw_label("КАРТА", Vector2(927, 151), 13, Color("#e6d7a6"))
+        if door_available():
+            var nearby_secret_direction := Vector2i.ZERO
+            var current_room: Dictionary = floor_data["rooms"][room_index]
+            for neighbor in current_room["neighbors"]:
+                var secret_id: int = int(neighbor)
+                if str(floor_data["rooms"][secret_id]["kind"]) == "ТАЙНИК" and not revealed_secrets.has(secret_id):
+                    nearby_secret_direction = floor_data["rooms"][secret_id]["grid"] - current_room["grid"]
+                    break
+            if nearby_secret_direction != Vector2i.ZERO:
+                var crack_center: Vector2 = DOOR_POINTS[nearby_secret_direction]
+                draw_line(crack_center + Vector2(-12, -10), crack_center + Vector2(3, 0), Color("#ba9f75"), 2.5)
+                draw_line(crack_center + Vector2(3, 0), crack_center + Vector2(-2, 17), Color("#ba9f75"), 2.5)
+                draw_label("ТРЕЩИНА В СТЕНЕ — E: ИССЛЕДОВАТЬ", Vector2(705, 198), 13, Color("#f1d29e"))
     if exploration_enabled:
         draw_label("ЭТАЖ: %d/10  ИССЛЕДОВАНО: %d" % [room_index + 1, visited_rooms.size()], Vector2(390, 63), 15, Color("#e7d3a8"))
         for direction in door_neighbors():
