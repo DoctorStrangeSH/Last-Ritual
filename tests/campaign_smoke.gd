@@ -36,6 +36,12 @@ func run_tests() -> void:
     check(game.tower_ability_description("necro", 3) == "Скелет: 125 HP / 6 с", "upgraded necro tower description preserved")
     check(game.tower_ability_description("fire", 1) == "Крит 18% + взрыв", "fire tower ability description preserved")
     check(game.tower_ability_description("fire", 3) == "Крит 26% + взрыв", "upgraded fire tower description preserved")
+    check(game.tower_sell_refund({"type": "bone", "level": 1}) == 15, "bone tower level one refund")
+    check(game.tower_sell_refund({"type": "bone", "level": 2}) == 27, "bone tower level two refund")
+    check(game.tower_sell_refund({"type": "fire", "level": 1}) == 27, "ballista level one refund")
+    check(game.tower_sell_refund({"type": "fire", "level": 3}) == 65, "ballista level three refund")
+    check(game.tower_sell_refund({"type": "necro", "level": 1}) == 32, "necromancer level one refund")
+    check(game.tower_sell_refund({"type": "necro", "level": 3}) == 70, "necromancer level three refund")
     check(game.current_day == 1, "initial day")
     game.dungeon_route = 1
     game.platforms = [Rect2(200.0, 420.0, 135.0, 16.0)]
