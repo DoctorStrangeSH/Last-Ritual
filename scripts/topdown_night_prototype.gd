@@ -5,6 +5,9 @@ const SFX_SCRIPT = preload("res://scripts/procedural_sfx.gd")
 var sfx: Node
 const SPEED := 240.0
 const ATTACK_RANGE := 155.0
+const DASH_DISTANCE := 170.0
+const DASH_COOLDOWN := 2.5
+const DASH_INVULNERABILITY := 0.22
 var room_index := 0
 var difficulty := 0 # 0 normal, 1 hard, 2 nightmare
 var dungeon_seed := 0
@@ -17,7 +20,12 @@ const ROUTE_RECTS := [Rect2(66.0, 490.0, 245.0, 65.0), Rect2(327.0, 490.0, 245.0
 const SHOP_RECTS := [Rect2(340.0, 320.0, 155.0, 60.0), Rect2(500.0, 320.0, 155.0, 60.0), Rect2(660.0, 320.0, 155.0, 60.0)]
 const HELP_BUTTON := Rect2(984.0, 10.0, 153.0, 46.0)
 const HELP_CLOSE_BUTTON := Rect2(688.0, 441.0, 135.0, 48.0)
+const DASH_BUTTON := Rect2(60.0, 600.0, 170.0, 38.0)
 var player_pos := Vector2(160.0, 325.0)
+var last_move_direction := Vector2.RIGHT
+var dash_cooldown := 0.0
+var dash_flash_time := 0.0
+var dash_origin := Vector2.ZERO
 var player_hp := 100
 var enemies: Array[Dictionary] = []
 var hostile_shots: Array[Dictionary] = []
@@ -73,9 +81,27 @@ func move_player(direction: Vector2, delta: float) -> void:
         return
     if direction.length_squared() > 1.0:
         direction = direction.normalized()
+    if direction.length_squared() > 0.01:
+        last_move_direction = direction.normalized()
     player_pos += direction * SPEED * delta
     player_pos = player_pos.clamp(ARENA.position + Vector2(16, 16), ARENA.end - Vector2(16, 16))
     queue_redraw()
+
+func dash() -> bool:
+    if help_visible or run_state != "playing" or shop_open or reward_available or dash_cooldown > 0.0:
+        return false
+    if last_move_direction.length_squared() < 0.01:
+        return false
+    var destination: Vector2 = (player_pos + last_move_direction.normalized() * DASH_DISTANCE).clamp(ARENA.position + Vector2(16, 16), ARENA.end - Vector2(16, 16))
+    if player_pos.distance_squared_to(destination) < 1.0:
+        return false
+    dash_origin = player_pos
+    player_pos = destination
+    dash_cooldown = DASH_COOLDOWN
+    dash_flash_time = 0.18
+    invulnerable_time = maxf(invulnerable_time, DASH_INVULNERABILITY)
+    queue_redraw()
+    return true
 
 func attack(target: Vector2) -> bool:
     if run_state != "playing" or attack_cooldown > 0.0 or enemies.is_empty():
@@ -193,6 +219,9 @@ func leave_shop() -> bool:
 
 func restart_run() -> void:
     help_visible = false
+    dash_cooldown = 0.0
+    dash_flash_time = 0.0
+    last_move_direction = Vector2.RIGHT
     player_hp = 100
     night_souls = 0
     shop_open = false
@@ -228,6 +257,8 @@ func _process(delta: float) -> void:
     if help_visible or run_state != "playing":
         return
     attack_cooldown = maxf(0.0, attack_cooldown - delta)
+    dash_cooldown = maxf(0.0, dash_cooldown - delta)
+    dash_flash_time = maxf(0.0, dash_flash_time - delta)
     invulnerable_time = maxf(0.0, invulnerable_time - delta)
     player_hit_flash = maxf(0.0, player_hit_flash - delta)
     reward_notice_time = maxf(0.0, reward_notice_time - delta)
@@ -332,6 +363,12 @@ func _unhandled_input(event: InputEvent) -> void:
             return
     if help_visible:
         return
+    if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_SPACE:
+        dash()
+        return
+    if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT and DASH_BUTTON.has_point(event.position):
+        dash()
+        return
     if event is InputEventKey and event.pressed and event.keycode == KEY_R and run_state != "playing":
         restart_run()
         return
@@ -352,6 +389,8 @@ func _draw() -> void:
     draw_rect(Rect2(Vector2.ZERO, Vector2(1152, 648)), Color("#111521"))
     draw_rect(ARENA, Color("#242936"))
     draw_rect(ARENA, Color("#7d7798"), false, 4.0)
+    if dash_flash_time > 0.0:
+        draw_line(dash_origin, player_pos, Color("#83e4ed", dash_flash_time / 0.18), 8.0)
     draw_circle(player_pos, 22.0 if player_hit_flash > 0.0 else 17.0, Color("#fff1d1") if player_hit_flash > 0.0 else (Color("#80dbed") if invulnerable_time <= 0.0 or int(invulnerable_time * 16.0) % 2 == 0 else Color("#4c657a")))
     draw_rect(Rect2(48.0, 25.0, 220.0, 18.0), Color("#442c37"))
     draw_rect(Rect2(48.0, 25.0, 220.0 * float(player_hp) / 100.0, 18.0), Color("#cf657a"))
@@ -407,6 +446,8 @@ func _draw() -> void:
     else:
         draw_rect(Rect2(1058.0, 275.0, 46.0, 96.0), Color("#59495b"))
 
+    draw_rect(DASH_BUTTON, Color("#497b80") if dash_cooldown <= 0.0 and run_state == "playing" and not reward_available and not shop_open else Color("#353c46"))
+    draw_label("DASH / SPACE" if dash_cooldown <= 0.0 else "DASH %.1fs" % dash_cooldown, DASH_BUTTON.position + Vector2(14, 26), 16, Color("#fff2c5"))
     draw_rect(HELP_BUTTON, Color("#526d9b") if help_visible else Color("#343b47"))
     draw_rect(HELP_BUTTON, Color("#d5c592"), false, 1.5)
     draw_label("HELP / H", HELP_BUTTON.position + Vector2(24.0, 30.0), 16, Color("#fff2c5"))
@@ -419,8 +460,9 @@ func _draw() -> void:
         draw_label("LEFT CLICK enemy  -  Attack in range", Vector2(354, 273), 18)
         draw_label("CLICK a relic card  -  Choose your reward", Vector2(354, 308), 17)
         draw_label("CLICK a route card  -  Choose the next room", Vector2(354, 343), 17)
-        draw_label("RIGHT CLICK near the open door  -  Advance", Vector2(354, 378), 16)
-        draw_label("H  -  Close this help panel", Vector2(354, 420), 17, Color("#d5c592"))
-        draw_label("The action pauses while help is open.", Vector2(354, 460), 15, Color("#9da9bf"))
+        draw_label("SPACE or DASH button  -  Evade (2.5s cooldown)", Vector2(354, 378), 16)
+        draw_label("RIGHT CLICK near the door  -  Advance", Vector2(354, 409), 16)
+        draw_label("H  -  Close this help panel", Vector2(354, 438), 16, Color("#d5c592"))
+        draw_label("The action pauses while help is open.", Vector2(354, 469), 14, Color("#9da9bf"))
         draw_rect(HELP_CLOSE_BUTTON, Color("#527d70"))
         draw_label("CONTINUE", HELP_CLOSE_BUTTON.position + Vector2(12.0, 31.0), 17, Color.WHITE)
