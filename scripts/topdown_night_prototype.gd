@@ -4,6 +4,9 @@ const ARENA := Rect2(48.0, 68.0, 1056.0, 520.0)
 const SPEED := 240.0
 const ATTACK_RANGE := 155.0
 var room_index := 0
+var dungeon_seed := 0
+var room_variant := 0
+const ROOM_KINDS := ["CRYPT", "AMBUSH", "ELITE"]
 var player_pos := Vector2(160.0, 325.0)
 var player_hp := 100
 var enemies: Array[Dictionary] = []
@@ -28,9 +31,19 @@ func open_room(index: int) -> void:
     enemies.clear()
     hostile_shots.clear()
     ranged_fire_clock = 0.0
+    room_variant = posmod(dungeon_seed + index, ROOM_KINDS.size())
+    var offsets := [Vector2.ZERO, Vector2(-90.0, 65.0), Vector2(40.0, -65.0)]
+    var offset: Vector2 = offsets[room_variant]
     for i in range(2):
-        enemies.append({"pos": Vector2(570.0 + i * 160.0, 240.0 + i * 130.0), "hp": 3, "speed": 65.0 + i * 20.0, "ranged": i == 1})
+        enemies.append({"pos": Vector2(570.0 + i * 160.0, 240.0 + i * 130.0) + offset, "hp": 3 + (2 if room_variant == 2 else 0), "speed": 65.0 + i * 20.0 + (25.0 if room_variant == 1 else 0.0), "ranged": i == 1})
+    if room_variant == 2:
+        enemies.append({"pos": Vector2(850.0, 450.0), "hp": 6, "speed": 90.0, "ranged": false})
     queue_redraw()
+
+func set_dungeon_seed(value: int) -> void:
+    dungeon_seed = value
+    if run_state == "playing" and room_index == 0 and rewards_taken == 0:
+        open_room(0)
 
 func move_player(direction: Vector2, delta: float) -> void:
     if run_state != "playing":
@@ -207,7 +220,7 @@ func _draw() -> void:
     draw_circle(player_pos, 17.0, Color("#80dbed"))
     draw_rect(Rect2(48.0, 25.0, 220.0, 18.0), Color("#442c37"))
     draw_rect(Rect2(48.0, 25.0, 220.0 * float(player_hp) / 100.0, 18.0), Color("#cf657a"))
-    draw_label("HP %d / 100     ROOM %d / 3     RELICS %d" % [player_hp, room_index + 1, relics.size()], Vector2(280, 41), 17)
+    draw_label("HP %d / 100     ROOM %d / 3     %s     RELICS %d" % [player_hp, room_index + 1, ROOM_KINDS[room_variant], relics.size()], Vector2(280, 41), 17)
     if run_state == "won":
         draw_rect(Rect2(350.0, 190.0, 452.0, 180.0), Color("#295343"))
         draw_label("VICTORY", Vector2(510, 245), 30)
