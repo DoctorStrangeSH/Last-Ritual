@@ -32,6 +32,8 @@ var room_variant := 0
 var route_boon := ""
 var night_souls := 0
 var shop_open := false
+var shrine_open := false
+const SHRINE_BUTTONS := [Rect2(300, 323, 170, 60), Rect2(491, 323, 170, 60), Rect2(682, 323, 170, 60)]
 const ROOM_KINDS := ["CRYPT", "AMBUSH", "ELITE"]
 const ROOM_TACTICS := ["СКЛЕП: РАЗНЫЕ ВРАГИ", "ЗАСАДА: БЫСТРЫЕ ВРАГИ", "ЭЛИТА: БРОНИРОВАННЫЙ ВРАГ"]
 const ROUTE_RECTS := [Rect2(66.0, 490.0, 245.0, 65.0), Rect2(327.0, 490.0, 245.0, 65.0), Rect2(588.0, 490.0, 245.0, 65.0), Rect2(849.0, 490.0, 245.0, 65.0)]
@@ -74,6 +76,7 @@ func open_room(index: int, override_variant: int = -1) -> void:
     player_pos = Vector2(160.0, 325.0)
     reward_available = false
     shop_open = false
+    shrine_open = false
     enemies.clear()
     hostile_shots.clear()
     obstacles.clear()
@@ -99,17 +102,7 @@ func open_room(index: int, override_variant: int = -1) -> void:
             queue_redraw()
             return
         if room_kind == "СОБЫТИЕ":
-            var event_choice: int = posmod(dungeon_seed + room_index, 2)
-            if event_choice == 0:
-                player_hp = mini(100, player_hp + 15)
-                route_boon = "АЛТАРЬ: +15 ЗДОРОВЬЯ"
-            else:
-                player_hp = maxi(1, player_hp - 10)
-                attack_damage += 1
-                route_boon = "ТЁМНЫЙ ДОГОВОР: -10 ЗДОРОВЬЯ, +1 УРОН"
-            cleared_rooms[room_index] = true
-            reward_notice = route_boon
-            reward_notice_time = 3.5
+            shrine_open = true
             queue_redraw()
             return
         if room_kind == "СОКРОВИЩНИЦА":
@@ -310,10 +303,31 @@ func choose_relic(kind: String) -> bool:
     queue_redraw()
     return true
 
+func choose_shrine_blessing(choice: int) -> bool:
+    if not shrine_open or choice < 0 or choice > 2:
+        return false
+    if choice == 0:
+        player_hp = mini(100, player_hp + 15)
+        route_boon = "АЛТАРЬ: +15 ЗДОРОВЬЯ"
+    elif choice == 1:
+        if player_hp <= 10:
+            return false
+        player_hp -= 10
+        attack_damage += 1
+        route_boon = "ТЁМНЫЙ ДОГОВОР: -10 ЗДОРОВЬЯ, +1 УРОН"
+    else:
+        route_boon = "АЛТАРЬ: ВЫ ОТКАЗАЛИСЬ"
+    shrine_open = false
+    cleared_rooms[room_index] = true
+    reward_notice = route_boon
+    reward_notice_time = 3.5
+    queue_redraw()
+    return true
+
 func door_available() -> bool:
     if exploration_enabled:
-        return run_state == "playing" and not shop_open and enemies.is_empty() and not reward_available
-    return run_state == "playing" and not shop_open and enemies.is_empty() and not reward_available and room_index < 2
+        return run_state == "playing" and not shop_open and not shrine_open and enemies.is_empty() and not reward_available
+    return run_state == "playing" and not shop_open and not shrine_open and enemies.is_empty() and not reward_available and room_index < 2
 
 func enable_floor_exploration(seed_value: int = 0) -> void:
     exploration_enabled = true
@@ -600,6 +614,11 @@ func click_ui(point: Vector2) -> bool:
             restart_run()
             return true
         return false
+    if shrine_open:
+        for i in range(SHRINE_BUTTONS.size()):
+            if SHRINE_BUTTONS[i].has_point(point):
+                return choose_shrine_blessing(i)
+        return true
     if shop_open:
         for i in range(SHOP_RECTS.size()):
             if SHOP_RECTS[i].has_point(point):
@@ -764,6 +783,13 @@ func _draw() -> void:
                 draw_rect(RELIC_RECTS[i], Color("#fff2c5"), false, 3.0)
             draw_label(RELIC_TITLES[i], RELIC_RECTS[i].position + Vector2(10, 26), 15)
             draw_label(RELIC_EFFECTS[i], RELIC_RECTS[i].position + Vector2(10, 50), 12)
+    if shrine_open:
+        draw_rect(Rect2(260, 206, 635, 218), Color("#26313e"))
+        draw_label("ДРЕВНИЙ АЛТАРЬ — ВЫБЕРИТЕ ДАР", Vector2(340, 255), 23, Color("#f3d7ad"))
+        var options := ["+15 ЗДОРОВЬЯ", "-10 ЗД / +1 УРОН", "ОТКАЗАТЬСЯ"]
+        for i in range(SHRINE_BUTTONS.size()):
+            draw_rect(SHRINE_BUTTONS[i], Color("#497568") if i == 0 else Color("#8a4e5e") if i == 1 else Color("#5d6074"))
+            draw_label(options[i], SHRINE_BUTTONS[i].position + Vector2(8, 35), 16)
     if shop_open:
         draw_rect(Rect2(285.0, 205.0, 570.0, 220.0), Color("#263b45"))
         draw_label("СТРАНСТВУЮЩИЙ ТОРГОВЕЦ — ДУШИ %d" % night_souls, Vector2(359, 255), 23)
