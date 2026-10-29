@@ -7,8 +7,11 @@ var room_index := 0
 var dungeon_seed := 0
 var room_variant := 0
 var route_boon := ""
+var night_souls := 0
+var shop_open := false
 const ROOM_KINDS := ["CRYPT", "AMBUSH", "ELITE"]
-const ROUTE_RECTS := [Rect2(180.0, 490.0, 245.0, 65.0), Rect2(455.0, 490.0, 245.0, 65.0), Rect2(730.0, 490.0, 245.0, 65.0)]
+const ROUTE_RECTS := [Rect2(66.0, 490.0, 245.0, 65.0), Rect2(327.0, 490.0, 245.0, 65.0), Rect2(588.0, 490.0, 245.0, 65.0), Rect2(849.0, 490.0, 245.0, 65.0)]
+const SHOP_RECTS := [Rect2(340.0, 320.0, 155.0, 60.0), Rect2(500.0, 320.0, 155.0, 60.0), Rect2(660.0, 320.0, 155.0, 60.0)]
 var player_pos := Vector2(160.0, 325.0)
 var player_hp := 100
 var enemies: Array[Dictionary] = []
@@ -30,6 +33,7 @@ func open_room(index: int, override_variant: int = -1) -> void:
     room_index = clampi(index, 0, 2)
     player_pos = Vector2(160.0, 325.0)
     reward_available = false
+    shop_open = false
     enemies.clear()
     hostile_shots.clear()
     ranged_fire_clock = 0.0
@@ -72,6 +76,7 @@ func attack(target: Vector2) -> bool:
     enemies[hit]["hp"] -= attack_damage
     if enemies[hit]["hp"] <= 0:
         enemies.remove_at(hit)
+        night_souls += 1
     if enemies.is_empty():
         reward_available = true
     attack_cooldown = 0.20 / attack_speed_multiplier
@@ -101,7 +106,7 @@ func choose_relic(kind: String) -> bool:
     return true
 
 func door_available() -> bool:
-    return run_state == "playing" and enemies.is_empty() and not reward_available and room_index < 2
+    return run_state == "playing" and not shop_open and enemies.is_empty() and not reward_available and room_index < 2
 
 func next_room() -> bool:
     return choose_route(0)
@@ -122,7 +127,7 @@ func choose_route(choice: int) -> bool:
         attack_damage += 1
         variant = 2
         route_boon = "RISK: -12 HP / +1 DAMAGE"
-    else:
+    elif choice == 2:
         # Cursed altar event: a larger sacrifice buys permanent speed this night.
         if player_hp <= 20:
             return false
@@ -130,11 +135,41 @@ func choose_route(choice: int) -> bool:
         attack_speed_multiplier += 0.35
         variant = 1
         route_boon = "CURSED ALTAR: -20 HP / +35% SPEED"
+    else:
+        shop_open = true
+        route_boon = "MERCHANT: SPEND SOULS OR LEAVE"
+        queue_redraw()
+        return true
     open_room(room_index + 1, variant)
+    return true
+
+func buy_shop_offer(choice: int) -> bool:
+    if not shop_open or run_state != "playing" or choice < 0 or choice > 1:
+        return false
+    var price := 2 if choice == 0 else 1
+    if night_souls < price:
+        return false
+    night_souls -= price
+    if choice == 0:
+        attack_damage += 1
+        route_boon = "MERCHANT: +1 DAMAGE"
+    else:
+        player_hp = mini(100, player_hp + 20)
+        route_boon = "MERCHANT: +20 HP"
+    queue_redraw()
+    return true
+
+func leave_shop() -> bool:
+    if not shop_open or run_state != "playing":
+        return false
+    shop_open = false
+    open_room(room_index + 1)
     return true
 
 func restart_run() -> void:
     player_hp = 100
+    night_souls = 0
+    shop_open = false
     route_boon = ""
     rewards_taken = 0
     relics.clear()
@@ -213,6 +248,11 @@ func click_ui(point: Vector2) -> bool:
             restart_run()
             return true
         return false
+    if shop_open:
+        for i in range(SHOP_RECTS.size()):
+            if SHOP_RECTS[i].has_point(point):
+                return leave_shop() if i == 2 else buy_shop_offer(i)
+        return false
     if not reward_available:
         if door_available():
             for i in range(ROUTE_RECTS.size()):
@@ -238,7 +278,7 @@ func _unhandled_input(event: InputEvent) -> void:
         return
     if event is InputEventMouseButton and event.pressed:
         if event.button_index == MOUSE_BUTTON_LEFT:
-            if not reward_available:
+            if not reward_available and not shop_open:
                 attack(get_global_mouse_position())
         elif event.button_index == MOUSE_BUTTON_RIGHT:
             if player_pos.distance_to(Vector2(1080.0, 325.0)) < 85.0:
@@ -251,7 +291,7 @@ func _draw() -> void:
     draw_circle(player_pos, 17.0, Color("#80dbed"))
     draw_rect(Rect2(48.0, 25.0, 220.0, 18.0), Color("#442c37"))
     draw_rect(Rect2(48.0, 25.0, 220.0 * float(player_hp) / 100.0, 18.0), Color("#cf657a"))
-    draw_label("HP %d / 100     ROOM %d / 3     %s     RELICS %d" % [player_hp, room_index + 1, ROOM_KINDS[room_variant], relics.size()], Vector2(280, 41), 17)
+    draw_label("HP %d / 100   ROOM %d / 3   %s   SOULS %d   RELICS %d" % [player_hp, room_index + 1, ROOM_KINDS[room_variant], night_souls, relics.size()], Vector2(280, 41), 17)
     if route_boon != "":
         draw_label(route_boon, Vector2(300, 65), 14, Color("#d5c592"))
     if run_state == "won":
@@ -277,12 +317,18 @@ func _draw() -> void:
                 draw_rect(RELIC_RECTS[i], Color("#fff2c5"), false, 3.0)
             draw_label(RELIC_TITLES[i], RELIC_RECTS[i].position + Vector2(10, 26), 15)
             draw_label(RELIC_EFFECTS[i], RELIC_RECTS[i].position + Vector2(10, 50), 12)
+    if shop_open:
+        draw_rect(Rect2(285.0, 205.0, 570.0, 220.0), Color("#263b45"))
+        draw_label("WANDERING MERCHANT - SOULS %d" % night_souls, Vector2(359, 255), 23)
+        for i in range(SHOP_RECTS.size()):
+            draw_rect(SHOP_RECTS[i], Color("#4e8373") if i < 2 else Color("#775e6d"))
+            draw_label("+1 DMG / 2" if i == 0 else "+20 HP / 1" if i == 1 else "LEAVE", SHOP_RECTS[i].position + Vector2(10, 37), 17)
     if door_available():
         draw_label("CHOOSE YOUR NEXT ROUTE", Vector2(450, 473), 22)
         for i in range(ROUTE_RECTS.size()):
             var variant := posmod(dungeon_seed + room_index + 1 + i, ROOM_KINDS.size())
-            draw_rect(ROUTE_RECTS[i], Color("#496c74") if i == 0 else Color("#81556e") if i == 1 else Color("#7a568b"))
-            var offer := "TREASURE +18 HP" if i == 0 else "RISK -12 HP / +1 ATK" if i == 1 else "CURSE -20 HP / +35% SPD"
+            draw_rect(ROUTE_RECTS[i], Color("#496c74") if i == 0 else Color("#81556e") if i == 1 else Color("#7a568b") if i == 2 else Color("#6c8061"))
+            var offer := "TREASURE +18 HP" if i == 0 else "RISK -12 HP / +1 ATK" if i == 1 else "CURSE -20 HP / +35% SPD" if i == 2 else "MERCHANT / SOULS"
             draw_label(offer, ROUTE_RECTS[i].position + Vector2(10, 39), 16)
         draw_rect(Rect2(1058.0, 275.0, 46.0, 96.0), Color("#72b59b"))
     else:
