@@ -356,7 +356,7 @@ func run_tests() -> void:
     ranged_probe._process(0.56)
     check(ranged_probe.hostile_shots.size() == 1 and ranged_probe.hostile_shots[0]["velocity"] == Vector2.LEFT * 180.0, "Ranged shot uses locked target after windup")
     ranged_probe._process(1.0)
-    check(ranged_probe.player_hp == 100 and ranged_probe.hostile_shots.is_empty(), "Dodging an aimed ranged shot avoids damage")
+    check(ranged_probe.player_hp == 100 and ranged_probe.hostile_shots.size() == 1, "Dodging an aimed ranged shot avoids damage without relying on invulnerability")
     ranged_probe.restart_run()
     check(ranged_probe.hostile_shots.is_empty() and is_zero_approx(ranged_probe.ranged_fire_clock) and is_zero_approx(float(ranged_probe.enemies[1].get("ranged_warning", 0.0))), "Room restart clears projectiles and warnings")
     ranged_probe.queue_free()
