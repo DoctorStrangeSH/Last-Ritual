@@ -781,10 +781,15 @@ func run_tests() -> void:
     check(not game.shadow_relic and not game.blood_mantle and not game.rage_shard, "New Game removes previous run relics after Continue")
     check(game.load_campaign() and game.current_day == 2 and game.phase == "ritual", "checkpoint remains loadable after starting a new run")
 
+    game.dash_cooldown = 1.75
+    game.cleave_cooldown = 3.25
+    game.empowered_strike = true
     var corrupt := FileAccess.open("user://campaign_smoke_test.json", FileAccess.WRITE)
     corrupt.store_string("{not valid json")
     corrupt.close()
     check(not game.load_campaign(), "corrupt save is rejected")
+    check(game.phase == "ritual" and game.current_day == 2 and game.stones_collected == 2, "corrupt save keeps current phase and progress")
+    check(is_equal_approx(game.dash_cooldown, 1.75) and is_equal_approx(game.cleave_cooldown, 3.25) and game.empowered_strike, "corrupt save does not reset transient session state")
     var invalid_relic := {"version": 1, "day": 2, "stones": 2, "mana": 90, "souls": 10, "wall_hp": 90, "tower_power": 0, "wall_ward": 0, "towers": [], "shadow_relic": "yes"}
     var relic_file := FileAccess.open("user://campaign_smoke_test.json", FileAccess.WRITE)
     relic_file.store_string(JSON.stringify(invalid_relic))
