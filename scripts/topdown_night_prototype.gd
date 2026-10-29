@@ -108,16 +108,40 @@ func build_room_cover() -> void:
             obstacles.assign([Rect2(475, 355, 70, 85), Rect2(920, 255, 70, 90)])
 
 func first_cover_hit(from: Vector2, to: Vector2, radius: float = 0.0) -> Variant:
+    # Ray-vs-AABB slab intersection for finite segments. Godot 4.4's Rect2
+    # does not expose intersects_segment; use an explicit sweep for fast dashes.
     var first: Variant = null
-    var distance := INF
+    var best_distance := INF
+    var travel: Vector2 = to - from
     for wall in obstacles:
         var expanded: Rect2 = wall.grow(radius)
         if expanded.has_point(from):
             continue
-        var hit: Variant = expanded.intersects_segment(from, to)
-        if hit != null and from.distance_squared_to(hit) < distance:
-            first = hit
-            distance = from.distance_squared_to(hit)
+        var entry := 0.0
+        var exit := 1.0
+        var intersects := true
+        for axis in range(2):
+            var initial: float = from.x if axis == 0 else from.y
+            var delta_axis: float = travel.x if axis == 0 else travel.y
+            var low: float = expanded.position.x if axis == 0 else expanded.position.y
+            var high: float = expanded.end.x if axis == 0 else expanded.end.y
+            if absf(delta_axis) < 0.00001:
+                if initial < low or initial > high:
+                    intersects = false
+                    break
+                continue
+            var near_t: float = (low - initial) / delta_axis
+            var far_t: float = (high - initial) / delta_axis
+            entry = maxf(entry, minf(near_t, far_t))
+            exit = minf(exit, maxf(near_t, far_t))
+            if entry > exit:
+                intersects = false
+                break
+        if intersects and entry <= 1.0 and exit >= 0.0:
+            var hit: Vector2 = from + travel * entry
+            if from.distance_squared_to(hit) < best_distance:
+                first = hit
+                best_distance = from.distance_squared_to(hit)
     return first
 
 func cover_blocks_line(from: Vector2, to: Vector2) -> bool:
