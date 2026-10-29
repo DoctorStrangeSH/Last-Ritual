@@ -952,7 +952,7 @@ func begin_night() -> void:
     trap_clock = 0.0
     spectral_patrol_clock = 0.0
     dungeon_route = 0
-    dungeon_omen = randi_range(0, 2)
+    dungeon_omen = randi_range(0, 3)
     omen_cache_bonus = false
     dungeon_route_chosen = false
     dungeon_route_reward = 0
@@ -1232,7 +1232,7 @@ func shadow_dash() -> void:
     show_notice("Теневой рывок!")
 
 func dungeon_omen_name() -> String:
-    return ["Тихая гробница", "Осквернённый зал", "Сокровищница теней"][clampi(dungeon_omen, 0, 2)]
+    return ["Тихая гробница", "Осквернённый зал", "Сокровищница теней", "Лунное затмение"][clampi(dungeon_omen, 0, 3)]
 
 func apply_dungeon_omen() -> void:
     # Different encounter rules without obstructing required portal and stone paths.
@@ -1244,6 +1244,12 @@ func apply_dungeon_omen() -> void:
         omen_cache_bonus = true
         for enemy in night_enemies:
             enemy["hp"] = float(enemy["hp"]) * 1.10
+    elif dungeon_omen == 3:
+        # High-risk route: stronger guardians and a more dangerous boss,
+        # but an extra legacy reward for bringing the stone home.
+        for enemy in night_enemies:
+            enemy["hp"] = float(enemy["hp"]) * 1.30
+        boss_hp *= 1.25
 
 func use_blood_shrine() -> bool:
     # Optional risk/reward encounter; it can only be activated once per night.
@@ -1553,7 +1559,12 @@ func update_night(delta: float) -> void:
     if boss_hp <= 0.0 and not stone_taken and player.distance_to(Vector2(1010, 465)) < 43.0:
         stone_taken = true
         stones_collected += 1
-        show_notice("Камень %d/5 получен! Вернись к порталу слева." % stones_collected)
+        if dungeon_omen == 3:
+            mana += 35
+            souls += 2
+            show_notice("Затмение побеждено: +35 маны и +2 души! Вернись к порталу.")
+        else:
+            show_notice("Камень %d/5 получен! Вернись к порталу слева." % stones_collected)
     if phase == "night" and stone_taken and player_hp > 0.0 and player.x < 85.0:
         roll_reward_offers()
         phase = "reward"
