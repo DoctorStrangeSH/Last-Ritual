@@ -97,6 +97,8 @@ var wall_ward_level := 0
 var saboteurs_defeated := 0
 var trap_clock := 0.0
 var dungeon_route := 0
+var dungeon_route_chosen := false
+var dungeon_route_reward := 0
 var secret_cache_taken := false
 var secret_cache_pos := Vector2.ZERO
 var trap_positions := [375.0, 775.0]
@@ -256,6 +258,8 @@ func reset_all() -> void:
     saboteurs_defeated = 0
     trap_clock = 0.0
     dungeon_route = 0
+    dungeon_route_chosen = false
+    dungeon_route_reward = 0
     secret_cache_taken = false
     chest_taken = false
     relic_taken = false
@@ -715,6 +719,14 @@ func _input(event: InputEvent) -> void:
         shadow_cleave()
         return
     if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed and phase == "night":
+        if not dungeon_route_chosen:
+            var dungeon_click: Vector2 = get_global_mouse_position()
+            if dungeon_click.y >= 270.0 and dungeon_click.y <= 455.0:
+                for route_i in range(3):
+                    if Rect2(140.0 + float(route_i) * 297.0, 270.0, 276.0, 185.0).has_point(dungeon_click):
+                        choose_dungeon_route(route_i)
+                        break
+            return
         var attack_target: Vector2 = get_global_mouse_position()
         if absf(attack_target.x - player.x) > 10.0:
             facing = signf(attack_target.x - player.x)
@@ -926,7 +938,9 @@ func begin_night() -> void:
     chest_taken = false
     relic_taken = false
     trap_clock = 0.0
-    dungeon_route = randi_range(0, 2)
+    dungeon_route = 0
+    dungeon_route_chosen = false
+    dungeon_route_reward = 0
     secret_cache_taken = false
     if current_day == 5:
         platforms = [Rect2(190, 450, 150, 16), Rect2(415, 390, 140, 16), Rect2(600, 345, 130, 16), Rect2(795, 390, 130, 16)]
@@ -979,8 +993,7 @@ func begin_night() -> void:
         charger["charging"] = 0.0
         charger["charge_dir"] = 1.0
         night_enemies[0] = charger
-    apply_dungeon_route()
-    show_notice("Ночь %d: победи хранителя, забери камень и вернись к порталу слева!" % current_day)
+    show_notice("Выбери маршрут по катакомбам мышкой!")
 
 func tower_ability_description(kind: String, level: int = 1) -> String:
     return TowerDescription.ability_description(kind, level)
@@ -1200,6 +1213,26 @@ func shadow_dash() -> void:
     play_cue("magic")
     show_notice("Теневой рывок!")
 
+func choose_dungeon_route(route: int) -> void:
+    if phase != "night" or dungeon_route_chosen or route < 0 or route > 2:
+        return
+    dungeon_route = route
+    dungeon_route_chosen = true
+    apply_dungeon_route()
+    if route == 0:
+        mana += 20
+        dungeon_route_reward = 20
+        show_notice("Тропа теней: +20 маны!")
+    elif route == 1:
+        player_hp = minf(100.0, player_hp + 0.0)
+        boss_hp *= 0.85
+        dungeon_route_reward = 1
+        show_notice("Тропа охотника: хранитель ослаблен!")
+    else:
+        souls += 2
+        dungeon_route_reward = 2
+        show_notice("Тропа реликвий: +2 души!")
+
 func apply_dungeon_route() -> void:
     # Keep jumps reachable, but vary the exploration path and the secret stash.
     if dungeon_route == 1:
@@ -1266,6 +1299,8 @@ func trap_is_dangerous() -> bool:
     return trap_phase() >= trap_danger_start()
 
 func update_night(delta: float) -> void:
+    if not dungeon_route_chosen:
+        return
     attack_cooldown = maxf(0.0, attack_cooldown - delta)
     hurt_cooldown = maxf(0.0, hurt_cooldown - delta)
     swing_timer = maxf(0.0, swing_timer - delta)
@@ -1785,6 +1820,19 @@ func _draw() -> void:
         label("Врагов: %d   |   Построено башен: %d   |   Камней: %d/5" % [campaign_kills, towers_built, stones_collected], 294, 427, 20)
         label("ЛКМ — вернуться в главное меню", 365, 509, 22, Color("f5cf84"))
         label("Осколки наследия: %d" % legacy_shards, 413, 469, 18)
+        return
+    if phase == "night" and not dungeon_route_chosen:
+        box(Rect2(112, 142, 928, 374), Color(0.095, 0.07, 0.15, 0.97))
+        draw_rect(Rect2(112, 142, 928, 374), Color("ad85c9"), false, 3.0)
+        label("ВЫБЕРИ ПУТЬ ЧЕРЕЗ ПОДЗЕМЕЛЬЕ", 204, 207, 33, Color("e9beff"))
+        label("Один путь • меняет план комнаты и стартовую награду", 210, 250, 19)
+        for route_i in range(3):
+            var rx: float = 140.0 + float(route_i) * 297.0
+            box(Rect2(rx, 270, 276, 185), Color("322442"))
+            draw_rect(Rect2(rx, 270, 276, 185), Color("a68bb9"), false, 2.0)
+            label("ТРОПА ТЕНЕЙ" if route_i == 0 else ("ТРОПА ОХОТНИКА" if route_i == 1 else "ТРОПА РЕЛИКВИЙ"), rx + 15, 325, 19, Color("ffe0ad"))
+            label("+20 маны" if route_i == 0 else ("-15% HP босса" if route_i == 1 else "+2 души"), rx + 27, 374, 20)
+            label("ВЫБРАТЬ", rx + 79, 436, 17, Color("bce2da"))
         return
     if phase == "reward":
         box(Rect2(112, 142, 928, 374), Color(0.095, 0.07, 0.15, 0.96))
