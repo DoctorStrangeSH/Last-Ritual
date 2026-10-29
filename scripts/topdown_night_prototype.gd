@@ -157,20 +157,44 @@ func shoot_hostile(origin: Vector2) -> void:
     hostile_shots.append({"pos": origin, "velocity": direction * 180.0})
     queue_redraw()
 
+const RESTART_BUTTON := Rect2(444.0, 304.0, 264.0, 52.0)
+const RELIC_RECTS := [
+    Rect2(280.0, 450.0, 180.0, 70.0),
+    Rect2(490.0, 450.0, 180.0, 70.0),
+    Rect2(700.0, 450.0, 180.0, 70.0)
+]
+const RELIC_IDS := ["bone", "ember", "blood"]
+const RELIC_TITLES := ["BONE SHARD", "EMBER", "BLOOD PACT"]
+const RELIC_EFFECTS := ["+1 DAMAGE", "+25% ATTACK SPEED", "-15 HP / +2 DAMAGE"]
+
+func click_ui(point: Vector2) -> bool:
+    if run_state != "playing":
+        if RESTART_BUTTON.has_point(point):
+            restart_run()
+            return true
+        return false
+    if not reward_available:
+        return false
+    for i in range(RELIC_RECTS.size()):
+        if RELIC_RECTS[i].has_point(point):
+            return choose_relic(RELIC_IDS[i])
+    return false
+
+func draw_label(value: String, point: Vector2, font_size: int = 18, color: Color = Color.WHITE) -> void:
+    draw_string(ThemeDB.fallback_font, point, value, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
+
 func _unhandled_input(event: InputEvent) -> void:
     if event is InputEventKey and event.pressed and event.keycode == KEY_R and run_state != "playing":
         restart_run()
         return
+    if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+        if click_ui(event.position):
+            return
     if run_state != "playing":
         return
     if event is InputEventMouseButton and event.pressed:
         if event.button_index == MOUSE_BUTTON_LEFT:
-            if reward_available and get_global_mouse_position().y >= 450.0 and get_global_mouse_position().y <= 520.0:
-                var mx := get_global_mouse_position().x
-                if mx >= 280.0 and mx < 460.0: choose_relic("bone")
-                elif mx >= 490.0 and mx < 670.0: choose_relic("ember")
-                elif mx >= 700.0 and mx < 880.0: choose_relic("blood")
-            else:
+            if not reward_available:
                 attack(get_global_mouse_position())
         elif event.button_index == MOUSE_BUTTON_RIGHT:
             if player_pos.distance_to(Vector2(1080.0, 325.0)) < 85.0:
@@ -183,19 +207,30 @@ func _draw() -> void:
     draw_circle(player_pos, 17.0, Color("#80dbed"))
     draw_rect(Rect2(48.0, 25.0, 220.0, 18.0), Color("#442c37"))
     draw_rect(Rect2(48.0, 25.0, 220.0 * float(player_hp) / 100.0, 18.0), Color("#cf657a"))
+    draw_label("HP %d / 100     ROOM %d / 3     RELICS %d" % [player_hp, room_index + 1, relics.size()], Vector2(280, 41), 17)
     if run_state == "won":
         draw_rect(Rect2(350.0, 190.0, 452.0, 180.0), Color("#295343"))
+        draw_label("VICTORY", Vector2(510, 245), 30)
     if run_state == "lost":
         draw_rect(Rect2(350.0, 190.0, 452.0, 180.0), Color("#422837"))
+        draw_label("DEFEAT", Vector2(510, 245), 30)
+    if run_state != "playing":
+        draw_rect(RESTART_BUTTON, Color("#739bb0"))
+        draw_label("RESTART RUN", Vector2(488, 337), 22)
     for enemy in enemies:
         draw_circle(enemy["pos"], 19.0, Color("#aa70d6") if enemy["ranged"] else Color("#cf646c"))
     for shot in hostile_shots:
         draw_circle(shot["pos"], 7.0, Color("#ffbd77"))
     if reward_available:
         draw_circle(Vector2(576, 325), 24.0, Color("#f4d78c"))
-        draw_rect(Rect2(280.0, 450.0, 180.0, 70.0), Color("#85a4c9"))
-        draw_rect(Rect2(490.0, 450.0, 180.0, 70.0), Color("#de974c"))
-        draw_rect(Rect2(700.0, 450.0, 180.0, 70.0), Color("#b65a72"))
+        draw_label("CHOOSE ONE RELIC", Vector2(480, 425), 23)
+        var palette := [Color("#526d9b"), Color("#a16a36"), Color("#863c54")]
+        for i in range(RELIC_RECTS.size()):
+            draw_rect(RELIC_RECTS[i], palette[i])
+            if RELIC_RECTS[i].has_point(get_local_mouse_position()):
+                draw_rect(RELIC_RECTS[i], Color("#fff2c5"), false, 3.0)
+            draw_label(RELIC_TITLES[i], RELIC_RECTS[i].position + Vector2(10, 26), 15)
+            draw_label(RELIC_EFFECTS[i], RELIC_RECTS[i].position + Vector2(10, 50), 12)
     if door_available():
         draw_rect(Rect2(1058.0, 275.0, 46.0, 96.0), Color("#72b59b"))
     else:
