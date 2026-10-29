@@ -42,6 +42,19 @@ func run_tests() -> void:
     check(game.tower_sell_refund({"type": "fire", "level": 3}) == 65, "ballista level three refund")
     check(game.tower_sell_refund({"type": "necro", "level": 1}) == 32, "necromancer level one refund")
     check(game.tower_sell_refund({"type": "necro", "level": 3}) == 70, "necromancer level three refund")
+    check(not game.shadow_relic, "relic absent at fresh run")
+    game.phase = "night"
+    game.mana = 100
+    game.shadow_dash()
+    check(game.dash_cooldown == 2.5, "dash cooldown without relic is unchanged")
+    game.reset_all()
+    game.shadow_relic = true
+    game.phase = "night"
+    game.mana = 100
+    game.shadow_dash()
+    check(game.dash_cooldown == 1.25, "Ashen Step relic halves dash cooldown")
+    game.reset_all()
+    check(not game.shadow_relic, "relic does not leak between runs")
     check(game.current_day == 1, "initial day")
     game.dungeon_route = 1
     game.platforms = [Rect2(200.0, 420.0, 135.0, 16.0)]
@@ -319,6 +332,7 @@ func run_tests() -> void:
     var souls_before_elite: int = game.souls
     game.update_night(0.0)
     check(game.mana == mana_before_elite + 45 and game.souls == souls_before_elite + 5, "optional elite pays unique reward")
+    check(game.shadow_relic, "optional elite unlocks Ashen Step relic")
     game.update_night(0.0)
     check(game.mana == mana_before_elite + 45 and game.souls == souls_before_elite + 5, "elite reward cannot be collected twice")
     game.reset_all()
@@ -416,10 +430,12 @@ func run_tests() -> void:
     game.souls = 11
     game.wall_hp = 78.0
     game.towers.append({"x": 430.0, "type": "fire", "cooldown": 0.0})
+    game.shadow_relic = true
     check(game.save_campaign(), "checkpoint save")
     game.reset_all()
     check(game.load_campaign(), "checkpoint load")
     check(game.phase == "ritual" and game.current_day == 2 and game.stones_collected == 2, "checkpoint phase and progress")
+    check(game.shadow_relic, "checkpoint restores run-long relic")
     check(game.mana == 93 and game.souls == 11 and game.wall_hp == 78.0, "checkpoint resources")
     check(game.towers.is_empty(), "checkpoint towers reset after night")
 
@@ -427,6 +443,12 @@ func run_tests() -> void:
     corrupt.store_string("{not valid json")
     corrupt.close()
     check(not game.load_campaign(), "corrupt save is rejected")
+    var invalid_relic := {"version": 1, "day": 2, "stones": 2, "mana": 90, "souls": 10, "wall_hp": 90, "tower_power": 0, "wall_ward": 0, "towers": [], "shadow_relic": "yes"}
+    var relic_file := FileAccess.open("user://campaign_smoke_test.json", FileAccess.WRITE)
+    relic_file.store_string(JSON.stringify(invalid_relic))
+    relic_file.close()
+    check(not game.load_campaign(), "invalid relic save type is rejected")
+    check(game.shadow_relic and game.mana == 93, "invalid relic save preserves prior checkpoint")
     var invalid := {"version": 1, "day": 2, "stones": 2, "mana": 90, "souls": 10, "wall_hp": 90, "tower_power": 0, "wall_ward": 0, "towers": [{"x": 400.0, "type": "bone"}, {"x": 420.0, "type": "bone"}]}
     var bad_file := FileAccess.open("user://campaign_smoke_test.json", FileAccess.WRITE)
     bad_file.store_string(JSON.stringify(invalid))

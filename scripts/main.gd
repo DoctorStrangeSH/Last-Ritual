@@ -25,6 +25,8 @@ var reward_bone_bonus := 0
 var reward_mana_bonus := 0
 var reward_ward_bonus := 0
 var legendary_boon := -1
+# First run-long relic, earned by defeating the optional elite warden.
+var shadow_relic := false
 # Three unique choices generated when a night ends. Never persisted mid-selection.
 var reward_offers: Array[int] = [0, 1, 2]
 var menu_page := "main"
@@ -234,6 +236,7 @@ func reset_all() -> void:
     reward_mana_bonus = 0
     reward_ward_bonus = 0
     legendary_boon = -1
+    shadow_relic = false
     reward_offers = [0, 1, 2]
     selected_build = ""
     selected_lane = 1
@@ -502,7 +505,7 @@ func save_campaign() -> bool:
         "tower_power": tower_power_level, "wall_ward": wall_ward_level,
         "towers": saved_towers,
         "campaign_kills": campaign_kills, "towers_built": maxi(towers_built, towers.size()),
-        "reward_bone": reward_bone_bonus, "reward_mana": reward_mana_bonus, "reward_ward": reward_ward_bonus, "legendary_boon": legendary_boon
+        "reward_bone": reward_bone_bonus, "reward_mana": reward_mana_bonus, "reward_ward": reward_ward_bonus, "legendary_boon": legendary_boon, "shadow_relic": shadow_relic
     }
     var temp_path := save_path + ".tmp"
     var file := FileAccess.open(temp_path, FileAccess.WRITE)
@@ -611,6 +614,8 @@ func load_campaign() -> bool:
             return false
         if float(boon_value) != floorf(float(boon_value)) or boon_value < -1 or boon_value > 2:
             return false
+    if data.has("shadow_relic") and not data["shadow_relic"] is bool:
+        return false
     reset_all()
     campaign_kills = loaded_kills
     towers_built = loaded_builds
@@ -625,6 +630,7 @@ func load_campaign() -> bool:
     reward_mana_bonus = int(data.get("reward_mana", 0))
     reward_ward_bonus = int(data.get("reward_ward", 0))
     legendary_boon = int(data.get("legendary_boon", -1))
+    shadow_relic = bool(data.get("shadow_relic", false))
     towers = []
     phase = "ritual"
     stone_taken = true
@@ -1141,7 +1147,7 @@ func shadow_dash() -> void:
         show_notice("Для рывка нужно 15 маны (не хватает %d)" % (15 - mana))
         return
     mana -= 15
-    dash_cooldown = 2.5
+    dash_cooldown = 1.25 if shadow_relic else 2.5
     dash_trail = 0.25
     player.x = clampf(player.x + facing * 125.0, 16.0, W - 16.0)
     hurt_cooldown = maxf(hurt_cooldown, 0.35)
@@ -1294,7 +1300,11 @@ func update_night(delta: float) -> void:
             if is_elite:
                 mana += 45
                 souls += 5
-                show_notice("Элитный страж повержен: +45 маны, +5 душ!")
+                if not shadow_relic:
+                    shadow_relic = true
+                    show_notice("Реликвия «Пепельный шаг»: рывок восстанавливается вдвое быстрее!")
+                else:
+                    show_notice("Элитный страж повержен: +45 маны, +5 душ!")
                 burst_particles(Vector2(float(e["x"]), FLOOR - 24.0), Color("ffd18a"), 22)
             else:
                 mana += 10
