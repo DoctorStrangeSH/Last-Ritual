@@ -199,6 +199,22 @@ func run_tests() -> void:
         game.update_night(0.0)
         check(game.stones_collected == guardian_night, "night %d cannot award a duplicate stone" % guardian_night)
     game.reset_all()
+    game.reset_all()
+    game.current_day = 1
+    check(is_equal_approx(game.trap_cycle_duration(), 3.1) and is_equal_approx(game.trap_danger_start(), 2.1), "early night keeps existing trap rhythm")
+    game.trap_clock = 2.0
+    check(not game.trap_is_dangerous(), "early trap stays safe before 2.1 seconds")
+    game.trap_clock = 2.2
+    check(game.trap_is_dangerous(), "early trap activates after warning")
+    game.current_day = 4
+    check(is_equal_approx(game.trap_cycle_duration(), 2.7) and is_equal_approx(game.trap_warning_start(), 1.2), "late night traps cycle faster with visible warning")
+    game.trap_clock = 1.7
+    check(not game.trap_is_dangerous(), "late trap is safe in warning stage")
+    game.trap_clock = 1.9
+    check(game.trap_is_dangerous(), "late trap becomes dangerous after 1.8 seconds")
+    game.trap_clock = 2.8
+    check(not game.trap_is_dangerous(), "late trap danger resets on new cycle")
+    game.reset_all()
     check(game.current_day == 1, "initial day")
     game.dungeon_route = 1
     game.platforms = [Rect2(200.0, 420.0, 135.0, 16.0)]
