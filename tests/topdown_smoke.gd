@@ -41,6 +41,28 @@ func run_tests() -> void:
         check(not td.help_visible, "TD controls help closes cleanly")
         check(not td.sfx.play_effect("unknown"), "Audio helper rejects unknown effects safely")
         check(td.slots.size() == 8, "TD has eight fixed construction slots")
+        for lane in td.PATHS:
+            check(lane.size() >= 7, "Fortress route has multiple meaningful bends")
+            for segment_index in range(1, lane.size()):
+                check(lane[segment_index].distance_to(lane[segment_index - 1]) > 10.0, "Route has no duplicate adjacent waypoints")
+            for slot in td.slots:
+                var clearance := INF
+                for segment_index in range(1, lane.size()):
+                    var a: Vector2 = lane[segment_index - 1]
+                    var b: Vector2 = lane[segment_index]
+                    var t: float = clampf((slot["pos"] - a).dot(b - a) / (b - a).length_squared(), 0.0, 1.0)
+                    clearance = minf(clearance, slot["pos"].distance_to(a.lerp(b, t)))
+                check(clearance >= 42.0, "Tower slots stay outside road corridor")
+        var first_lane: Array = td.PATHS[0]
+        var first_direction: Vector2 = (first_lane[1] - first_lane[0]).normalized()
+        check((first_lane[3] - first_lane[2]).normalized().distance_to(first_direction) > 0.2, "Upper lane is not straight")
+        var second_lane: Array = td.PATHS[1]
+        check((second_lane[3] - second_lane[2]).normalized().distance_to((second_lane[1] - second_lane[0]).normalized()) > 0.2, "Lower lane is not straight")
+        td.enemies.append({"lane": 0, "pos": first_lane[0], "waypoint": 1, "hp": 999, "speed": 85.0, "delay": 0.0})
+        td.advance_enemies(8.0)
+        check(td.enemies[0]["waypoint"] > 3, "Movement consumes several waypoints per long frame")
+        td.enemies.clear()
+
         check(td.slot_at(Vector2(0, 0)) == -1, "No construction slot outside designated areas")
         check(td.choose_tower("bone"), "Select bone tower")
         check(not td.build_tower(-1), "Cannot build off slot")
@@ -77,7 +99,7 @@ func run_tests() -> void:
             check(boss["boss_warning"] and td.altar_hp == altar_before_blast, "Boss telegraphs attack without immediate altar damage")
             td.tick_boss(0.9)
             check(not boss["boss_warning"] and td.altar_hp == altar_before_blast - 8, "Boss blast damages altar after warning")
-            check(td.boss_feedback_time > 0.0 and td.boss_feedback_text.begins_with("ALTAR HIT!"), "Altar blast shows temporary damage notice")
+            check(td.boss_feedback_time > 0.0 and td.boss_feedback_text.begins_with("АЛТАРЬ ПОВРЕЖДЁН!"), "Altar blast shows temporary damage notice")
             boss["pos"] = Vector2(350, 285)
             td.hero_pos = Vector2(345, 360)
             td.tick_boss(3.2)
@@ -86,7 +108,7 @@ func run_tests() -> void:
             check(td.hero_attack(boss["pos"]) and boss["interrupt_hits"] == 1, "First hero strike pressures boss during telegraph")
             td.hero_attack_cooldown = 0.0
             check(td.hero_attack(boss["pos"]) and not boss["boss_warning"] and boss["boss_charge"] == 0.0, "Second hero strike interrupts boss blast")
-            check(td.boss_feedback_time > 0.0 and td.boss_feedback_text == "ATTACK INTERRUPTED!", "Interrupted boss blast shows readable confirmation")
+            check(td.boss_feedback_time > 0.0 and td.boss_feedback_text == "АТАКА ПРЕРВАНА!", "Interrupted boss blast shows readable confirmation")
             td.tick_boss(0.9)
             check(td.altar_hp == altar_before_interrupt, "Interrupted blast does not damage altar")
             td.tick_boss(2.2)
@@ -126,7 +148,7 @@ func run_tests() -> void:
         check(not td.start_wave(), "TD victory blocks further waves")
         td.restart_defense()
         td.altar_hp = 10
-        td.enemies.append({"lane": 0, "pos": Vector2(1070, 285), "waypoint": 2, "hp": 1, "delay": 0.0})
+        td.enemies.append({"lane": 0, "pos": td.PATHS[0][td.PATHS[0].size() - 1], "waypoint": td.PATHS[0].size() - 1, "hp": 1, "delay": 0.0})
         td.advance_enemies(0.01)
         check(td.defense_state == "lost" and td.altar_hp == 0, "TD altar defeat ends defense")
         check(not td.start_wave(), "TD defeat blocks more waves")
