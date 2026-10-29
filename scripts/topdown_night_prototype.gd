@@ -7,6 +7,7 @@ var room_index := 0
 var dungeon_seed := 0
 var room_variant := 0
 const ROOM_KINDS := ["CRYPT", "AMBUSH", "ELITE"]
+const ROUTE_RECTS := [Rect2(340.0, 490.0, 210.0, 65.0), Rect2(605.0, 490.0, 210.0, 65.0)]
 var player_pos := Vector2(160.0, 325.0)
 var player_hp := 100
 var enemies: Array[Dictionary] = []
@@ -24,14 +25,14 @@ var run_state := "playing" # playing, won, lost
 func _ready() -> void:
     open_room(0)
 
-func open_room(index: int) -> void:
+func open_room(index: int, override_variant: int = -1) -> void:
     room_index = clampi(index, 0, 2)
     player_pos = Vector2(160.0, 325.0)
     reward_available = false
     enemies.clear()
     hostile_shots.clear()
     ranged_fire_clock = 0.0
-    room_variant = posmod(dungeon_seed + index, ROOM_KINDS.size())
+    room_variant = override_variant if override_variant >= 0 else posmod(dungeon_seed + index, ROOM_KINDS.size())
     var offsets := [Vector2.ZERO, Vector2(-90.0, 65.0), Vector2(40.0, -65.0)]
     var offset: Vector2 = offsets[room_variant]
     for i in range(2):
@@ -102,9 +103,13 @@ func door_available() -> bool:
     return run_state == "playing" and enemies.is_empty() and not reward_available and room_index < 2
 
 func next_room() -> bool:
-    if not door_available():
+    return choose_route(0)
+
+func choose_route(choice: int) -> bool:
+    if not door_available() or choice < 0 or choice >= ROUTE_RECTS.size():
         return false
-    open_room(room_index + 1)
+    var variant := posmod(dungeon_seed + room_index + 1 + choice, ROOM_KINDS.size())
+    open_room(room_index + 1, variant)
     return true
 
 func restart_run() -> void:
@@ -187,6 +192,10 @@ func click_ui(point: Vector2) -> bool:
             return true
         return false
     if not reward_available:
+        if door_available():
+            for i in range(ROUTE_RECTS.size()):
+                if ROUTE_RECTS[i].has_point(point):
+                    return choose_route(i)
         return false
     for i in range(RELIC_RECTS.size()):
         if RELIC_RECTS[i].has_point(point):
@@ -245,6 +254,11 @@ func _draw() -> void:
             draw_label(RELIC_TITLES[i], RELIC_RECTS[i].position + Vector2(10, 26), 15)
             draw_label(RELIC_EFFECTS[i], RELIC_RECTS[i].position + Vector2(10, 50), 12)
     if door_available():
+        draw_label("CHOOSE YOUR NEXT ROUTE", Vector2(450, 473), 22)
+        for i in range(ROUTE_RECTS.size()):
+            var variant := posmod(dungeon_seed + room_index + 1 + i, ROOM_KINDS.size())
+            draw_rect(ROUTE_RECTS[i], Color("#496c74") if i == 0 else Color("#81556e"))
+            draw_label(ROOM_KINDS[variant], ROUTE_RECTS[i].position + Vector2(48, 40), 20)
         draw_rect(Rect2(1058.0, 275.0, 46.0, 96.0), Color("#72b59b"))
     else:
         draw_rect(Rect2(1058.0, 275.0, 46.0, 96.0), Color("#59495b"))

@@ -194,7 +194,7 @@ func run_tests() -> void:
     check(game.room_variant == 1 and game.enemies[0]["pos"] != seeded_position, "Different seed changes the room")
     game.set_dungeon_seed(0)
     check(game.enemies[1]["ranged"], "Ranged enemy is present")
-    check(not game.next_room(), "Room remains locked while enemies live")
+    check(not game.next_room() and not game.choose_route(1), "Room routes remain locked while enemies live")
     game.player_pos = Vector2(560.0, 240.0)
     for i in range(3):
         game.attack_cooldown = 0.0
@@ -209,7 +209,9 @@ func run_tests() -> void:
     check(game.choose_relic("bone"), "Bone relic can be chosen")
     check(game.attack_damage == 2 and game.relics == ["bone"], "Bone relic increases damage")
     check(not game.choose_relic("blood"), "Room reward cannot be taken twice")
-    check(game.door_available() and game.next_room(), "Door unlocks to room two")
+    check(not game.choose_route(2), "Invalid route choice is rejected")
+    check(game.door_available() and game.click_ui(game.ROUTE_RECTS[1].get_center()), "Mouse chooses alternate night route")
+    check(game.room_variant == 2 and game.room_index == 1, "Alternate route changes the next room variant")
     check(game.room_index == 1 and game.hostile_shots.is_empty(), "New room resets projectiles")
     game.enemies.clear()
     game.reward_available = true
