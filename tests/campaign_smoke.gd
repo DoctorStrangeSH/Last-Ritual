@@ -24,6 +24,12 @@ func run_tests() -> void:
     root.add_child(game)
     game.save_path = "user://campaign_smoke_test.json"
     game.reset_all()
+    var expected_names := ["МОЩЬ БАШЕН", "ЗАПАС МАНЫ", "КРЕПОСТЬ", "ДАНЬ ДУШ", "ЗАПРЕТНЫЙ ОБМЕН"]
+    var expected_details := ["+12% урона башен", "+35 маны сейчас", "+35 здоровья стен", "+3 души сейчас", "+65 маны, -15 HP стен"]
+    var expected_notes := ["до конца забега", "+5 маны за врага", "восстановление стен", "на ритуал или улучшение", "риск ради силы"]
+    for kind in range(5):
+        check(game.reward_name(kind) == expected_names[kind] and game.reward_detail(kind) == expected_details[kind] and game.reward_note(kind) == expected_notes[kind], "reward catalog preserves offer %d" % kind)
+    check(game.reward_name(99) == "НЕИЗВЕСТНЫЙ ДАР" and game.reward_detail(99) == "" and game.reward_note(99) == "", "reward catalog handles unknown kind")
     check(game.current_day == 1, "initial day")
     game.dungeon_route = 1
     game.platforms = [Rect2(200.0, 420.0, 135.0, 16.0)]
