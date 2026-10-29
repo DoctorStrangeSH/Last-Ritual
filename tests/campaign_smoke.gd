@@ -240,6 +240,19 @@ func run_tests() -> void:
     game.reset_all()
     check(game.cleave_cooldown == 0.0, "cleave cooldown resets between runs")
     game.reset_all()
+    game.attack_cooldown = 0.31
+    game.hurt_cooldown = 0.92
+    game.swing_timer = 0.12
+    game.dash_cooldown = 1.8
+    game.dash_trail = 0.3
+    game.cleave_cooldown = 4.1
+    game.cleave_flash_timer = 0.2
+    game.empowered_strike = true
+    game.begin_night()
+    check(game.attack_cooldown == 0.0 and game.hurt_cooldown == 0.0 and game.swing_timer == 0.0, "night begins without stale attack and damage cooldowns")
+    check(game.dash_cooldown == 0.0 and game.dash_trail == 0.0, "night begins without stale dash effects")
+    check(game.cleave_cooldown == 0.0 and game.cleave_flash_timer == 0.0 and not game.empowered_strike, "night begins without stale cleave effects")
+    game.reset_all()
     game.current_day = 2
     game.begin_night()
     check(str(game.night_enemies[0].get("kind", "")) == "charger", "night two introduces the Cursed Charger")
