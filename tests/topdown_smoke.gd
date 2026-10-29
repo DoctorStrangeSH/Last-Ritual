@@ -108,6 +108,24 @@ func run_tests() -> void:
         td.restart_defense()
         check(td.defense_state == "playing" and td.altar_hp == 100 and td.enemies.is_empty(), "TD restart after defeat succeeds")
         td.queue_free()
+    var meta_script = load("res://scripts/meta_progression.gd")
+    check(meta_script != null, "Versioned meta progression script loads")
+    if meta_script != null:
+        var profile = meta_script.new()
+        profile.save_path = "user://last_ritual_meta_smoke_test.json"
+        if FileAccess.file_exists(profile.save_path):
+            DirAccess.remove_absolute(ProjectSettings.globalize_path(profile.save_path))
+        check(not profile.load_profile(), "Missing profile starts with defaults")
+        check(profile.award(3) and profile.buy_upgrade("hero") and profile.buy_upgrade("treasury"), "Fragments purchase both permanent upgrades")
+        check(profile.fragments == 1 and profile.hero_level == 1 and profile.treasury_level == 1, "Upgrade costs consume fragments")
+        check(profile.save_profile(), "Versioned meta profile saves")
+        var restored = meta_script.new()
+        restored.save_path = profile.save_path
+        check(restored.load_profile() and restored.fragments == 1 and restored.hero_level == 1 and restored.treasury_level == 1, "Meta upgrades persist across instances")
+        check(not restored.buy_upgrade("hero") and not restored.buy_upgrade("invalid"), "Meta rejects unaffordable and unknown upgrades")
+        restored.award(20)
+        check(restored.buy_upgrade("hero") and restored.buy_upgrade("hero") and not restored.buy_upgrade("hero"), "Permanent upgrade obeys level cap")
+        DirAccess.remove_absolute(ProjectSettings.globalize_path(profile.save_path))
     var run_scene := load("res://scenes/run_loop.tscn") as PackedScene
     check(run_scene != null, "Unified day-night run scene loads")
     if run_scene != null:

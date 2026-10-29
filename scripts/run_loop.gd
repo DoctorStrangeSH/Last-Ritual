@@ -2,6 +2,8 @@ extends Node2D
 ## First playable day/night run coordinator. Run-only upgrades persist between phases.
 const NIGHT_SCENE: PackedScene = preload("res://scenes/topdown_night_prototype.tscn")
 const TD_SCENE: PackedScene = preload("res://scenes/topdown_td_prototype.tscn")
+const META_SCRIPT = preload("res://scripts/meta_progression.gd")
+var meta = META_SCRIPT.new()
 var phase := "hub" # hub, day, night, reward, victory, defeat
 var phase_count := 0
 var completed_phases := 0
@@ -13,11 +15,14 @@ var run_bone_tower_bonus := 0
 var run_necro_kill_bonus := 0
 var active_game: Node2D
 var last_phase := "day"
+const META_HERO_BUTTON := Rect2(270, 510, 260, 65)
+const META_TREASURY_BUTTON := Rect2(620, 510, 260, 65)
 const DAY_BUTTON := Rect2(240, 330, 280, 90)
 const NIGHT_BUTTON := Rect2(630, 330, 280, 90)
 const REWARD_BUTTONS := [Rect2(80, 370, 225, 100), Rect2(350, 370, 225, 100), Rect2(620, 370, 225, 100), Rect2(890, 370, 225, 100)]
 
 func _ready() -> void:
+    meta.load_profile()
     queue_redraw()
 
 func expected_phase() -> String:
@@ -32,12 +37,12 @@ func start_phase(kind: String) -> bool:
     active_game = TD_SCENE.instantiate() if kind == "day" else NIGHT_SCENE.instantiate()
     add_child(active_game)
     if kind == "day":
-        active_game.coins += run_gold_bonus
+        active_game.coins += run_gold_bonus + meta.treasury_level * 10
         active_game.fire_synergy_bonus = run_fire_bonus
         active_game.bone_synergy_bonus = run_bone_tower_bonus
         active_game.necro_kill_bonus = run_necro_kill_bonus
     else:
-        active_game.attack_damage += run_damage_bonus
+        active_game.attack_damage += run_damage_bonus + meta.hero_level
         active_game.attack_speed_multiplier += run_speed_bonus
     phase = kind
     queue_redraw()
@@ -51,6 +56,8 @@ func finish_phase(won: bool) -> void:
         phase = "defeat"
     else:
         completed_phases += 1
+        meta.award(1)
+        meta.save_profile()
         phase_count += 1
         phase = "victory" if phase_count >= 6 else "reward"
     queue_redraw()
@@ -94,6 +101,16 @@ func _input(event: InputEvent) -> void:
         return
     var point: Vector2 = event.position
     if phase == "hub":
+        if META_HERO_BUTTON.has_point(point) and meta.buy_upgrade("hero"):
+            meta.save_profile()
+            queue_redraw()
+            get_viewport().set_input_as_handled()
+            return
+        if META_TREASURY_BUTTON.has_point(point) and meta.buy_upgrade("treasury"):
+            meta.save_profile()
+            queue_redraw()
+            get_viewport().set_input_as_handled()
+            return
         if expected_phase() == "day" and DAY_BUTTON.has_point(point):
             start_phase("day")
             get_viewport().set_input_as_handled()
@@ -137,7 +154,12 @@ func _draw() -> void:
             draw_rect(NIGHT_BUTTON, Color("#594d78") if next_phase == "night" else Color("#343b47"))
             draw_string(ThemeDB.fallback_font, Vector2(290, 382), "DAY: DEFEND" if next_phase == "day" else "DAY: COMPLETE", HORIZONTAL_ALIGNMENT_LEFT, -1, 24, Color.WHITE)
             draw_string(ThemeDB.fallback_font, Vector2(665, 382), "NIGHT: EXPLORE" if next_phase == "night" else "NIGHT: LOCKED", HORIZONTAL_ALIGNMENT_LEFT, -1, 24, Color.WHITE)
-            draw_string(ThemeDB.fallback_font, Vector2(300, 490), "Relics: +%d damage, +%d gold, +%d fire, +%d bone, +%d necro kill gold" % [run_damage_bonus, run_gold_bonus, run_fire_bonus, run_bone_tower_bonus, run_necro_kill_bonus], HORIZONTAL_ALIGNMENT_LEFT, -1, 19, Color("#c7c9d1"))
+            draw_string(ThemeDB.fallback_font, Vector2(120, 455), "Run relics: +%d damage, +%d gold, +%d fire, +%d bone, +%d necro gold" % [run_damage_bonus, run_gold_bonus, run_fire_bonus, run_bone_tower_bonus, run_necro_kill_bonus], HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color("#c7c9d1"))
+            draw_string(ThemeDB.fallback_font, Vector2(390, 495), "SOUL FRAGMENTS: %d  (1 per completed phase)" % meta.fragments, HORIZONTAL_ALIGNMENT_LEFT, -1, 19, Color("#e7d3a8"))
+            draw_rect(META_HERO_BUTTON, Color("#526d9b") if meta.hero_level < 3 and meta.fragments >= meta.hero_level + 1 else Color("#343b47"))
+            draw_rect(META_TREASURY_BUTTON, Color("#527d70") if meta.treasury_level < 3 and meta.fragments >= meta.treasury_level + 1 else Color("#343b47"))
+            draw_string(ThemeDB.fallback_font, META_HERO_BUTTON.position + Vector2(9, 39), "HERO +1 DMG  Lv%d/3  %d FR" % [meta.hero_level, meta.hero_level + 1], HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
+            draw_string(ThemeDB.fallback_font, META_TREASURY_BUTTON.position + Vector2(9, 39), "DAY +10 GOLD  Lv%d/3  %d FR" % [meta.treasury_level, meta.treasury_level + 1], HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
         "reward":
             draw_string(ThemeDB.fallback_font, Vector2(410, 235), "CHOOSE A RUN RELIC", HORIZONTAL_ALIGNMENT_LEFT, -1, 26, Color.WHITE)
             var names := ["BONE: +1 HERO/TOWER", "EMBER: SPEED + FIRE", "GOLD: +30 START GOLD", "NECRO: +3 KILL GOLD"]
