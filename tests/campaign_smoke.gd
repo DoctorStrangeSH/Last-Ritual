@@ -230,6 +230,7 @@ func run_tests() -> void:
     game.night_enemies.append({"x": 420.0, "hp": 100.0, "dir": 1.0})
     game.shadow_cleave()
     check(game.mana == 80 and game.cleave_cooldown == 6.0, "shadow cleave consumes mana and starts cooldown")
+    check(game.cleave_flash_timer == 0.32 and game.cleave_flash_facing == 1.0, "shadow cleave starts directional visual feedback")
     check(float(game.night_enemies[0]["hp"]) == 52.0, "shadow cleave hits beyond basic range for double damage")
     game.shadow_cleave()
     check(game.mana == 80, "cleave cannot repeat while attack is cooling down")
