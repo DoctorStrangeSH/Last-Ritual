@@ -287,6 +287,7 @@ func run_tests() -> void:
         game.attack_cooldown = 0.0
         check(game.attack(Vector2(570.0, 240.0)), "Hero can attack first enemy")
     check(game.enemies.size() == 1 and game.night_souls == 1, "First enemy defeated and awards a soul")
+    check(game.floating_combat_texts.size() >= 3 and game.enemies[0].get("hit_flash", 0.0) > 0.0, "Successful hits spawn damage numbers and enemy hit flash")
     game.player_pos = Vector2(710.0, 370.0)
     for i in range(3):
         game.attack_cooldown = 0.0
