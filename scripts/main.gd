@@ -924,6 +924,9 @@ func begin_night() -> void:
     else:
         platforms = [Rect2(205, 473, 135, 16), Rect2(415, 413, 145, 16), Rect2(640, 462, 130, 16), Rect2(830, 396, 135, 16)]
         trap_positions = [375.0, 775.0]
+    if current_day >= 3:
+        # Optional elite: the stone and exit do not require defeating this enemy.
+        night_enemies.append({"x": 530.0, "hp": 155.0 + float(current_day - 3) * 25.0, "dir": 1.0, "kind": "elite_warden", "windup": 0.0, "strike_cd": 2.0})
     if current_day >= 3 and night_enemies.size() > 1:
         var hexer: Dictionary = night_enemies[1]
         hexer["kind"] = "hexer"
@@ -1223,7 +1226,22 @@ func update_night(delta: float) -> void:
         var e := night_enemies[i]
         var is_charger: bool = str(e.get("kind", "")) == "charger"
         var is_hexer: bool = str(e.get("kind", "")) == "hexer"
-        if is_charger:
+        var is_elite: bool = str(e.get("kind", "")) == "elite_warden"
+        if is_elite:
+            var elite_windup: float = float(e.get("windup", 0.0))
+            if elite_windup > 0.0:
+                e["windup"] = maxf(0.0, elite_windup - delta)
+                if float(e["windup"]) <= 0.0:
+                    if absf(player.x - float(e["x"])) < 100.0 and player.y > FLOOR - 90.0:
+                        hurt(28.0)
+                    e["strike_cd"] = 3.1
+            else:
+                e["strike_cd"] = maxf(0.0, float(e.get("strike_cd", 0.0)) - delta)
+                if float(e["strike_cd"]) <= 0.0 and absf(player.x - float(e["x"])) < 130.0:
+                    e["windup"] = 1.0
+                elif absf(player.x - float(e["x"])) > 105.0:
+                    e["x"] += signf(player.x - float(e["x"])) * 24.0 * delta
+        elif is_charger:
             e["charge_cd"] = maxf(0.0, float(e.get("charge_cd", 0.0)) - delta)
             var windup_before: float = float(e.get("windup", 0.0))
             e["windup"] = maxf(0.0, windup_before - delta)
@@ -1273,9 +1291,15 @@ func update_night(delta: float) -> void:
         if e["hp"] > 0.0 and absf(player.x - e["x"]) < 30.0 and player.y > FLOOR - 55.0:
             hurt(24.0 if is_charger and float(e.get("charging", 0.0)) > 0.0 else (12.0 if is_charger else (10.0 if is_hexer else 17.0)))
         if e["hp"] <= 0:
-            mana += 10
-            souls += 2
-            burst_particles(Vector2(float(e["x"]), FLOOR - 24.0), Color("a6c8a2"), 10)
+            if is_elite:
+                mana += 45
+                souls += 5
+                show_notice("Элитный страж повержен: +45 маны, +5 душ!")
+                burst_particles(Vector2(float(e["x"]), FLOOR - 24.0), Color("ffd18a"), 22)
+            else:
+                mana += 10
+                souls += 2
+                burst_particles(Vector2(float(e["x"]), FLOOR - 24.0), Color("a6c8a2"), 10)
             night_enemies.remove_at(i)
     if mage["hp"] > 0.0:
         mage["cooldown"] -= delta
@@ -2015,10 +2039,17 @@ func _draw() -> void:
                 var bob: float = sin(atmosphere_clock * 7.0 + enemy_x * 0.04) * 3.0
                 var is_charger: bool = str(e.get("kind", "")) == "charger"
                 var is_hexer: bool = str(e.get("kind", "")) == "hexer"
+                var is_elite: bool = str(e.get("kind", "")) == "elite_warden"
                 var is_winding: bool = float(e.get("windup", 0.0)) > 0.0
                 var is_charging: bool = is_charger and float(e.get("charging", 0.0)) > 0.0
-                var body_color: Color = Color("9c4d59") if is_charger else (Color("6b4c99") if is_hexer else Color("557a66"))
-                var head_color: Color = Color("d47a79") if is_charger else (Color("b69add") if is_hexer else Color("9cc09b"))
+                var body_color: Color = Color("c19a50") if is_elite else (Color("9c4d59") if is_charger else (Color("6b4c99") if is_hexer else Color("557a66")))
+                var head_color: Color = Color("ffe5a3") if is_elite else (Color("d47a79") if is_charger else (Color("b69add") if is_hexer else Color("9cc09b")))
+                if is_elite:
+                    label("ЭЛИТА", enemy_x - 28.0, FLOOR - 90.0, 15, Color("ffe39b"))
+                    if is_winding:
+                        draw_circle(Vector2(enemy_x, FLOOR - 24.0), 88.0, Color(1.0, 0.72, 0.22, 0.12 + 0.08 * sin(atmosphere_clock * 19.0)))
+                        draw_arc(Vector2(enemy_x, FLOOR - 24.0), 88.0, 0.0, TAU, 28, Color("ffd074"), 4.0)
+                        label("УДАР!", enemy_x - 28.0, FLOOR - 108.0, 15, Color("fff1bf"))
                 if is_winding and is_charger:
                     var warning_pulse: float = 0.55 + 0.35 * sin(atmosphere_clock * 24.0)
                     var warning_dir: float = float(e.get("charge_dir", 1.0))
