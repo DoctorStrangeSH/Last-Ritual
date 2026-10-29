@@ -226,6 +226,20 @@ func run_tests() -> void:
     check(game.night_enemies.size() == 3 and is_equal_approx(float(game.night_enemies[2]["hp"]), 240.0), "fifth tomb elite has unique stronger variant")
     check(is_equal_approx(float(game.night_enemies[2]["strike_cd"]), 1.5), "fifth tomb elite reacts earlier")
     game.reset_all()
+    game.reset_all()
+    game.current_day = 1
+    game.begin_night()
+    check(game.night_controls_hint_visible(), "first night briefly shows mouse controls")
+    game.trap_clock = 8.1
+    check(not game.night_controls_hint_visible(), "night controls tutorial hides after eight seconds")
+    game.trap_clock = 0.0
+    game.stone_taken = true
+    check(not game.night_controls_hint_visible(), "night control hint hides after stone pickup")
+    game.reset_all()
+    game.current_day = 2
+    game.begin_night()
+    check(not game.night_controls_hint_visible(), "later nights start with uncluttered HUD")
+    game.reset_all()
     check(game.current_day == 1, "initial day")
     game.dungeon_route = 1
     game.platforms = [Rect2(200.0, 420.0, 135.0, 16.0)]
