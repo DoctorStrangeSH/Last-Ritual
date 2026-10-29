@@ -10,6 +10,8 @@ var coins := 150
 var fire_synergy_bonus := 0
 var bone_synergy_bonus := 0
 var necro_kill_bonus := 0
+var necro_kill_streak := 0
+var summoned_spirits: Array[Dictionary] = []
 const PATHS := [
     [Vector2(65, 285), Vector2(560, 285), Vector2(1070, 285)],
     [Vector2(65, 345), Vector2(560, 345), Vector2(1070, 345)]
@@ -143,7 +145,42 @@ func attack_with_towers(delta: float) -> void:
                 coins += 5
                 if kind == "necro":
                     coins += necro_kill_bonus
+                    necro_kill_streak += 1
+                    if necro_kill_streak >= 3:
+                        necro_kill_streak = 0
+                        spawn_necro_spirit(tower["pos"])
         tower_cooldowns[slot_id] = 0.8
+    queue_redraw()
+
+func spawn_necro_spirit(origin: Vector2) -> void:
+    summoned_spirits.append({"pos": origin, "life": 4.0, "cooldown": 0.0, "damage": 2})
+
+func tick_necro_spirits(delta: float) -> void:
+    for spirit in summoned_spirits.duplicate():
+        spirit["life"] = float(spirit["life"]) - delta
+        spirit["cooldown"] = maxf(0.0, float(spirit["cooldown"]) - delta)
+        if float(spirit["life"]) <= 0.0:
+            summoned_spirits.erase(spirit)
+            continue
+        if float(spirit["cooldown"]) > 0.0:
+            continue
+        var target: Dictionary = {}
+        var nearest := 170.0
+        for enemy in enemies:
+            if float(enemy.get("delay", 0.0)) > 0.0:
+                continue
+            var distance: float = spirit["pos"].distance_to(enemy["pos"])
+            if distance < nearest:
+                nearest = distance
+                target = enemy
+        if not target.is_empty():
+            target["hp"] -= int(spirit["damage"])
+            shot_trails.append({"from": spirit["pos"], "to": target["pos"], "time": 0.15})
+            spirit["cooldown"] = 0.75
+            if target["hp"] <= 0:
+                enemies.erase(target)
+                enemies_defeated += 1
+                coins += 5
     queue_redraw()
 
 func apply_burn(enemy: Dictionary) -> void:
@@ -203,6 +240,7 @@ func _process(delta: float) -> void:
     advance_enemies(delta)
     tick_burning(delta)
     attack_with_towers(delta)
+    tick_necro_spirits(delta)
     for trail in shot_trails.duplicate():
         trail["time"] -= delta
         if trail["time"] <= 0.0:
