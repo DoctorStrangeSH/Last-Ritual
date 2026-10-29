@@ -762,16 +762,14 @@ func _input(event: InputEvent) -> void:
             elif mouse.x >= 1020.0 and mouse.x <= 1138.0:
                 sell_selected_tower()
             return
-        # Hit-test the whole tower sprite first, not just the center of its lane.
-        for i in range(towers.size()):
-            var tower_lane: int = int(towers[i].get("lane", 1))
-            var tower_base_y: float = FLOOR + float(LANE_OFFSETS[tower_lane])
-            if absf(float(towers[i]["x"]) - mouse.x) <= 35.0 and mouse.y >= tower_base_y - 112.0 and mouse.y <= tower_base_y + 8.0:
-                selected_tower_index = i
-                selected_lane = tower_lane
-                dragging_tower = false
-                show_notice("Башня выбрана. Все характеристики — в нижней панели.")
-                return
+        # Reuse the drawn sprite bounds for mouse selection and hover feedback.
+        var clicked_tower := tower_at_point(mouse)
+        if clicked_tower >= 0:
+            selected_tower_index = clicked_tower
+            selected_lane = int(towers[clicked_tower].get("lane", 1))
+            dragging_tower = false
+            show_notice("Башня выбрана. Все характеристики — в нижней панели.")
+            return
         var lane: int = lane_for_y(mouse.y)
         selected_lane = lane
         selected_tower_index = -1
@@ -1213,6 +1211,14 @@ func apply_dungeon_route() -> void:
             var p: Rect2 = platforms[i]
             platforms[i] = Rect2(p.position + Vector2(-18.0 if i % 2 == 0 else 18.0, 10.0), p.size)
     secret_cache_pos = Vector2(575.0 if dungeon_route == 0 else (610.0 if dungeon_route == 1 else 535.0), FLOOR - 27.0)
+
+func tower_at_point(pos: Vector2) -> int:
+    for i in range(towers.size() - 1, -1, -1):
+        var tower_lane: int = int(towers[i].get("lane", 1))
+        var tower_base_y: float = FLOOR + float(LANE_OFFSETS[tower_lane])
+        if absf(float(towers[i]["x"]) - pos.x) <= 35.0 and pos.y >= tower_base_y - 112.0 and pos.y <= tower_base_y + 8.0:
+            return i
+    return -1
 
 func reward_card_at(pos: Vector2) -> int:
     for i in range(3):
@@ -1889,8 +1895,11 @@ func _draw() -> void:
                     draw_line(Vector2(tx + 5.0, tower_y - 78.0), Vector2(float(tower.get("flash_target_x", tx)), FLOOR - 32.0 + float(LANE_OFFSETS[tower_lane])), tracer_color, 3.0 if tower["type"] == "fire" else 2.0)
                 var tower_art: Texture2D = preload("res://assets/towers/bone_tower.svg") if tower["type"] == "bone" else (preload("res://assets/towers/infernal_ballista.svg") if tower["type"] == "fire" else preload("res://assets/towers/necromancer_tower.svg"))
                 draw_texture_rect(tower_art, Rect2(tx - 30.0, tower_y - 106.0, 60.0, 106.0), false)
+                var tower_hovered := tower_at_point(get_global_mouse_position()) == tower_i
                 if selected_tower_index == tower_i:
                     draw_rect(Rect2(tx - 34.0, tower_y - 111.0, 68.0, 115.0), Color("f7dfad"), false, 2.0)
+                elif tower_hovered and not dragging_tower and selected_build == "":
+                    draw_rect(Rect2(tx - 34.0, tower_y - 111.0, 68.0, 115.0), Color("a9dce2", 0.8), false, 1.5)
                 var hp_ratio: float = clampf(float(tower.get("hp", tower_max_hp(tower))) / tower_max_hp(tower), 0.0, 1.0)
                 box(Rect2(tx - 24.0, tower_y - 120.0, 48.0, 6.0), Color("442b36"))
                 box(Rect2(tx - 24.0, tower_y - 120.0, 48.0 * hp_ratio, 6.0), Color("88d0a2") if hp_ratio > 0.3 else Color("ec7778"))
