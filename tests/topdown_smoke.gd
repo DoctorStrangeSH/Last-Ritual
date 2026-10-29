@@ -66,6 +66,13 @@ func run_tests() -> void:
     check(game.choose_relic("bone") and game.run_state == "won", "Final reward completes short prototype run")
     game.restart_run()
     check(game.run_state == "playing" and game.room_index == 0, "Restart after victory works")
+    game.reward_available = true
+    check(game.click_ui(Vector2(301, 470)) and game.relics == ["bone"], "Mouse selects first relic card")
+    check(not game.click_ui(Vector2(301, 470)), "Mouse cannot claim same reward twice")
+    game.take_damage(999)
+    check(game.run_state == "lost", "Death opens restart panel")
+    check(game.click_ui(Vector2(500, 330)), "Restart button accepts mouse click")
+    check(game.run_state == "playing" and game.relics.is_empty(), "Mouse restart clears relics")
     game.queue_free()
     print("TOPDOWN SMOKE RESULT: ", "PASS" if failures == 0 else str(failures) + " FAILURES")
     quit(0 if failures == 0 else 1)
