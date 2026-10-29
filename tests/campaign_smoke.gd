@@ -30,6 +30,12 @@ func run_tests() -> void:
     for kind in range(5):
         check(game.reward_name(kind) == expected_names[kind] and game.reward_detail(kind) == expected_details[kind] and game.reward_note(kind) == expected_notes[kind], "reward catalog preserves offer %d" % kind)
     check(game.reward_name(99) == "НЕИЗВЕСТНЫЙ ДАР" and game.reward_detail(99) == "" and game.reward_note(99) == "", "reward catalog handles unknown kind")
+    check(game.tower_ability_description("bone", 1) == "Замедление 2.5 с", "bone tower ability description preserved")
+    check(game.tower_ability_description("bone", 3) == "Замедление 3.2 с", "upgraded bone tower description preserved")
+    check(game.tower_ability_description("necro", 1) == "Скелет: 65 HP / 6 с", "necro tower ability description preserved")
+    check(game.tower_ability_description("necro", 3) == "Скелет: 125 HP / 6 с", "upgraded necro tower description preserved")
+    check(game.tower_ability_description("fire", 1) == "Крит 18% + взрыв", "fire tower ability description preserved")
+    check(game.tower_ability_description("fire", 3) == "Крит 26% + взрыв", "upgraded fire tower description preserved")
     check(game.current_day == 1, "initial day")
     game.dungeon_route = 1
     game.platforms = [Rect2(200.0, 420.0, 135.0, 16.0)]
