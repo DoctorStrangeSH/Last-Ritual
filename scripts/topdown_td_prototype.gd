@@ -464,3 +464,18 @@ func _draw() -> void:
         draw_rect(Rect2(260.0 + i * 210.0, 550.0, 180.0, 64.0), Color("#876c58"))
     draw_rect(Rect2(880, 545, 110, 55), Color("#518b78"))
     draw_rect(Rect2(1010, 545, 110, 55), Color("#914c59"))
+
+    draw_string(ThemeDB.fallback_font, Vector2(1010, 45), "H: HELP", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#d5c592"))
+    if help_visible:
+        var help_panel := Rect2(286, 116, 580, 410)
+        draw_rect(help_panel, Color(0.055, 0.07, 0.11, 0.97))
+        draw_rect(help_panel, Color("#d5c592"), false, 2.0)
+        draw_string(ThemeDB.fallback_font, Vector2(430, 160), "DAY DEFENSE CONTROLS", HORIZONTAL_ALIGNMENT_LEFT, -1, 25, Color("#e7d3a8"))
+        draw_string(ThemeDB.fallback_font, Vector2(326, 207), "WASD / ARROWS  -  Move the hero", HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color.WHITE)
+        draw_string(ThemeDB.fallback_font, Vector2(326, 247), "Choose BONE / FIRE / NECRO below, then click a pad", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
+        draw_string(ThemeDB.fallback_font, Vector2(326, 287), "Click a built tower to select it", HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color.WHITE)
+        draw_string(ThemeDB.fallback_font, Vector2(326, 327), "UPGRADE / SELL manage the selected tower", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
+        draw_string(ThemeDB.fallback_font, Vector2(326, 367), "Click open ground  -  Hero attacks toward cursor", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
+        draw_string(ThemeDB.fallback_font, Vector2(326, 407), "RIGHT CLICK or ESC  -  Cancel tower selection", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
+        draw_string(ThemeDB.fallback_font, Vector2(326, 447), "START WAVE  -  Send the next wave", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
+        draw_string(ThemeDB.fallback_font, Vector2(326, 490), "H  -  Close help (action pauses while open)", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#d5c592"))
