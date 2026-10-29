@@ -25,6 +25,8 @@ var attack_damage := 1
 var attack_speed_multiplier := 1.0
 var attack_cooldown := 0.0
 var invulnerable_time := 0.0
+var player_hit_flash := 0.0
+var floating_combat_texts: Array[Dictionary] = []
 var run_state := "playing" # playing, won, lost
 
 func _ready() -> void:
@@ -75,6 +77,8 @@ func attack(target: Vector2) -> bool:
     if hit == -1:
         return false
     enemies[hit]["hp"] -= attack_damage
+    enemies[hit]["hit_flash"] = 0.12
+    floating_combat_texts.append({"pos": enemies[hit]["pos"] + Vector2(0, -22), "text": "-%d" % attack_damage, "time": 0.65, "color": Color("#fff0b0")})
     if enemies[hit]["hp"] <= 0:
         enemies.remove_at(hit)
         night_souls += 1
@@ -185,6 +189,8 @@ func take_damage(amount: int) -> void:
     if run_state != "playing" or invulnerable_time > 0.0 or amount <= 0:
         return
     player_hp = maxi(0, player_hp - amount)
+    player_hit_flash = 0.22
+    floating_combat_texts.append({"pos": player_pos + Vector2(0, -26), "text": "-%d HP" % amount, "time": 0.8, "color": Color("#ff7c91")})
     invulnerable_time = 0.75
     if player_hp == 0:
         run_state = "lost"
@@ -196,6 +202,14 @@ func _process(delta: float) -> void:
         return
     attack_cooldown = maxf(0.0, attack_cooldown - delta)
     invulnerable_time = maxf(0.0, invulnerable_time - delta)
+    player_hit_flash = maxf(0.0, player_hit_flash - delta)
+    for combat_text in floating_combat_texts.duplicate():
+        combat_text["time"] = float(combat_text["time"]) - delta
+        combat_text["pos"] = combat_text["pos"] + Vector2(0, -24.0 * delta)
+        if float(combat_text["time"]) <= 0.0:
+            floating_combat_texts.erase(combat_text)
+    for enemy in enemies:
+        enemy["hit_flash"] = maxf(0.0, float(enemy.get("hit_flash", 0.0)) - delta)
     var direction := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
     if Input.is_key_pressed(KEY_A): direction.x -= 1.0
     if Input.is_key_pressed(KEY_D): direction.x += 1.0
@@ -289,7 +303,7 @@ func _draw() -> void:
     draw_rect(Rect2(Vector2.ZERO, Vector2(1152, 648)), Color("#111521"))
     draw_rect(ARENA, Color("#242936"))
     draw_rect(ARENA, Color("#7d7798"), false, 4.0)
-    draw_circle(player_pos, 17.0, Color("#80dbed"))
+    draw_circle(player_pos, 22.0 if player_hit_flash > 0.0 else 17.0, Color("#fff1d1") if player_hit_flash > 0.0 else (Color("#80dbed") if invulnerable_time <= 0.0 or int(invulnerable_time * 16.0) % 2 == 0 else Color("#4c657a")))
     draw_rect(Rect2(48.0, 25.0, 220.0, 18.0), Color("#442c37"))
     draw_rect(Rect2(48.0, 25.0, 220.0 * float(player_hp) / 100.0, 18.0), Color("#cf657a"))
     draw_label("HP %d / 100   ROOM %d / 3   %s   SOULS %d   RELICS %d" % [player_hp, room_index + 1, ROOM_KINDS[room_variant], night_souls, relics.size()], Vector2(280, 41), 17)
@@ -305,9 +319,12 @@ func _draw() -> void:
         draw_rect(RESTART_BUTTON, Color("#739bb0"))
         draw_label("RESTART RUN", Vector2(488, 337), 22)
     for enemy in enemies:
-        draw_circle(enemy["pos"], 19.0, Color("#aa70d6") if enemy["ranged"] else Color("#cf646c"))
+        var enemy_color: Color = Color("#fff1d1") if float(enemy.get("hit_flash", 0.0)) > 0.0 else (Color("#aa70d6") if enemy["ranged"] else Color("#cf646c"))
+        draw_circle(enemy["pos"], 23.0 if float(enemy.get("hit_flash", 0.0)) > 0.0 else 19.0, enemy_color)
     for shot in hostile_shots:
         draw_circle(shot["pos"], 7.0, Color("#ffbd77"))
+    for combat_text in floating_combat_texts:
+        draw_label(str(combat_text["text"]), combat_text["pos"], 16, combat_text["color"])
     if reward_available:
         draw_circle(Vector2(576, 325), 24.0, Color("#f4d78c"))
         draw_label("CHOOSE ONE RELIC", Vector2(480, 425), 23)
