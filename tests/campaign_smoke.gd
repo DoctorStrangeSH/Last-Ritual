@@ -70,7 +70,8 @@ func run_tests() -> void:
     game.update_night(0.0)
     check(game.player_hp == 76.0, "Blood Mantle restores six HP on regular kill")
     game.player_hp = 98.0
-    game.night_enemies[1]["hp"] = 0.0
+    check(game.night_enemies.size() == 1, "only one regular enemy remains after two deaths")
+    game.night_enemies[0]["hp"] = 0.0
     game.update_night(0.0)
     check(game.player_hp == 100.0, "Blood Mantle healing caps at max HP")
     game.reset_all()
