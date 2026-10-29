@@ -55,6 +55,26 @@ func run_tests() -> void:
     check(game.dash_cooldown == 1.25, "Ashen Step relic halves dash cooldown")
     game.reset_all()
     check(not game.shadow_relic, "relic does not leak between runs")
+    game.reset_all()
+    game.current_day = 4
+    game.begin_night()
+    game.player = Vector2(95.0, game.FLOOR - 22.0)
+    game.mage["hp"] = 0.0
+    game.boss_hp = 0.0
+    game.shadow_relic = true
+    game.night_enemies[2]["hp"] = 0.0
+    game.update_night(0.0)
+    check(game.blood_mantle, "second elite grants Blood Mantle relic")
+    game.player_hp = 70.0
+    game.night_enemies[0]["hp"] = 0.0
+    game.update_night(0.0)
+    check(game.player_hp == 76.0, "Blood Mantle restores six HP on regular kill")
+    game.player_hp = 98.0
+    game.night_enemies[1]["hp"] = 0.0
+    game.update_night(0.0)
+    check(game.player_hp == 100.0, "Blood Mantle healing caps at max HP")
+    game.reset_all()
+    check(not game.blood_mantle, "Blood Mantle resets on new run")
     check(game.current_day == 1, "initial day")
     game.dungeon_route = 1
     game.platforms = [Rect2(200.0, 420.0, 135.0, 16.0)]
@@ -431,11 +451,13 @@ func run_tests() -> void:
     game.wall_hp = 78.0
     game.towers.append({"x": 430.0, "type": "fire", "cooldown": 0.0})
     game.shadow_relic = true
+    game.blood_mantle = true
     check(game.save_campaign(), "checkpoint save")
     game.reset_all()
     check(game.load_campaign(), "checkpoint load")
     check(game.phase == "ritual" and game.current_day == 2 and game.stones_collected == 2, "checkpoint phase and progress")
     check(game.shadow_relic, "checkpoint restores run-long relic")
+    check(game.blood_mantle, "checkpoint restores Blood Mantle")
     check(game.mana == 93 and game.souls == 11 and game.wall_hp == 78.0, "checkpoint resources")
     check(game.towers.is_empty(), "checkpoint towers reset after night")
 
@@ -448,6 +470,12 @@ func run_tests() -> void:
     relic_file.store_string(JSON.stringify(invalid_relic))
     relic_file.close()
     check(not game.load_campaign(), "invalid relic save type is rejected")
+    invalid_relic["shadow_relic"] = true
+    invalid_relic["blood_mantle"] = "yes"
+    relic_file = FileAccess.open("user://campaign_smoke_test.json", FileAccess.WRITE)
+    relic_file.store_string(JSON.stringify(invalid_relic))
+    relic_file.close()
+    check(not game.load_campaign(), "invalid Blood Mantle save type rejected")
     check(game.shadow_relic and game.mana == 93, "invalid relic save preserves prior checkpoint")
     var invalid := {"version": 1, "day": 2, "stones": 2, "mana": 90, "souls": 10, "wall_hp": 90, "tower_power": 0, "wall_ward": 0, "towers": [{"x": 400.0, "type": "bone"}, {"x": 420.0, "type": "bone"}]}
     var bad_file := FileAccess.open("user://campaign_smoke_test.json", FileAccess.WRITE)
