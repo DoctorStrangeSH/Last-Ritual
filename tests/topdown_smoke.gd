@@ -120,6 +120,28 @@ func run_tests() -> void:
             ritual_game.update_guardian_boss(0.1)
             check(float(guardian["ritual_warning"]) <= 0.65, "Enraged guardian accelerates warning")
         ritual_game.queue_free()
+    var event_scene = load("res://scenes/topdown_night_prototype.tscn")
+    if event_scene != null:
+        var events = event_scene.instantiate()
+        root.add_child(events)
+        events.enable_floor_exploration(42)
+        var secret_id := -1
+        var event_id := -1
+        for room in events.floor_data["rooms"]:
+            if room["kind"] == "ТАЙНИК":
+                secret_id = int(room["id"])
+            elif room["kind"] == "СОБЫТИЕ":
+                event_id = int(room["id"])
+        check(secret_id >= 0 and event_id >= 0, "Each floor includes a cache and event room")
+        events.night_souls = 0
+        var original_damage: int = events.attack_damage
+        events.open_room(secret_id)
+        check(events.night_souls == 2 and events.attack_damage == original_damage + 1, "Cache grants souls and damage")
+        events.open_room(secret_id)
+        check(events.night_souls == 2, "Cache cannot be farmed by revisits")
+        events.open_room(event_id)
+        check(events.cleared_rooms.has(event_id) and events.enemies.is_empty(), "Event resolves without combat")
+        events.queue_free()
     var td_scene := load("res://scenes/topdown_td_prototype.tscn") as PackedScene
     check(td_scene != null, "Top-down TD scene loads")
     if td_scene != null:
