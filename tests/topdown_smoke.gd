@@ -149,14 +149,37 @@ func run_tests() -> void:
         restored.award(20)
         check(restored.buy_upgrade("hero") and restored.buy_upgrade("hero") and not restored.buy_upgrade("hero"), "Permanent upgrade obeys level cap")
         DirAccess.remove_absolute(ProjectSettings.globalize_path(profile.save_path))
+    var hard_td_scene := load("res://scenes/topdown_td_prototype.tscn") as PackedScene
+    if hard_td_scene != null:
+        var hard_td = hard_td_scene.instantiate()
+        root.add_child(hard_td)
+        hard_td.difficulty = 2
+        check(hard_td.start_wave() and hard_td.enemies[0]["hp"] == 8 and float(hard_td.enemies[0]["speed"]) > 85.0, "Nightmare TD wave has tougher faster enemies")
+        hard_td.wave_number = 2
+        hard_td.enemies.clear()
+        check(hard_td.start_wave() and hard_td.enemies.back()["role"] == "boss" and hard_td.enemies.back()["hp"] == 85, "Nightmare boss gains durability")
+        hard_td.enemies.clear()
+        hard_td.queue_free()
+    var hard_night_scene := load("res://scenes/topdown_night_prototype.tscn") as PackedScene
+    if hard_night_scene != null:
+        var hard_night = hard_night_scene.instantiate()
+        root.add_child(hard_night)
+        hard_night.difficulty = 1
+        hard_night.open_room(0)
+        check(hard_night.enemies[0]["hp"] == 5 and float(hard_night.enemies[0]["speed"]) > 65.0, "Hard night enemies get boosted HP and movement")
+        hard_night.queue_free()
     var run_scene := load("res://scenes/run_loop.tscn") as PackedScene
     check(run_scene != null, "Unified day-night run scene loads")
     if run_scene != null:
         var run = run_scene.instantiate()
         root.add_child(run)
         check(run.phase == "hub", "Run starts at phase selection hub")
+        check(not run.set_difficulty(-1) and not run.set_difficulty(3), "Invalid difficulty rejected")
+        check(run.set_difficulty(2) and run.difficulty == 2, "Nightmare difficulty selectable from hub")
+        check(run.set_difficulty(0), "Normal difficulty selectable from hub")
         check(run.expected_phase() == "day" and not run.start_phase("night"), "Run requires day as first phase")
         check(run.start_phase("day") and run.phase == "day", "Run can start day defense")
+        check(not run.set_difficulty(2), "Difficulty cannot be changed during a run")
         check(not run.start_phase("day"), "Cannot restart active phase to duplicate run starts")
         run.finish_phase(true)
         check(run.phase == "reward" and run.completed_phases == 1, "Winning a phase grants run reward")
@@ -222,6 +245,18 @@ func run_tests() -> void:
         check(run.choose_run_reward("necro") and run.run_necro_kill_bonus == 3, "Necro reward adds kill gold")
         check(run.start_phase("day") and run.active_game.necro_kill_bonus == 3, "Necro reward carries into tower defense")
         run.queue_free()
+        var difficulty_run = run_scene.instantiate()
+        root.add_child(difficulty_run)
+        check(difficulty_run.set_difficulty(2) and difficulty_run.start_phase("day"), "Nightmare difficulty propagates to day")
+        check(difficulty_run.active_game.difficulty == 2, "Day receives Nightmare setting")
+        var difficulty_fragments: int = difficulty_run.meta.fragments
+        difficulty_run.finish_phase(true)
+        check(difficulty_run.meta.fragments == difficulty_fragments + 3, "Nightmare phase awards three fragments")
+        check(difficulty_run.choose_run_reward("bone") and difficulty_run.start_phase("night"), "Nightmare run proceeds to night")
+        check(difficulty_run.active_game.difficulty == 2, "Night also receives Nightmare setting")
+        difficulty_run.reset_run()
+        check(difficulty_run.difficulty == 0, "New run defaults to normal")
+        difficulty_run.queue_free()
     var packed := load("res://scenes/topdown_night_prototype.tscn") as PackedScene
     check(packed != null, "Top-down entry scene loads")
     if packed == null:

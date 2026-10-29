@@ -4,6 +4,7 @@ const ARENA := Rect2(48.0, 68.0, 1056.0, 520.0)
 const SPEED := 240.0
 const ATTACK_RANGE := 155.0
 var room_index := 0
+var difficulty := 0 # 0 normal, 1 hard, 2 nightmare
 var dungeon_seed := 0
 var room_variant := 0
 var route_boon := ""
@@ -41,9 +42,9 @@ func open_room(index: int, override_variant: int = -1) -> void:
     var offsets := [Vector2.ZERO, Vector2(-90.0, 65.0), Vector2(40.0, -65.0)]
     var offset: Vector2 = offsets[room_variant]
     for i in range(2):
-        enemies.append({"pos": Vector2(570.0 + i * 160.0, 240.0 + i * 130.0) + offset, "hp": 3 + (2 if room_variant == 2 else 0), "speed": 65.0 + i * 20.0 + (25.0 if room_variant == 1 else 0.0), "ranged": i == 1})
+        enemies.append({"pos": Vector2(570.0 + i * 160.0, 240.0 + i * 130.0) + offset, "hp": 3 + (2 if room_variant == 2 else 0) + difficulty * 2, "speed": (65.0 + i * 20.0 + (25.0 if room_variant == 1 else 0.0)) * (1.0 + difficulty * 0.15), "ranged": i == 1})
     if room_variant == 2:
-        enemies.append({"pos": Vector2(850.0, 450.0), "hp": 6, "speed": 90.0, "ranged": false})
+        enemies.append({"pos": Vector2(850.0, 450.0), "hp": 6 + difficulty * 2, "speed": 90.0 * (1.0 + difficulty * 0.15), "ranged": false})
     queue_redraw()
 
 func set_dungeon_seed(value: int) -> void:
