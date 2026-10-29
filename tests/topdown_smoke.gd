@@ -85,6 +85,20 @@ func run_tests() -> void:
         special.open_room(shop_id)
         check(not special.shop_open, "Merchant does not reset on revisit")
         special.queue_free()
+    var boss_scene = load("res://scenes/topdown_night_prototype.tscn")
+    if boss_scene != null:
+        var boss_game = boss_scene.instantiate()
+        root.add_child(boss_game)
+        boss_game.enable_floor_exploration(73)
+        var boss_id: int = int(boss_game.floor_data["boss"])
+        boss_game.open_room(boss_id)
+        var guardians := 0
+        for foe in boss_game.enemies:
+            if foe.get("role", "") == "boss":
+                guardians += 1
+                check(int(foe["hp"]) >= 30, "Ritual guardian has boss-scale health")
+        check(guardians == 1 and boss_game.enemies.size() == 3, "Boss chamber spawns guardian with escort")
+        boss_game.queue_free()
     var td_scene := load("res://scenes/topdown_td_prototype.tscn") as PackedScene
     check(td_scene != null, "Top-down TD scene loads")
     if td_scene != null:
