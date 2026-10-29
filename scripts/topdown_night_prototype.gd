@@ -13,6 +13,10 @@ const MELEE_WARNING := 0.45
 const MELEE_RECHARGE := 1.15
 const MELEE_REACH := 60.0
 const MELEE_HIT_RADIUS := 32.0
+const FLANKER_RECHARGE := 0.8
+const FLANKER_WARNING := 0.38
+const CHAMPION_WARNING := 0.7
+const CHAMPION_ARMOR := 1
 var room_index := 0
 var difficulty := 0 # 0 normal, 1 hard, 2 nightmare
 var dungeon_seed := 0
@@ -21,6 +25,7 @@ var route_boon := ""
 var night_souls := 0
 var shop_open := false
 const ROOM_KINDS := ["CRYPT", "AMBUSH", "ELITE"]
+const ROOM_TACTICS := ["CRYPT: MIXED ENEMIES", "AMBUSH: FAST FLANKERS", "ELITE: ARMORED CHAMPION"]
 const ROUTE_RECTS := [Rect2(66.0, 490.0, 245.0, 65.0), Rect2(327.0, 490.0, 245.0, 65.0), Rect2(588.0, 490.0, 245.0, 65.0), Rect2(849.0, 490.0, 245.0, 65.0)]
 const SHOP_RECTS := [Rect2(340.0, 320.0, 155.0, 60.0), Rect2(500.0, 320.0, 155.0, 60.0), Rect2(660.0, 320.0, 155.0, 60.0)]
 const HELP_BUTTON := Rect2(984.0, 10.0, 153.0, 46.0)
@@ -68,13 +73,32 @@ func open_room(index: int, override_variant: int = -1) -> void:
     reward_notice = ""
     reward_notice_time = 0.0
     room_variant = override_variant if override_variant >= 0 else posmod(dungeon_seed + index, ROOM_KINDS.size())
-    var offsets := [Vector2.ZERO, Vector2(-90.0, 65.0), Vector2(40.0, -65.0)]
-    var offset: Vector2 = offsets[room_variant]
-    for i in range(2):
-        enemies.append({"pos": Vector2(570.0 + i * 160.0, 240.0 + i * 130.0) + offset, "hp": 3 + (2 if room_variant == 2 else 0) + difficulty * 2, "speed": (65.0 + i * 20.0 + (25.0 if room_variant == 1 else 0.0)) * (1.0 + difficulty * 0.15), "ranged": i == 1})
-    if room_variant == 2:
-        enemies.append({"pos": Vector2(850.0, 450.0), "hp": 6 + difficulty * 2, "speed": 90.0 * (1.0 + difficulty * 0.15), "ranged": false})
+    var mirror := 1.0 if posmod(dungeon_seed + room_index, 2) == 0 else -1.0
+    match room_variant:
+        0:
+            # Crypt: predictable melee + a ranged shooter with room to learn dodge.
+            spawn_enemy(Vector2(570.0, 240.0), 3, 65.0, false)
+            spawn_enemy(Vector2(730.0, 370.0), 3, 85.0, true)
+        1:
+            # Ambush: two lightly-armored flankers approach from opposing lanes.
+            spawn_enemy(Vector2(490.0, 185.0 if mirror > 0 else 470.0), 2, 120.0, false, "flanker")
+            spawn_enemy(Vector2(590.0, 470.0 if mirror > 0 else 185.0), 2, 115.0, false, "flanker")
+            spawn_enemy(Vector2(825.0, 325.0), 3, 85.0, true)
+        2:
+            # Elite: slower, stronger armored champion screened by a mixed pair.
+            spawn_enemy(Vector2(570.0, 240.0), 5, 70.0, false)
+            spawn_enemy(Vector2(730.0, 370.0), 5, 90.0, true)
+            spawn_enemy(Vector2(850.0, 450.0), 8, 75.0, false, "champion")
     queue_redraw()
+
+func spawn_enemy(position: Vector2, hp: int, speed: float, ranged: bool, role: String = "regular") -> void:
+    enemies.append({
+        "pos": position,
+        "hp": hp + difficulty * 2,
+        "speed": speed * (1.0 + difficulty * 0.15),
+        "ranged": ranged,
+        "role": role
+    })
 
 func set_dungeon_seed(value: int) -> void:
     dungeon_seed = value
@@ -121,10 +145,11 @@ func attack(target: Vector2) -> bool:
             hit = i
     if hit == -1:
         return false
-    enemies[hit]["hp"] -= attack_damage
+    var effective_damage: int = maxi(1, attack_damage - (CHAMPION_ARMOR if enemies[hit].get("role", "") == "champion" else 0))
+    enemies[hit]["hp"] -= effective_damage
     sfx.play_effect("hit")
     enemies[hit]["hit_flash"] = 0.12
-    floating_combat_texts.append({"pos": enemies[hit]["pos"] + Vector2(0, -22), "text": "-%d" % attack_damage, "time": 0.65, "color": Color("#fff0b0")})
+    floating_combat_texts.append({"pos": enemies[hit]["pos"] + Vector2(0, -22), "text": "-%d" % effective_damage, "time": 0.65, "color": Color("#fff0b0")})
     if enemies[hit]["hp"] <= 0:
         death_bursts.append({"pos": enemies[hit]["pos"], "time": 0.4})
         sfx.play_effect("kill")
@@ -328,10 +353,12 @@ func update_enemy_attacks(delta: float) -> void:
             if float(enemy["melee_warning"]) <= 0.0:
                 # The target was locked before the strike: dodging out avoids it.
                 if player_pos.distance_to(enemy["attack_target"]) <= MELEE_HIT_RADIUS:
-                    take_damage(10)
-                enemy["melee_recharge"] = MELEE_RECHARGE
+                    take_damage(14 if enemy.get("role", "") == "champion" else 8 if enemy.get("role", "") == "flanker" else 10)
+                enemy["melee_recharge"] = FLANKER_RECHARGE if enemy.get("role", "") == "flanker" else MELEE_RECHARGE
         elif recovery <= 0.0 and enemy["pos"].distance_to(player_pos) <= MELEE_REACH:
-            enemy["melee_warning"] = MELEE_WARNING
+            var warning_duration := FLANKER_WARNING if enemy.get("role", "") == "flanker" else CHAMPION_WARNING if enemy.get("role", "") == "champion" else MELEE_WARNING
+            enemy["melee_warning"] = warning_duration
+            enemy["melee_warning_duration"] = warning_duration
             enemy["attack_target"] = player_pos
 
 func shoot_hostile(origin: Vector2, target: Vector2 = Vector2.ZERO) -> void:
@@ -427,6 +454,7 @@ func _draw() -> void:
     draw_rect(Rect2(48.0, 25.0, 220.0, 18.0), Color("#442c37"))
     draw_rect(Rect2(48.0, 25.0, 220.0 * float(player_hp) / 100.0, 18.0), Color("#cf657a"))
     draw_label("HP %d / 100   ROOM %d / 3   %s   SOULS %d   RELICS %d" % [player_hp, room_index + 1, ROOM_KINDS[room_variant], night_souls, relics.size()], Vector2(280, 41), 17)
+    draw_label(ROOM_TACTICS[room_variant], Vector2(77, 108), 15, Color("#e7d3a8"))
     if route_boon != "":
         draw_label(route_boon, Vector2(300, 65), 14, Color("#d5c592"))
     if run_state == "won":
@@ -448,10 +476,13 @@ func _draw() -> void:
             draw_arc(aim, 24.0, -PI / 2.0, -PI / 2.0 + TAU * ranged_charge, 32, Color("#ffbc76"), 4.0)
         elif melee_remaining > 0.0:
             var attack_at: Vector2 = enemy["attack_target"]
-            var melee_charge: float = 1.0 - melee_remaining / MELEE_WARNING
+            var melee_charge: float = 1.0 - melee_remaining / float(enemy.get("melee_warning_duration", MELEE_WARNING))
             draw_arc(attack_at, MELEE_HIT_RADIUS, -PI / 2.0, -PI / 2.0 + TAU * melee_charge, 32, Color("#ff7b89"), 5.0)
-        var enemy_color: Color = Color("#fff1d1") if float(enemy.get("hit_flash", 0.0)) > 0.0 else (Color("#aa70d6") if enemy["ranged"] else Color("#cf646c"))
-        draw_circle(enemy["pos"], 23.0 if float(enemy.get("hit_flash", 0.0)) > 0.0 else 19.0, enemy_color)
+        var enemy_color: Color = Color("#fff1d1") if float(enemy.get("hit_flash", 0.0)) > 0.0 else (Color("#aa70d6") if enemy["ranged"] else Color("#e3b967") if enemy.get("role", "") == "flanker" else Color("#b46773") if enemy.get("role", "") == "champion" else Color("#cf646c"))
+        var enemy_radius: float = 25.0 if enemy.get("role", "") == "champion" else 16.0 if enemy.get("role", "") == "flanker" else 19.0
+        draw_circle(enemy["pos"], 23.0 if float(enemy.get("hit_flash", 0.0)) > 0.0 else enemy_radius, enemy_color)
+        if enemy.get("role", "") == "champion":
+            draw_arc(enemy["pos"], 30.0, 0.0, TAU, 32, Color("#e7d3a8"), 3.0)
     for burst in death_bursts:
         var progress: float = 1.0 - float(burst["time"]) / 0.4
         draw_arc(burst["pos"], 20.0 + progress * 24.0, 0.0, TAU, 24, Color("#f0a0b1", 1.0 - progress), 3.0)
