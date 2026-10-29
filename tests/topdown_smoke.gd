@@ -133,6 +133,9 @@ func run_tests() -> void:
         check(run.phase == "defeat", "Losing a phase ends run")
         run.reset_run()
         check(run.phase == "hub" and run.phase_count == 0 and run.run_damage_bonus == 0, "New run resets run-only relics")
+        run.phase = "reward"
+        check(run.choose_run_reward("necro") and run.run_necro_kill_bonus == 3, "Necro reward adds kill gold")
+        check(run.start_phase("day") and run.active_game.necro_kill_bonus == 3, "Necro reward carries into tower defense")
         run.queue_free()
     var packed := load("res://scenes/topdown_night_prototype.tscn") as PackedScene
     check(packed != null, "Top-down entry scene loads")
