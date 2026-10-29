@@ -92,6 +92,31 @@ func run_tests() -> void:
     game.reset_all()
     check(not game.blood_mantle, "Blood Mantle resets on new run")
     check(not game.relic_choice_pending, "pending relic selection resets on new run")
+    game.reset_all()
+    game.phase = "night"
+    game.mage = {"x": 1000.0, "hp": 0.0, "cooldown": 1.0}
+    game.boss_hp = 0.0
+    game.night_enemies.clear()
+    game.night_enemies.append({"x": 140.0, "hp": 100.0, "dir": 1.0})
+    game.player = Vector2(95.0, game.FLOOR - 22.0)
+    game.facing = 1.0
+    game.attack()
+    check(is_equal_approx(float(game.night_enemies[0]["hp"]), 76.0), "base melee damage remains unchanged")
+    game.reset_all()
+    game.phase = "night"
+    game.mage = {"x": 1000.0, "hp": 0.0, "cooldown": 1.0}
+    game.boss_hp = 0.0
+    game.night_enemies.clear()
+    game.night_enemies.append({"x": 140.0, "hp": 100.0, "dir": 1.0})
+    game.player = Vector2(95.0, game.FLOOR - 22.0)
+    game.facing = 1.0
+    game.relic_choice_pending = true
+    game.choose_relic(2)
+    check(game.rage_shard and not game.relic_choice_pending, "player may choose Rage Shard")
+    game.attack()
+    check(is_equal_approx(float(game.night_enemies[0]["hp"]), 70.0), "Rage Shard increases hero melee damage by 25 percent")
+    game.reset_all()
+    check(not game.rage_shard, "Rage Shard resets between runs")
     check(game.current_day == 1, "initial day")
     game.dungeon_route = 1
     game.platforms = [Rect2(200.0, 420.0, 135.0, 16.0)]
@@ -471,12 +496,14 @@ func run_tests() -> void:
     game.towers.append({"x": 430.0, "type": "fire", "cooldown": 0.0})
     game.shadow_relic = true
     game.blood_mantle = true
+    game.rage_shard = true
     check(game.save_campaign(), "checkpoint save")
     game.reset_all()
     check(game.load_campaign(), "checkpoint load")
     check(game.phase == "ritual" and game.current_day == 2 and game.stones_collected == 2, "checkpoint phase and progress")
     check(game.shadow_relic, "checkpoint restores run-long relic")
     check(game.blood_mantle, "checkpoint restores Blood Mantle")
+    check(game.rage_shard, "checkpoint restores Rage Shard")
     check(game.mana == 93 and game.souls == 11 and game.wall_hp == 78.0, "checkpoint resources")
     check(game.towers.is_empty(), "checkpoint towers reset after night")
 
@@ -495,6 +522,12 @@ func run_tests() -> void:
     relic_file.store_string(JSON.stringify(invalid_relic))
     relic_file.close()
     check(not game.load_campaign(), "invalid Blood Mantle save type rejected")
+    invalid_relic["blood_mantle"] = true
+    invalid_relic["rage_shard"] = "yes"
+    relic_file = FileAccess.open("user://campaign_smoke_test.json", FileAccess.WRITE)
+    relic_file.store_string(JSON.stringify(invalid_relic))
+    relic_file.close()
+    check(not game.load_campaign(), "invalid Rage Shard save type rejected")
     check(game.shadow_relic and game.mana == 93, "invalid relic save preserves prior checkpoint")
     var invalid := {"version": 1, "day": 2, "stones": 2, "mana": 90, "souls": 10, "wall_hp": 90, "tower_power": 0, "wall_ward": 0, "towers": [{"x": 400.0, "type": "bone"}, {"x": 420.0, "type": "bone"}]}
     var bad_file := FileAccess.open("user://campaign_smoke_test.json", FileAccess.WRITE)
