@@ -395,3 +395,17 @@ func _draw() -> void:
         draw_rect(Rect2(1058.0, 275.0, 46.0, 96.0), Color("#72b59b"))
     else:
         draw_rect(Rect2(1058.0, 275.0, 46.0, 96.0), Color("#59495b"))
+
+    draw_label("H: CONTROLS", Vector2(1000, 43), 14, Color("#d5c592"))
+    if help_visible:
+        var help_panel := Rect2(306, 144, 540, 360)
+        draw_rect(help_panel, Color(0.055, 0.07, 0.11, 0.97))
+        draw_rect(help_panel, Color("#d5c592"), false, 2.0)
+        draw_label("NIGHT CONTROLS", Vector2(435, 190), 27, Color("#e7d3a8"))
+        draw_label("WASD / ARROWS  -  Move", Vector2(354, 238), 18)
+        draw_label("LEFT CLICK enemy  -  Attack in range", Vector2(354, 273), 18)
+        draw_label("CLICK a relic card  -  Choose your reward", Vector2(354, 308), 17)
+        draw_label("CLICK a route card  -  Choose the next room", Vector2(354, 343), 17)
+        draw_label("RIGHT CLICK near the open door  -  Advance", Vector2(354, 378), 16)
+        draw_label("H  -  Close this help panel", Vector2(354, 420), 17, Color("#d5c592"))
+        draw_label("The action pauses while help is open.", Vector2(354, 460), 15, Color("#9da9bf"))
