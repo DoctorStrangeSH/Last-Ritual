@@ -337,17 +337,20 @@ func run_tests() -> void:
     game.reset_all()
     game.dungeon_omen = 1
     game.trap_positions = [375.0, 775.0]
-    game.night_enemies = [{"x": 360.0, "hp": 100.0, "dir": -1.0}]
+    game.night_enemies.clear()
+    game.night_enemies.append({"x": 360.0, "hp": 100.0, "dir": -1.0})
     game.apply_dungeon_omen()
     check(game.trap_positions.size() == 3 and is_equal_approx(float(game.night_enemies[0]["hp"]), 122.0), "cursed dungeon omen increases hazards and enemy HP")
     game.reset_all()
     game.dungeon_omen = 2
-    game.night_enemies = [{"x": 360.0, "hp": 100.0, "dir": -1.0}]
+    game.night_enemies.clear()
+    game.night_enemies.append({"x": 360.0, "hp": 100.0, "dir": -1.0})
     game.apply_dungeon_omen()
     check(game.omen_cache_bonus and is_equal_approx(float(game.night_enemies[0]["hp"]), 110.0), "treasure omen boosts optional cache and enemies")
     game.reset_all()
     game.dungeon_omen = 3
-    game.night_enemies = [{"x": 360.0, "hp": 100.0, "dir": -1.0}]
+    game.night_enemies.clear()
+    game.night_enemies.append({"x": 360.0, "hp": 100.0, "dir": -1.0})
     game.boss_hp = 200.0
     game.apply_dungeon_omen()
     check(game.dungeon_omen_name() == "Лунное затмение", "lunar eclipse omen has its own name")
