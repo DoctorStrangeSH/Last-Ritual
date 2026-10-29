@@ -553,7 +553,7 @@ func draw_crypt_environment() -> void:
 func _draw() -> void:
     draw_crypt_environment()
     for wall in obstacles:
-        draw_rect(wall + Rect2(Vector2(3, 5), Vector2.ZERO), Color("#151c24"))
+        draw_rect(Rect2(wall.position + Vector2(3, 5), wall.size), Color("#151c24"))
         draw_rect(wall, Color("#515665"))
         draw_rect(wall.grow(-5.0), Color("#78818a"), false, 3.0)
         draw_line(wall.position + Vector2(7, 8), wall.position + Vector2(wall.size.x - 7, 8), Color("#a3a9a9", 0.45), 2.0)
