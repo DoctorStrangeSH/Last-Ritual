@@ -119,8 +119,9 @@ func run_tests() -> void:
         td.build_tower(1)
         td.enemies.clear()
         td.enemies.append({"lane": 0, "pos": td.slots[1]["pos"] + Vector2(20, 0), "waypoint": 1, "hp": 5, "delay": 0.0})
+        td.enemies.append({"lane": 0, "pos": td.slots[1]["pos"] + Vector2(45, 10), "waypoint": 1, "hp": 5, "delay": 0.0})
         td.attack_with_towers(1.0)
-        check(td.enemies[0]["hp"] == 1, "Stacked Bone relic increases bone tower damage")
+        check(td.enemies.size() == 2 and td.enemies[0]["hp"] == 1 and td.enemies[1]["hp"] == 1, "Bone tower pierces aligned enemies and applies stacked damage")
         td.restart_defense()
         td.necro_kill_bonus = 3
         td.choose_tower("necro")

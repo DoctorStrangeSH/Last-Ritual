@@ -116,20 +116,32 @@ func attack_with_towers(delta: float) -> void:
                 target = enemy
         if target.is_empty():
             continue
-        shot_trails.append({"from": tower["pos"], "to": target["pos"], "time": 0.18})
+        var hit_targets: Array = [target]
+        if kind == "bone":
+            var direction: Vector2 = (target["pos"] - tower["pos"]).normalized()
+            for candidate in enemies:
+                if candidate == target or candidate["delay"] > 0.0 or hit_targets.size() >= 3:
+                    continue
+                var relative: Vector2 = candidate["pos"] - tower["pos"]
+                var along: float = relative.dot(direction)
+                var across: float = absf(direction.cross(relative))
+                if along > nearest and along <= TOWER_RANGE[kind] and across <= 24.0:
+                    hit_targets.append(candidate)
         var damage: int = int(TOWER_DAMAGE[kind]) * int(tower["level"])
         if kind == "fire":
             damage += fire_synergy_bonus
         elif kind == "bone":
             damage += bone_synergy_bonus
-        target["hp"] -= damage
+        for hit_target in hit_targets:
+            shot_trails.append({"from": tower["pos"], "to": hit_target["pos"], "time": 0.18})
+            hit_target["hp"] -= damage
+            if hit_target["hp"] <= 0:
+                enemies.erase(hit_target)
+                enemies_defeated += 1
+                coins += 5
+                if kind == "necro":
+                    coins += necro_kill_bonus
         tower_cooldowns[slot_id] = 0.8
-        if target["hp"] <= 0:
-            enemies.erase(target)
-            enemies_defeated += 1
-            coins += 5
-            if kind == "necro":
-                coins += necro_kill_bonus
     queue_redraw()
 
 func restart_defense() -> void:
