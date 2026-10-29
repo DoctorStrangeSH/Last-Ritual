@@ -43,6 +43,18 @@ func run_tests() -> void:
         check(float(td.enemies[0]["speed"]) > float(td.enemies[1]["speed"]) and int(td.enemies[0]["hp"]) < int(td.enemies[1]["hp"]), "Runner is faster but weaker than brute")
         td.enemies.clear()
         check(td.start_wave() and td.wave_number == 3, "TD third wave starts")
+        var boss: Dictionary = {}
+        for enemy in td.enemies:
+            if enemy.get("role", "") == "boss":
+                boss = enemy
+        check(not boss.is_empty() and boss["hp"] == 55, "Final wave has a durable altar boss")
+        if not boss.is_empty():
+            boss["delay"] = 0.0
+            var altar_before_blast: int = td.altar_hp
+            td.tick_boss(3.2)
+            check(boss["boss_warning"] and td.altar_hp == altar_before_blast, "Boss telegraphs attack without immediate altar damage")
+            td.tick_boss(0.9)
+            check(not boss["boss_warning"] and td.altar_hp == altar_before_blast - 8, "Boss blast damages altar after warning")
         td.enemies.clear()
         check(not td.start_wave(), "TD stops at three waves")
         td.coins = 0
