@@ -75,6 +75,9 @@ func start_wave() -> bool:
         var speed := 135.0 if role == "runner" else (55.0 if role == "brute" else 85.0)
         enemies.append({"lane": i % PATHS.size(), "pos": PATHS[i % PATHS.size()][0], "waypoint": 1, "hp": hp, "speed": speed, "role": role, "delay": float(i) * 0.7})
         enemies_spawned += 1
+    if wave_number == 3:
+        enemies.append({"lane": 0, "pos": PATHS[0][0], "waypoint": 1, "hp": 55, "speed": 28.0, "role": "boss", "delay": 3.0, "boss_charge": 0.0, "boss_warning": false})
+        enemies_spawned += 1
     queue_redraw()
     return true
 
@@ -98,6 +101,20 @@ func advance_enemies(delta: float) -> void:
                     defense_state = "lost"
             else:
                 enemy["waypoint"] = waypoint
+    queue_redraw()
+
+func tick_boss(delta: float) -> void:
+    for enemy in enemies:
+        if enemy.get("role", "") != "boss" or float(enemy.get("delay", 0.0)) > 0.0:
+            continue
+        enemy["boss_charge"] = float(enemy.get("boss_charge", 0.0)) + delta
+        enemy["boss_warning"] = float(enemy["boss_charge"]) >= 3.0
+        if float(enemy["boss_charge"]) >= 4.0:
+            enemy["boss_charge"] = 0.0
+            enemy["boss_warning"] = false
+            altar_hp = maxi(0, altar_hp - 8)
+            if altar_hp == 0:
+                defense_state = "lost"
     queue_redraw()
 
 func attack_with_towers(delta: float) -> void:
@@ -244,6 +261,7 @@ func _process(delta: float) -> void:
     if Input.is_key_pressed(KEY_S): move_direction.y += 1.0
     move_hero(move_direction, delta)
     advance_enemies(delta)
+    tick_boss(delta)
     tick_burning(delta)
     attack_with_towers(delta)
     tick_necro_spirits(delta)
@@ -375,7 +393,14 @@ func _draw() -> void:
             draw_line(path[i], path[i + 1], Color("#594e50"), 24.0)
     for enemy in enemies:
         if enemy["delay"] <= 0.0:
-            draw_circle(enemy["pos"], 16.0 if enemy.get("role", "grunt") == "brute" else 10.0 if enemy.get("role", "grunt") == "runner" else 12.0, Color("#8591b8") if enemy.get("role", "grunt") == "brute" else Color("#efc36f") if enemy.get("role", "grunt") == "runner" else Color("#c67f64"))
+            if enemy.get("role", "") == "boss":
+                draw_circle(enemy["pos"], 29.0, Color("#9a4268"))
+                draw_circle(enemy["pos"], 19.0, Color("#df96ba"))
+                if enemy.get("boss_warning", false):
+                    draw_arc(enemy["pos"], 45.0, 0.0, TAU, 48, Color("#ffde80"), 4.0)
+                draw_rect(Rect2(enemy["pos"] + Vector2(-28.0, -43.0), Vector2(56.0 * clampf(float(enemy["hp"]) / 55.0, 0.0, 1.0), 5.0)), Color("#df7b94"))
+            else:
+                draw_circle(enemy["pos"], 16.0 if enemy.get("role", "grunt") == "brute" else 10.0 if enemy.get("role", "grunt") == "runner" else 12.0, Color("#8591b8") if enemy.get("role", "grunt") == "brute" else Color("#efc36f") if enemy.get("role", "grunt") == "runner" else Color("#c67f64"))
     for spirit in summoned_spirits:
         draw_circle(spirit["pos"], 10.0, Color("#6de6b2"))
         draw_circle(spirit["pos"], 5.0, Color("#d8fff0"))
