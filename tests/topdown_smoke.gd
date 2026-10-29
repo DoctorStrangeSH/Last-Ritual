@@ -104,7 +104,7 @@ func run_tests() -> void:
         check(run.choose_run_reward("ember") and run.run_fire_bonus == 1, "Ember relic enables fire tower synergy")
         check(run.start_phase("night"), "Run continues into night after fire relic")
         run.finish_phase(true)
-        check(run.choose_run_reward("bone") and run.run_bone_tower_bonus == 1, "Bone relic enables bone tower synergy")
+        check(run.choose_run_reward("bone") and run.run_bone_tower_bonus == 2, "Repeated Bone relic stacks bone tower synergy")
         check(run.start_phase("day") and run.active_game.fire_synergy_bonus == 1 and run.active_game.bone_synergy_bonus == 1, "Fire and Bone synergies carry into defense")
         var td = run.active_game
         td.coins = 100
@@ -120,7 +120,7 @@ func run_tests() -> void:
         td.enemies.clear()
         td.enemies.append({"lane": 0, "pos": td.slots[1]["pos"] + Vector2(20, 0), "waypoint": 1, "hp": 5, "delay": 0.0})
         td.attack_with_towers(1.0)
-        check(td.enemies[0]["hp"] == 2, "Bone relic increases bone tower damage")
+        check(td.enemies[0]["hp"] == 1, "Stacked Bone relic increases bone tower damage")
         run.finish_phase(false)
         check(run.phase == "defeat", "Losing a phase ends run")
         run.reset_run()
