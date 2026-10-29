@@ -52,6 +52,20 @@ func run_tests() -> void:
     check(not game.next_room(), "Cannot go beyond final room")
     game.move_player(Vector2(-1, -1), 100.0)
     check(game.player_pos.x >= 64.0 and game.player_pos.y >= 84.0, "Player stays inside arena")
+    game.restart_run()
+    game.invulnerable_time = 0.0
+    game.take_damage(999)
+    check(game.run_state == "lost" and game.player_hp == 0, "Lethal damage ends run")
+    check(not game.attack(Vector2(570.0, 240.0)) and not game.next_room(), "Cannot fight or progress after death")
+    game.restart_run()
+    check(game.run_state == "playing" and game.player_hp == 100 and game.room_index == 0, "Restart restores health and room")
+    check(game.relics.is_empty() and game.rewards_taken == 0 and game.attack_damage == 1, "Restart clears run-only relic upgrades")
+    game.room_index = 2
+    game.enemies.clear()
+    game.reward_available = true
+    check(game.choose_relic("bone") and game.run_state == "won", "Final reward completes short prototype run")
+    game.restart_run()
+    check(game.run_state == "playing" and game.room_index == 0, "Restart after victory works")
     game.queue_free()
     print("TOPDOWN SMOKE RESULT: ", "PASS" if failures == 0 else str(failures) + " FAILURES")
     quit(0 if failures == 0 else 1)

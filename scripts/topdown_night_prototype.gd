@@ -16,6 +16,7 @@ var attack_damage := 1
 var attack_speed_multiplier := 1.0
 var attack_cooldown := 0.0
 var invulnerable_time := 0.0
+var run_state := "playing" # playing, won, lost
 
 func _ready() -> void:
     open_room(0)
@@ -32,6 +33,8 @@ func open_room(index: int) -> void:
     queue_redraw()
 
 func move_player(direction: Vector2, delta: float) -> void:
+    if run_state != "playing":
+        return
     if direction.length_squared() > 1.0:
         direction = direction.normalized()
     player_pos += direction * SPEED * delta
@@ -39,7 +42,7 @@ func move_player(direction: Vector2, delta: float) -> void:
     queue_redraw()
 
 func attack(target: Vector2) -> bool:
-    if attack_cooldown > 0.0 or enemies.is_empty():
+    if run_state != "playing" or attack_cooldown > 0.0 or enemies.is_empty():
         return false
     var hit := -1
     var nearest := INF
@@ -64,10 +67,12 @@ func claim_reward() -> bool:
     return choose_relic("bone")
 
 func choose_relic(kind: String) -> bool:
-    if not reward_available or not kind in ["bone", "ember", "blood"]:
+    if run_state != "playing" or not reward_available or not kind in ["bone", "ember", "blood"]:
         return false
     reward_available = false
     rewards_taken += 1
+    if room_index == 2:
+        run_state = "won"
     relics.append(kind)
     match kind:
         "bone":
@@ -81,7 +86,7 @@ func choose_relic(kind: String) -> bool:
     return true
 
 func door_available() -> bool:
-    return enemies.is_empty() and not reward_available and room_index < 2
+    return run_state == "playing" and enemies.is_empty() and not reward_available and room_index < 2
 
 func next_room() -> bool:
     if not door_available():
@@ -89,7 +94,30 @@ func next_room() -> bool:
     open_room(room_index + 1)
     return true
 
+func restart_run() -> void:
+    player_hp = 100
+    rewards_taken = 0
+    relics.clear()
+    attack_damage = 1
+    attack_speed_multiplier = 1.0
+    attack_cooldown = 0.0
+    invulnerable_time = 0.0
+    run_state = "playing"
+    open_room(0)
+
+func take_damage(amount: int) -> void:
+    if run_state != "playing" or invulnerable_time > 0.0 or amount <= 0:
+        return
+    player_hp = maxi(0, player_hp - amount)
+    invulnerable_time = 0.75
+    if player_hp == 0:
+        run_state = "lost"
+        hostile_shots.clear()
+    queue_redraw()
+
 func _process(delta: float) -> void:
+    if run_state != "playing":
+        return
     attack_cooldown = maxf(0.0, attack_cooldown - delta)
     invulnerable_time = maxf(0.0, invulnerable_time - delta)
     var direction := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
@@ -110,8 +138,7 @@ func _process(delta: float) -> void:
             hostile_shots.erase(shot)
         elif shot["pos"].distance_to(player_pos) <= 19.0:
             if invulnerable_time <= 0.0:
-                player_hp = maxi(0, player_hp - 8)
-                invulnerable_time = 0.75
+                take_damage(8)
             hostile_shots.erase(shot)
     for enemy in enemies:
         var pos: Vector2 = enemy["pos"]
@@ -120,8 +147,7 @@ func _process(delta: float) -> void:
             step = Vector2.ZERO
         enemy["pos"] = (pos + step).clamp(ARENA.position, ARENA.end)
         if player_pos.distance_to(enemy["pos"]) < 25.0 and invulnerable_time <= 0.0:
-            player_hp = maxi(0, player_hp - 10)
-            invulnerable_time = 0.75
+            take_damage(10)
     queue_redraw()
 
 func shoot_hostile(origin: Vector2) -> void:
@@ -132,6 +158,11 @@ func shoot_hostile(origin: Vector2) -> void:
     queue_redraw()
 
 func _unhandled_input(event: InputEvent) -> void:
+    if event is InputEventKey and event.pressed and event.keycode == KEY_R and run_state != "playing":
+        restart_run()
+        return
+    if run_state != "playing":
+        return
     if event is InputEventMouseButton and event.pressed:
         if event.button_index == MOUSE_BUTTON_LEFT:
             if reward_available and get_global_mouse_position().y >= 450.0 and get_global_mouse_position().y <= 520.0:
@@ -150,6 +181,12 @@ func _draw() -> void:
     draw_rect(ARENA, Color("#242936"))
     draw_rect(ARENA, Color("#7d7798"), false, 4.0)
     draw_circle(player_pos, 17.0, Color("#80dbed"))
+    draw_rect(Rect2(48.0, 25.0, 220.0, 18.0), Color("#442c37"))
+    draw_rect(Rect2(48.0, 25.0, 220.0 * float(player_hp) / 100.0, 18.0), Color("#cf657a"))
+    if run_state == "won":
+        draw_rect(Rect2(350.0, 190.0, 452.0, 180.0), Color("#295343"))
+    if run_state == "lost":
+        draw_rect(Rect2(350.0, 190.0, 452.0, 180.0), Color("#422837"))
     for enemy in enemies:
         draw_circle(enemy["pos"], 19.0, Color("#aa70d6") if enemy["ranged"] else Color("#cf646c"))
     for shot in hostile_shots:
