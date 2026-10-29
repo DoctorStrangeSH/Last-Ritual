@@ -180,6 +180,30 @@ func run_tests() -> void:
         check(layout_probe.DIFFICULTY_BUTTONS.size() == 3 and layout_probe.DAY_BUTTON.position.y > layout_probe.DIFFICULTY_BUTTONS[0].end.y, "Hub difficulty and phase controls have vertical separation")
         check(layout_probe.META_HERO_BUTTON.position.y >= 474 and layout_probe.META_TREASURY_BUTTON.position.y >= 474, "Permanent upgrades sit in lower hub panel")
         check(not layout_probe.META_HERO_BUTTON.intersects(layout_probe.META_TREASURY_BUTTON), "Permanent upgrade cards do not overlap")
+        check(layout_probe.AUDIO_MUTE_BUTTON.intersects(Rect2(72, 32, 1008, 112)) and not layout_probe.AUDIO_MUTE_BUTTON.intersects(layout_probe.AUDIO_UP_BUTTON), "Audio controls fit in the header without overlap")
+        root.add_child(layout_probe)
+        var original_audio_volume: float = layout_probe.audio_volume
+        var original_audio_muted: bool = layout_probe.audio_muted
+        layout_probe.audio_settings_path = "user://last_ritual_audio_smoke.cfg"
+        layout_probe.audio_volume = 0.4
+        layout_probe.audio_muted = true
+        check(layout_probe.save_audio_settings(), "Audio settings save to config")
+        layout_probe.apply_audio_settings()
+        var audio_reload = run_scene.instantiate()
+        root.add_child(audio_reload)
+        audio_reload.audio_settings_path = layout_probe.audio_settings_path
+        audio_reload.load_audio_settings()
+        check(is_equal_approx(audio_reload.audio_volume, 0.4) and audio_reload.audio_muted, "Audio volume and mute restore from config")
+        check(audio_reload.adjust_audio_volume(0.1) and is_equal_approx(audio_reload.audio_volume, 0.5), "Audio volume adjusts in ten-percent steps")
+        audio_reload.toggle_audio_mute()
+        check(not audio_reload.audio_muted, "Mute button toggles audio back on")
+        audio_reload.load_audio_settings()
+        check(is_equal_approx(audio_reload.audio_volume, 0.5) and not audio_reload.audio_muted, "Changed audio settings persist")
+        audio_reload.audio_volume = original_audio_volume
+        audio_reload.audio_muted = original_audio_muted
+        audio_reload.apply_audio_settings()
+        DirAccess.remove_absolute(ProjectSettings.globalize_path("user://last_ritual_audio_smoke.cfg"))
+        audio_reload.queue_free()
         layout_probe.queue_free()
     check(run_scene != null, "Unified day-night run scene loads")
     if run_scene != null:
