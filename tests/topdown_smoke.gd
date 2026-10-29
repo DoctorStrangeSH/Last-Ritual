@@ -65,6 +65,22 @@ func run_tests() -> void:
         check(td.hero_attack(Vector2(420, 350)), "TD hero attacks selected enemy")
         check(td.enemies.is_empty() and td.enemies_defeated == hero_kills_before + 1, "TD hero kills enemy and earns gold")
         check(not td.hero_attack(Vector2(420, 350)), "TD hero attack respects cooldown and empty targets")
+        td.restart_defense()
+        check(td.defense_state == "playing" and td.wave_number == 0 and td.altar_hp == 100, "TD restart resets wave and altar")
+        check(td.slots[0]["tower"] == "" and td.coins == 150, "TD restart clears towers and restores economy")
+        td.wave_number = 3
+        td.enemies.clear()
+        td._process(0.0)
+        check(td.defense_state == "won", "TD victory after final cleared wave")
+        check(not td.start_wave(), "TD victory blocks further waves")
+        td.restart_defense()
+        td.altar_hp = 10
+        td.enemies.append({"lane": 0, "pos": Vector2(1070, 285), "waypoint": 2, "hp": 1, "delay": 0.0})
+        td.advance_enemies(0.01)
+        check(td.defense_state == "lost" and td.altar_hp == 0, "TD altar defeat ends defense")
+        check(not td.start_wave(), "TD defeat blocks more waves")
+        td.restart_defense()
+        check(td.defense_state == "playing" and td.altar_hp == 100 and td.enemies.is_empty(), "TD restart after defeat succeeds")
         td.queue_free()
     var packed := load("res://scenes/topdown_night_prototype.tscn") as PackedScene
     check(packed != null, "Top-down entry scene loads")
