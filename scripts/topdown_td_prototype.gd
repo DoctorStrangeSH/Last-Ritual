@@ -55,6 +55,12 @@ func hero_attack(target: Vector2) -> bool:
         return false
     shot_trails.append({"from": hero_pos, "to": best["pos"], "time": 0.18})
     best["hp"] -= 2
+    if best.get("role", "") == "boss" and best.get("boss_warning", false) and best["hp"] > 0:
+        best["interrupt_hits"] = int(best.get("interrupt_hits", 0)) + 1
+        if int(best["interrupt_hits"]) >= 2:
+            best["boss_charge"] = 0.0
+            best["boss_warning"] = false
+            best["interrupt_hits"] = 0
     hero_attack_cooldown = 0.28
     if best["hp"] <= 0:
         enemies.erase(best)
@@ -76,7 +82,7 @@ func start_wave() -> bool:
         enemies.append({"lane": i % PATHS.size(), "pos": PATHS[i % PATHS.size()][0], "waypoint": 1, "hp": hp, "speed": speed, "role": role, "delay": float(i) * 0.7})
         enemies_spawned += 1
     if wave_number == 3:
-        enemies.append({"lane": 0, "pos": PATHS[0][0], "waypoint": 1, "hp": 55, "speed": 28.0, "role": "boss", "delay": 3.0, "boss_charge": 0.0, "boss_warning": false})
+        enemies.append({"lane": 0, "pos": PATHS[0][0], "waypoint": 1, "hp": 55, "speed": 28.0, "role": "boss", "delay": 3.0, "boss_charge": 0.0, "boss_warning": false, "interrupt_hits": 0})
         enemies_spawned += 1
     queue_redraw()
     return true
@@ -112,6 +118,7 @@ func tick_boss(delta: float) -> void:
         if float(enemy["boss_charge"]) >= 4.0:
             enemy["boss_charge"] = 0.0
             enemy["boss_warning"] = false
+            enemy["interrupt_hits"] = 0
             altar_hp = maxi(0, altar_hp - 8)
             if altar_hp == 0:
                 defense_state = "lost"
