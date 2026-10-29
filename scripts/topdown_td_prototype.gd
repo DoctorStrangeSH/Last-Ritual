@@ -426,8 +426,56 @@ func _unhandled_input(event: InputEvent) -> void:
             else:
                 hero_attack(point)
 
+# Небольшой самостоятельный арт-проход: собственный процедурный рисунок без
+# сторонних лицензий. Позже можно заменить тайлами, сохранив игровую геометрию.
+func draw_fortress_ground() -> void:
+    draw_rect(Rect2(0, 0, 1152, 648), Color("#111b23"))
+    draw_rect(Rect2(28, 66, 1096, 464), Color("#25302f"))
+    draw_rect(Rect2(28, 66, 1096, 464), Color("#59665c"), false, 4.0)
+    # Повторяемый каменный рисунок с небольшими различиями цвета, без случайности.
+    for row in range(10):
+        for col in range(24):
+            var offset := 12.0 if row % 2 == 1 else 0.0
+            var tile := Rect2(40.0 + float(col) * 45.0 + offset, 74.0 + float(row) * 44.0, 41.0, 40.0)
+            if tile.end.x > 1118.0:
+                continue
+            var shade := Color("#303a37") if (col * 7 + row * 3) % 5 == 0 else Color("#293531")
+            draw_rect(tile, shade)
+            draw_rect(tile, Color("#1d2829"), false, 1.0)
+    # Стены цитадели справа и башенки с подсвеченными бойницами.
+    draw_rect(Rect2(1090, 92, 38, 418), Color("#151f28"))
+    draw_rect(Rect2(1087, 92, 8, 418), Color("#647073"))
+    for y in range(105, 505, 66):
+        draw_rect(Rect2(1078, y, 51, 42), Color("#4c5962"))
+        draw_rect(Rect2(1084, y + 6, 38, 27), Color("#24323d"))
+        draw_rect(Rect2(1100, y + 11, 8, 18), Color("#d9a85d"))
+    # Входы двух дорог и знамёна возле ворот.
+    for entry_y in [285.0, 345.0]:
+        draw_rect(Rect2(24, entry_y - 32.0, 40, 64), Color("#121b22"))
+        draw_rect(Rect2(40, entry_y - 23.0, 6, 46), Color("#b67861"))
+    # Алтарь: подлинная цель нападения, видимая на карте.
+    draw_circle(Vector2(1041, 314), 47.0, Color("#18383c"))
+    draw_arc(Vector2(1041, 314), 38.0, 0.0, TAU, 48, Color("#6ac4b2"), 4.0)
+    draw_circle(Vector2(1041, 314), 19.0, Color("#6b4f78"))
+    draw_circle(Vector2(1041, 314), 9.0, Color("#e1b57e"))
+    draw_rect(Rect2(0, 0, 1152, 64), Color("#131a27"))
+    draw_line(Vector2(0, 64), Vector2(1152, 64), Color("#a08157"), 2.0)
+    draw_rect(Rect2(0, 534, 1152, 114), Color("#141b27"))
+    draw_line(Vector2(0, 534), Vector2(1152, 534), Color("#8c775b"), 2.0)
+
+func draw_fortress_road(path: Array) -> void:
+    for index in range(path.size() - 1):
+        var a: Vector2 = path[index]
+        var b: Vector2 = path[index + 1]
+        draw_line(a, b, Color("#141b1c"), 37.0, true)
+        draw_line(a, b, Color("#7b6860"), 31.0, true)
+        draw_line(a, b, Color("#a18a76"), 23.0, true)
+        draw_line(a, b, Color("#b7a089"), 1.5, true)
+    for point in path:
+        draw_circle(point, 13.0, Color("#a18a76"))
+
 func _draw() -> void:
-    draw_rect(Rect2(Vector2.ZERO, Vector2(1152, 648)), Color("#131827"))
+    draw_fortress_ground()
     if defense_state != "playing":
         draw_rect(Rect2(345, 225, 460, 210), Color("#285849") if defense_state == "won" else Color("#693943"))
         draw_string(ThemeDB.fallback_font, Vector2(485, 301), "VICTORY" if defense_state == "won" else "ALTAR FALLEN", HORIZONTAL_ALIGNMENT_LEFT, -1, 28, Color.WHITE)
@@ -437,8 +485,7 @@ func _draw() -> void:
     draw_rect(WAVE_BUTTON, Color("#487d6b") if enemies.is_empty() and wave_number < 3 and altar_hp > 0 else Color("#454b54"))
     draw_string(ThemeDB.fallback_font, Vector2(78, 581), "START WAVE", HORIZONTAL_ALIGNMENT_LEFT, -1, 19, Color.WHITE)
     for path in PATHS:
-        for i in range(path.size() - 1):
-            draw_line(path[i], path[i + 1], Color("#594e50"), 24.0)
+        draw_fortress_road(path)
     for enemy in enemies:
         if enemy["delay"] <= 0.0:
             if enemy.get("role", "") == "boss":
@@ -465,8 +512,13 @@ func _draw() -> void:
     for i in range(slots.size()):
         var pos: Vector2 = slots[i]["pos"]
         var occupied: bool = slots[i]["tower"] != ""
-        draw_circle(pos, 32, Color("#57666e") if not occupied else Color("#a66b50"))
-        draw_circle(pos, 26, Color("#202f3a") if not occupied else Color("#d1b57e"))
+        draw_circle(pos + Vector2(3, 5), 35.0, Color("#152024"))
+        draw_circle(pos, 33.0, Color("#64706a") if not occupied else Color("#b48153"))
+        draw_circle(pos, 27.0, Color("#1e353b") if not occupied else Color("#e0bb76"))
+        draw_arc(pos, 23.0, -PI / 2.0, PI * 1.5, 24, Color("#89b6ab") if not occupied else Color("#724b45"), 2.0)
+        if not occupied:
+            draw_line(pos + Vector2(-8, 0), pos + Vector2(8, 0), Color("#9fc9b9"), 2.0)
+            draw_line(pos + Vector2(0, -8), pos + Vector2(0, 8), Color("#9fc9b9"), 2.0)
         if selected_slot == i:
             draw_arc(pos, 39, 0, TAU, 32, Color("#d8d0a1"), 3)
         if selected_type != "" and not occupied and pos.distance_to(get_global_mouse_position()) < 36:
