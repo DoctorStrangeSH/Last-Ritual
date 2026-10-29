@@ -64,7 +64,11 @@ func run_tests() -> void:
     game.shadow_relic = true
     game.night_enemies[2]["hp"] = 0.0
     game.update_night(0.0)
-    check(game.blood_mantle, "second elite grants Blood Mantle relic")
+    check(game.relic_choice_pending and not game.blood_mantle, "elite opens relic selection instead of auto-granting")
+    game.choose_relic(0)
+    check(game.relic_choice_pending, "already-owned relic cannot be chosen")
+    game.choose_relic(1)
+    check(game.blood_mantle and not game.relic_choice_pending, "player choice grants Blood Mantle")
     game.player_hp = 70.0
     game.night_enemies[0]["hp"] = 0.0
     game.update_night(0.0)
@@ -76,6 +80,7 @@ func run_tests() -> void:
     check(game.player_hp == 100.0, "Blood Mantle healing caps at max HP")
     game.reset_all()
     check(not game.blood_mantle, "Blood Mantle resets on new run")
+    check(not game.relic_choice_pending, "pending relic selection resets on new run")
     check(game.current_day == 1, "initial day")
     game.dungeon_route = 1
     game.platforms = [Rect2(200.0, 420.0, 135.0, 16.0)]
@@ -353,7 +358,9 @@ func run_tests() -> void:
     var souls_before_elite: int = game.souls
     game.update_night(0.0)
     check(game.mana == mana_before_elite + 45 and game.souls == souls_before_elite + 5, "optional elite pays unique reward")
-    check(game.shadow_relic, "optional elite unlocks Ashen Step relic")
+    check(game.relic_choice_pending and not game.shadow_relic, "first elite offers relic choice")
+    game.choose_relic(0)
+    check(game.shadow_relic and not game.relic_choice_pending, "first elite grants selected Ashen Step relic")
     game.update_night(0.0)
     check(game.mana == mana_before_elite + 45 and game.souls == souls_before_elite + 5, "elite reward cannot be collected twice")
     game.reset_all()
