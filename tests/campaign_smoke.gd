@@ -260,6 +260,16 @@ func run_tests() -> void:
     game.player_hp = 20.0
     check(not game.night_low_hp_warning_visible(), "night HP warning hidden outside dungeon")
     game.reset_all()
+    game.reset_all()
+    game.phase = "night"
+    game.player_hp = 25.0
+    check(game.night_low_hp_warning_visible(), "compact night HUD preserves low HP warning")
+    game.player_hp = 26.0
+    check(not game.night_low_hp_warning_visible(), "night warning clears when HP recovers")
+    game.current_day = 4
+    game.trap_clock = 1.9
+    check(game.trap_is_dangerous(), "night HUD hazard indicator uses active trap state")
+    game.reset_all()
     check(game.current_day == 1, "initial day")
     game.dungeon_route = 1
     game.platforms = [Rect2(200.0, 420.0, 135.0, 16.0)]
