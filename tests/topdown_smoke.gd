@@ -148,7 +148,7 @@ func run_tests() -> void:
         check(not td.start_wave(), "TD victory blocks further waves")
         td.restart_defense()
         td.altar_hp = 10
-        td.enemies.append({"lane": 0, "pos": Vector2(1070, 285), "waypoint": 2, "hp": 1, "delay": 0.0})
+        td.enemies.append({"lane": 0, "pos": td.PATHS[0][td.PATHS[0].size() - 1], "waypoint": td.PATHS[0].size() - 1, "hp": 1, "delay": 0.0})
         td.advance_enemies(0.01)
         check(td.defense_state == "lost" and td.altar_hp == 0, "TD altar defeat ends defense")
         check(not td.start_wave(), "TD defeat blocks more waves")
