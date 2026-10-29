@@ -308,6 +308,19 @@ func run_tests() -> void:
     check(not game.selected_tower_can_sell(), "sell button disabled when selection index out of bounds")
     game.reset_all()
     check(game.current_day == 1, "initial day")
+    game.reset_all()
+    game.dungeon_omen = 1
+    game.trap_positions = [375.0, 775.0]
+    game.night_enemies = [{"x": 360.0, "hp": 100.0, "dir": -1.0}]
+    game.apply_dungeon_omen()
+    check(game.trap_positions.size() == 3 and is_equal_approx(float(game.night_enemies[0]["hp"]), 122.0), "cursed dungeon omen increases hazards and enemy HP")
+    game.reset_all()
+    game.dungeon_omen = 2
+    game.night_enemies = [{"x": 360.0, "hp": 100.0, "dir": -1.0}]
+    game.apply_dungeon_omen()
+    check(game.omen_cache_bonus and is_equal_approx(float(game.night_enemies[0]["hp"]), 110.0), "treasure omen boosts optional cache and enemies")
+    game.reset_all()
+
     game.begin_night()
     check(not game.dungeon_route_chosen and game.secret_cache_pos.x > 0.0, "night opens route choice and initializes cache")
     game.mana = 70
