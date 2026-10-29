@@ -49,6 +49,7 @@ func run_tests() -> void:
         td.attack_with_towers(1.0)
         check(td.enemies.is_empty() and td.enemies_defeated == kills_before + 1, "TD tower automatically kills enemy within range")
         check(td.coins == 5, "TD defeated enemy grants gold")
+        check(td.shot_trails.size() > 0, "TD tower attack creates visible shot feedback")
         td.enemies.append({"lane": 0, "pos": Vector2(1050, 330), "waypoint": 2, "hp": 5, "delay": 0.0})
         td.attack_with_towers(2.0)
         check(td.enemies.size() == 1 and td.enemies[0]["hp"] == 5, "TD tower ignores enemies beyond range")

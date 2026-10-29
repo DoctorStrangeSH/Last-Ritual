@@ -17,6 +17,7 @@ var enemies_spawned := 0
 var enemies_escaped := 0
 var enemies_defeated := 0
 var tower_cooldowns: Dictionary = {}
+var shot_trails: Array[Dictionary] = []
 const TOWER_RANGE := {"bone": 135.0, "fire": 160.0, "necro": 125.0}
 const TOWER_DAMAGE := {"bone": 2, "fire": 1, "necro": 3}
 
@@ -73,6 +74,7 @@ func attack_with_towers(delta: float) -> void:
                 target = enemy
         if target.is_empty():
             continue
+        shot_trails.append({"from": tower["pos"], "to": target["pos"], "time": 0.18})
         target["hp"] -= int(TOWER_DAMAGE[kind]) * int(tower["level"])
         tower_cooldowns[slot_id] = 0.8
         if target["hp"] <= 0:
@@ -84,6 +86,11 @@ func attack_with_towers(delta: float) -> void:
 func _process(delta: float) -> void:
     advance_enemies(delta)
     attack_with_towers(delta)
+    for trail in shot_trails.duplicate():
+        trail["time"] -= delta
+        if trail["time"] <= 0.0:
+            shot_trails.erase(trail)
+    queue_redraw()
 
 
 func _ready() -> void:
@@ -186,6 +193,8 @@ func _draw() -> void:
     for enemy in enemies:
         if enemy["delay"] <= 0.0:
             draw_circle(enemy["pos"], 12.0, Color("#c67f64"))
+    for trail in shot_trails:
+        draw_line(trail["from"], trail["to"], Color("#ffda8e"), 4.0)
     for i in range(slots.size()):
         var pos: Vector2 = slots[i]["pos"]
         var occupied: bool = slots[i]["tower"] != ""
