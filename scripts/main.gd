@@ -1846,7 +1846,7 @@ func _draw() -> void:
         box(Rect2(112, 142, 928, 374), Color(0.095, 0.07, 0.15, 0.97))
         draw_rect(Rect2(112, 142, 928, 374), Color("ad85c9"), false, 3.0)
         label("ВЫБЕРИ ПУТЬ ЧЕРЕЗ ПОДЗЕМЕЛЬЕ", 204, 207, 33, Color("e9beff"))
-        label("Один путь • меняет план комнаты и стартовую награду", 210, 250, 19)
+        label("Знамение: %s  •  выбери маршрут" % dungeon_omen_name(), 210, 250, 19)
         for route_i in range(3):
             var rx: float = 140.0 + float(route_i) * 297.0
             box(Rect2(rx, 270, 276, 185), Color("322442"))
