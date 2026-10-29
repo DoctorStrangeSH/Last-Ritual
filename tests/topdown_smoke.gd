@@ -410,6 +410,46 @@ func run_tests() -> void:
     check(is_zero_approx(dash_probe.dash_cooldown) and dash_probe.last_move_direction == Vector2.RIGHT, "Restart clears dash cooldown and facing")
     dash_probe.queue_free()
 
+    var patterns = packed.instantiate()
+    root.add_child(patterns)
+    patterns.set_dungeon_seed(1)
+    check(patterns.room_variant == 1 and patterns.enemies.size() == 3, "Ambush seed creates a three-enemy formation")
+    check(patterns.enemies[0].get("role", "") == "flanker" and patterns.enemies[1].get("role", "") == "flanker" and patterns.enemies[2]["ranged"], "Ambush combines two quick flankers and one ranged foe")
+    var seed_one_pos: Vector2 = patterns.enemies[0]["pos"]
+    patterns.set_dungeon_seed(1)
+    check(patterns.enemies[0]["pos"] == seed_one_pos, "Repeated ambush seed reproduces formation")
+    patterns.set_dungeon_seed(4)
+    check(patterns.room_variant == 1 and patterns.enemies[0]["pos"] != seed_one_pos, "Different ambush seeds mirror flanking lanes")
+    patterns.set_dungeon_seed(2)
+    check(patterns.room_variant == 2 and patterns.enemies.size() == 3 and patterns.enemies.back().get("role", "") == "champion", "Elite room includes an armored champion")
+    check(patterns.ROOM_TACTICS.size() == patterns.ROOM_KINDS.size(), "Every encounter type has a visible tactical hint")
+    patterns.player_pos = Vector2(850.0, 450.0)
+    patterns.attack_damage = 3
+    var champion_before: int = patterns.enemies.back()["hp"]
+    check(patterns.attack(Vector2(850.0, 450.0)) and patterns.enemies.back()["hp"] == champion_before - 2, "Champion armor reduces effective relic damage by one")
+    check(patterns.floating_combat_texts.back()["text"] == "-2", "Floating hit number shows damage after armor")
+    patterns.attack_damage = 1
+    patterns.attack_cooldown = 0.0
+    check(patterns.attack(Vector2(850.0, 450.0)) and patterns.enemies.back()["hp"] == champion_before - 3, "Champion armor never reduces damage below one")
+    patterns.difficulty = 2
+    patterns.open_room(0, 2)
+    check(patterns.enemies.back()["hp"] == 12 and float(patterns.enemies.back()["speed"]) > 75.0, "Nightmare champion scales in health and speed")
+    patterns.player_pos = Vector2(160.0, 325.0)
+    patterns.enemies.clear()
+    patterns.enemies.append({"pos": Vector2(210.0, 325.0), "hp": 8, "speed": 0.0, "ranged": false, "role": "flanker"})
+    patterns._process(0.05)
+    check(is_equal_approx(float(patterns.enemies[0]["melee_warning"]), patterns.FLANKER_WARNING), "Flanker uses a shorter visible windup")
+    patterns._process(0.4)
+    check(patterns.player_hp == 92, "Flanker strike deals lighter eight-point damage")
+    patterns.invulnerable_time = 0.0
+    patterns.enemies.clear()
+    patterns.enemies.append({"pos": Vector2(210.0, 325.0), "hp": 8, "speed": 0.0, "ranged": false, "role": "champion"})
+    patterns._process(0.05)
+    check(is_equal_approx(float(patterns.enemies[0]["melee_warning"]), patterns.CHAMPION_WARNING), "Champion telegraph lasts longer than flanker warning")
+    patterns._process(0.72)
+    check(patterns.player_hp == 78, "Champion's slower strike deals fourteen-point damage")
+    patterns.queue_free()
+
     var game = packed.instantiate()
     root.add_child(game)
     check(game.sfx != null and game.sfx.has_effect("hit") and game.sfx.has_effect("relic"), "Night prototype loads synthesized combat and reward audio")
