@@ -85,9 +85,25 @@ func open_room(index: int, override_variant: int = -1) -> void:
     room_variant = override_variant if override_variant >= 0 else posmod(dungeon_seed + index, ROOM_KINDS.size())
     var mirror := 1.0 if posmod(dungeon_seed + room_index, 2) == 0 else -1.0
     build_room_cover()
-    if exploration_enabled and cleared_rooms.has(room_index):
-        queue_redraw()
-        return
+    if exploration_enabled:
+        if cleared_rooms.has(room_index):
+            queue_redraw()
+            return
+        var room_kind: String = str(floor_data["rooms"][room_index]["kind"])
+        if room_kind == "СОКРОВИЩНИЦА":
+            player_hp = mini(100, player_hp + 25)
+            night_souls += 3
+            cleared_rooms[room_index] = true
+            reward_notice = "СОКРОВИЩНИЦА: +25 ЗДОРОВЬЯ И +3 ДУШИ"
+            reward_notice_time = 3.5
+            queue_redraw()
+            return
+        if room_kind == "МАГАЗИН":
+            shop_open = true
+            reward_notice = "ТОРГОВЕЦ: ПОКУПКИ ЗА ДУШИ"
+            reward_notice_time = 3.5
+            queue_redraw()
+            return
     match room_variant:
         0:
             # Crypt: predictable melee + a ranged shooter with room to learn dodge.
@@ -369,7 +385,13 @@ func leave_shop() -> bool:
     if not shop_open or run_state != "playing":
         return false
     shop_open = false
-    open_room(room_index + 1)
+    if exploration_enabled:
+        cleared_rooms[room_index] = true
+        reward_notice = "ТОРГОВЕЦ ПОКИНУЛ КОМНАТУ"
+        reward_notice_time = 2.0
+        queue_redraw()
+    else:
+        open_room(room_index + 1)
     return true
 
 func restart_run() -> void:
