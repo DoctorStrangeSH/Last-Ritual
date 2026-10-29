@@ -631,8 +631,8 @@ const RELIC_RECTS := [
     Rect2(700.0, 450.0, 180.0, 70.0)
 ]
 const RELIC_IDS := ["bone", "ember", "blood"]
-const RELIC_TITLES := ["BONE SHARD", "EMBER", "BLOOD PACT"]
-const RELIC_EFFECTS := ["+1 DAMAGE", "+25% ATTACK SPEED", "-15 HP / +2 DAMAGE"]
+const RELIC_TITLES := ["КОСТЯНОЙ ОСКОЛОК", "УГОЛЁК", "КРОВАВЫЙ ДОГОВОР"]
+const RELIC_EFFECTS := ["+1 УРОН", "+25% СКОРОСТЬ АТАКИ", "-15 ЗД / +2 УРОН"]
 
 func click_ui(point: Vector2) -> bool:
     if run_state != "playing":
@@ -789,6 +789,16 @@ func _draw() -> void:
         var enemy_color: Color = Color("#fff1d1") if float(enemy.get("hit_flash", 0.0)) > 0.0 else (Color("#aa70d6") if enemy["ranged"] else Color("#e3b967") if enemy.get("role", "") == "flanker" else Color("#b46773") if enemy.get("role", "") == "champion" else Color("#cf646c"))
         var enemy_radius: float = 34.0 if enemy.get("role", "") == "boss" else 25.0 if enemy.get("role", "") == "champion" else 16.0 if enemy.get("role", "") == "flanker" else 19.0
         draw_circle(enemy["pos"], 23.0 if float(enemy.get("hit_flash", 0.0)) > 0.0 else enemy_radius, enemy_color)
+        # Чёткие символы ролей: противника можно узнать без различения цветов.
+        if enemy.get("role", "") == "flanker":
+            draw_line(enemy["pos"] + Vector2(-9, -9), enemy["pos"] + Vector2(9, 9), Color("#241e30"), 3.0)
+            draw_line(enemy["pos"] + Vector2(9, -9), enemy["pos"] + Vector2(-9, 9), Color("#241e30"), 3.0)
+        elif enemy["ranged"]:
+            draw_arc(enemy["pos"], 9.0, 0.0, TAU, 20, Color("#f9e5b2"), 2.0)
+            draw_circle(enemy["pos"], 3.0, Color("#f9e5b2"))
+        elif enemy.get("role", "") == "champion":
+            draw_rect(Rect2(enemy["pos"] + Vector2(-8, -8), Vector2(16, 16)), Color("#f9e5b2"), false, 3.0)
+
         if enemy.get("role", "") == "boss":
             draw_arc(enemy["pos"], 42.0, 0.0, TAU, 48, Color("#ffc47f"), 5.0)
             draw_label("СТРАЖ РИТУАЛА", enemy["pos"] + Vector2(-72, -59), 16, Color("#ffe6bd"))
