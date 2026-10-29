@@ -368,6 +368,14 @@ func reveal_adjacent_secret() -> bool:
             return true
     return false
 
+func click_open_door(point: Vector2) -> bool:
+    if not exploration_enabled or not door_available():
+        return false
+    for direction in door_neighbors():
+        if point.distance_to(DOOR_POINTS[direction]) <= 32.0 and player_pos.distance_to(DOOR_POINTS[direction]) < 85.0:
+            return travel_through_door(direction)
+    return false
+
 func travel_through_door(direction: Vector2i) -> bool:
     if not exploration_enabled or not door_available():
         return false
@@ -687,6 +695,8 @@ func _unhandled_input(event: InputEvent) -> void:
         restart_run()
         return
     if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+        if click_open_door(event.position):
+            return
         if click_ui(event.position):
             return
     if run_state != "playing":
@@ -856,6 +866,11 @@ func _draw() -> void:
                 draw_line(crack_center + Vector2(3, 0), crack_center + Vector2(-2, 17), Color("#ba9f75"), 2.5)
                 draw_label("ТРЕЩИНА В СТЕНЕ — E: ИССЛЕДОВАТЬ", Vector2(705, 198), 13, Color("#f1d29e"))
     if exploration_enabled:
+        if door_available():
+            for direction in door_neighbors():
+                var point: Vector2 = DOOR_POINTS[direction]
+                draw_arc(point, 25.0, 0.0, TAU, 32, Color("#e7d3a8"), 2.0)
+                draw_label("ЛКМ", point + Vector2(-15, -29), 12, Color("#fff0ce"))
         draw_label("ЭТАЖ: %d/10  ИССЛЕДОВАНО: %d" % [room_index + 1, visited_rooms.size()], Vector2(390, 63), 15, Color("#e7d3a8"))
         for direction in door_neighbors():
             var door_point: Vector2 = DOOR_POINTS[direction]
