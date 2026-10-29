@@ -276,6 +276,7 @@ func run_tests() -> void:
         return
     var game = packed.instantiate()
     root.add_child(game)
+    check(game.sfx != null and game.sfx.has_effect("hit") and game.sfx.has_effect("relic"), "Night prototype loads synthesized combat and reward audio")
     check(game.room_index == 0 and game.enemies.size() == 2, "First room has two enemy archetypes")
     game.set_dungeon_seed(2)
     check(game.room_variant == 2 and game.enemies.size() == 3, "Elite seed adds a third enemy")
