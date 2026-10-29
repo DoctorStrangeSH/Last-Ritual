@@ -39,6 +39,26 @@ func run_tests() -> void:
         for dungeon_seed in range(20):
             var generated: Dictionary = floor_generator.generate_floor(dungeon_seed)
             check(generated["rooms"].size() == 10 and floor_generator.reachable(generated), "Generated floor stays connected across seeds")
+    var exploratory_scene = load("res://scenes/topdown_night_prototype.tscn")
+    if exploratory_scene != null:
+        var exploration = exploratory_scene.instantiate()
+        root.add_child(exploration)
+        exploration.enable_floor_exploration(42)
+        check(exploration.exploration_enabled and exploration.floor_data["rooms"].size() == 10, "Night game enables ten-room exploration")
+        check(not exploration.travel_through_door(Vector2i.RIGHT), "Doors stay blocked during active encounter")
+        var starting_neighbors: Dictionary = exploration.door_neighbors()
+        check(not starting_neighbors.is_empty(), "Spawn room has at least one accessible neighbor")
+        var first_direction: Vector2i = starting_neighbors.keys()[0]
+        exploration.enemies.clear()
+        exploration.reward_available = false
+        check(exploration.travel_through_door(first_direction), "Cleared room can enter adjacent generated room")
+        check(exploration.room_index == int(starting_neighbors[first_direction]), "Room transitions follow generated graph")
+        check(exploration.visited_rooms.size() == 2, "Exploration tracks discovered rooms")
+        exploration.enemies.clear()
+        exploration.reward_available = false
+        check(exploration.travel_through_door(-first_direction), "Backtracking through opposite door returns to original room")
+        check(exploration.room_index == 0 and exploration.enemies.is_empty(), "Previously cleared room stays cleared")
+        exploration.queue_free()
     var td_scene := load("res://scenes/topdown_td_prototype.tscn") as PackedScene
     check(td_scene != null, "Top-down TD scene loads")
     if td_scene != null:
