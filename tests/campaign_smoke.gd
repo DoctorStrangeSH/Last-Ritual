@@ -768,6 +768,19 @@ func run_tests() -> void:
     check(game.mana == 93 and game.souls == 11 and game.wall_hp == 78.0, "checkpoint resources")
     check(game.towers.is_empty(), "checkpoint towers reset after night")
 
+    # Continue must reconstruct a saved campaign without retaining transient night effects.
+    game.dash_cooldown = 2.0
+    game.cleave_cooldown = 5.0
+    game.empowered_strike = true
+    game.phase = "night"
+    check(game.load_campaign(), "Continue reloads saved altar checkpoint from active gameplay")
+    check(game.phase == "ritual" and game.current_day == 2 and game.stones_collected == 2, "Continue restores altar state")
+    check(game.dash_cooldown == 0.0 and game.cleave_cooldown == 0.0 and not game.empowered_strike, "Continue clears transient night abilities")
+    game.start_run()
+    check(game.phase == "day" and game.current_day == 1 and game.stones_collected == 0, "New Game begins at day one after Continue")
+    check(not game.shadow_relic and not game.blood_mantle and not game.rage_shard, "New Game removes previous run relics after Continue")
+    check(game.load_campaign() and game.current_day == 2 and game.phase == "ritual", "checkpoint remains loadable after starting a new run")
+
     var corrupt := FileAccess.open("user://campaign_smoke_test.json", FileAccess.WRITE)
     corrupt.store_string("{not valid json")
     corrupt.close()
