@@ -337,6 +337,35 @@ func run_tests() -> void:
     if packed == null:
         quit(1)
         return
+    var dash_probe = packed.instantiate()
+    root.add_child(dash_probe)
+    var dash_start: Vector2 = dash_probe.player_pos
+    dash_probe._unhandled_input(left_click_event(dash_probe.DASH_BUTTON.get_center()))
+    check(dash_probe.player_pos == dash_start + Vector2(dash_probe.DASH_DISTANCE, 0) and is_equal_approx(dash_probe.dash_cooldown, dash_probe.DASH_COOLDOWN), "Mouse dash moves along last facing direction and starts cooldown")
+    check(dash_probe.invulnerable_time >= dash_probe.DASH_INVULNERABILITY and dash_probe.dash_flash_time > 0.0, "Dash grants brief evasion and shows a trail")
+    dash_probe.take_damage(10)
+    check(dash_probe.player_hp == 100 and not dash_probe.dash(), "Dash prevents immediate damage and cannot be repeated before cooldown")
+    dash_probe.enemies.clear()
+    dash_probe._process(dash_probe.DASH_COOLDOWN)
+    check(is_zero_approx(dash_probe.dash_cooldown) and is_zero_approx(dash_probe.invulnerable_time), "Dash cooldown and evasion expire during active play")
+    dash_probe.toggle_controls_help()
+    check(not dash_probe.dash() and is_zero_approx(dash_probe.dash_cooldown), "Pause help prevents dodging")
+    dash_probe.toggle_controls_help()
+    dash_probe.reward_available = true
+    check(not dash_probe.dash(), "Relic choice blocks dash")
+    dash_probe.reward_available = false
+    var dash_space_event := InputEventKey.new()
+    dash_space_event.keycode = KEY_SPACE
+    dash_space_event.pressed = true
+    dash_probe._unhandled_input(dash_space_event)
+    check(dash_probe.dash_cooldown > 0.0, "Space key triggers dash")
+    dash_probe.player_pos = dash_probe.ARENA.end - Vector2(16, 16)
+    dash_probe.dash_cooldown = 0.0
+    check(not dash_probe.dash(), "Dash at arena boundary cannot teleport outside or waste cooldown")
+    dash_probe.restart_run()
+    check(is_zero_approx(dash_probe.dash_cooldown) and dash_probe.last_move_direction == Vector2.RIGHT, "Restart clears dash cooldown and facing")
+    dash_probe.queue_free()
+
     var game = packed.instantiate()
     root.add_child(game)
     check(game.sfx != null and game.sfx.has_effect("hit") and game.sfx.has_effect("relic"), "Night prototype loads synthesized combat and reward audio")
