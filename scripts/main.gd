@@ -236,6 +236,9 @@ func reset_all() -> void:
     towers.clear()
     shots.clear()
     skeletons.clear()
+    night_enemies.clear()
+    mage_bolts.clear()
+    hex_bolts.clear()
     wave_count = 0
     siege_event = 0
     elite_kills = 0
