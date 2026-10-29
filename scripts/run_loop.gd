@@ -142,10 +142,10 @@ func _draw() -> void:
             draw_string(ThemeDB.fallback_font, Vector2(410, 235), "CHOOSE A RUN RELIC", HORIZONTAL_ALIGNMENT_LEFT, -1, 26, Color.WHITE)
             var names := ["BONE: +1 HERO/TOWER", "EMBER: SPEED + FIRE", "GOLD: +30 START GOLD", "NECRO: +3 KILL GOLD"]
             for i in range(REWARD_BUTTONS.size()):
-                draw_rect(REWARD_BUTTONS[i], [Color("#526d9b"), Color("#a16a36"), Color("#927447")][i])
+                draw_rect(REWARD_BUTTONS[i], [Color("#526d9b"), Color("#a16a36"), Color("#927447"), Color("#4e7668")][i])
                 draw_string(ThemeDB.fallback_font, REWARD_BUTTONS[i].position + Vector2(12, 55), names[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color.WHITE)
         "defeat", "victory":
             draw_string(ThemeDB.fallback_font, Vector2(400, 260), "RUN COMPLETE" if phase == "victory" else "RUN ENDED", HORIZONTAL_ALIGNMENT_LEFT, -1, 32, Color.WHITE)
-            draw_string(ThemeDB.fallback_font, Vector2(400, 320), "Phases survived: %d / 4" % completed_phases, HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color("#c7c9d1"))
+            draw_string(ThemeDB.fallback_font, Vector2(400, 320), "Phases survived: %d / 6" % completed_phases, HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color("#c7c9d1"))
             draw_rect(Rect2(430, 480, 290, 70), Color("#527d70"))
             draw_string(ThemeDB.fallback_font, Vector2(485, 523), "START NEW RUN", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color.WHITE)
