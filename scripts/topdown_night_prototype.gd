@@ -27,7 +27,7 @@ var route_boon := ""
 var night_souls := 0
 var shop_open := false
 const ROOM_KINDS := ["CRYPT", "AMBUSH", "ELITE"]
-const ROOM_TACTICS := ["CRYPT: MIXED ENEMIES", "AMBUSH: FAST FLANKERS", "ELITE: ARMORED CHAMPION"]
+const ROOM_TACTICS := ["СКЛЕП: РАЗНЫЕ ВРАГИ", "ЗАСАДА: БЫСТРЫЕ ВРАГИ", "ЭЛИТА: БРОНИРОВАННЫЙ ВРАГ"]
 const ROUTE_RECTS := [Rect2(66.0, 490.0, 245.0, 65.0), Rect2(327.0, 490.0, 245.0, 65.0), Rect2(588.0, 490.0, 245.0, 65.0), Rect2(849.0, 490.0, 245.0, 65.0)]
 const SHOP_RECTS := [Rect2(340.0, 320.0, 155.0, 60.0), Rect2(500.0, 320.0, 155.0, 60.0), Rect2(660.0, 320.0, 155.0, 60.0)]
 const HELP_BUTTON := Rect2(984.0, 10.0, 153.0, 46.0)
@@ -562,19 +562,19 @@ func _draw() -> void:
     draw_circle(player_pos, 22.0 if player_hit_flash > 0.0 else 17.0, Color("#fff1d1") if player_hit_flash > 0.0 else (Color("#80dbed") if invulnerable_time <= 0.0 or int(invulnerable_time * 16.0) % 2 == 0 else Color("#4c657a")))
     draw_rect(Rect2(48.0, 25.0, 220.0, 18.0), Color("#442c37"))
     draw_rect(Rect2(48.0, 25.0, 220.0 * float(player_hp) / 100.0, 18.0), Color("#cf657a"))
-    draw_label("HP %d / 100   ROOM %d / 3   %s   SOULS %d   RELICS %d" % [player_hp, room_index + 1, ROOM_KINDS[room_variant], night_souls, relics.size()], Vector2(280, 41), 17)
+    draw_label("ЗДОРОВЬЕ %d/100  КОМНАТА %d/3  %s  ДУШИ %d  РЕЛИКВИИ %d" % [player_hp, room_index + 1, ROOM_KINDS[room_variant], night_souls, relics.size()], Vector2(280, 41), 17)
     draw_label(ROOM_TACTICS[room_variant], Vector2(77, 108), 15, Color("#e7d3a8"))
     if route_boon != "":
         draw_label(route_boon, Vector2(300, 65), 14, Color("#d5c592"))
     if run_state == "won":
         draw_rect(Rect2(350.0, 190.0, 452.0, 180.0), Color("#295343"))
-        draw_label("VICTORY", Vector2(510, 245), 30)
+        draw_label("ПОБЕДА", Vector2(510, 245), 30)
     if run_state == "lost":
         draw_rect(Rect2(350.0, 190.0, 452.0, 180.0), Color("#422837"))
-        draw_label("DEFEAT", Vector2(510, 245), 30)
+        draw_label("ПОРАЖЕНИЕ", Vector2(510, 245), 30)
     if run_state != "playing":
         draw_rect(RESTART_BUTTON, Color("#739bb0"))
-        draw_label("RESTART RUN", Vector2(488, 337), 22)
+        draw_label("НОВЫЙ ЗАБЕГ", Vector2(488, 337), 22)
     for enemy in enemies:
         var ranged_remaining: float = float(enemy.get("ranged_warning", 0.0))
         var melee_remaining: float = float(enemy.get("melee_warning", 0.0))
@@ -604,7 +604,7 @@ func _draw() -> void:
         draw_label(reward_notice, Vector2(414, 119), 19, Color("#fff1c8"))
     if reward_available:
         draw_circle(Vector2(576, 325), 24.0, Color("#f4d78c"))
-        draw_label("CHOOSE ONE RELIC", Vector2(480, 425), 23)
+        draw_label("ВЫБЕРИТЕ РЕЛИКВИЮ", Vector2(480, 425), 23)
         var palette := [Color("#526d9b"), Color("#a16a36"), Color("#863c54")]
         for i in range(RELIC_RECTS.size()):
             draw_rect(RELIC_RECTS[i], palette[i])
@@ -614,38 +614,38 @@ func _draw() -> void:
             draw_label(RELIC_EFFECTS[i], RELIC_RECTS[i].position + Vector2(10, 50), 12)
     if shop_open:
         draw_rect(Rect2(285.0, 205.0, 570.0, 220.0), Color("#263b45"))
-        draw_label("WANDERING MERCHANT - SOULS %d" % night_souls, Vector2(359, 255), 23)
+        draw_label("СТРАНСТВУЮЩИЙ ТОРГОВЕЦ — ДУШИ %d" % night_souls, Vector2(359, 255), 23)
         for i in range(SHOP_RECTS.size()):
             draw_rect(SHOP_RECTS[i], Color("#4e8373") if i < 2 else Color("#775e6d"))
-            draw_label("+1 DMG / 2" if i == 0 else "+20 HP / 1" if i == 1 else "LEAVE", SHOP_RECTS[i].position + Vector2(10, 37), 17)
+            draw_label("+1 УРОН / 2" if i == 0 else "+20 ЗДОРОВЬЯ / 1" if i == 1 else "УЙТИ", SHOP_RECTS[i].position + Vector2(10, 37), 17)
     if door_available():
-        draw_label("CHOOSE YOUR NEXT ROUTE", Vector2(450, 473), 22)
+        draw_label("ВЫБЕРИТЕ ПУТЬ", Vector2(450, 473), 22)
         for i in range(ROUTE_RECTS.size()):
             var variant := posmod(dungeon_seed + room_index + 1 + i, ROOM_KINDS.size())
             draw_rect(ROUTE_RECTS[i], Color("#496c74") if i == 0 else Color("#81556e") if i == 1 else Color("#7a568b") if i == 2 else Color("#6c8061"))
-            var offer := "TREASURE +18 HP" if i == 0 else "RISK -12 HP / +1 ATK" if i == 1 else "CURSE -20 HP / +35% SPD" if i == 2 else "MERCHANT / SOULS"
+            var offer := "КЛАД +18 ЗДОРОВЬЯ" if i == 0 else "РИСК -12 ЗД / +1 УРОН" if i == 1 else "ПРОКЛЯТИЕ -20 ЗД / +35% СКОР" if i == 2 else "ТОРГОВЕЦ / ДУШИ"
             draw_label(offer, ROUTE_RECTS[i].position + Vector2(10, 39), 16)
         draw_rect(Rect2(1058.0, 275.0, 46.0, 96.0), Color("#72b59b"))
     else:
         draw_rect(Rect2(1058.0, 275.0, 46.0, 96.0), Color("#59495b"))
 
     draw_rect(DASH_BUTTON, Color("#497b80") if dash_cooldown <= 0.0 and run_state == "playing" and not reward_available and not shop_open else Color("#353c46"))
-    draw_label("DASH / SPACE" if dash_cooldown <= 0.0 else "DASH %.1fs" % dash_cooldown, DASH_BUTTON.position + Vector2(14, 26), 16, Color("#fff2c5"))
+    draw_label("РЫВОК / ПРОБЕЛ" if dash_cooldown <= 0.0 else "РЫВОК %.1f С" % dash_cooldown, DASH_BUTTON.position + Vector2(14, 26), 16, Color("#fff2c5"))
     draw_rect(HELP_BUTTON, Color("#526d9b") if help_visible else Color("#343b47"))
     draw_rect(HELP_BUTTON, Color("#d5c592"), false, 1.5)
-    draw_label("HELP / H", HELP_BUTTON.position + Vector2(24.0, 30.0), 16, Color("#fff2c5"))
+    draw_label("ПОМОЩЬ / H", HELP_BUTTON.position + Vector2(24.0, 30.0), 16, Color("#fff2c5"))
     if help_visible:
         var help_panel := Rect2(306, 144, 540, 360)
         draw_rect(help_panel, Color(0.055, 0.07, 0.11, 0.97))
         draw_rect(help_panel, Color("#d5c592"), false, 2.0)
-        draw_label("NIGHT CONTROLS", Vector2(435, 190), 27, Color("#e7d3a8"))
-        draw_label("WASD / ARROWS  -  Move", Vector2(354, 238), 18)
-        draw_label("LEFT CLICK enemy  -  Attack in range", Vector2(354, 273), 18)
-        draw_label("CLICK a relic card  -  Choose your reward", Vector2(354, 308), 17)
-        draw_label("CLICK a route card  -  Choose the next room", Vector2(354, 343), 17)
-        draw_label("SPACE / DASH  -  Evade warning circles and aim lines", Vector2(354, 378), 15)
-        draw_label("RIGHT CLICK near the door  -  Advance", Vector2(354, 409), 16)
+        draw_label("УПРАВЛЕНИЕ НОЧЬЮ", Vector2(435, 190), 27, Color("#e7d3a8"))
+        draw_label("WASD / СТРЕЛКИ — ДВИЖЕНИЕ", Vector2(354, 238), 18)
+        draw_label("ЛКМ ПО ВРАГУ — АТАКА", Vector2(354, 273), 18)
+        draw_label("КЛИК ПО РЕЛИКВИИ — ВЫБОР НАГРАДЫ", Vector2(354, 308), 17)
+        draw_label("КЛИК ПО КАРТОЧКЕ — ВЫБОР ПУТИ", Vector2(354, 343), 17)
+        draw_label("ПРОБЕЛ / РЫВОК — УКЛОНЕНИЕ ОТ АТАК", Vector2(354, 378), 15)
+        draw_label("ПКМ У ДВЕРИ — ПЕРЕХОД", Vector2(354, 409), 16)
         draw_label("H  -  Close this help panel", Vector2(354, 438), 16, Color("#d5c592"))
         draw_label("The action pauses while help is open.", Vector2(354, 469), 14, Color("#9da9bf"))
         draw_rect(HELP_CLOSE_BUTTON, Color("#527d70"))
-        draw_label("CONTINUE", HELP_CLOSE_BUTTON.position + Vector2(12.0, 31.0), 17, Color.WHITE)
+        draw_label("ПРОДОЛЖИТЬ", HELP_CLOSE_BUTTON.position + Vector2(12.0, 31.0), 17, Color.WHITE)
