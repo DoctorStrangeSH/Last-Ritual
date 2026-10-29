@@ -13,6 +13,30 @@ func check(ok: bool, name: String) -> void:
         print("PASS " + name)
 
 func run_tests() -> void:
+    var topdown_scene := load("res://scenes/topdown_night_prototype.tscn") as PackedScene
+    check(topdown_scene != null, "P1 top-down scene imports")
+    if topdown_scene != null:
+        var prototype = topdown_scene.instantiate()
+        root.add_child(prototype)
+        check(prototype.room_index == 0 and prototype.enemies.size() == 2, "P1 begins with two room enemies")
+        check(not prototype.next_room(), "P1 room exit locked while enemies remain")
+        prototype.player_pos = Vector2(560, 240)
+        for i in range(3):
+            prototype.attack_cooldown = 0.0
+            check(prototype.attack(Vector2(570, 240)), "P1 attack hits first enemy")
+        check(prototype.enemies.size() == 1, "P1 defeated enemy removed")
+        prototype.player_pos = Vector2(710, 370)
+        for i in range(3):
+            prototype.attack_cooldown = 0.0
+            check(prototype.attack(Vector2(730, 370)), "P1 attack hits second enemy")
+        check(prototype.reward_available and prototype.enemies.is_empty(), "P1 cleared room offers reward")
+        check(not prototype.next_room(), "P1 reward cannot be skipped")
+        check(prototype.claim_reward() and not prototype.claim_reward(), "P1 reward can be claimed once")
+        check(prototype.next_room() and prototype.room_index == 1, "P1 moves to next room after reward")
+        prototype.player_pos = Vector2(-200, -200)
+        prototype.move_player(Vector2.ZERO, 0.0)
+        check(prototype.player_pos.x >= 64.0 and prototype.player_pos.y >= 84.0, "P1 movement stays inside room")
+        prototype.queue_free()
     var packed := load("res://scenes/main.tscn") as PackedScene
     if packed == null:
         quit(1)
