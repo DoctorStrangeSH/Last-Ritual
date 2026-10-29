@@ -960,8 +960,10 @@ func begin_night() -> void:
         platforms = [Rect2(205, 473, 135, 16), Rect2(415, 413, 145, 16), Rect2(640, 462, 130, 16), Rect2(830, 396, 135, 16)]
         trap_positions = [375.0, 775.0]
     if current_day >= 3:
-        # Optional elite: the stone and exit do not require defeating this enemy.
-        night_enemies.append({"x": 530.0, "hp": 155.0 + float(current_day - 3) * 25.0, "dir": 1.0, "kind": "elite_warden", "windup": 0.0, "strike_cd": 2.0})
+        # The final tomb introduces a tougher optional Warden with a longer tell.
+        var elite_hp := 240.0 if current_day == 5 else 155.0 + float(current_day - 3) * 25.0
+        var elite_cooldown := 1.5 if current_day == 5 else 2.0
+        night_enemies.append({"x": 530.0, "hp": elite_hp, "dir": 1.0, "kind": "elite_warden", "windup": 0.0, "strike_cd": elite_cooldown})
     if current_day >= 3 and night_enemies.size() > 1:
         var hexer: Dictionary = night_enemies[1]
         hexer["kind"] = "hexer"

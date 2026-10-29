@@ -215,6 +215,17 @@ func run_tests() -> void:
     game.trap_clock = 2.8
     check(not game.trap_is_dangerous(), "late trap danger resets on new cycle")
     game.reset_all()
+    game.reset_all()
+    game.current_day = 4
+    game.begin_night()
+    check(game.night_enemies.size() == 3 and is_equal_approx(float(game.night_enemies[2]["hp"]), 180.0), "fourth night retains regular elite strength")
+    check(is_equal_approx(float(game.night_enemies[2]["strike_cd"]), 2.0), "fourth night retains regular elite delay")
+    game.reset_all()
+    game.current_day = 5
+    game.begin_night()
+    check(game.night_enemies.size() == 3 and is_equal_approx(float(game.night_enemies[2]["hp"]), 240.0), "fifth tomb elite has unique stronger variant")
+    check(is_equal_approx(float(game.night_enemies[2]["strike_cd"]), 1.5), "fifth tomb elite reacts earlier")
+    game.reset_all()
     check(game.current_day == 1, "initial day")
     game.dungeon_route = 1
     game.platforms = [Rect2(200.0, 420.0, 135.0, 16.0)]
