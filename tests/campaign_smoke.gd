@@ -240,6 +240,14 @@ func run_tests() -> void:
     game.begin_night()
     check(not game.night_controls_hint_visible(), "later nights start with uncluttered HUD")
     game.reset_all()
+    game.reset_all()
+    game.cleave_cooldown = 6.0
+    check(is_equal_approx(game.cleave_charge_ratio(), 0.0), "cleave HUD meter empty after skill use")
+    game.cleave_cooldown = 3.0
+    check(is_equal_approx(game.cleave_charge_ratio(), 0.5), "cleave HUD meter shows half cooldown")
+    game.cleave_cooldown = 0.0
+    check(is_equal_approx(game.cleave_charge_ratio(), 1.0), "cleave HUD meter full when ready")
+    game.reset_all()
     check(game.current_day == 1, "initial day")
     game.dungeon_route = 1
     game.platforms = [Rect2(200.0, 420.0, 135.0, 16.0)]
