@@ -61,8 +61,11 @@ func claim_reward() -> bool:
     queue_redraw()
     return true
 
+func door_available() -> bool:
+    return enemies.is_empty() and not reward_available and room_index < 2
+
 func next_room() -> bool:
-    if not enemies.is_empty() or room_index >= 2 or reward_available:
+    if not door_available():
         return false
     open_room(room_index + 1)
     return true
@@ -93,7 +96,8 @@ func _unhandled_input(event: InputEvent) -> void:
             else:
                 attack(get_global_mouse_position())
         elif event.button_index == MOUSE_BUTTON_RIGHT:
-            next_room()
+            if player_pos.distance_to(Vector2(1080.0, 325.0)) < 85.0:
+                next_room()
 
 func _draw() -> void:
     draw_rect(Rect2(Vector2.ZERO, Vector2(1152, 648)), Color("#111521"))
@@ -104,5 +108,7 @@ func _draw() -> void:
         draw_circle(enemy["pos"], 19.0, Color("#cf646c"))
     if reward_available:
         draw_circle(Vector2(576, 325), 24.0, Color("#f4d78c"))
-    if enemies.is_empty() and not reward_available and room_index < 2:
+    if door_available():
         draw_rect(Rect2(1058.0, 275.0, 46.0, 96.0), Color("#72b59b"))
+    else:
+        draw_rect(Rect2(1058.0, 275.0, 46.0, 96.0), Color("#59495b"))
