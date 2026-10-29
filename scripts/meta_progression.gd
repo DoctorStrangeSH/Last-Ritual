@@ -17,13 +17,15 @@ func load_profile() -> bool:
     var currency: Variant = data.get("fragments", -1)
     var hero: Variant = data.get("hero_level", -1)
     var treasury: Variant = data.get("treasury_level", -1)
-    if not currency is int or not hero is int or not treasury is int:
+    if not (currency is int or currency is float) or not (hero is int or hero is float) or not (treasury is int or treasury is float):
+        return false
+    if float(currency) != floorf(float(currency)) or float(hero) != floorf(float(hero)) or float(treasury) != floorf(float(treasury)):
         return false
     if currency < 0 or hero < 0 or hero > MAX_LEVEL or treasury < 0 or treasury > MAX_LEVEL:
         return false
-    fragments = currency
-    hero_level = hero
-    treasury_level = treasury
+    fragments = int(currency)
+    hero_level = int(hero)
+    treasury_level = int(treasury)
     return true
 
 func save_profile() -> bool:
