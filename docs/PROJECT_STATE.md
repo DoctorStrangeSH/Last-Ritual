@@ -25,6 +25,8 @@
 - PR RC68 прошёл GitHub Actions до объединения.
 - Post-merge push workflow для main завершился успешно: [run #40816997661](https://github.com/DoctorStrangeSH/Last-Ritual/actions/runs/40816997661). Импорт, smoke tests и экспорт Windows EXE прошли в CI. Это не заменяет ручную проверку игры.
 
+Для S0 добавлен воспроизводимый сценарий ручной проверки: docs/QA_SMOKE_TEST.md. Сценарий ещё не выполнен.
+
 ## Что НЕ подтверждено
 
 - Полный ручной проход всех пяти дней и финального штурма.
