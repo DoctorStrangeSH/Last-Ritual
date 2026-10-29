@@ -19,7 +19,7 @@ func run_tests() -> void:
         var prototype = topdown_scene.instantiate()
         root.add_child(prototype)
         check(prototype.room_index == 0 and prototype.enemies.size() == 2, "P1 begins with two room enemies")
-        check(not prototype.next_room(), "P1 room exit locked while enemies remain")
+        check(not prototype.door_available() and not prototype.next_room(), "P1 room exit locked while enemies remain")
         prototype.player_pos = Vector2(560, 240)
         for i in range(3):
             prototype.attack_cooldown = 0.0
@@ -30,9 +30,11 @@ func run_tests() -> void:
             prototype.attack_cooldown = 0.0
             check(prototype.attack(Vector2(730, 370)), "P1 attack hits second enemy")
         check(prototype.reward_available and prototype.enemies.is_empty(), "P1 cleared room offers reward")
-        check(not prototype.next_room(), "P1 reward cannot be skipped")
+        check(not prototype.door_available() and not prototype.next_room(), "P1 reward cannot be skipped")
         check(prototype.claim_reward() and not prototype.claim_reward(), "P1 reward can be claimed once")
+        check(prototype.door_available(), "P1 exit opens after collecting reward")
         check(prototype.next_room() and prototype.room_index == 1, "P1 moves to next room after reward")
+        check(not prototype.door_available(), "P1 new room starts with locked exit")
         prototype.player_pos = Vector2(-200, -200)
         prototype.move_player(Vector2.ZERO, 0.0)
         check(prototype.player_pos.x >= 64.0 and prototype.player_pos.y >= 84.0, "P1 movement stays inside room")
