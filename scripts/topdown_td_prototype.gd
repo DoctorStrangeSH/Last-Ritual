@@ -217,6 +217,9 @@ func start_wave() -> bool:
         var support_hp: int = 8 + wave_number * 2 + difficulty * 2
         enemies.append({"lane": 1, "pos": paths[1][0], "waypoint": 1, "hp": support_hp, "max_hp": support_hp, "speed": 62.0, "role": "healer", "delay": 1.5, "heal_timer": 1.0})
         enemies_spawned += 1
+    if wave_number == 5:
+        enemies.append({"lane": 0, "pos": paths[0][0], "waypoint": 1, "hp": 24 + difficulty * 6, "max_hp": 24 + difficulty * 6, "speed": 65.0, "role": "captain", "delay": 2.0})
+        enemies_spawned += 1
     if wave_number == SIEGE_WAVES:
         enemies.append({"lane": 0, "pos": paths[0][0], "waypoint": 1, "hp": 55 + difficulty * 15 + (20 if siege_day >= 3 else 0), "speed": 28.0 * (1.0 + 0.15 * difficulty), "role": "boss", "delay": 3.0, "boss_charge": 0.0, "boss_warning": false, "interrupt_hits": 0})
         enemies_spawned += 1
@@ -242,6 +245,16 @@ func tick_support_enemies(delta: float) -> void:
                     break
     queue_redraw()
 
+func siege_captain_speed_multiplier(enemy: Dictionary) -> float:
+    if str(enemy.get("role", "")) == "captain":
+        return 1.0
+    for ally in enemies:
+        if str(ally.get("role", "")) != "captain" or float(ally.get("delay", 0.0)) > 0.0:
+            continue
+        if enemy["pos"].distance_to(ally["pos"]) <= 130.0:
+            return 1.2
+    return 1.0
+
 func advance_enemies(delta: float) -> void:
     for enemy in enemies.duplicate():
         if enemy["delay"] > 0.0:
@@ -252,7 +265,7 @@ func advance_enemies(delta: float) -> void:
         var position: Vector2 = enemy["pos"]
         # Полный остаток движения за кадр проходит все достигнутые повороты.
         # Без этого враг задерживается на каждой точке и зависит от FPS.
-        var remaining := float(enemy.get("speed", 85.0)) * delta
+        var remaining := float(enemy.get("speed", 85.0)) * siege_captain_speed_multiplier(enemy) * delta
         while remaining > 0.0 and waypoint < path.size():
             var target: Vector2 = path[waypoint]
             var distance := position.distance_to(target)
@@ -889,6 +902,8 @@ func enemy_visual_profile(role: String) -> Dictionary:
             return {"radius": 11.0, "color": Color("#efc36f"), "mark": "speed"}
         "brute":
             return {"radius": 18.0, "color": Color("#8591b8"), "mark": "armor"}
+        "captain":
+            return {"radius": 21.0, "color": Color("#b99754"), "mark": "command"}
         "healer":
             return {"radius": 16.0, "color": Color("#427f71"), "mark": "heal"}
         "boss":
@@ -912,6 +927,9 @@ func draw_enemy_figure(enemy: Dictionary) -> void:
             draw_rect(Rect2(pos + Vector2(-12, -13), Vector2(24, 8)), Color("#d6dbe5"))
             draw_rect(Rect2(pos + Vector2(-16, -1), Vector2(32, 10)), Color("#43556e"))
             draw_line(pos + Vector2(-9, 11), pos + Vector2(9, 11), Color("#d6dbe5"), 2.0)
+        "captain":
+            draw_colored_polygon(PackedVector2Array([pos + Vector2(-12, -15), pos + Vector2(0, -29), pos + Vector2(12, -15)]), Color("#ffe6a5"))
+            draw_circle(pos, 6.0, Color("#46382d"))
         "healer":
             draw_line(pos + Vector2(-9, 0), pos + Vector2(9, 0), Color("#d8ffe0"), 4.0)
             draw_line(pos + Vector2(0, -9), pos + Vector2(0, 9), Color("#d8ffe0"), 4.0)
