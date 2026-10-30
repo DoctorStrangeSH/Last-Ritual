@@ -9,6 +9,12 @@ static func targets(tower: Dictionary, target: Dictionary, enemies: Array, attac
                 continue
             if tower["pos"].distance_to(candidate["pos"]) <= attack_range:
                 result.append(candidate)
+    elif kind == "frost" and str(tower.get("specialization", "")) == "swarm":
+        for candidate in enemies:
+            if candidate == target or float(candidate.get("delay", 0.0)) > 0.0 or result.size() >= 3:
+                continue
+            if tower["pos"].distance_to(candidate["pos"]) <= attack_range:
+                result.append(candidate)
     elif kind == "bone":
         var nearest: float = tower["pos"].distance_to(target["pos"])
         var direction: Vector2 = (target["pos"] - tower["pos"]).normalized()
