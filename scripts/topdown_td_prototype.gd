@@ -168,7 +168,10 @@ func siege_enemy_role(wave: int, index: int) -> String:
     return "grunt"
 
 func siege_spawn_delay(wave: int, index: int, role: String) -> float:
-    var base_delay := float(index) * 0.7
+    # Later waves arrive in slightly tighter groups to limit idle waiting.
+    # Opening wave timing stays unchanged for new players.
+    var pace: float = 0.7 if wave <= 2 else (0.62 if wave <= 4 else 0.55)
+    var base_delay := float(index) * pace
     # Raiders arrive early in tight packs, while heavy siege units approach
     # more slowly. The first day keeps its existing beginner-friendly timing.
     if siege_day == 2 and role == "runner":
