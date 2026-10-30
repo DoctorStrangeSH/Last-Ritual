@@ -783,6 +783,32 @@ func draw_fitted_label(position: Vector2, value: String, font_size: int, width: 
     # Keep long Russian labels in their card rather than spilling into neighbours.
     draw_string(ThemeDB.fallback_font, position, value, HORIZONTAL_ALIGNMENT_LEFT, width, font_size, color)
 
+func selected_synergy_lines() -> Array[String]:
+    if selected_slot < 0 or selected_slot >= slots.size():
+        return []
+    var kind: String = str(slots[selected_slot]["tower"])
+    return TD_TOWER_TOOLTIPS.synergy_lines(
+        kind,
+        has_adjacent_tower(selected_slot, "fire"),
+        has_adjacent_tower(selected_slot, "bone"),
+        has_adjacent_tower(selected_slot, "frost")
+    )
+
+func draw_synergy_tooltip(point: Vector2) -> void:
+    if help_visible or specialization_open or selected_tower_info().is_empty():
+        return
+    if not Rect2(845, 129, 280, 258).has_point(point):
+        return
+    var lines: Array[String] = selected_synergy_lines()
+    if lines.is_empty():
+        return
+    var panel := Rect2(353, 324, 471, 202)
+    draw_rect(panel, Color("#101d27", 0.98))
+    draw_rect(panel, Color("#d9b978"), false, 2.0)
+    draw_string(ThemeDB.fallback_font, Vector2(370, 354), "СИНЕРГИИ И СОСЕДНИЕ БАШНИ", HORIZONTAL_ALIGNMENT_LEFT, 445, 20, Color("#f1daaa"))
+    for idx in range(lines.size()):
+        draw_string(ThemeDB.fallback_font, Vector2(370, 386 + 35 * idx), lines[idx], HORIZONTAL_ALIGNMENT_LEFT, 441, 15, Color("#a8e3bc") if lines[idx].begins_with("АКТИВНО") else Color("#e2d6c4"))
+
 func draw_tower_tooltip(point: Vector2) -> void:
     var tip: Dictionary = tooltip_at(point)
     if tip.is_empty():
@@ -1339,6 +1365,7 @@ func _draw() -> void:
         draw_string(ThemeDB.fallback_font, HELP_CLOSE_BUTTON.position + Vector2(11.0, 29.0), "ПРОДОЛЖИТЬ", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
     if not help_visible:
         draw_tower_tooltip(get_global_mouse_position())
+        draw_synergy_tooltip(get_global_mouse_position())
     if can_choose_interwave_event():
         draw_rect(Rect2(184, 205, 785, 186), Color("#1d3038", 0.97))
         draw_rect(Rect2(184, 205, 785, 186), Color("#d7ba80"), false, 2.0)
