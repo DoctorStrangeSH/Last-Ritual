@@ -609,11 +609,12 @@ func _unhandled_input(event: InputEvent) -> void:
             if HELP_CLOSE_BUTTON.has_point(event.position):
                 toggle_controls_help()
             return
-    if specialization_open and event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-        if SPECIALIZATION_BUTTONS[0].has_point(event.position):
-            choose_specialization("siege")
-        elif SPECIALIZATION_BUTTONS[1].has_point(event.position):
-            choose_specialization("swarm")
+    if specialization_open:
+        if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+            if SPECIALIZATION_BUTTONS[0].has_point(event.position):
+                choose_specialization("siege")
+            elif SPECIALIZATION_BUTTONS[1].has_point(event.position):
+                choose_specialization("swarm")
         return
     if help_visible:
         return
@@ -753,15 +754,6 @@ func draw_defender_figure(pos: Vector2) -> void:
     draw_line(pos + Vector2(13, -4), pos + Vector2(25, -25), Color("#c6d7df"), 4.0)
 
 func _draw() -> void:
-    if specialization_open:
-        draw_rect(Rect2(275, 260, 560, 175), Color("#202c38"))
-        draw_string(ThemeDB.fallback_font, Vector2(350, 300), "ВЫБЕРИТЕ СПЕЦИАЛИЗАЦИЮ", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color("#f4dfb7"))
-        draw_rect(SPECIALIZATION_BUTTONS[0], Color("#805d49"))
-        draw_rect(SPECIALIZATION_BUTTONS[1], Color("#426d6a"))
-        if selected_slot >= 0:
-            var labels: Array = SPECIALIZATION_LABELS[str(slots[selected_slot]["tower"])]
-            draw_string(ThemeDB.fallback_font, Vector2(322, 365), str(labels[0]), HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color.WHITE)
-            draw_string(ThemeDB.fallback_font, Vector2(563, 365), str(labels[1]), HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color.WHITE)
     draw_fortress_ground()
     if defense_state != "playing":
         draw_rect(Rect2(345, 225, 460, 210), Color("#285849") if defense_state == "won" else Color("#693943"))
@@ -876,3 +868,13 @@ func _draw() -> void:
         draw_string(ThemeDB.fallback_font, Vector2(326, 490), "Игра на паузе — H или «Продолжить»", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#d5c592"))
         draw_rect(HELP_CLOSE_BUTTON, Color("#527d70"))
         draw_string(ThemeDB.fallback_font, HELP_CLOSE_BUTTON.position + Vector2(11.0, 29.0), "ПРОДОЛЖИТЬ", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
+    if specialization_open and selected_slot >= 0 and selected_slot < slots.size():
+        draw_rect(Rect2(0, 65, 1152, 469), Color(0.015, 0.025, 0.04, 0.72))
+        draw_rect(Rect2(275, 260, 560, 175), Color("#202c38"))
+        draw_rect(Rect2(275, 260, 560, 175), Color("#d5c592"), false, 2.0)
+        draw_string(ThemeDB.fallback_font, Vector2(350, 300), "ВЫБЕРИТЕ СПЕЦИАЛИЗАЦИЮ", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color("#f4dfb7"))
+        draw_rect(SPECIALIZATION_BUTTONS[0], Color("#805d49"))
+        draw_rect(SPECIALIZATION_BUTTONS[1], Color("#426d6a"))
+        var labels: Array = SPECIALIZATION_LABELS[str(slots[selected_slot]["tower"])]
+        draw_string(ThemeDB.fallback_font, Vector2(322, 365), str(labels[0]), HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color.WHITE)
+        draw_string(ThemeDB.fallback_font, Vector2(563, 365), str(labels[1]), HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color.WHITE)
