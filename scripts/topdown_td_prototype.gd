@@ -8,6 +8,8 @@ const WAVE_BUTTON := Rect2(65, 545, 170, 60)
 const HELP_BUTTON := Rect2(987.0, 10.0, 150.0, 46.0)
 const HELP_CLOSE_BUTTON := Rect2(720.0, 471.0, 130.0, 43.0)
 var slots: Array[Dictionary] = []
+var specialization_open := false
+const SPECIALIZATION_BUTTONS := [Rect2(315, 325, 220, 70), Rect2(555, 325, 220, 70)]
 var selected_type := ""
 var selected_slot := -1
 var coins := 150
@@ -182,6 +184,10 @@ func attack_with_towers(delta: float) -> void:
                 if along > nearest and along <= TOWER_RANGE[kind] and across <= 24.0:
                     hit_targets.append(candidate)
         var damage: int = int(TOWER_DAMAGE[kind]) * int(tower["level"])
+        if tower.get("specialization", "") == "siege":
+            damage += 2
+        elif tower.get("specialization", "") == "swarm":
+            damage = maxi(1, damage - 1)
         if kind == "fire":
             damage += fire_synergy_bonus
         elif kind == "bone":
@@ -201,7 +207,7 @@ func attack_with_towers(delta: float) -> void:
                     if necro_kill_streak >= 3:
                         necro_kill_streak = 0
                         spawn_necro_spirit(tower["pos"])
-        tower_cooldowns[slot_id] = 0.8
+        tower_cooldowns[slot_id] = 0.45 if tower.get("specialization", "") == "swarm" else 0.8
     queue_redraw()
 
 func spawn_necro_spirit(origin: Vector2) -> void:
@@ -314,13 +320,13 @@ func _ready() -> void:
     sfx = SFX_SCRIPT.new()
     add_child(sfx)
     for i in range(SLOT_POSITIONS.size()):
-        slots.append({"id": i, "pos": SLOT_POSITIONS[i], "tower": "", "level": 0})
+        slots.append({"id": i, "pos": SLOT_POSITIONS[i], "tower": "", "level": 0, "specialization": ""})
     queue_redraw()
 
 func export_fortress_state() -> Dictionary:
     var buildings: Array[Dictionary] = []
     for slot in slots:
-        buildings.append({"tower": str(slot["tower"]), "level": int(slot["level"])})
+        buildings.append({"tower": str(slot["tower"]), "level": int(slot["level"]), "specialization": str(slot.get("specialization", ""))})
     return {"buildings": buildings, "coins": coins, "altar_hp": altar_hp}
 
 func import_fortress_state(state: Dictionary) -> bool:
@@ -331,6 +337,9 @@ func import_fortress_state(state: Dictionary) -> bool:
         var building: Dictionary = buildings[i]
         var kind: String = str(building.get("tower", ""))
         var level: int = int(building.get("level", 0))
+        var spec: String = str(building.get("specialization", ""))
+        if spec != "" and (level < 2 or not ["siege", "swarm"].has(spec)):
+            return false
         if kind != "" and not COSTS.has(kind):
             return false
         if level < 0 or level > 3 or (kind == "" and level != 0) or (kind != "" and level == 0):
@@ -338,6 +347,7 @@ func import_fortress_state(state: Dictionary) -> bool:
     for i in range(slots.size()):
         slots[i]["tower"] = str(buildings[i]["tower"])
         slots[i]["level"] = int(buildings[i]["level"])
+        slots[i]["specialization"] = str(buildings[i].get("specialization", ""))
     coins = maxi(0, int(state.get("coins", coins)))
     altar_hp = clampi(int(state.get("altar_hp", altar_hp)), 1, 100)
     tower_cooldowns.clear()
@@ -368,6 +378,7 @@ func build_tower(slot_id: int) -> bool:
     coins -= COSTS[selected_type]
     slots[slot_id]["tower"] = selected_type
     slots[slot_id]["level"] = 1
+    slots[slot_id]["specialization"] = ""
     tower_cooldowns[slot_id] = 0.0
     selected_type = ""
     selected_slot = slot_id
@@ -390,6 +401,16 @@ func upgrade_selected() -> bool:
         return false
     coins -= cost
     slots[selected_slot]["level"] += 1
+    if slots[selected_slot]["level"] == 2 and slots[selected_slot]["specialization"] == "":
+        specialization_open = true
+    queue_redraw()
+    return true
+
+func choose_specialization(path: String) -> bool:
+    if not specialization_open or selected_slot < 0 or not ["siege", "swarm"].has(path):
+        return false
+    slots[selected_slot]["specialization"] = path
+    specialization_open = false
     queue_redraw()
     return true
 
@@ -399,6 +420,7 @@ func sell_selected() -> bool:
     coins += 10 * int(slots[selected_slot]["level"])
     slots[selected_slot]["tower"] = ""
     slots[selected_slot]["level"] = 0
+    slots[selected_slot]["specialization"] = ""
     tower_cooldowns.erase(selected_slot)
     selected_slot = -1
     queue_redraw()
@@ -420,6 +442,12 @@ func _unhandled_input(event: InputEvent) -> void:
             if HELP_CLOSE_BUTTON.has_point(event.position):
                 toggle_controls_help()
             return
+    if specialization_open and event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+        if SPECIALIZATION_BUTTONS[0].has_point(event.position):
+            choose_specialization("siege")
+        elif SPECIALIZATION_BUTTONS[1].has_point(event.position):
+            choose_specialization("swarm")
+        return
     if help_visible:
         return
     if event is InputEventKey and event.pressed and event.keycode == KEY_R and defense_state != "playing":
@@ -542,6 +570,13 @@ func draw_defender_figure(pos: Vector2) -> void:
     draw_line(pos + Vector2(13, -4), pos + Vector2(25, -25), Color("#c6d7df"), 4.0)
 
 func _draw() -> void:
+    if specialization_open:
+        draw_rect(Rect2(275, 260, 560, 175), Color("#202c38"))
+        draw_string(ThemeDB.fallback_font, Vector2(350, 300), "ВЫБЕРИТЕ СПЕЦИАЛИЗАЦИЮ", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color("#f4dfb7"))
+        draw_rect(SPECIALIZATION_BUTTONS[0], Color("#805d49"))
+        draw_rect(SPECIALIZATION_BUTTONS[1], Color("#426d6a"))
+        draw_string(ThemeDB.fallback_font, Vector2(335, 365), "БАЛЛИСТА: +2 УРОН", HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color.WHITE)
+        draw_string(ThemeDB.fallback_font, Vector2(570, 365), "РОЙ: БЫСТРЕЕ АТАКИ", HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color.WHITE)
     draw_fortress_ground()
     if defense_state != "playing":
         draw_rect(Rect2(345, 225, 460, 210), Color("#285849") if defense_state == "won" else Color("#693943"))
@@ -585,6 +620,8 @@ func _draw() -> void:
         draw_arc(pos, 23.0, -PI / 2.0, PI * 1.5, 24, Color("#89b6ab") if not occupied else Color("#724b45"), 2.0)
         if occupied:
             draw_tower_figure(pos, str(slots[i]["tower"]), int(slots[i]["level"]))
+            if slots[i].get("specialization", "") != "":
+                draw_arc(pos, 28.0, 0.0, TAU, 24, Color("#ffdc91") if slots[i]["specialization"] == "siege" else Color("#86e0bd"), 3.0)
         if not occupied:
             draw_line(pos + Vector2(-8, 0), pos + Vector2(8, 0), Color("#9fc9b9"), 2.0)
             draw_line(pos + Vector2(0, -8), pos + Vector2(0, 8), Color("#9fc9b9"), 2.0)
