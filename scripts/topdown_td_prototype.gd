@@ -1046,7 +1046,7 @@ func _draw() -> void:
         draw_fortress_road(path)
     draw_fortress_atmosphere()
     for enemy in enemies:
-        if enemy["delay"] <= 0.0:
+        if float(enemy.get("delay", 0.0)) <= 0.0:
             if enemy.get("role", "") == "boss":
                 draw_enemy_figure(enemy)
                 if enemy.get("boss_warning", false):
