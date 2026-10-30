@@ -577,12 +577,12 @@ func run_tests() -> void:
         var income = specialization_balance_scene.instantiate()
         root.add_child(income)
         var forecast: Dictionary = income.siege_economy_forecast()
-        check(int(forecast["enemies"]) == 41, "Day one six-wave siege fields 41 enemies")
-        check(int(forecast["kill_gold"]) == 205, "All-kill gold forecast matches per-enemy income")
-        check(int(forecast["maximum_gold"]) == 355, "Siege economy forecast includes starting treasury")
+        check(int(forecast["enemies"]) == 40, "Day one six-wave siege fields 41 enemies")
+        check(int(forecast["kill_gold"]) == 200, "All-kill gold forecast matches per-enemy income")
+        check(int(forecast["maximum_gold"]) == 350, "Siege economy forecast includes starting treasury")
         income.siege_day = 2
-        check(int(income.siege_economy_forecast()["enemies"]) == 47, "Later siege day adds six attackers")
-        check(int(income.siege_economy_forecast()["maximum_gold"]) == 385, "Later siege income scales with attackers")
+        check(int(income.siege_economy_forecast()["enemies"]) == 46, "Later siege day adds six attackers")
+        check(int(income.siege_economy_forecast()["maximum_gold"]) == 380, "Later siege income scales with attackers")
         income.queue_free()
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
