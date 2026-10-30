@@ -489,6 +489,25 @@ func run_tests() -> void:
         first_map.queue_free()
         second_map.queue_free()
         other_map.queue_free()
+    if specialization_balance_scene != null:
+        var council = specialization_balance_scene.instantiate()
+        root.add_child(council)
+        check(not council.choose_interwave_event("raid"), "War council unavailable before third wave")
+        council.wave_number = 3
+        check(council.can_choose_interwave_event(), "War council opens after third wave")
+        check(not council.choose_interwave_event("invalid"), "Invalid war council choice is rejected")
+        check(council.choose_interwave_event("raid"), "Raid choice grants immediate gold")
+        check(council.coins == 185 and council.next_wave_extra_hp == 3, "Raid reward incurs next-wave danger")
+        check(not council.choose_interwave_event("safe"), "War council cannot be claimed twice")
+        check(council.start_wave(), "Next siege wave starts after council choice")
+        check(council.next_wave_extra_hp == 0 and int(council.enemies[0]["hp"]) >= 10, "Risk applies only to the following wave")
+        council.queue_free()
+        var rest_council = specialization_balance_scene.instantiate()
+        root.add_child(rest_council)
+        rest_council.wave_number = 3
+        rest_council.altar_hp = 60
+        check(rest_council.choose_interwave_event("repair") and rest_council.altar_hp == 80, "War council can heal the altar")
+        rest_council.queue_free()
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
