@@ -730,6 +730,50 @@ func draw_fortress_road(path: Array) -> void:
         draw_circle(point, 13.0, Color("#a18a76"))
 
 # Distinct readable silhouettes; no gameplay logic or external asset dependency.
+func enemy_visual_profile(role: String) -> Dictionary:
+    match role:
+        "runner":
+            return {"radius": 11.0, "color": Color("#efc36f"), "mark": "speed"}
+        "brute":
+            return {"radius": 18.0, "color": Color("#8591b8"), "mark": "armor"}
+        "healer":
+            return {"radius": 16.0, "color": Color("#427f71"), "mark": "heal"}
+        "boss":
+            return {"radius": 29.0, "color": Color("#9a4268"), "mark": "boss"}
+    return {"radius": 13.0, "color": Color("#c67f64"), "mark": "grunt"}
+
+func draw_enemy_figure(enemy: Dictionary) -> void:
+    var role: String = str(enemy.get("role", "grunt"))
+    var pos: Vector2 = enemy["pos"]
+    var profile: Dictionary = enemy_visual_profile(role)
+    var radius: float = float(profile["radius"])
+    draw_circle(pos + Vector2(2, 4), radius + 3.0, Color("#13232a"))
+    draw_circle(pos, radius, profile["color"])
+    match role:
+        "runner":
+            # Forward-pointing arrow: speed should read without a tooltip.
+            draw_colored_polygon(PackedVector2Array([pos + Vector2(12, 0), pos + Vector2(-5, -8), pos + Vector2(-2, 0), pos + Vector2(-5, 8)]), Color("#503e35"))
+            draw_line(pos + Vector2(-14, -5), pos + Vector2(-8, -5), Color("#fff2bc"), 2.0)
+            draw_line(pos + Vector2(-14, 5), pos + Vector2(-8, 5), Color("#fff2bc"), 2.0)
+        "brute":
+            draw_rect(Rect2(pos + Vector2(-12, -13), Vector2(24, 8)), Color("#d6dbe5"))
+            draw_rect(Rect2(pos + Vector2(-16, -1), Vector2(32, 10)), Color("#43556e"))
+            draw_line(pos + Vector2(-9, 11), pos + Vector2(9, 11), Color("#d6dbe5"), 2.0)
+        "healer":
+            draw_line(pos + Vector2(-9, 0), pos + Vector2(9, 0), Color("#d8ffe0"), 4.0)
+            draw_line(pos + Vector2(0, -9), pos + Vector2(0, 9), Color("#d8ffe0"), 4.0)
+            # Radius is shown only for a selected healer, avoiding huge overlapping rings.
+        "boss":
+            draw_circle(pos, 19.0, Color("#df96ba"))
+            for offset in [-12.0, 12.0]:
+                draw_colored_polygon(PackedVector2Array([pos + Vector2(offset - 6, -18), pos + Vector2(offset, -37), pos + Vector2(offset + 7, -18)]), Color("#f7d2d6"))
+            draw_circle(pos + Vector2(-7, 2), 4.0, Color("#472a3b"))
+            draw_circle(pos + Vector2(7, 2), 4.0, Color("#472a3b"))
+        _:
+            draw_circle(pos + Vector2(-5, -3), 3.0, Color("#332d34"))
+            draw_circle(pos + Vector2(5, -3), 3.0, Color("#332d34"))
+            draw_line(pos + Vector2(-4, 7), pos + Vector2(4, 7), Color("#ffe1bc"), 2.0)
+
 func draw_tower_figure(pos: Vector2, kind: String, level: int) -> void:
     draw_rect(Rect2(pos + Vector2(-16, -21), Vector2(32, 35)), Color("#18242b"))
     draw_rect(Rect2(pos + Vector2(-13, -24), Vector2(26, 30)), Color("#667482"))
@@ -820,8 +864,7 @@ func _draw() -> void:
     for enemy in enemies:
         if enemy["delay"] <= 0.0:
             if enemy.get("role", "") == "boss":
-                draw_circle(enemy["pos"], 29.0, Color("#9a4268"))
-                draw_circle(enemy["pos"], 19.0, Color("#df96ba"))
+                draw_enemy_figure(enemy)
                 if enemy.get("boss_warning", false):
                     var warning_progress: float = clampf(float(enemy.get("boss_charge", 3.0)) - 3.0, 0.0, 1.0)
                     draw_arc(enemy["pos"], 45.0, -PI / 2.0, -PI / 2.0 + TAU, 48, Color("#694e36"), 4.0)
@@ -830,12 +873,7 @@ func _draw() -> void:
                     draw_string(ThemeDB.fallback_font, enemy["pos"] + Vector2(-53, 61), "ГЕРОЙ: 2 УДАРА (%d/2)" % int(enemy.get("interrupt_hits", 0)), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#f6e6c4"))
                 draw_rect(Rect2(enemy["pos"] + Vector2(-28.0, -43.0), Vector2(56.0 * clampf(float(enemy["hp"]) / float(55 + difficulty * 15 + (20 if siege_day >= 3 else 0)), 0.0, 1.0), 5.0)), Color("#df7b94"))
             else:
-                draw_circle(enemy["pos"], 16.0 if enemy.get("role", "grunt") == "brute" else 10.0 if enemy.get("role", "grunt") == "runner" else 12.0, Color("#8591b8") if enemy.get("role", "grunt") == "brute" else Color("#efc36f") if enemy.get("role", "grunt") == "runner" else Color("#c67f64"))
-                if enemy.get("role", "") == "healer":
-                    draw_circle(enemy["pos"], 17.0, Color("#427f71"))
-                    draw_line(enemy["pos"] + Vector2(-9, 0), enemy["pos"] + Vector2(9, 0), Color("#d8ffe0"), 4.0)
-                    draw_line(enemy["pos"] + Vector2(0, -9), enemy["pos"] + Vector2(0, 9), Color("#d8ffe0"), 4.0)
-                    draw_arc(enemy["pos"], 135.0, 0.0, TAU, 48, Color("#65b99b", 0.22), 1.5)
+                draw_enemy_figure(enemy)
     if boss_feedback_time > 0.0:
         draw_rect(Rect2(385, 71, 382, 42), Color("#314f47") if boss_feedback_text == "АТАКА ПРЕРВАНА!" else Color("#683c46"))
         draw_string(ThemeDB.fallback_font, Vector2(407, 98), boss_feedback_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 21, Color("#fff0cf"))
