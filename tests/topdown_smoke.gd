@@ -1302,6 +1302,11 @@ func run_tests() -> void:
         marathon.meta.claimed_achievement_rewards.clear()
         check(marathon.set_difficulty(1) and marathon.start_run(), "Full run starts at Hard difficulty")
         check(marathon.active_game.coins == 170, "Day one receives treasury bonus once")
+        var marathon_seed: int = marathon.fortress_map_seed
+        var marathon_paths: Array = marathon.active_game.paths.duplicate(true)
+        check(marathon.active_game.fortress_map_seed == marathon_seed, "Run seed matches first day")
+        check(marathon.active_game.SIEGE_WAVES == 6, "Full run day uses six-wave siege")
+
         marathon.active_game.choose_tower("bone")
         check(marathon.active_game.build_tower(0), "First day buys permanent bone tower")
         var carried_coins: int = marathon.active_game.coins
@@ -1318,6 +1323,9 @@ func run_tests() -> void:
         check(marathon.choose_run_reward("gold") and not marathon.choose_run_reward("gold"), "Relic reward cannot be collected twice")
         check(marathon.phase == "transition" and marathon.complete_transition(), "First dawn enters second day")
         check(marathon.active_game.siege_day == 2 and marathon.active_game.altar_hp == 68, "Day two restores fortress layout and altar HP")
+        check(marathon.fortress_map_seed == marathon_seed and marathon.active_game.paths == marathon_paths, "Fortress map remains identical on second day")
+        check(marathon.active_game.SIEGE_WAVES == 6, "Second day retains six-wave siege")
+
         check(marathon.active_game.slots[0]["tower"] == "bone", "Tower survives complete day night cycle")
         check(marathon.active_game.coins == carried_coins + 20 + 30 + 20, "Day two gets saved gold, souls, relic income and treasury exactly once")
         check(marathon.pending_night_coins == 0, "Night income cannot be applied again on the next day")
@@ -1328,6 +1336,9 @@ func run_tests() -> void:
         check(marathon.pending_night_coins == 10, "Second night generates new soul income only")
         check(marathon.choose_run_reward("bone") and marathon.complete_transition(), "Second relic passes through dawn")
         check(marathon.phase == "day" and marathon.active_game.siege_day == 3, "Third day uses final siege")
+        check(marathon.fortress_map_seed == marathon_seed and marathon.active_game.paths == marathon_paths, "Fortress map remains identical on third day")
+        check(marathon.active_game.SIEGE_WAVES == 6, "Final day retains six-wave siege")
+
         check(marathon.active_game.slots[0]["tower"] == "bone" and marathon.active_game.bone_synergy_bonus == 1, "Tower and earned relic carry into final siege")
         marathon.finish_phase(true)
         check(marathon.phase == "transition" and marathon.complete_transition(), "Final day passes into last night")
@@ -1341,6 +1352,7 @@ func run_tests() -> void:
         check(marathon.meta.fragments == final_fragments and marathon.meta.runs_won == 1, "Victory cannot award fragments twice")
         marathon.reset_run()
         check(marathon.phase == "hub" and marathon.fortress_state.is_empty() and marathon.run_gold_bonus == 0, "Replay clears fortress and run relics but keeps meta progress")
+        check(marathon.fortress_map_seed == 0, "Run reset clears map seed before next run")
         check(marathon.meta.runs_won == 1 and marathon.meta.hero_level == 1, "Permanent progression survives new run")
         marathon.queue_free()
         DirAccess.remove_absolute(ProjectSettings.globalize_path("user://last_ritual_full_run_smoke.json"))
