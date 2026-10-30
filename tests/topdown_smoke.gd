@@ -679,7 +679,9 @@ func run_tests() -> void:
         check(not run.start_phase("day"), "Cannot restart active phase to duplicate run starts")
         run.finish_phase(true)
         check(run.phase == "transition" and run.completed_phases == 1, "Winning day begins dusk transition")
-        check(not run.start_phase("day") and run.complete_transition(), "Dusk opens night automatically without hub")
+        check(not run.start_phase("day"), "Cannot manually select day during dusk")
+        run._process(run.TRANSITION_DURATION + 0.1)
+        check(run.phase == "night", "Dusk timer opens night automatically without a button")
         check(run.active_game != null and run.expected_phase() == "night", "Night scene opens without menu selection")
         var fragments_once: int = run.meta.fragments
         run.finish_phase(true)
