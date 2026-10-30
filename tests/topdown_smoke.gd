@@ -235,6 +235,22 @@ func run_tests() -> void:
         school.spawn_necro_spirit(Vector2(200, 200), true)
         check(school.summoned_spirits.size() == 1 and int(school.summoned_spirits[0]["damage"]) == 4, "Reaper creates empowered spirit")
         school.queue_free()
+    var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
+    if synergy_scene != null:
+        var synergy = synergy_scene.instantiate()
+        root.add_child(synergy)
+        synergy.slots[0]["tower"] = "bone"
+        synergy.slots[1]["tower"] = "fire"
+        var burning_foe := {"burn_time": 2.0}
+        check(synergy.has_adjacent_tower(0, "fire"), "Adjacent fire tower activates bone synergy")
+        check(synergy.tower_synergy_damage(0, burning_foe) == 2, "Bone gains damage against burning foe beside fire tower")
+        check(synergy.tower_synergy_damage(0, {"burn_time": 0.0}) == 0, "No bonus without burning")
+        synergy.slots[1]["tower"] = ""
+        check(synergy.tower_synergy_damage(0, burning_foe) == 0, "No bonus without nearby fire tower")
+        synergy.slots[0]["tower"] = "necro"
+        synergy.slots[1]["tower"] = "bone"
+        check(synergy.tower_synergy_damage(0, burning_foe) == 1, "Nearby bone tower supports necromancer")
+        synergy.queue_free()
     var td_scene := load("res://scenes/topdown_td_prototype.tscn") as PackedScene
     check(td_scene != null, "Top-down TD scene loads")
     if td_scene != null:
