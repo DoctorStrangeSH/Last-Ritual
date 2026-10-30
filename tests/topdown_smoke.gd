@@ -568,6 +568,7 @@ func run_tests() -> void:
         check(not td.build_tower(0), "Occupied slot rejects duplicate building")
         check(td.choose_tower("necro") and td.build_tower(1), "Different tower uses its own build slot")
         check(td.select_slot(0) and td.upgrade_selected(), "Click selected tower to upgrade")
+        check(td.choose_specialization("siege"), "Choose specialization before selling the upgraded tower")
         check(td.sell_selected() and td.slots[0]["tower"] == "", "Sold tower frees slot")
         check(td.choose_tower("fire") and td.build_tower(0), "Freed slot can be built again")
         td.coins = 0
