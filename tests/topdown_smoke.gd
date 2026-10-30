@@ -211,6 +211,13 @@ func run_tests() -> void:
         spec_game.select_slot(0)
         check(spec_game.upgrade_selected(), "Tower reaches specialization threshold")
         check(spec_game.specialization_open, "Specialization choice opens at level two")
+        var blocked_click := InputEventMouseButton.new()
+        blocked_click.button_index = MOUSE_BUTTON_LEFT
+        blocked_click.pressed = true
+        blocked_click.position = Vector2(100, 570)
+        spec_game._unhandled_input(blocked_click)
+        check(spec_game.wave_number == 0 and spec_game.specialization_open, "Modal blocks clicks on underlying wave start")
+
         check(spec_game.choose_specialization("siege"), "Player can choose siege specialization")
         check(spec_game.slots[0]["specialization"] == "siege", "Specialization stored on tower")
         var spec_snapshot: Dictionary = spec_game.export_fortress_state()
