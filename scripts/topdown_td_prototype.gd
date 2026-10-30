@@ -164,6 +164,20 @@ func has_adjacent_tower(slot_id: int, tower_kind: String) -> bool:
                 return true
     return false
 
+func tower_synergy_links(slot_id: int) -> Array[int]:
+    var links: Array[int] = []
+    if slot_id < 0 or slot_id >= slots.size():
+        return links
+    var kind: String = str(slots[slot_id]["tower"])
+    for other_id in range(slots.size()):
+        if other_id == slot_id:
+            continue
+        var other_kind: String = str(slots[other_id]["tower"])
+        var active_pair: bool = (kind == "bone" and other_kind == "fire") or (kind == "fire" and other_kind == "bone") or (kind == "necro" and other_kind == "bone") or (kind == "bone" and other_kind == "necro")
+        if active_pair and slots[slot_id]["pos"].distance_to(slots[other_id]["pos"]) <= SYNERGY_DISTANCE:
+            links.append(other_id)
+    return links
+
 func tower_synergy_damage(slot_id: int, enemy: Dictionary) -> int:
     if slot_id < 0 or slot_id >= slots.size():
         return 0
@@ -639,6 +653,16 @@ func _draw() -> void:
     for trail in shot_trails:
         draw_line(trail["from"], trail["to"], Color("#ffda8e"), 4.0)
     draw_defender_figure(hero_pos)
+    if selected_slot >= 0 and selected_slot < slots.size() and slots[selected_slot]["tower"] != "":
+        var linked: Array[int] = tower_synergy_links(selected_slot)
+        for linked_id in linked:
+            var source: Vector2 = slots[selected_slot]["pos"]
+            var destination: Vector2 = slots[linked_id]["pos"]
+            draw_line(source, destination, Color("#f1d08d", 0.8), 4.0)
+            draw_arc(destination, 40.0, 0.0, TAU, 32, Color("#e8dc9b"), 3.0)
+        if not linked.is_empty():
+            draw_rect(Rect2(56, 75, 320, 42), Color("#263b39", 0.95))
+            draw_string(ThemeDB.fallback_font, Vector2(72, 102), "СИНЕРГИЯ: %d СВЯЗЕЙ" % linked.size(), HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color("#f1dba1"))
     for i in range(slots.size()):
         var pos: Vector2 = slots[i]["pos"]
         var occupied: bool = slots[i]["tower"] != ""
