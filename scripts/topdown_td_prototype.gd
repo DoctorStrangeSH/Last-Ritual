@@ -937,10 +937,20 @@ func enemy_status_markers(enemy: Dictionary) -> Array[String]:
 
 func enemy_status_marker_position(enemy: Dictionary, radius: float, index: int, count: int) -> Vector2:
     var position: Vector2 = enemy.get("pos", Vector2.ZERO)
+    var visible_bounds: Vector2 = Vector2(1152.0, 648.0)
+    var center: Vector2
     if str(enemy.get("role", "")) == "boss":
-        # Keep boss crown, warning arc/title and health bar unobstructed.
-        return position + Vector2(radius + 27.0, (float(index) - float(count - 1) * 0.5) * 16.0)
-    return position + Vector2((float(index) - float(count - 1) * 0.5) * 16.0, -radius - 14.0)
+        # Prefer the right edge, but flip to the left near the screen boundary.
+        var horizontal_offset: float = radius + 27.0
+        if position.x + horizontal_offset + 6.0 > visible_bounds.x:
+            horizontal_offset = -horizontal_offset
+        center = position + Vector2(horizontal_offset, (float(index) - float(count - 1) * 0.5) * 16.0)
+    else:
+        var vertical_offset: float = -radius - 14.0
+        if position.y + vertical_offset - 6.0 < 0.0:
+            vertical_offset = radius + 14.0
+        center = position + Vector2((float(index) - float(count - 1) * 0.5) * 16.0, vertical_offset)
+    return Vector2(clampf(center.x, 6.0, visible_bounds.x - 6.0), clampf(center.y, 6.0, visible_bounds.y - 6.0))
 
 func draw_enemy_status_markers(enemy: Dictionary, radius: float) -> void:
     var markers: Array[String] = enemy_status_markers(enemy)
