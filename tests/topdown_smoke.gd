@@ -886,6 +886,40 @@ func run_tests() -> void:
         check(marathon.meta.runs_won == 1 and marathon.meta.hero_level == 1, "Permanent progression survives new run")
         marathon.queue_free()
         DirAccess.remove_absolute(ProjectSettings.globalize_path("user://last_ritual_full_run_smoke.json"))
+    # Terminal-state regression: no duplicated loss, rewards, phases or stale timers.
+    if run_scene != null:
+        var loss_probe = run_scene.instantiate()
+        root.add_child(loss_probe)
+        loss_probe.meta.save_path = "user://last_ritual_defeat_smoke.json"
+        loss_probe.meta.runs_started = 0
+        loss_probe.meta.runs_lost = 0
+        loss_probe.meta.runs_won = 0
+        loss_probe.meta.phases_cleared = 0
+        check(loss_probe.start_run(), "Defeat regression starts a run")
+        loss_probe.finish_phase(false)
+        check(loss_probe.phase == "defeat" and loss_probe.meta.runs_lost == 1, "First-day defeat records exactly one loss")
+        var lost_fragments: int = loss_probe.meta.fragments
+        loss_probe.finish_phase(false)
+        loss_probe.finish_phase(true)
+        check(loss_probe.meta.runs_lost == 1 and loss_probe.meta.fragments == lost_fragments, "Late scene callbacks do not double count loss or award a win")
+        check(not loss_probe.choose_run_reward("gold") and not loss_probe.complete_transition(), "Cannot collect relics or advance after defeat")
+        loss_probe.begin_transition()
+        check(loss_probe.phase == "defeat", "Stray transition does not revive a defeated run")
+        loss_probe.reset_run()
+        check(loss_probe.phase == "hub" and loss_probe.transition_time == 0.0, "Restart clears defeat and transition timer")
+        check(loss_probe.start_run(), "Restart after first-day loss works")
+        loss_probe.finish_phase(true)
+        check(loss_probe.phase == "transition" and loss_probe.complete_transition(), "Dusk resumes normally after defeat reset")
+        loss_probe.active_game.night_souls = 4
+        loss_probe.finish_phase(false)
+        check(loss_probe.phase == "defeat" and loss_probe.pending_night_coins == 0, "Night defeat does not transfer unearned souls")
+        check(loss_probe.meta.runs_lost == 2 and loss_probe.meta.runs_won == 0, "Day and night defeats count once each")
+        var second_loss_fragments: int = loss_probe.meta.fragments
+        loss_probe.finish_phase(true)
+        loss_probe._process(loss_probe.TRANSITION_DURATION + 1.0)
+        check(loss_probe.phase == "defeat" and loss_probe.meta.fragments == second_loss_fragments, "Old timers and victory signals cannot escape terminal state")
+        loss_probe.queue_free()
+        DirAccess.remove_absolute(ProjectSettings.globalize_path("user://last_ritual_defeat_smoke.json"))
     var packed := load("res://scenes/topdown_night_prototype.tscn") as PackedScene
     check(packed != null, "Top-down entry scene loads")
     if packed == null:

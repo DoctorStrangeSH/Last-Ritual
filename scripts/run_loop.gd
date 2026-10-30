@@ -115,6 +115,8 @@ func start_phase(kind: String) -> bool:
     return true
 
 func begin_transition() -> void:
+    if phase != "day" and phase != "reward":
+        return
     phase = "transition"
     transition_time = TRANSITION_DURATION
     queue_redraw()
@@ -131,7 +133,8 @@ func start_run() -> bool:
     return start_phase("day")
 
 func finish_phase(won: bool) -> void:
-    if phase != "day" and phase != "night":
+    # A phase can be resolved only once, and only while its scene exists.
+    if (phase != "day" and phase != "night") or active_game == null:
         return
     if active_game != null:
         if won and phase == "day":
