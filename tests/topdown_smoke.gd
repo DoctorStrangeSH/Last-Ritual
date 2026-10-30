@@ -608,6 +608,11 @@ func run_tests() -> void:
         siege_status.defense_state = "lost"
         check(siege_status.siege_progress_label() == "ОБОРОНА ПРОВАЛЕНА", "Siege HUD identifies defeat")
         siege_status.queue_free()
+    var shop_catalog = load("res://scripts/td/td_tower_stats.gd")
+    check(shop_catalog.SHOP_ORDER == ["bone", "fire", "necro"], "Tower shop keeps current mouse ordering")
+    check(shop_catalog.DISPLAY_NAMES.size() == shop_catalog.SHOP_ORDER.size(), "Tower shop labels cover all entries")
+    for kind in shop_catalog.SHOP_ORDER:
+        check(shop_catalog.COSTS.has(kind) and shop_catalog.RANGES.has(kind) and shop_catalog.DAMAGES.has(kind) and shop_catalog.DISPLAY_NAMES.has(kind), "Tower shop entry has complete base stats and name")
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
