@@ -304,6 +304,36 @@ func run_tests() -> void:
         inferno.tick_burning(3.0)
         check(inferno.coins == 85 and sturdy_foe["hp"] == 78, "Inferno spends the same gold but burns down a single armored target faster")
         inferno.queue_free()
+    # Bone specialization benchmark: equal 50-gold investment, isolated tower,
+    # one durable target. Ballista has stronger individual shots, while Swarm
+    # gains additional shots over time. No hero, relic or synergy modifiers.
+    if specialization_balance_scene != null:
+        var ballista = specialization_balance_scene.instantiate()
+        root.add_child(ballista)
+        check(ballista.choose_tower("bone") and ballista.build_tower(0), "Ballista benchmark builds bone tower")
+        check(ballista.upgrade_selected() and ballista.choose_specialization("siege"), "Ballista benchmark upgrades for 20 gold")
+        check(ballista.coins == 100, "Ballista costs 50 gold total")
+        var ballista_foe: Dictionary = {"pos": ballista.slots[0]["pos"] + Vector2(30, 0), "hp": 100, "delay": 0.0}
+        ballista.enemies.append(ballista_foe)
+        ballista.attack_with_towers(0.01)
+        check(ballista_foe["hp"] == 94, "Ballista hits one durable target for six damage")
+        ballista.attack_with_towers(0.45)
+        check(ballista_foe["hp"] == 94, "Ballista has not reloaded after 0.45 seconds")
+        ballista.queue_free()
+
+        var bone_swarm = specialization_balance_scene.instantiate()
+        root.add_child(bone_swarm)
+        check(bone_swarm.choose_tower("bone") and bone_swarm.build_tower(0), "Bone swarm benchmark builds bone tower")
+        check(bone_swarm.upgrade_selected() and bone_swarm.choose_specialization("swarm"), "Bone swarm benchmark upgrades for 20 gold")
+        check(bone_swarm.coins == 100, "Bone swarm also costs 50 gold total")
+        var swarm_foe: Dictionary = {"pos": bone_swarm.slots[0]["pos"] + Vector2(30, 0), "hp": 100, "delay": 0.0}
+        bone_swarm.enemies.append(swarm_foe)
+        bone_swarm.attack_with_towers(0.01)
+        check(swarm_foe["hp"] == 97, "Bone swarm hits a durable target for three damage")
+        bone_swarm.attack_with_towers(0.45)
+        check(swarm_foe["hp"] == 94, "Bone swarm fires its second shot while Ballista reloads")
+        check(bone_swarm.coins == 100 and ballista.coins == 100, "Neither bone benchmark awards gold without a kill")
+        bone_swarm.queue_free()
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
