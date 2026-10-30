@@ -407,9 +407,11 @@ func tick_burning(delta: float) -> void:
     for enemy in enemies.duplicate():
         if float(enemy.get("burn_time", 0.0)) <= 0.0:
             continue
-        enemy["burn_time"] = maxf(0.0, float(enemy["burn_time"]) - delta)
-        enemy["burn_tick"] = float(enemy.get("burn_tick", 0.5)) - delta
-        while float(enemy["burn_tick"]) <= 0.0 and float(enemy["burn_time"]) > 0.0:
+        var active_delta: float = minf(maxf(delta, 0.0), float(enemy["burn_time"]))
+        enemy["burn_time"] = maxf(0.0, float(enemy["burn_time"]) - active_delta)
+        enemy["burn_tick"] = float(enemy.get("burn_tick", 0.5)) - active_delta
+        # Resolve ticks at the expiration boundary, even when a frame spans it.
+        while float(enemy["burn_tick"]) <= 0.0:
             enemy["hp"] -= int(enemy.get("burn_damage", 1))
             enemy["burn_tick"] = float(enemy["burn_tick"]) + 0.5
             if enemy["hp"] <= 0:
