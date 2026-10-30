@@ -250,7 +250,7 @@ func tower_synergy_links(slot_id: int) -> Array[int]:
         if other_id == slot_id:
             continue
         var other_kind: String = str(slots[other_id]["tower"])
-        var active_pair: bool = (kind == "bone" and other_kind == "fire") or (kind == "fire" and other_kind == "bone") or (kind == "necro" and other_kind == "bone") or (kind == "bone" and other_kind == "necro")
+        var active_pair: bool = (kind == "bone" and other_kind == "fire") or (kind == "fire" and other_kind == "bone") or (kind == "necro" and other_kind == "bone") or (kind == "bone" and other_kind == "necro") or (kind == "necro" and other_kind == "fire") or (kind == "fire" and other_kind == "necro")
         if active_pair and slots[slot_id]["pos"].distance_to(slots[other_id]["pos"]) <= SYNERGY_DISTANCE:
             links.append(other_id)
     return links
@@ -261,8 +261,11 @@ func tower_synergy_damage(slot_id: int, enemy: Dictionary) -> int:
     var kind: String = str(slots[slot_id]["tower"])
     if kind == "bone" and float(enemy.get("burn_time", 0.0)) > 0.0 and has_adjacent_tower(slot_id, "fire"):
         return 2
-    if kind == "necro" and has_adjacent_tower(slot_id, "bone"):
-        return 1
+    if kind == "necro":
+        var bonus: int = 1 if has_adjacent_tower(slot_id, "bone") else 0
+        if float(enemy.get("burn_time", 0.0)) > 0.0 and has_adjacent_tower(slot_id, "fire"):
+            bonus += 1
+        return bonus
     return 0
 
 func choose_tower_target(slot_id: int) -> Dictionary:
