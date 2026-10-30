@@ -96,6 +96,7 @@ func start_phase(kind: String) -> bool:
     active_game.difficulty = difficulty
     add_child(active_game)
     if kind == "day":
+        active_game.siege_day = mini(3, phase_count / 2 + 1)
         if not fortress_state.is_empty():
             active_game.import_fortress_state(fortress_state)
         active_game.coins += pending_night_coins
