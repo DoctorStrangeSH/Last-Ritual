@@ -566,10 +566,7 @@ func _process(delta: float) -> void:
     tick_burning(delta)
     attack_with_towers(delta)
     tick_necro_spirits(delta)
-    for trail in shot_trails.duplicate():
-        trail["time"] -= delta
-        if trail["time"] <= 0.0:
-            shot_trails.erase(trail)
+    update_shot_trails(delta)
     queue_redraw()
 
 
@@ -1002,6 +999,18 @@ func draw_enemy_figure(enemy: Dictionary) -> void:
             draw_circle(pos + Vector2(5, -3), 3.0, Color("#332d34"))
             draw_line(pos + Vector2(-4, 7), pos + Vector2(4, 7), Color("#ffe1bc"), 2.0)
     draw_enemy_status_markers(enemy, radius)
+
+const MAX_STORED_SHOT_TRAILS := 64
+
+func update_shot_trails(delta: float) -> void:
+    # Remove expired visuals in place: no copied array or dictionary equality searches.
+    for index in range(shot_trails.size() - 1, -1, -1):
+        var trail: Dictionary = shot_trails[index]
+        trail["time"] = float(trail.get("time", 0.0)) - maxf(delta, 0.0)
+        if float(trail["time"]) <= 0.0:
+            shot_trails.remove_at(index)
+    if shot_trails.size() > MAX_STORED_SHOT_TRAILS:
+        shot_trails = shot_trails.slice(shot_trails.size() - MAX_STORED_SHOT_TRAILS)
 
 const MAX_VISIBLE_SHOT_TRAILS := 28
 

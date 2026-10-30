@@ -844,6 +844,17 @@ func run_tests() -> void:
         check(trail_budget_game.visible_shot_trail_start(10) == 0, "Small battles retain every hit effect")
         check(trail_budget_game.visible_shot_trail_start(80) == 52, "Large battles draw only the latest 28 shot traces")
         trail_budget_game.queue_free()
+    if specialization_balance_scene != null:
+        var lifecycle_game = specialization_balance_scene.instantiate()
+        root.add_child(lifecycle_game)
+        for index in range(100):
+            lifecycle_game.shot_trails.append({"time": 0.18, "kind": "fire", "id": index})
+        lifecycle_game.update_shot_trails(0.05)
+        check(lifecycle_game.shot_trails.size() == 64, "Dense fights retain at most 64 temporary shot trails")
+        check(int(lifecycle_game.shot_trails[0]["id"]) == 36 and int(lifecycle_game.shot_trails[-1]["id"]) == 99, "Newest traces are retained when trimming")
+        lifecycle_game.update_shot_trails(0.2)
+        check(lifecycle_game.shot_trails.is_empty(), "Expired shot trails are removed completely")
+        lifecycle_game.queue_free()
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
