@@ -700,6 +700,17 @@ func run_tests() -> void:
         frost_synergy_game.slots[1]["tower"] = ""
         check(frost_synergy_game.tower_synergy_damage(0, chilled_target) == frost_synergy_game.tower_synergy_damage(0, unchilled_target), "Frost bone bonus ends without adjacent frost tower")
         frost_synergy_game.queue_free()
+    if specialization_balance_scene != null:
+        var thermal_game = specialization_balance_scene.instantiate()
+        root.add_child(thermal_game)
+        thermal_game.slots[0]["tower"] = "fire"
+        thermal_game.slots[1]["tower"] = "frost"
+        var thermal_chilled := {"hp": 20, "frost_time": 1.5}
+        var thermal_plain := {"hp": 20}
+        check(thermal_game.tower_synergy_damage(0, thermal_chilled) == thermal_game.tower_synergy_damage(0, thermal_plain) + 1, "Thermal shock adds one fire damage against chilled enemies near frost tower")
+        thermal_game.slots[1]["tower"] = ""
+        check(thermal_game.tower_synergy_damage(0, thermal_chilled) == thermal_game.tower_synergy_damage(0, thermal_plain), "Thermal shock requires neighboring frost tower")
+        thermal_game.queue_free()
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
