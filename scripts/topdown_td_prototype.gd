@@ -1040,17 +1040,17 @@ func _draw() -> void:
         if str(info["specialization"]) != "":
             var label_index: int = 0 if info["specialization"] == "siege" else 1
             specialization_label = str(SPECIALIZATION_LABELS[str(info["kind"])][label_index]).split(":")[0]
-        draw_rect(Rect2(845, 129, 280, 157), Color("#17272e", 0.95))
-        draw_rect(Rect2(845, 129, 280, 157), Color("#a4b9a7"), false, 2.0)
+        draw_rect(Rect2(845, 129, 280, 181), Color("#17272e", 0.95))
+        draw_rect(Rect2(845, 129, 280, 181), Color("#a4b9a7"), false, 2.0)
         draw_string(ThemeDB.fallback_font, Vector2(858, 151), "%s / УР. %d" % [tower_title, int(info["level"])], HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color("#fff0c6"))
         draw_string(ThemeDB.fallback_font, Vector2(858, 177), "УРОН: %d  СВЯЗИ: %d" % [int(info["damage"]), int(info["links"])], HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
         draw_string(ThemeDB.fallback_font, Vector2(858, 202), "ПУТЬ: %s" % specialization_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#b9e4d6"))
         draw_string(ThemeDB.fallback_font, Vector2(858, 228), "УЛУЧШ.: %s" % ("МАКС." if int(info["upgrade_cost"]) == 0 else "%d ЗОЛ." % int(info["upgrade_cost"])), HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#e7cf98"))
         var frost_status: String = frost_synergy_status(selected_slot)
-        if frost_status != "":
-            draw_string(ThemeDB.fallback_font, Vector2(858, 253), frost_status, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#a4e9ff"))
-        elif int(info["synergy_flat"]) > 0 or int(info["synergy_burning"]) > 0:
+        if int(info["synergy_flat"]) > 0 or int(info["synergy_burning"]) > 0:
             draw_string(ThemeDB.fallback_font, Vector2(858, 253), "БОНУС: +%d / +%d ГОРЯЩ." % [int(info["synergy_flat"]), int(info["synergy_burning"])], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#e4c990"))
+        if frost_status != "":
+            draw_string(ThemeDB.fallback_font, Vector2(858, 279), frost_status, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#a4e9ff"))
     var repair_ready: bool = defense_state == "playing" and enemies.is_empty() and wave_number < SIEGE_WAVES and altar_hp > 0 and altar_hp < 100 and coins >= REPAIR_COST
     var can_move: bool = selected_slot >= 0 and selected_slot < slots.size() and slots[selected_slot]["tower"] != "" and defense_state == "playing" and enemies.is_empty() and wave_number < SIEGE_WAVES
     if can_move:

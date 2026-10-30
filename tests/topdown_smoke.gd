@@ -721,6 +721,17 @@ func run_tests() -> void:
         indicator_game.slots[0]["tower"] = "fire"
         check("ТЕРМОУДАР" in indicator_game.frost_synergy_status(0), "Fire synergy visible with frost neighbor")
         indicator_game.queue_free()
+    # Stage 203: legacy adjacency remains visible alongside frost help.
+    if specialization_balance_scene != null:
+        var combo_panel = specialization_balance_scene.instantiate()
+        root.add_child(combo_panel)
+        combo_panel.slots[0]["tower"] = "bone"
+        combo_panel.slots[1]["tower"] = "frost"
+        combo_panel.slots[2]["tower"] = "fire"
+        check(combo_panel.frost_synergy_status(0) != "", "Bone frost help remains available alongside ordinary synergy")
+        var preserved_bonus: Dictionary = combo_panel.tower_synergy_preview(0)
+        check(preserved_bonus.has("flat") and preserved_bonus.has("burning"), "Frost help does not replace legacy synergy data")
+        combo_panel.queue_free()
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
