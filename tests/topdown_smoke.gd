@@ -656,6 +656,15 @@ func run_tests() -> void:
     var spirit_pending := {"pos": Vector2(10, 0), "delay": 1.0}
     check(spirit_rules.select_target(normal_spirit, [spirit_pending, spirit_target]) == spirit_target, "Spirit ignores pending enemies")
     check(spirit_rules.select_target(normal_spirit, [{"pos": Vector2(180, 0), "delay": 0.0}]).is_empty(), "Spirit respects target radius")
+    var frost_rules = load("res://scripts/td/td_frost_effect.gd")
+    var frost_enemy := {"speed": 100.0}
+    check(is_equal_approx(frost_rules.multiplier(frost_enemy), 1.0), "Fresh enemy has normal movement speed")
+    frost_rules.apply(frost_enemy)
+    check(is_equal_approx(frost_rules.multiplier(frost_enemy), 0.75), "Frost reduces movement to 75 percent")
+    frost_rules.apply(frost_enemy, 1.0, 0.9)
+    check(is_equal_approx(frost_rules.multiplier(frost_enemy), 0.45), "Slow cap prevents full immobilization")
+    frost_rules.advance(frost_enemy, 2.0)
+    check(is_equal_approx(frost_rules.multiplier(frost_enemy), 1.0), "Frost expires and restores speed")
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
