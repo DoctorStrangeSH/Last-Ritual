@@ -776,6 +776,13 @@ func tooltip_at(point: Vector2) -> Dictionary:
             return shop
     return {}
 
+func specialization_card_rect(index: int) -> Rect2:
+    return Rect2(277.0 + 309.0 * index, 270.0, 293.0, 184.0)
+
+func draw_fitted_label(position: Vector2, value: String, font_size: int, width: float, color: Color) -> void:
+    # Keep long Russian labels in their card rather than spilling into neighbours.
+    draw_string(ThemeDB.fallback_font, position, value, HORIZONTAL_ALIGNMENT_LEFT, width, font_size, color)
+
 func draw_tower_tooltip(point: Vector2) -> void:
     var tip: Dictionary = tooltip_at(point)
     if tip.is_empty():
@@ -1344,13 +1351,13 @@ func _draw() -> void:
         for index in range(2):
             var path: String = "siege" if index == 0 else "swarm"
             var details: Dictionary = TD_TOWER_TOOLTIPS.specialization_info(kind, path, int(slots[selected_slot]["level"]))
-            var left: float = 277.0 + 309.0 * index
-            var card: Rect2 = Rect2(left, 270, 293, 184)
+            var card: Rect2 = specialization_card_rect(index)
+            var left: float = card.position.x
             draw_rect(card, Color("#263744") if index == 0 else Color("#24433f"))
             draw_rect(card, Color("#dfc48a") if index == 0 else Color("#91d9c5"), false, 1.5)
-            draw_string(ThemeDB.fallback_font, Vector2(left + 10, 297), str(details["title"]), HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#f9e5bb"))
-            draw_string(ThemeDB.fallback_font, Vector2(left + 10, 325), str(details["line1"]), HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color.WHITE)
-            draw_string(ThemeDB.fallback_font, Vector2(left + 10, 350), str(details["line2"]), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#c6d5de"))
-            draw_string(ThemeDB.fallback_font, Vector2(left + 10, 377), "УРОН: %d  •  КД: %.2f с" % [int(details["damage"]), float(details["cooldown"])], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#aedac9"))
+            draw_fitted_label(Vector2(left + 10, 297), str(details["title"]), 16, 270.0, Color("#f9e5bb"))
+            draw_fitted_label(Vector2(left + 10, 325), str(details["line1"]), 14, 270.0, Color.WHITE)
+            draw_fitted_label(Vector2(left + 10, 350), str(details["line2"]), 13, 270.0, Color("#c6d5de"))
+            draw_fitted_label(Vector2(left + 10, 377), "УРОН: %d  •  КД: %.2f с" % [int(details["damage"]), float(details["cooldown"])], 14, 270.0, Color("#aedac9"))
             draw_rect(SPECIALIZATION_BUTTONS[index], Color("#76593b") if index == 0 else Color("#3a7164"))
             draw_string(ThemeDB.fallback_font, Vector2(left + 90, 427), "ВЫБРАТЬ", HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color.WHITE)
