@@ -257,6 +257,15 @@ func run_tests() -> void:
         synergy.slots[0]["tower"] = "necro"
         synergy.slots[1]["tower"] = "bone"
         check(synergy.tower_synergy_damage(0, burning_foe) == 1, "Nearby bone tower supports necromancer")
+        synergy.slots[1]["tower"] = "fire"
+        check(synergy.tower_synergy_links(0).has(1) and synergy.tower_synergy_links(1).has(0), "Nearby fire and necromancer towers show a reciprocal synergy link")
+        check(synergy.tower_synergy_damage(0, burning_foe) == 1, "Necromancer gains one bonus damage against burning enemy near fire tower")
+        check(synergy.tower_synergy_damage(0, {"burn_time": 0.0}) == 0, "Fire necromancy combo does not increase damage against normal targets")
+        synergy.slots[1]["tower"] = "bone"
+        synergy.slots[2]["tower"] = "fire"
+        check(synergy.tower_synergy_damage(0, burning_foe) == 1, "Distant fire tower does not provide extra burn bonus")
+        synergy.slots[2]["tower"] = ""
+
         synergy.queue_free()
     var link_scene = load("res://scenes/topdown_td_prototype.tscn")
     if link_scene != null:
