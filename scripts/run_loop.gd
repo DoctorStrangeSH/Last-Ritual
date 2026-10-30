@@ -271,7 +271,7 @@ func _draw() -> void:
             draw_rect(START_RUN_BUTTON, Color("#527d70"))
             draw_rect(START_RUN_BUTTON, Color("#b5dfbf"), false, 3.0)
             draw_string(ThemeDB.fallback_font, START_RUN_BUTTON.position + Vector2(91, 48), "НАЧАТЬ ЗАБЕГ", HORIZONTAL_ALIGNMENT_LEFT, -1, 25, Color.WHITE)
-            draw_string(ThemeDB.fallback_font, Vector2(234, 444), "День → ночь → награда → следующий день. Переходы автоматические.", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#c7d5d0"))
+            draw_string(ThemeDB.fallback_font, Vector2(245, 444), "День → ночь → награда → следующий день", HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color("#c7d5d0"))
             draw_rect(Rect2(72, 474, 1008, 105), Color("#1a2232"))
             draw_string(ThemeDB.fallback_font, Vector2(100, 500), "УЛУЧШЕНИЯ МЕЖДУ ЗАБЕГАМИ", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#9da9bf"))
             draw_string(ThemeDB.fallback_font, Vector2(820, 500), "ОСКОЛКИ: %d" % meta.fragments, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#e7d3a8"))
@@ -289,16 +289,20 @@ func _draw() -> void:
                 badges.append("МАСТЕР РИТУАЛА +6")
             draw_string(ThemeDB.fallback_font, Vector2(104, 630), "ДОСТИЖЕНИЯ: " + (", ".join(badges) if not badges.is_empty() else "Проходите этапы для открытия"), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#e7d3a8"))
         "reward":
-            draw_string(ThemeDB.fallback_font, Vector2(410, 235), "НОЧЬ ЗАВЕРШЕНА — ВЫБЕРИТЕ НАГРАДУ", HORIZONTAL_ALIGNMENT_LEFT, -1, 26, Color.WHITE)
+            draw_string(ThemeDB.fallback_font, Vector2(312, 226), "НОЧЬ ПРОЙДЕНА", HORIZONTAL_ALIGNMENT_LEFT, -1, 30, Color("#e7d3a8"))
+            draw_string(ThemeDB.fallback_font, Vector2(312, 264), "Выберите усиление перед следующим днём", HORIZONTAL_ALIGNMENT_LEFT, -1, 19, Color("#b5c9d3"))
             var names := ["КОСТИ", "УГОЛЬ", "ЗОЛОТО", "НЕКРОМАНТИЯ"]
-            var descriptions := ["+1 урон героя и костей", "+25% скорость и сила огня", "+30 золота каждый день", "+3 золота за убийство"]
+            var descriptions := ["Герою +1 урон", "Герою +25% скорости атак", "Казна: +30 золота", "Некромант: +3 золота"]
+            var details := ["Костяным башням +1 урон", "Огненным башням +1 урон", "В начале каждого дня", "За каждого убитого врага"]
             for i in range(REWARD_BUTTONS.size()):
                 var card: Rect2 = REWARD_BUTTONS[i]
                 draw_rect(card, [Color("#526d9b"), Color("#a16a36"), Color("#927447"), Color("#4e7668")][i])
                 draw_rect(card, Color("#e3d2ac"), false, 2.0)
                 draw_string(ThemeDB.fallback_font, card.position + Vector2(12, 33), names[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 19, Color.WHITE)
-                draw_string(ThemeDB.fallback_font, card.position + Vector2(12, 67), descriptions[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#f4e9d9"))
-            draw_string(ThemeDB.fallback_font, Vector2(265, 516), "Выберите награду — следующий день начнётся автоматически", HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color("#bed9cf"))
+                draw_string(ThemeDB.fallback_font, card.position + Vector2(12, 61), descriptions[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#f4e9d9"))
+                draw_string(ThemeDB.fallback_font, card.position + Vector2(12, 82), details[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#f4e9d9"))
+            draw_rect(Rect2(237, 497, 680, 47), Color("#263b3c"))
+            draw_string(ThemeDB.fallback_font, Vector2(255, 527), "После выбора награды следующий день начнётся сам", HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color("#d5e9df"))
         "defeat", "victory":
             draw_string(ThemeDB.fallback_font, Vector2(400, 260), "РИТУАЛ ЗАВЕРШЁН" if phase == "victory" else "ЗАБЕГ ОКОНЧЕН", HORIZONTAL_ALIGNMENT_LEFT, -1, 32, Color.WHITE)
             draw_string(ThemeDB.fallback_font, Vector2(400, 320), "Пройдено этапов: %d / 6" % completed_phases, HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color("#c7c9d1"))
