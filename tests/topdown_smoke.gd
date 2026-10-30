@@ -828,6 +828,64 @@ func run_tests() -> void:
         check(warning_probe.current_room_progress().begins_with("ОТКРЫТО 1 / "), "Exploration HUD counts discovered rooms instead of showing a false 3-room limit")
         check(warning_probe.current_room_caption() != "", "Exploration room type has a readable caption")
         warning_probe.queue_free()
+    # A deterministic complete six-phase run catches regressions in currency,
+    # fortress persistence, nighttime income, victory and replay eligibility.
+    if run_scene != null:
+        var marathon = run_scene.instantiate()
+        root.add_child(marathon)
+        marathon.meta.save_path = "user://last_ritual_full_run_smoke.json"
+        marathon.meta.fragments = 0
+        marathon.meta.hero_level = 1
+        marathon.meta.treasury_level = 2
+        marathon.meta.runs_started = 0
+        marathon.meta.runs_won = 0
+        marathon.meta.runs_lost = 0
+        marathon.meta.phases_cleared = 0
+        marathon.meta.claimed_achievement_rewards.clear()
+        check(marathon.set_difficulty(1) and marathon.start_run(), "Full run starts at Hard difficulty")
+        check(marathon.active_game.coins == 170, "Day one receives treasury bonus once")
+        marathon.active_game.choose_tower("bone")
+        check(marathon.active_game.build_tower(0), "First day buys permanent bone tower")
+        var carried_coins: int = marathon.active_game.coins
+        marathon.active_game.altar_hp = 68
+        marathon.finish_phase(true)
+        check(marathon.phase == "transition" and marathon.phase_count == 1, "Day one clears into dusk")
+        check(int(marathon.fortress_state["coins"]) == carried_coins and int(marathon.fortress_state["altar_hp"]) == 68, "Fortress snapshot captures gold and altar HP")
+        marathon.complete_transition()
+        check(marathon.phase == "night" and marathon.active_game.difficulty == 1, "Hard difficulty persists into first night")
+        marathon.active_game.night_souls = 4
+        marathon.finish_phase(true)
+        check(marathon.phase == "reward" and marathon.pending_night_coins == 20, "First night converts four souls to twenty defense coins")
+        check(not marathon.choose_run_reward("invalid"), "Invalid relic cannot bypass reward selection")
+        check(marathon.choose_run_reward("gold") and not marathon.choose_run_reward("gold"), "Relic reward cannot be collected twice")
+        check(marathon.phase == "transition" and marathon.complete_transition(), "First dawn enters second day")
+        check(marathon.active_game.siege_day == 2 and marathon.active_game.altar_hp == 68, "Day two restores fortress layout and altar HP")
+        check(marathon.active_game.slots[0]["tower"] == "bone", "Tower survives complete day night cycle")
+        check(marathon.active_game.coins == carried_coins + 20 + 30 + 20, "Day two gets saved gold, souls, relic income and treasury exactly once")
+        check(marathon.pending_night_coins == 0, "Night income cannot be applied again on the next day")
+        marathon.finish_phase(true)
+        check(marathon.phase == "transition" and marathon.complete_transition(), "Day two passes automatically into second night")
+        marathon.active_game.night_souls = 2
+        marathon.finish_phase(true)
+        check(marathon.pending_night_coins == 10, "Second night generates new soul income only")
+        check(marathon.choose_run_reward("bone") and marathon.complete_transition(), "Second relic passes through dawn")
+        check(marathon.phase == "day" and marathon.active_game.siege_day == 3, "Third day uses final siege")
+        check(marathon.active_game.slots[0]["tower"] == "bone" and marathon.active_game.bone_synergy_bonus == 1, "Tower and earned relic carry into final siege")
+        marathon.finish_phase(true)
+        check(marathon.phase == "transition" and marathon.complete_transition(), "Final day passes into last night")
+        check(marathon.active_game.attack_damage >= 3, "Last night inherits meta and run-only damage bonuses")
+        marathon.finish_phase(true)
+        check(marathon.phase == "victory" and marathon.completed_phases == 6, "Final night ends the entire six-phase run")
+        check(marathon.meta.runs_started == 1 and marathon.meta.runs_won == 1 and marathon.meta.runs_lost == 0, "One completed run counts as exactly one victory")
+        check(marathon.meta.phases_cleared == 6, "All six phases count exactly once")
+        var final_fragments: int = marathon.meta.fragments
+        marathon.finish_phase(true)
+        check(marathon.meta.fragments == final_fragments and marathon.meta.runs_won == 1, "Victory cannot award fragments twice")
+        marathon.reset_run()
+        check(marathon.phase == "hub" and marathon.fortress_state.is_empty() and marathon.run_gold_bonus == 0, "Replay clears fortress and run relics but keeps meta progress")
+        check(marathon.meta.runs_won == 1 and marathon.meta.hero_level == 1, "Permanent progression survives new run")
+        marathon.queue_free()
+        DirAccess.remove_absolute(ProjectSettings.globalize_path("user://last_ritual_full_run_smoke.json"))
     var packed := load("res://scenes/topdown_night_prototype.tscn") as PackedScene
     check(packed != null, "Top-down entry scene loads")
     if packed == null:
