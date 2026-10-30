@@ -7,6 +7,7 @@ const TD_TOWER_DAMAGE = preload("res://scripts/td/td_tower_damage.gd")
 const TD_TARGETING = preload("res://scripts/td/td_targeting.gd")
 const TD_BURN_EFFECT = preload("res://scripts/td/td_burn_effect.gd")
 const TD_MULTIHIT = preload("res://scripts/td/td_multihit.gd")
+const TD_NECRO_SPIRITS = preload("res://scripts/td/td_necro_spirits.gd")
 var sfx: Node
 const SLOT_POSITIONS := [Vector2(280, 190), Vector2(430, 190), Vector2(590, 190), Vector2(750, 190), Vector2(280, 440), Vector2(430, 440), Vector2(590, 440), Vector2(750, 440)]
 const COSTS = TD_TOWER_STATS.COSTS
@@ -447,7 +448,7 @@ func attack_with_towers(delta: float) -> void:
 func spawn_necro_spirit(origin: Vector2, empowered: bool = false) -> void:
     if summoned_spirits.size() >= 2:
         return
-    summoned_spirits.append({"pos": origin, "life": 5.0 if empowered else 4.0, "cooldown": 0.0, "damage": 4 if empowered else 2})
+    summoned_spirits.append(TD_NECRO_SPIRITS.create(origin, empowered))
 
 func tick_necro_spirits(delta: float) -> void:
     for spirit in summoned_spirits.duplicate():
@@ -458,15 +459,7 @@ func tick_necro_spirits(delta: float) -> void:
             continue
         if float(spirit["cooldown"]) > 0.0:
             continue
-        var target: Dictionary = {}
-        var nearest := 170.0
-        for enemy in enemies:
-            if float(enemy.get("delay", 0.0)) > 0.0:
-                continue
-            var distance: float = spirit["pos"].distance_to(enemy["pos"])
-            if distance < nearest:
-                nearest = distance
-                target = enemy
+        var target: Dictionary = TD_NECRO_SPIRITS.select_target(spirit, enemies)
         if not target.is_empty():
             target["hp"] -= int(spirit["damage"])
             shot_trails.append({"from": spirit["pos"], "to": target["pos"], "time": 0.15})
