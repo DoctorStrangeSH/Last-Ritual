@@ -10,6 +10,7 @@ const HELP_CLOSE_BUTTON := Rect2(720.0, 471.0, 130.0, 43.0)
 var slots: Array[Dictionary] = []
 var specialization_open := false
 const SPECIALIZATION_BUTTONS := [Rect2(315, 325, 220, 70), Rect2(555, 325, 220, 70)]
+const SPECIALIZATION_LABELS := {"bone": ["БАЛЛИСТА: +2 УРОН", "РОЙ: СКОРОСТЬ"], "fire": ["ИНФЕРНО: ПЛАМЯ", "ИСКРЫ: ЧАСТЫЕ УДАРЫ"], "necro": ["ЖНЕЦ: СИЛА ДУХОВ", "ЛЕГИОН: БОЛЬШЕ ДУХОВ"]}
 var selected_type := ""
 var selected_slot := -1
 var coins := 150
@@ -197,6 +198,9 @@ func attack_with_towers(delta: float) -> void:
             hit_target["hp"] -= damage
             if kind == "fire" and hit_target["hp"] > 0:
                 apply_burn(hit_target)
+                if tower.get("specialization", "") == "siege":
+                    hit_target["burn_damage"] = int(hit_target["burn_damage"]) + 2
+                    hit_target["burn_time"] = 4.0
             if hit_target["hp"] <= 0:
                 enemies.erase(hit_target)
                 enemies_defeated += 1
@@ -204,17 +208,17 @@ func attack_with_towers(delta: float) -> void:
                 if kind == "necro":
                     coins += necro_kill_bonus
                     necro_kill_streak += 1
-                    if necro_kill_streak >= 3:
+                    var spirit_threshold: int = 2 if tower.get("specialization", "") == "swarm" else 3
+                    if necro_kill_streak >= spirit_threshold:
                         necro_kill_streak = 0
-                        spawn_necro_spirit(tower["pos"])
+                        spawn_necro_spirit(tower["pos"], tower.get("specialization", "") == "siege")
         tower_cooldowns[slot_id] = 0.45 if tower.get("specialization", "") == "swarm" else 0.8
     queue_redraw()
 
-func spawn_necro_spirit(origin: Vector2) -> void:
-    # Keep the summon build useful without allowing an unlimited spirit army.
-    if summoned_spirits.size() >= 2:
+func spawn_necro_spirit(origin: Vector2, empowered: bool = false) -> void:
+    if summoned_spirits.size() >= 3:
         return
-    summoned_spirits.append({"pos": origin, "life": 4.0, "cooldown": 0.0, "damage": 2})
+    summoned_spirits.append({"pos": origin, "life": 5.0 if empowered else 4.0, "cooldown": 0.0, "damage": 4 if empowered else 2})
 
 func tick_necro_spirits(delta: float) -> void:
     for spirit in summoned_spirits.duplicate():
@@ -575,8 +579,10 @@ func _draw() -> void:
         draw_string(ThemeDB.fallback_font, Vector2(350, 300), "ВЫБЕРИТЕ СПЕЦИАЛИЗАЦИЮ", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color("#f4dfb7"))
         draw_rect(SPECIALIZATION_BUTTONS[0], Color("#805d49"))
         draw_rect(SPECIALIZATION_BUTTONS[1], Color("#426d6a"))
-        draw_string(ThemeDB.fallback_font, Vector2(335, 365), "БАЛЛИСТА: +2 УРОН", HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color.WHITE)
-        draw_string(ThemeDB.fallback_font, Vector2(570, 365), "РОЙ: БЫСТРЕЕ АТАКИ", HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color.WHITE)
+        if selected_slot >= 0:
+            var labels: Array = SPECIALIZATION_LABELS[str(slots[selected_slot]["tower"])]
+            draw_string(ThemeDB.fallback_font, Vector2(322, 365), str(labels[0]), HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color.WHITE)
+            draw_string(ThemeDB.fallback_font, Vector2(563, 365), str(labels[1]), HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color.WHITE)
     draw_fortress_ground()
     if defense_state != "playing":
         draw_rect(Rect2(345, 225, 460, 210), Color("#285849") if defense_state == "won" else Color("#693943"))
