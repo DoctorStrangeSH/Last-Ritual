@@ -7,7 +7,9 @@ var meta = META_SCRIPT.new()
 var audio_volume := 0.7
 var audio_muted := false
 var audio_settings_path := "user://last_ritual_audio.cfg"
-var phase := "hub" # hub, day, night, reward, victory, defeat
+var phase := "hub" # hub, day, transition, night, reward, victory, defeat
+var transition_time := 0.0
+const TRANSITION_DURATION := 1.25
 var phase_count := 0
 var difficulty := 0 # 0 normal, 1 hard, 2 nightmare
 const DIFFICULTY_NAMES := ["НОРМА", "СЛОЖНО", "КОШМАР"]
@@ -112,6 +114,17 @@ func start_phase(kind: String) -> bool:
     queue_redraw()
     return true
 
+func begin_transition() -> void:
+    phase = "transition"
+    transition_time = TRANSITION_DURATION
+    queue_redraw()
+
+func complete_transition() -> bool:
+    if phase != "transition":
+        return false
+    transition_time = 0.0
+    return start_phase(expected_phase())
+
 func start_run() -> bool:
     if phase != "hub" or phase_count != 0:
         return false
@@ -139,8 +152,7 @@ func finish_phase(won: bool) -> void:
             phase = "victory"
             meta.record_result(true)
         elif expected_phase() == "night":
-            phase = "transition"
-            start_phase("night")
+            begin_transition()
         else:
             phase = "reward"
     meta.save_profile()
@@ -162,10 +174,15 @@ func choose_run_reward(kind: String) -> bool:
             run_necro_kill_bonus += 3
         _:
             return false
-    phase = "transition"
-    return start_phase(expected_phase())
+    begin_transition()
+    return true
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+    if phase == "transition":
+        transition_time -= delta
+        if transition_time <= 0.0:
+            complete_transition()
+        return
     if active_game == null:
         return
     if phase == "day":
@@ -229,6 +246,7 @@ func reset_run() -> void:
         active_game.queue_free()
         active_game = null
     phase = "hub"
+    transition_time = 0.0
     phase_count = 0
     difficulty = 0
     completed_phases = 0
@@ -252,6 +270,16 @@ func _draw() -> void:
     draw_string(ThemeDB.fallback_font, Vector2(386, 83), "ПОСЛЕДНИЙ РИТУАЛ", HORIZONTAL_ALIGNMENT_LEFT, -1, 38, Color("#e7d3a8"))
     draw_string(ThemeDB.fallback_font, Vector2(355, 116), "ОБОРОНА КРЕПОСТИ И НОЧНЫЕ ВЫЛАЗКИ", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#9da9bf"))
     match phase:
+        "transition":
+            var coming_night: bool = expected_phase() == "night"
+            var accent: Color = Color("#bb7691") if coming_night else Color("#e8be80")
+            draw_rect(Rect2(144, 180, 864, 288), Color("#202838"))
+            draw_rect(Rect2(144, 180, 864, 288), accent, false, 3.0)
+            draw_circle(Vector2(576, 263), 47.0, accent)
+            if coming_night:
+                draw_circle(Vector2(597, 249), 42.0, Color("#202838"))
+            draw_string(ThemeDB.fallback_font, Vector2(440, 365), "НАСТУПАЕТ НОЧЬ" if coming_night else "НАСТУПАЕТ РАССВЕТ", HORIZONTAL_ALIGNMENT_LEFT, -1, 24, Color("#f2e4ca"))
+            draw_string(ThemeDB.fallback_font, Vector2(355, 409), "Вперёд, к подземелью..." if coming_night else "Возвращение к обороне крепости...", HORIZONTAL_ALIGNMENT_LEFT, -1, 19, Color("#b6c6d7"))
         "hub":
             draw_rect(AUDIO_MUTE_BUTTON, Color("#526d9b") if not audio_muted else Color("#754452"))
             draw_string(ThemeDB.fallback_font, AUDIO_MUTE_BUTTON.position + Vector2(8, 26), "ЗВУК ВКЛ" if not audio_muted else "ЗВУК ВЫКЛ", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color.WHITE)
