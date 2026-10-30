@@ -689,6 +689,17 @@ func run_tests() -> void:
         check(four_school.choose_tower("frost") and four_school.build_tower(0), "Frost tower can be selected and built by shared controls")
         check(int(four_school.slots[0]["level"]) == 1 and str(four_school.slots[0]["tower"]) == "frost", "Frost occupies tower slot")
         four_school.queue_free()
+    if specialization_balance_scene != null:
+        var frost_synergy_game = specialization_balance_scene.instantiate()
+        root.add_child(frost_synergy_game)
+        frost_synergy_game.slots[0]["tower"] = "bone"
+        frost_synergy_game.slots[1]["tower"] = "frost"
+        var chilled_target := {"hp": 20, "frost_time": 1.5}
+        var unchilled_target := {"hp": 20}
+        check(frost_synergy_game.tower_synergy_damage(0, chilled_target) == frost_synergy_game.tower_synergy_damage(0, unchilled_target) + 1, "Bone tower gains one bonus against chilled enemies near frost tower")
+        frost_synergy_game.slots[1]["tower"] = ""
+        check(frost_synergy_game.tower_synergy_damage(0, chilled_target) == frost_synergy_game.tower_synergy_damage(0, unchilled_target), "Frost bone bonus ends without adjacent frost tower")
+        frost_synergy_game.queue_free()
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
