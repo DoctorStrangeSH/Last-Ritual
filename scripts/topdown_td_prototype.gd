@@ -23,6 +23,7 @@ var selected_type := ""
 var selected_slot := -1
 var coins := 150
 var difficulty := 0 # 0 normal, 1 hard, 2 nightmare
+var siege_day := 1 # 1 normal, 2 swift raiders, 3 armored siege
 var fire_synergy_bonus := 0
 var bone_synergy_bonus := 0
 var necro_kill_bonus := 0
@@ -96,6 +97,10 @@ func hero_attack(target: Vector2) -> bool:
 func upcoming_wave_summary() -> String:
     if wave_number >= 3:
         return "ВСЕ ВОЛНЫ ОТБИТЫ"
+    if siege_day == 2:
+        return "ДЕНЬ 2: НАЛЁТ БЕГУНОВ / ВОЛНА %d" % (wave_number + 1)
+    if siege_day >= 3:
+        return "ДЕНЬ 3: ТЯЖЁЛАЯ ОСАДА / ВОЛНА %d" % (wave_number + 1)
     match wave_number + 1:
         1:
             return "РАЗВЕДКА: МЕДЛЕННАЯ ПЕХОТА"
@@ -122,10 +127,10 @@ func start_wave() -> bool:
     moving_tower = false
     wave_number += 1
     enemies_spawned = 0
-    var count := wave_number + 2
+    var count := wave_number + 2 + (1 if siege_day >= 2 else 0)
     for i in range(count):
-        var role := "runner" if wave_number >= 2 and i % 3 == 0 else ("brute" if wave_number >= 2 and i % 3 == 1 else "grunt")
-        var hp := ((7 + wave_number) if role == "brute" else (2 + wave_number if role == "runner" else 3 + wave_number)) + difficulty * 2
+        var role := "runner" if siege_day == 2 and i % 2 == 0 else "brute" if siege_day >= 3 and i % 2 == 0 else "runner" if wave_number >= 2 and i % 3 == 0 else "brute" if wave_number >= 2 and i % 3 == 1 else "grunt"
+        var hp := ((7 + wave_number) if role == "brute" else (2 + wave_number if role == "runner" else 3 + wave_number)) + difficulty * 2 + (3 if siege_day >= 3 else 0)
         var speed := (135.0 if role == "runner" else (55.0 if role == "brute" else 85.0)) * (1.0 + 0.15 * difficulty)
         enemies.append({"lane": i % PATHS.size(), "pos": PATHS[i % PATHS.size()][0], "waypoint": 1, "hp": hp, "max_hp": hp, "speed": speed, "role": role, "delay": float(i) * 0.7})
         enemies_spawned += 1
@@ -134,7 +139,7 @@ func start_wave() -> bool:
         enemies.append({"lane": 1, "pos": PATHS[1][0], "waypoint": 1, "hp": support_hp, "max_hp": support_hp, "speed": 62.0, "role": "healer", "delay": 1.5, "heal_timer": 1.0})
         enemies_spawned += 1
     if wave_number == 3:
-        enemies.append({"lane": 0, "pos": PATHS[0][0], "waypoint": 1, "hp": 55 + difficulty * 15, "speed": 28.0 * (1.0 + 0.15 * difficulty), "role": "boss", "delay": 3.0, "boss_charge": 0.0, "boss_warning": false, "interrupt_hits": 0})
+        enemies.append({"lane": 0, "pos": PATHS[0][0], "waypoint": 1, "hp": 55 + difficulty * 15 + (20 if siege_day >= 3 else 0), "speed": 28.0 * (1.0 + 0.15 * difficulty), "role": "boss", "delay": 3.0, "boss_charge": 0.0, "boss_warning": false, "interrupt_hits": 0})
         enemies_spawned += 1
     queue_redraw()
     return true
@@ -798,7 +803,7 @@ func _draw() -> void:
                     draw_arc(enemy["pos"], 45.0, -PI / 2.0, -PI / 2.0 + TAU * warning_progress, 48, Color("#ffde80"), 6.0)
                     draw_string(ThemeDB.fallback_font, enemy["pos"] + Vector2(-55, -61), "УДАР ПО АЛТАРЮ", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#ffde80"))
                     draw_string(ThemeDB.fallback_font, enemy["pos"] + Vector2(-53, 61), "ГЕРОЙ: 2 УДАРА (%d/2)" % int(enemy.get("interrupt_hits", 0)), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#f6e6c4"))
-                draw_rect(Rect2(enemy["pos"] + Vector2(-28.0, -43.0), Vector2(56.0 * clampf(float(enemy["hp"]) / float(55 + difficulty * 15), 0.0, 1.0), 5.0)), Color("#df7b94"))
+                draw_rect(Rect2(enemy["pos"] + Vector2(-28.0, -43.0), Vector2(56.0 * clampf(float(enemy["hp"]) / float(55 + difficulty * 15 + (20 if siege_day >= 3 else 0)), 0.0, 1.0), 5.0)), Color("#df7b94"))
             else:
                 draw_circle(enemy["pos"], 16.0 if enemy.get("role", "grunt") == "brute" else 10.0 if enemy.get("role", "grunt") == "runner" else 12.0, Color("#8591b8") if enemy.get("role", "grunt") == "brute" else Color("#efc36f") if enemy.get("role", "grunt") == "runner" else Color("#c67f64"))
                 if enemy.get("role", "") == "healer":
