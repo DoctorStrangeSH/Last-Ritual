@@ -791,6 +791,20 @@ func run_tests() -> void:
         difficulty_run.reset_run()
         check(difficulty_run.difficulty == 0, "New run defaults to normal")
         difficulty_run.queue_free()
+    var night_art_scene = load("res://scenes/topdown_night_prototype.tscn")
+    if night_art_scene != null:
+        var night_art = night_art_scene.instantiate()
+        root.add_child(night_art)
+        night_art.room_variant = 0
+        var crypt_colors: Dictionary = night_art.crypt_room_palette()
+        night_art.room_variant = 1
+        var ambush_colors: Dictionary = night_art.crypt_room_palette()
+        night_art.room_variant = 2
+        var elite_colors: Dictionary = night_art.crypt_room_palette()
+        check(crypt_colors["floor"] != ambush_colors["floor"], "Crypt and ambush rooms have distinct floor palettes")
+        check(ambush_colors["floor"] != elite_colors["floor"], "Ambush and elite rooms have distinct floor palettes")
+        check(night_art.DOOR_POINTS.size() == 4, "Night door markers preserve four directional positions")
+        night_art.queue_free()
     var packed := load("res://scenes/topdown_night_prototype.tscn") as PackedScene
     check(packed != null, "Top-down entry scene loads")
     if packed == null:
