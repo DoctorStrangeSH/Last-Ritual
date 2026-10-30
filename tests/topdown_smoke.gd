@@ -427,6 +427,14 @@ func run_tests() -> void:
         check(synergy.tower_synergy_damage(0, {"burn_time": 0.0}) == 0, "No bonus without burning")
         synergy.slots[1]["tower"] = ""
         check(synergy.tower_synergy_damage(0, burning_foe) == 0, "No bonus without nearby fire tower")
+        synergy.slots[0]["tower"] = "fire"
+        synergy.slots[1]["tower"] = "bone"
+        check(synergy.tower_synergy_preview(0) == {"flat": 0, "burning": 1}, "Bone adjacency grants fire a conditional follow-up bonus")
+        check(synergy.tower_synergy_damage(0, burning_foe) == 1, "Fire gets +1 direct damage on burning enemies near bone")
+        check(synergy.tower_synergy_damage(0, {"burn_time": 0.0}) == 0, "Fire first hit stays unchanged before ignition")
+        check(synergy.tower_synergy_links(0).has(1) and synergy.tower_synergy_links(1).has(0), "Fire-bone synergy link is reciprocal")
+        synergy.slots[1]["tower"] = ""
+        check(synergy.tower_synergy_preview(0) == {"flat": 0, "burning": 0}, "Fire loses bonus when bone moves away")
         synergy.slots[0]["tower"] = "necro"
         synergy.slots[1]["tower"] = "bone"
         check(synergy.tower_synergy_damage(0, burning_foe) == 1, "Nearby bone tower supports necromancer")
