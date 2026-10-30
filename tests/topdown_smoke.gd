@@ -369,6 +369,31 @@ func run_tests() -> void:
         check(not layout.relocate_tower(4, 5), "Cannot move tower during attack")
         layout.queue_free()
         following_day.queue_free()
+    var scenario_scene = load("res://scenes/topdown_td_prototype.tscn")
+    if scenario_scene != null:
+        var raid = scenario_scene.instantiate()
+        root.add_child(raid)
+        raid.siege_day = 2
+        check("НАЛЁТ" in raid.upcoming_wave_summary(), "Second day warns of fast raid")
+        check(raid.start_wave(), "Second day assault starts")
+        check(raid.enemies.size() == 4, "Swift raid adds an attacker to first wave")
+        var runner_count := 0
+        for foe in raid.enemies:
+            if foe["role"] == "runner":
+                runner_count += 1
+        check(runner_count >= 2, "Swift raid fields more runners")
+        raid.queue_free()
+        var siege = scenario_scene.instantiate()
+        root.add_child(siege)
+        siege.siege_day = 3
+        check("ОСАДА" in siege.upcoming_wave_summary(), "Third day warns of armored siege")
+        check(siege.start_wave(), "Third day siege starts")
+        var brute_count := 0
+        for foe in siege.enemies:
+            if foe["role"] == "brute":
+                brute_count += 1
+        check(brute_count >= 2, "Armored siege fields more brutes")
+        siege.queue_free()
     var td_scene := load("res://scenes/topdown_td_prototype.tscn") as PackedScene
     check(td_scene != null, "Top-down TD scene loads")
     if td_scene != null:
