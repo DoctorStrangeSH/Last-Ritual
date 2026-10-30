@@ -32,10 +32,10 @@ var bone_synergy_bonus := 0
 var necro_kill_bonus := 0
 var necro_kill_streak := 0
 var summoned_spirits: Array[Dictionary] = []
-const PATHS := [
-    [Vector2(65, 285), Vector2(205, 285), Vector2(300, 260), Vector2(375, 302), Vector2(490, 263), Vector2(625, 292), Vector2(780, 260), Vector2(900, 295), Vector2(1070, 285)],
-    [Vector2(65, 345), Vector2(200, 355), Vector2(325, 382), Vector2(425, 344), Vector2(550, 384), Vector2(705, 340), Vector2(845, 380), Vector2(950, 347), Vector2(1070, 345)]
-]
+const TD_PATH_LAYOUTS = preload("res://scripts/td/td_path_layouts.gd")
+# Compatibility: active fortress uses the original layout until run-level
+# seed persistence and slot-layout validation are integrated in stage 179.
+const PATHS = TD_PATH_LAYOUTS.LAYOUTS[0]
 var enemies: Array[Dictionary] = []
 var wave_number := 0
 var altar_hp := 100
