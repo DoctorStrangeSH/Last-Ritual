@@ -6,6 +6,8 @@ const SLOT_POSITIONS := [Vector2(280, 190), Vector2(430, 190), Vector2(590, 190)
 const COSTS := {"bone": 30, "fire": 45, "necro": 60}
 const WAVE_BUTTON := Rect2(65, 545, 170, 60)
 const REPAIR_BUTTON := Rect2(485, 474, 225, 54)
+const MOVE_BUTTON := Rect2(730, 474, 155, 54)
+var moving_tower := false
 const REPAIR_COST := 25
 const REPAIR_HP := 20
 const HELP_BUTTON := Rect2(987.0, 10.0, 150.0, 46.0)
@@ -475,6 +477,7 @@ func import_fortress_state(state: Dictionary) -> bool:
     coins = maxi(0, int(state.get("coins", coins)))
     altar_hp = clampi(int(state.get("altar_hp", altar_hp)), 1, 100)
     tower_cooldowns.clear()
+    moving_tower = false
     selected_slot = -1
     selected_type = ""
     queue_redraw()
@@ -510,11 +513,43 @@ func build_tower(slot_id: int) -> bool:
     queue_redraw()
     return true
 
+func can_relocate_tower(source_id: int, destination_id: int) -> bool:
+    if defense_state != "playing" or not enemies.is_empty() or wave_number >= 3:
+        return false
+    if source_id < 0 or source_id >= slots.size() or destination_id < 0 or destination_id >= slots.size():
+        return false
+    return source_id != destination_id and slots[source_id]["tower"] != "" and slots[destination_id]["tower"] == ""
+
+func begin_tower_relocation() -> bool:
+    if selected_slot < 0 or selected_slot >= slots.size() or slots[selected_slot]["tower"] == "" or not enemies.is_empty() or defense_state != "playing" or wave_number >= 3 or specialization_open:
+        return false
+    selected_type = ""
+    moving_tower = true
+    queue_redraw()
+    return true
+
+func relocate_tower(source_id: int, destination_id: int) -> bool:
+    if not can_relocate_tower(source_id, destination_id):
+        return false
+    var building: Dictionary = slots[source_id].duplicate(true)
+    var destination_pos: Vector2 = slots[destination_id]["pos"]
+    slots[destination_id] = building
+    slots[destination_id]["id"] = destination_id
+    slots[destination_id]["pos"] = destination_pos
+    slots[source_id] = {"id": source_id, "pos": SLOT_POSITIONS[source_id], "tower": "", "level": 0, "specialization": "", "target_priority": "nearest"}
+    tower_cooldowns.erase(source_id)
+    tower_cooldowns[destination_id] = 0.0
+    selected_slot = destination_id
+    moving_tower = false
+    queue_redraw()
+    return true
+
 func select_slot(slot_id: int) -> bool:
     if slot_id < 0 or slot_id >= slots.size() or slots[slot_id]["tower"] == "":
         return false
     selected_slot = slot_id
     selected_type = ""
+    moving_tower = false
     queue_redraw()
     return true
 
@@ -547,6 +582,7 @@ func sell_selected() -> bool:
     slots[selected_slot]["level"] = 0
     slots[selected_slot]["specialization"] = ""
     slots[selected_slot]["target_priority"] = "nearest"
+    moving_tower = false
     tower_cooldowns.erase(selected_slot)
     selected_slot = -1
     queue_redraw()
@@ -589,16 +625,26 @@ func _unhandled_input(event: InputEvent) -> void:
         cycle_target_priority()
         return
     if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
+        moving_tower = false
         selected_type = ""
         selected_slot = -1
         queue_redraw()
     if event is InputEventMouseButton and event.pressed:
         if event.button_index == MOUSE_BUTTON_RIGHT:
+            moving_tower = false
             selected_type = ""
             selected_slot = -1
             queue_redraw()
         elif event.button_index == MOUSE_BUTTON_LEFT:
             var point := get_global_mouse_position()
+            if MOVE_BUTTON.has_point(point):
+                begin_tower_relocation()
+                return
+            if moving_tower:
+                var destination: int = slot_at(point)
+                if destination >= 0:
+                    relocate_tower(selected_slot, destination)
+                return
             if REPAIR_BUTTON.has_point(point):
                 repair_altar()
                 return
@@ -724,6 +770,9 @@ func _draw() -> void:
         var priority: String = str(slots[selected_slot].get("target_priority", "nearest"))
         draw_string(ThemeDB.fallback_font, TARGET_BUTTON.position + Vector2(9, 29), "ЦЕЛЬ: " + str(TARGET_LABELS[priority]), HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color("#fff1c9"))
     var repair_ready: bool = defense_state == "playing" and enemies.is_empty() and wave_number < 3 and altar_hp > 0 and altar_hp < 100 and coins >= REPAIR_COST
+    var can_move: bool = selected_slot >= 0 and selected_slot < slots.size() and slots[selected_slot]["tower"] != "" and defense_state == "playing" and enemies.is_empty() and wave_number < 3
+    draw_rect(MOVE_BUTTON, Color("#ac8b52") if moving_tower else Color("#486f80") if can_move else Color("#454b54"))
+    draw_string(ThemeDB.fallback_font, MOVE_BUTTON.position + Vector2(8, 32), "ВЫБЕРИ МЕСТО" if moving_tower else "ПЕРЕНЕСТИ", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#fff1c9"))
     draw_rect(REPAIR_BUTTON, Color("#527b75") if repair_ready else Color("#454b54"))
     draw_string(ThemeDB.fallback_font, REPAIR_BUTTON.position + Vector2(12, 33), "РЕМОНТ +20 / 25 ЗОЛ.", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#fff1ce") if repair_ready else Color("#abb2b5"))
     draw_rect(WAVE_BUTTON, Color("#487d6b") if enemies.is_empty() and wave_number < 3 and altar_hp > 0 else Color("#454b54"))
@@ -785,6 +834,8 @@ func _draw() -> void:
         if not occupied:
             draw_line(pos + Vector2(-8, 0), pos + Vector2(8, 0), Color("#9fc9b9"), 2.0)
             draw_line(pos + Vector2(0, -8), pos + Vector2(0, 8), Color("#9fc9b9"), 2.0)
+        if moving_tower and not occupied:
+            draw_arc(pos, 42.0, 0.0, TAU, 36, Color("#a4e4ba"), 4.0)
         if selected_slot == i:
             draw_arc(pos, 39, 0, TAU, 32, Color("#d8d0a1"), 3)
         if selected_type != "" and not occupied and pos.distance_to(get_global_mouse_position()) < 36:
