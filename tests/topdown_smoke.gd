@@ -619,6 +619,18 @@ func run_tests() -> void:
     check(tower_damage_rules.direct_damage("fire", 2, "siege", 2, 0) == 6, "Damage module preserves fire bonus")
     check(tower_damage_rules.direct_damage("necro", 2, "swarm", 0, 0) == 5, "Damage module preserves necro swarm damage")
     check(tower_damage_rules.direct_damage("unknown", 1, "", 0, 0) == 0, "Damage module rejects unknown tower types")
+    var target_rules = load("res://scripts/td/td_targeting.gd")
+    var probe_tower := {"tower": "bone", "pos": Vector2.ZERO, "target_priority": "nearest"}
+    var near_foe := {"pos": Vector2(25, 0), "role": "grunt", "delay": 0.0}
+    var healer_foe := {"pos": Vector2(85, 0), "role": "healer", "delay": 0.0}
+    var delayed_foe := {"pos": Vector2(2, 0), "role": "grunt", "delay": 4.0}
+    var probe_enemies := [near_foe, healer_foe, delayed_foe]
+    check(target_rules.choose(probe_tower, probe_enemies, {"bone": 135.0}) == near_foe, "Target module retains nearest rule and ignores pending spawn")
+    probe_tower["target_priority"] = "support"
+    check(target_rules.choose(probe_tower, probe_enemies, {"bone": 135.0}) == healer_foe, "Target module prioritizes healer")
+    probe_tower["target_priority"] = "front"
+    check(target_rules.choose(probe_tower, probe_enemies, {"bone": 135.0}) == healer_foe, "Target module prioritizes enemy near gate")
+    check(target_rules.choose(probe_tower, probe_enemies, {"bone": 30.0}) == near_foe, "Target module excludes out-of-range enemies")
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
