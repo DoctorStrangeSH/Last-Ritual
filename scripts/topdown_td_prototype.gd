@@ -396,6 +396,8 @@ func frost_synergy_status(slot_id: int) -> String:
     if slot_id < 0 or slot_id >= slots.size():
         return ""
     var kind: String = str(slots[slot_id].get("tower", ""))
+    if kind == "necro":
+        return "ДУХИ ПРОДЛЕВАЮТ ХОЛОД" if has_adjacent_tower(slot_id, "frost") else "ЛЁД РЯДОМ: УСИЛИТЬ ДУХОВ"
     if kind != "bone" and kind != "fire":
         return ""
     if has_adjacent_tower(slot_id, "frost"):
