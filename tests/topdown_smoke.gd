@@ -395,6 +395,25 @@ func run_tests() -> void:
             necro_balance.spawn_necro_spirit(necro_balance.slots[0]["pos"], necro_path == "siege")
             check(necro_balance.summoned_spirits.size() == 2, "Necromancy spirit cap remains two: " + necro_path)
             necro_balance.queue_free()
+    # Economy benchmark: same starting treasury, exact purchase/upgrade/sale
+    # prices for each school. No wave rewards or meta bonuses in this scenario.
+    if specialization_balance_scene != null:
+        for economy_kind in ["bone", "fire", "necro"]:
+            var economy = specialization_balance_scene.instantiate()
+            root.add_child(economy)
+            var base_cost: int = int(economy.COSTS[economy_kind])
+            economy.coins = base_cost - 1
+            check(economy.choose_tower(economy_kind), "Economy selects school " + economy_kind)
+            check(not economy.build_tower(0) and economy.coins == base_cost - 1, "Insufficient treasury blocks purchase " + economy_kind)
+            economy.coins = 150
+            check(economy.build_tower(0) and economy.coins == 150 - base_cost, "School purchase charges exact price " + economy_kind)
+            check(economy.upgrade_selected() and economy.coins == 130 - base_cost, "Level two upgrade costs 20 gold " + economy_kind)
+            check(economy.choose_specialization("siege"), "Economy selects specialization " + economy_kind)
+            check(economy.upgrade_selected() and economy.coins == 90 - base_cost, "Level three upgrade costs 40 gold " + economy_kind)
+            check(not economy.upgrade_selected() and economy.coins == 90 - base_cost, "Level three is the upgrade cap " + economy_kind)
+            check(economy.sell_selected() and economy.coins == 120 - base_cost, "Level three sale returns 30 gold " + economy_kind)
+            check(economy.slots[0]["tower"] == "" and int(economy.slots[0]["level"]) == 0, "Sale clears slot " + economy_kind)
+            economy.queue_free()
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
