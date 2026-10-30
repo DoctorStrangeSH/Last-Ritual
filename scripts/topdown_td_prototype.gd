@@ -1003,6 +1003,18 @@ func draw_enemy_figure(enemy: Dictionary) -> void:
             draw_line(pos + Vector2(-4, 7), pos + Vector2(4, 7), Color("#ffe1bc"), 2.0)
     draw_enemy_status_markers(enemy, radius)
 
+func shot_trail_style(kind: String) -> Dictionary:
+    match kind:
+        "bone":
+            return {"width": 4.0, "impact": "shard"}
+        "fire":
+            return {"width": 3.0, "impact": "ember"}
+        "necro":
+            return {"width": 2.0, "impact": "spirit"}
+        "frost":
+            return {"width": 2.0, "impact": "crystal"}
+    return {"width": 3.0, "impact": "none"}
+
 func tower_visual_color(kind: String) -> Color:
     match kind:
         "bone":
@@ -1144,11 +1156,18 @@ func _draw() -> void:
         var shot_kind: String = str(trail.get("kind", "hero"))
         var shot_color: Color = tower_visual_color(shot_kind)
         var opacity: float = clampf(float(trail.get("time", 0.18)) / 0.18, 0.0, 1.0)
-        draw_line(trail["from"], trail["to"], Color(shot_color.r, shot_color.g, shot_color.b, opacity), 3.0)
-        if shot_kind == "fire":
-            draw_circle(trail["to"], 5.0 * opacity + 2.0, Color("#ffd9a0", opacity * 0.7))
-        elif shot_kind == "necro":
-            draw_circle(trail["to"], 4.0 * opacity + 1.0, Color("#86f6ce", opacity * 0.8))
+        var visual: Dictionary = shot_trail_style(shot_kind)
+        draw_line(trail["from"], trail["to"], Color(shot_color.r, shot_color.g, shot_color.b, opacity), float(visual["width"]))
+        match str(visual["impact"]):
+            "shard":
+                draw_colored_polygon(PackedVector2Array([trail["to"] + Vector2(-6, 2), trail["to"] + Vector2(0, -7), trail["to"] + Vector2(6, 2)]), Color("#f9e9cd", opacity))
+            "ember":
+                draw_circle(trail["to"], 5.0 * opacity + 2.0, Color("#ffd9a0", opacity * 0.7))
+            "spirit":
+                draw_circle(trail["to"], 4.0 * opacity + 1.0, Color("#86f6ce", opacity * 0.8))
+            "crystal":
+                var impact: Vector2 = trail["to"]
+                draw_colored_polygon(PackedVector2Array([impact + Vector2(0, -8), impact + Vector2(5, 0), impact + Vector2(0, 8), impact + Vector2(-5, 0)]), Color("#c4f3ff", opacity))
     draw_defender_figure(hero_pos)
     if selected_slot >= 0 and selected_slot < slots.size() and slots[selected_slot]["tower"] != "":
         var linked: Array[int] = tower_synergy_links(selected_slot)
