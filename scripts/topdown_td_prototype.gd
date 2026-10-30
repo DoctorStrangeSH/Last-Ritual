@@ -35,7 +35,13 @@ var summoned_spirits: Array[Dictionary] = []
 const TD_PATH_LAYOUTS = preload("res://scripts/td/td_path_layouts.gd")
 # Compatibility: active fortress uses the original layout until run-level
 # seed persistence and slot-layout validation are integrated in stage 179.
-const PATHS = TD_PATH_LAYOUTS.LAYOUTS[0]
+var fortress_map_seed := 0
+var paths: Array = TD_PATH_LAYOUTS.layout_for_seed(0)
+
+func set_fortress_map_seed(seed_value: int) -> void:
+    fortress_map_seed = seed_value
+    paths = TD_PATH_LAYOUTS.layout_for_seed(seed_value)
+    queue_redraw()
 var enemies: Array[Dictionary] = []
 var wave_number := 0
 var altar_hp := 100
@@ -162,14 +168,14 @@ func start_wave() -> bool:
         var role: String = siege_enemy_role(wave_number, i)
         var hp := ((7 + wave_number) if role == "brute" else (2 + wave_number if role == "runner" else 3 + wave_number)) + difficulty * 2 + (3 if siege_day >= 3 else 0)
         var speed := (135.0 if role == "runner" else (55.0 if role == "brute" else 85.0)) * (1.0 + 0.15 * difficulty)
-        enemies.append({"lane": i % PATHS.size(), "pos": PATHS[i % PATHS.size()][0], "waypoint": 1, "hp": hp, "max_hp": hp, "speed": speed, "role": role, "delay": siege_spawn_delay(wave_number, i, role)})
+        enemies.append({"lane": i % paths.size(), "pos": paths[i % paths.size()][0], "waypoint": 1, "hp": hp, "max_hp": hp, "speed": speed, "role": role, "delay": siege_spawn_delay(wave_number, i, role)})
         enemies_spawned += 1
     if wave_number >= 2:
         var support_hp: int = 8 + wave_number * 2 + difficulty * 2
-        enemies.append({"lane": 1, "pos": PATHS[1][0], "waypoint": 1, "hp": support_hp, "max_hp": support_hp, "speed": 62.0, "role": "healer", "delay": 1.5, "heal_timer": 1.0})
+        enemies.append({"lane": 1, "pos": paths[1][0], "waypoint": 1, "hp": support_hp, "max_hp": support_hp, "speed": 62.0, "role": "healer", "delay": 1.5, "heal_timer": 1.0})
         enemies_spawned += 1
     if wave_number == 3:
-        enemies.append({"lane": 0, "pos": PATHS[0][0], "waypoint": 1, "hp": 55 + difficulty * 15 + (20 if siege_day >= 3 else 0), "speed": 28.0 * (1.0 + 0.15 * difficulty), "role": "boss", "delay": 3.0, "boss_charge": 0.0, "boss_warning": false, "interrupt_hits": 0})
+        enemies.append({"lane": 0, "pos": paths[0][0], "waypoint": 1, "hp": 55 + difficulty * 15 + (20 if siege_day >= 3 else 0), "speed": 28.0 * (1.0 + 0.15 * difficulty), "role": "boss", "delay": 3.0, "boss_charge": 0.0, "boss_warning": false, "interrupt_hits": 0})
         enemies_spawned += 1
     queue_redraw()
     return true
@@ -198,7 +204,7 @@ func advance_enemies(delta: float) -> void:
         if enemy["delay"] > 0.0:
             enemy["delay"] = maxf(0.0, float(enemy["delay"]) - delta)
             continue
-        var path: Array = PATHS[int(enemy["lane"])]
+        var path: Array = paths[int(enemy["lane"])]
         var waypoint: int = int(enemy["waypoint"])
         var position: Vector2 = enemy["pos"]
         # Полный остаток движения за кадр проходит все достигнутые повороты.
@@ -505,7 +511,7 @@ func export_fortress_state() -> Dictionary:
     var buildings: Array[Dictionary] = []
     for slot in slots:
         buildings.append({"tower": str(slot["tower"]), "level": int(slot["level"]), "specialization": str(slot.get("specialization", "")), "target_priority": str(slot.get("target_priority", "nearest"))})
-    return {"buildings": buildings, "coins": coins, "altar_hp": altar_hp}
+    return {"buildings": buildings, "coins": coins, "altar_hp": altar_hp, "map_seed": fortress_map_seed}
 
 func import_fortress_state(state: Dictionary) -> bool:
     var buildings: Array = state.get("buildings", [])
@@ -524,6 +530,8 @@ func import_fortress_state(state: Dictionary) -> bool:
             return false
         if level < 0 or level > 3 or (kind == "" and level != 0) or (kind != "" and level == 0):
             return false
+    if int(state.get("map_seed", fortress_map_seed)) != fortress_map_seed:
+        return false
     for i in range(slots.size()):
         slots[i]["tower"] = str(buildings[i]["tower"])
         slots[i]["level"] = int(buildings[i]["level"])
@@ -975,7 +983,7 @@ func _draw() -> void:
     if enemies.is_empty() and defense_state == "playing":
         draw_rect(Rect2(62, 487, 410, 42), Color("#263d43", 0.96))
         draw_string(ThemeDB.fallback_font, Vector2(74, 515), upcoming_wave_summary(), HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#f2d89c"))
-    for path in PATHS:
+    for path in paths:
         draw_fortress_road(path)
     draw_fortress_atmosphere()
     for enemy in enemies:
