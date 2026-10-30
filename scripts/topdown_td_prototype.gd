@@ -195,6 +195,16 @@ func choose_interwave_event(choice: String) -> bool:
     queue_redraw()
     return true
 
+func wave_enemy_budget(next_wave: int) -> Dictionary:
+    # Deterministic forecast shared with regression tests and future UI.
+    if next_wave < 1 or next_wave > SIEGE_WAVES:
+        return {}
+    var ordinary: int = next_wave + 2 + (1 if siege_day >= 2 else 0)
+    var support: int = 1 if next_wave >= 2 else 0
+    var captain: int = 1 if next_wave == 5 else 0
+    var boss: int = 1 if next_wave == SIEGE_WAVES else 0
+    return {"ordinary": ordinary, "support": support, "captain": captain, "boss": boss, "total": ordinary + support + captain + boss}
+
 func start_wave() -> bool:
     if defense_state != "playing" or not enemies.is_empty() or wave_number >= SIEGE_WAVES or altar_hp <= 0:
         return false
@@ -204,7 +214,7 @@ func start_wave() -> bool:
     moving_tower = false
     wave_number += 1
     enemies_spawned = 0
-    var count := wave_number + 2 + (1 if siege_day >= 2 else 0)
+    var count: int = int(wave_enemy_budget(wave_number)["ordinary"])
     var encounter_extra_hp: int = next_wave_extra_hp
     next_wave_extra_hp = 0
     for i in range(count):
