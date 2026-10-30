@@ -573,6 +573,17 @@ func run_tests() -> void:
         pacing.siege_day = 3
         check(is_equal_approx(pacing.siege_spawn_delay(6, 4, "brute"), 3.0), "Armored siege retains staggered reinforcements")
         pacing.queue_free()
+    if specialization_balance_scene != null:
+        var income = specialization_balance_scene.instantiate()
+        root.add_child(income)
+        var forecast: Dictionary = income.siege_economy_forecast()
+        check(int(forecast["enemies"]) == 41, "Day one six-wave siege fields 41 enemies")
+        check(int(forecast["kill_gold"]) == 205, "All-kill gold forecast matches per-enemy income")
+        check(int(forecast["maximum_gold"]) == 355, "Siege economy forecast includes starting treasury")
+        income.siege_day = 2
+        check(int(income.siege_economy_forecast()["enemies"]) == 47, "Later siege day adds six attackers")
+        check(int(income.siege_economy_forecast()["maximum_gold"]) == 385, "Later siege income scales with attackers")
+        income.queue_free()
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
