@@ -5,6 +5,7 @@ const TD_SYNERGY_RULES = preload("res://scripts/td/td_synergy_rules.gd")
 const TD_TOWER_STATS = preload("res://scripts/td/td_tower_stats.gd")
 const TD_TOWER_DAMAGE = preload("res://scripts/td/td_tower_damage.gd")
 const TD_TARGETING = preload("res://scripts/td/td_targeting.gd")
+const TD_BURN_EFFECT = preload("res://scripts/td/td_burn_effect.gd")
 var sfx: Node
 const SLOT_POSITIONS := [Vector2(280, 190), Vector2(430, 190), Vector2(590, 190), Vector2(750, 190), Vector2(280, 440), Vector2(430, 440), Vector2(590, 440), Vector2(750, 440)]
 const COSTS = TD_TOWER_STATS.COSTS
@@ -495,26 +496,14 @@ func tick_necro_spirits(delta: float) -> void:
     queue_redraw()
 
 func apply_burn(enemy: Dictionary) -> void:
-    enemy["burn_time"] = 3.0
-    enemy["burn_tick"] = 0.5
-    enemy["burn_damage"] = 1 + fire_synergy_bonus
+    TD_BURN_EFFECT.apply(enemy, fire_synergy_bonus)
 
 func tick_burning(delta: float) -> void:
     for enemy in enemies.duplicate():
-        if float(enemy.get("burn_time", 0.0)) <= 0.0:
-            continue
-        var active_delta: float = minf(maxf(delta, 0.0), float(enemy["burn_time"]))
-        enemy["burn_time"] = maxf(0.0, float(enemy["burn_time"]) - active_delta)
-        enemy["burn_tick"] = float(enemy.get("burn_tick", 0.5)) - active_delta
-        # Resolve ticks at the expiration boundary, even when a frame spans it.
-        while float(enemy["burn_tick"]) <= 0.0:
-            enemy["hp"] -= int(enemy.get("burn_damage", 1))
-            enemy["burn_tick"] = float(enemy["burn_tick"]) + 0.5
-            if enemy["hp"] <= 0:
-                enemies.erase(enemy)
-                enemies_defeated += 1
-                coins += 5
-                break
+        if TD_BURN_EFFECT.advance(enemy, delta):
+            enemies.erase(enemy)
+            enemies_defeated += 1
+            coins += 5
 
 func restart_defense() -> void:
     moving_tower = false
