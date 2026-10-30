@@ -904,6 +904,19 @@ func run_tests() -> void:
             var button: Rect2 = fit_game.SPECIALIZATION_BUTTONS[button_idx]
             check(fit_game.specialization_card_rect(button_idx).encloses(button), "Specialization button stays inside corresponding comparison card")
         fit_game.queue_free()
+    if specialization_balance_scene != null:
+        var selected_details = specialization_balance_scene.instantiate()
+        root.add_child(selected_details)
+        selected_details.slots[0]["tower"] = "frost"
+        selected_details.slots[0]["level"] = 1
+        selected_details.selected_slot = 0
+        var info_before: Dictionary = selected_details.selected_tower_info()
+        check(int(info_before["range"]) == 145 and is_equal_approx(float(info_before["attack_delay"]), 0.8), "Selected frost tower shows accurate range and normal attack interval")
+        check(str(info_before["effect"]) != "", "Selected tower includes plain-language ability")
+        selected_details.slots[0]["specialization"] = "swarm"
+        var info_after: Dictionary = selected_details.selected_tower_info()
+        check(is_equal_approx(float(info_after["attack_delay"]), 0.45), "Swarm tower inspector reflects faster attacks")
+        selected_details.queue_free()
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
