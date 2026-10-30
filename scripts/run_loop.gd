@@ -22,6 +22,7 @@ var run_fire_bonus := 0
 var run_bone_tower_bonus := 0
 var run_necro_kill_bonus := 0
 var fortress_state: Dictionary = {}
+var fortress_map_seed := 0
 var pending_night_coins := 0
 var active_game: Node2D
 var last_phase := "day"
@@ -98,6 +99,7 @@ func start_phase(kind: String) -> bool:
     add_child(active_game)
     if kind == "day":
         active_game.siege_day = mini(3, int(phase_count / 2) + 1)
+        active_game.set_fortress_map_seed(fortress_map_seed)
         if not fortress_state.is_empty():
             active_game.import_fortress_state(fortress_state)
         active_game.coins += pending_night_coins
@@ -130,6 +132,7 @@ func complete_transition() -> bool:
 func start_run() -> bool:
     if phase != "hub" or phase_count != 0:
         return false
+    fortress_map_seed = randi()
     return start_phase("day")
 
 func finish_phase(won: bool) -> void:
@@ -260,6 +263,7 @@ func reset_run() -> void:
     run_bone_tower_bonus = 0
     run_necro_kill_bonus = 0
     fortress_state.clear()
+    fortress_map_seed = 0
     pending_night_coins = 0
     queue_redraw()
 
