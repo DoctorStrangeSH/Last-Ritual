@@ -855,6 +855,17 @@ func run_tests() -> void:
         lifecycle_game.update_shot_trails(0.2)
         check(lifecycle_game.shot_trails.is_empty(), "Expired shot trails are removed completely")
         lifecycle_game.queue_free()
+    if specialization_balance_scene != null:
+        var debug_game = specialization_balance_scene.instantiate()
+        root.add_child(debug_game)
+        check(not debug_game.performance_overlay_visible, "Performance overlay starts hidden")
+        debug_game.shot_trails.clear()
+        for index in range(35):
+            debug_game.shot_trails.append({"time": 0.18, "kind": "fire"})
+        var snapshot: Dictionary = debug_game.performance_snapshot()
+        check(int(snapshot["trails_stored"]) == 35 and int(snapshot["trails_visible"]) == 28, "Performance overlay reports rendered and stored traces separately")
+        check(int(snapshot["enemies"]) == debug_game.enemies.size() and int(snapshot["spirits"]) == debug_game.summoned_spirits.size(), "Performance overlay counts active enemies and spirits")
+        debug_game.queue_free()
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
