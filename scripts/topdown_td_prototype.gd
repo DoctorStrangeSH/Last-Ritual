@@ -1025,14 +1025,6 @@ func _draw() -> void:
     if enemies.is_empty() and defense_state == "playing":
         draw_rect(Rect2(62, 487, 410, 42), Color("#263d43", 0.96))
         draw_string(ThemeDB.fallback_font, Vector2(74, 515), upcoming_wave_summary(), HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#f2d89c"))
-    if can_choose_interwave_event():
-        draw_rect(Rect2(184, 205, 785, 186), Color("#1d3038", 0.97))
-        draw_rect(Rect2(184, 205, 785, 186), Color("#d7ba80"), false, 2.0)
-        draw_string(ThemeDB.fallback_font, Vector2(235, 257), "ВОЕННЫЙ СОВЕТ: ВЫБЕРИ ПОДГОТОВКУ", HORIZONTAL_ALIGNMENT_LEFT, -1, 21, Color("#f5e6bc"))
-        var labels := ["ОБОЗ: +35 / +3 HP ВРАГАМ", "АЛТАРЬ: +20 HP", "ЗАПАС: +15 ЗОЛОТА"]
-        for i in range(EVENT_BUTTONS.size()):
-            draw_rect(EVENT_BUTTONS[i], Color("#53695d"))
-            draw_string(ThemeDB.fallback_font, EVENT_BUTTONS[i].position + Vector2(8, 37), labels[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color.WHITE)
     for path in paths:
         draw_fortress_road(path)
     draw_fortress_atmosphere()
@@ -1134,6 +1126,14 @@ func _draw() -> void:
         draw_string(ThemeDB.fallback_font, Vector2(326, 490), "Игра на паузе — H или «Продолжить»", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#d5c592"))
         draw_rect(HELP_CLOSE_BUTTON, Color("#527d70"))
         draw_string(ThemeDB.fallback_font, HELP_CLOSE_BUTTON.position + Vector2(11.0, 29.0), "ПРОДОЛЖИТЬ", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
+    if can_choose_interwave_event():
+        draw_rect(Rect2(184, 205, 785, 186), Color("#1d3038", 0.97))
+        draw_rect(Rect2(184, 205, 785, 186), Color("#d7ba80"), false, 2.0)
+        draw_string(ThemeDB.fallback_font, Vector2(235, 257), "ВОЕННЫЙ СОВЕТ: ВЫБЕРИ ПОДГОТОВКУ", HORIZONTAL_ALIGNMENT_LEFT, -1, 21, Color("#f5e6bc"))
+        var labels := ["ОБОЗ: +35 / +3 HP ВРАГАМ", "АЛТАРЬ: +20 HP", "ЗАПАС: +15 ЗОЛОТА"]
+        for i in range(EVENT_BUTTONS.size()):
+            draw_rect(EVENT_BUTTONS[i], Color("#53695d"))
+            draw_string(ThemeDB.fallback_font, EVENT_BUTTONS[i].position + Vector2(8, 37), labels[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color.WHITE)
     if specialization_open and selected_slot >= 0 and selected_slot < slots.size():
         draw_rect(Rect2(0, 65, 1152, 469), Color(0.015, 0.025, 0.04, 0.72))
         draw_rect(Rect2(275, 260, 560, 175), Color("#202c38"))
