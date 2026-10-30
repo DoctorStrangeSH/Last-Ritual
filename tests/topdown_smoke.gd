@@ -553,7 +553,7 @@ func run_tests() -> void:
         scouting.wave_number = 1
         check("БЕГУНЫ" in scouting.upcoming_wave_summary(), "Second wave scouting warns about runners")
         scouting.wave_number = 2
-        check("БОСС" in scouting.upcoming_wave_summary(), "Final wave scouting warns about boss")
+        check("НАТИСК" in scouting.upcoming_wave_summary(), "Third wave scouting warns about armored pressure")
         scouting.queue_free()
     var healer_scene = load("res://scenes/topdown_td_prototype.tscn")
     if healer_scene != null:
@@ -621,7 +621,7 @@ func run_tests() -> void:
         repairs.enemies.append({"role": "grunt"})
         check(not repairs.repair_altar(), "Cannot repair during active enemy wave")
         repairs.enemies.clear()
-        repairs.wave_number = 3
+        repairs.wave_number = 6
         check(not repairs.repair_altar(), "Cannot repair after final wave")
         repairs.queue_free()
     var relocation_scene = load("res://scenes/topdown_td_prototype.tscn")
@@ -767,7 +767,7 @@ func run_tests() -> void:
         check(economy_probe.upgrade_selected(), "Upgrading is possible between waves")
         check(not economy_probe.can_modify_towers() and not economy_probe.sell_selected(), "Specialization choice cannot be skipped by selling or another upgrade")
         check(economy_probe.choose_specialization("siege") and economy_probe.can_modify_towers(), "Finishing specialization restores preparations")
-        economy_probe.wave_number = 3
+        economy_probe.wave_number = 6
         check(not economy_probe.can_modify_towers() and not economy_probe.sell_selected(), "Completed final wave locks the economy")
         economy_probe.defense_state = "lost"
         economy_probe.wave_number = 1
@@ -841,11 +841,16 @@ func run_tests() -> void:
         check(float(td.enemies[0]["speed"]) > float(td.enemies[1]["speed"]) and int(td.enemies[0]["hp"]) < int(td.enemies[1]["hp"]), "Runner is faster but weaker than brute")
         td.enemies.clear()
         check(td.start_wave() and td.wave_number == 3, "TD third wave starts")
+        td.enemies.clear()
+        for wave_index in range(4, 7):
+            check(td.start_wave() and td.wave_number == wave_index, "TD extended siege wave %d starts" % wave_index)
+            if wave_index < 6:
+                td.enemies.clear()
         var boss: Dictionary = {}
         for enemy in td.enemies:
             if enemy.get("role", "") == "boss":
                 boss = enemy
-        check(not boss.is_empty() and boss["hp"] == 55, "Final wave has a durable altar boss")
+        check(not boss.is_empty() and boss["hp"] == 55, "Sixth wave has a durable altar boss")
         if not boss.is_empty():
             boss["delay"] = 0.0
             var altar_before_blast: int = td.altar_hp
@@ -868,7 +873,7 @@ func run_tests() -> void:
             td.tick_boss(2.2)
             check(boss["boss_warning"] and boss["interrupt_hits"] == 0, "Boss can charge again after interrupt")
         td.enemies.clear()
-        check(not td.start_wave(), "TD stops at three waves")
+        check(not td.start_wave(), "TD stops at six waves")
         td.coins = 0
         td.enemies.clear()
         td.enemies.append({"lane": 0, "pos": td.slots[0]["pos"] + Vector2(20, 0), "waypoint": 1, "hp": 1, "delay": 0.0})
@@ -895,7 +900,7 @@ func run_tests() -> void:
         check(td.boss_feedback_time == 0.0 and td.boss_feedback_text == "" and td.summoned_spirits.is_empty(), "Defense restart clears boss feedback and necro summons")
         check(td.defense_state == "playing" and td.wave_number == 0 and td.altar_hp == 100, "TD restart resets wave and altar")
         check(td.slots[0]["tower"] == "" and td.coins == 150, "TD restart clears towers and restores economy")
-        td.wave_number = 3
+        td.wave_number = 6
         td.enemies.clear()
         td._process(0.0)
         check(td.defense_state == "won", "TD victory after final cleared wave")
@@ -975,7 +980,7 @@ func run_tests() -> void:
         root.add_child(hard_td)
         hard_td.difficulty = 2
         check(hard_td.start_wave() and hard_td.enemies[0]["role"] == "brute" and hard_td.enemies[0]["hp"] == 12 and float(hard_td.enemies[0]["speed"]) > 55.0 and hard_td.enemies[1]["role"] == "runner" and float(hard_td.enemies[1]["speed"]) > 135.0, "Nightmare TD opening wave has durable armor and fast runner")
-        hard_td.wave_number = 2
+        hard_td.wave_number = 5
         hard_td.enemies.clear()
         check(hard_td.start_wave() and hard_td.enemies.back()["role"] == "boss" and hard_td.enemies.back()["hp"] == 85, "Nightmare boss gains durability")
         hard_td.enemies.clear()
