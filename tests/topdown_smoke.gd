@@ -638,6 +638,15 @@ func run_tests() -> void:
     check(not burn_rules.advance(burned_foe, 0.5) and int(burned_foe["hp"]) == 7, "Burn module applies first tick")
     check(not burn_rules.advance(burned_foe, 1.0) and int(burned_foe["hp"]) == 3, "Burn module handles multiple ticks per frame")
     check(burn_rules.advance(burned_foe, 1.5) and int(burned_foe["hp"]) <= 0, "Burn module resolves lethal expiration tick")
+    var multihit = load("res://scripts/td/td_multihit.gd")
+    var multihit_primary := {"pos": Vector2(40, 0), "delay": 0.0}
+    var multihit_inline := {"pos": Vector2(85, 0), "delay": 0.0}
+    var multihit_offline := {"pos": Vector2(90, 50), "delay": 0.0}
+    var multihit_pending := {"pos": Vector2(100, 0), "delay": 2.0}
+    var multihit_foes := [multihit_primary, multihit_inline, multihit_offline, multihit_pending]
+    check(multihit.targets({"tower": "bone", "pos": Vector2.ZERO}, multihit_primary, multihit_foes, 135.0).size() == 2, "Bone pierce hits lined-up enemies but ignores side and pending enemies")
+    check(multihit.targets({"tower": "fire", "pos": Vector2.ZERO, "specialization": "swarm"}, multihit_primary, multihit_foes, 135.0).size() == 3, "Sparks hit up to three active enemies")
+    check(multihit.targets({"tower": "fire", "pos": Vector2.ZERO, "specialization": "siege"}, multihit_primary, multihit_foes, 135.0).size() == 1, "Inferno retains single-target attack")
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()

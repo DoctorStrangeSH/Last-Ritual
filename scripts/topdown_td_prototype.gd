@@ -6,6 +6,7 @@ const TD_TOWER_STATS = preload("res://scripts/td/td_tower_stats.gd")
 const TD_TOWER_DAMAGE = preload("res://scripts/td/td_tower_damage.gd")
 const TD_TARGETING = preload("res://scripts/td/td_targeting.gd")
 const TD_BURN_EFFECT = preload("res://scripts/td/td_burn_effect.gd")
+const TD_MULTIHIT = preload("res://scripts/td/td_multihit.gd")
 var sfx: Node
 const SLOT_POSITIONS := [Vector2(280, 190), Vector2(430, 190), Vector2(590, 190), Vector2(750, 190), Vector2(280, 440), Vector2(430, 440), Vector2(590, 440), Vector2(750, 440)]
 const COSTS = TD_TOWER_STATS.COSTS
@@ -419,26 +420,7 @@ func attack_with_towers(delta: float) -> void:
         var target: Dictionary = choose_tower_target(slot_id)
         if target.is_empty():
             continue
-        var nearest: float = tower["pos"].distance_to(target["pos"])
-        var hit_targets: Array = [target]
-        if kind == "fire" and tower.get("specialization", "") == "swarm":
-            # Sparks distribute ordinary burns across a group. Inferno remains
-            # the stronger single-target burn, while Sparks can affect 3 foes.
-            for candidate in enemies:
-                if candidate == target or float(candidate.get("delay", 0.0)) > 0.0 or hit_targets.size() >= 3:
-                    continue
-                if tower["pos"].distance_to(candidate["pos"]) <= TOWER_RANGE[kind]:
-                    hit_targets.append(candidate)
-        if kind == "bone":
-            var direction: Vector2 = (target["pos"] - tower["pos"]).normalized()
-            for candidate in enemies:
-                if candidate == target or candidate["delay"] > 0.0 or hit_targets.size() >= 3:
-                    continue
-                var relative: Vector2 = candidate["pos"] - tower["pos"]
-                var along: float = relative.dot(direction)
-                var across: float = absf(direction.cross(relative))
-                if along > nearest and along <= TOWER_RANGE[kind] and across <= 24.0:
-                    hit_targets.append(candidate)
+        var hit_targets: Array = TD_MULTIHIT.targets(tower, target, enemies, float(TOWER_RANGE[kind]))
         var damage: int = TD_TOWER_DAMAGE.direct_damage(kind, int(tower["level"]), str(tower.get("specialization", "")), fire_synergy_bonus, bone_synergy_bonus)
         for hit_target in hit_targets:
             shot_trails.append({"from": tower["pos"], "to": hit_target["pos"], "time": 0.18, "kind": kind})
