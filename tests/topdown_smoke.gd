@@ -342,6 +342,33 @@ func run_tests() -> void:
         repairs.wave_number = 3
         check(not repairs.repair_altar(), "Cannot repair after final wave")
         repairs.queue_free()
+    var relocation_scene = load("res://scenes/topdown_td_prototype.tscn")
+    if relocation_scene != null:
+        var layout = relocation_scene.instantiate()
+        root.add_child(layout)
+        layout.choose_tower("fire")
+        check(layout.build_tower(0), "Build tower for relocation")
+        layout.coins = 100
+        layout.select_slot(0)
+        check(layout.upgrade_selected(), "Tower upgrades before relocation")
+        check(layout.choose_specialization("siege"), "Tower chooses specialization before relocation")
+        layout.cycle_target_priority()
+        var coins_before: int = layout.coins
+        check(layout.begin_tower_relocation(), "Relocation can begin between waves")
+        check(layout.relocate_tower(0, 4), "Relocation moves tower to empty position")
+        check(layout.slots[0]["tower"] == "" and layout.slots[4]["tower"] == "fire", "Source is empty, destination keeps tower")
+        check(layout.slots[4]["level"] == 2 and layout.slots[4]["specialization"] == "siege", "Relocated tower keeps upgrades")
+        check(layout.slots[4]["target_priority"] == "support" and layout.coins == coins_before, "Relocation keeps target priority and coins")
+        check(not layout.relocate_tower(4, 4), "Relocation cannot move into occupied position")
+        var transfer: Dictionary = layout.export_fortress_state()
+        var following_day = relocation_scene.instantiate()
+        root.add_child(following_day)
+        check(following_day.import_fortress_state(transfer), "Relocated layout survives day transition")
+        check(following_day.slots[4]["tower"] == "fire" and following_day.slots[0]["tower"] == "", "Tower stays in relocated slot")
+        layout.enemies.append({"role": "grunt"})
+        check(not layout.relocate_tower(4, 5), "Cannot move tower during attack")
+        layout.queue_free()
+        following_day.queue_free()
     var td_scene := load("res://scenes/topdown_td_prototype.tscn") as PackedScene
     check(td_scene != null, "Top-down TD scene loads")
     if td_scene != null:
