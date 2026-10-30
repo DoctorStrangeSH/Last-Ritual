@@ -545,6 +545,23 @@ func run_tests() -> void:
         check(found_commander, "Fifth wave fields a commander")
         check(commander_game.enemy_visual_profile("captain")["mark"] == "command", "Commander has distinct silhouette")
         commander_game.queue_free()
+    # Stage 184: audit enemy-count progression on all siege days and difficulties.
+    if specialization_balance_scene != null:
+        var budget_game = specialization_balance_scene.instantiate()
+        root.add_child(budget_game)
+        check(budget_game.wave_enemy_budget(0).is_empty() and budget_game.wave_enemy_budget(7).is_empty(), "Siege budget rejects waves outside 1–6")
+        for day_index in range(1, 4):
+            budget_game.siege_day = day_index
+            var previous_total := 0
+            for wave_index in range(1, 7):
+                var budget: Dictionary = budget_game.wave_enemy_budget(wave_index)
+                check(int(budget["total"]) > previous_total, "Siege enemy count rises through day %d wave %d" % [day_index, wave_index])
+                previous_total = int(budget["total"])
+                budget_game.wave_number = wave_index - 1
+                budget_game.enemies.clear()
+                check(budget_game.start_wave(), "Budgeted wave starts on day %d wave %d" % [day_index, wave_index])
+                check(budget_game.enemies.size() == int(budget["total"]), "Actual spawns match budget on day %d wave %d" % [day_index, wave_index])
+        budget_game.queue_free()
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
