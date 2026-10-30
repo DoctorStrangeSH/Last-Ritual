@@ -152,6 +152,28 @@ func tick_boss(delta: float) -> void:
                 defense_state = "lost"
     queue_redraw()
 
+const SYNERGY_DISTANCE := 190.0
+
+func has_adjacent_tower(slot_id: int, tower_kind: String) -> bool:
+    if slot_id < 0 or slot_id >= slots.size():
+        return false
+    var origin: Vector2 = slots[slot_id]["pos"]
+    for other_id in range(slots.size()):
+        if other_id != slot_id and str(slots[other_id]["tower"]) == tower_kind:
+            if origin.distance_to(slots[other_id]["pos"]) <= SYNERGY_DISTANCE:
+                return true
+    return false
+
+func tower_synergy_damage(slot_id: int, enemy: Dictionary) -> int:
+    if slot_id < 0 or slot_id >= slots.size():
+        return 0
+    var kind: String = str(slots[slot_id]["tower"])
+    if kind == "bone" and float(enemy.get("burn_time", 0.0)) > 0.0 and has_adjacent_tower(slot_id, "fire"):
+        return 2
+    if kind == "necro" and has_adjacent_tower(slot_id, "bone"):
+        return 1
+    return 0
+
 func attack_with_towers(delta: float) -> void:
     for slot_id in range(slots.size()):
         var tower: Dictionary = slots[slot_id]
@@ -195,7 +217,7 @@ func attack_with_towers(delta: float) -> void:
             damage += bone_synergy_bonus
         for hit_target in hit_targets:
             shot_trails.append({"from": tower["pos"], "to": hit_target["pos"], "time": 0.18})
-            hit_target["hp"] -= damage
+            hit_target["hp"] -= damage + tower_synergy_damage(slot_id, hit_target)
             if kind == "fire" and hit_target["hp"] > 0:
                 apply_burn(hit_target)
                 if tower.get("specialization", "") == "siege":
