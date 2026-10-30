@@ -711,6 +711,16 @@ func run_tests() -> void:
         thermal_game.slots[1]["tower"] = ""
         check(thermal_game.tower_synergy_damage(0, thermal_chilled) == thermal_game.tower_synergy_damage(0, thermal_plain), "Thermal shock requires neighboring frost tower")
         thermal_game.queue_free()
+    if specialization_balance_scene != null:
+        var indicator_game = specialization_balance_scene.instantiate()
+        root.add_child(indicator_game)
+        indicator_game.slots[0]["tower"] = "bone"
+        check(indicator_game.frost_synergy_status(0) == "РЯДОМ НУЖНА ЛЕДЯНАЯ БАШНЯ", "Synergy panel explains missing frost neighbor")
+        indicator_game.slots[1]["tower"] = "frost"
+        check("ЛЁД + КОСТИ" in indicator_game.frost_synergy_status(0), "Bone synergy visible with frost neighbor")
+        indicator_game.slots[0]["tower"] = "fire"
+        check("ТЕРМОУДАР" in indicator_game.frost_synergy_status(0), "Fire synergy visible with frost neighbor")
+        indicator_game.queue_free()
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
