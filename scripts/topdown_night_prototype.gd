@@ -715,24 +715,44 @@ func _unhandled_input(event: InputEvent) -> void:
                 next_room()
 
 # Процедурное оформление подземелья. Не влияет на стены и столкновения.
+func crypt_room_palette() -> Dictionary:
+    match room_variant:
+        1:
+            return {"floor": Color("#303138"), "stone": Color("#393841"), "accent": Color("#bc8b72")}
+        2:
+            return {"floor": Color("#30343d"), "stone": Color("#383d48"), "accent": Color("#96a3d2")}
+    return {"floor": Color("#283036"), "stone": Color("#32383f"), "accent": Color("#a0bdab")}
+
+func draw_crypt_door_marker(point: Vector2, unlocked: bool) -> void:
+    var frame_color: Color = Color("#74c8a3") if unlocked else Color("#806775")
+    draw_arc(point, 27.0, -PI / 2.0, PI * 1.5, 32, frame_color, 4.0)
+    draw_rect(Rect2(point + Vector2(-12, -18), Vector2(24, 36)), Color("#1d2530"))
+    draw_rect(Rect2(point + Vector2(-9, -15), Vector2(18, 30)), Color("#3f7364") if unlocked else Color("#57424d"))
+    if unlocked:
+        draw_circle(point, 5.0, Color("#dff5bf"))
+    else:
+        draw_line(point + Vector2(-5, -5), point + Vector2(5, 5), Color("#d7a2a0"), 2.0)
+        draw_line(point + Vector2(5, -5), point + Vector2(-5, 5), Color("#d7a2a0"), 2.0)
+
 func draw_crypt_environment() -> void:
     draw_rect(Rect2(Vector2.ZERO, Vector2(1152, 648)), Color("#10151d"))
     draw_rect(ARENA.grow(15.0), Color("#121a22"))
     draw_rect(ARENA.grow(7.0), Color("#596069"))
-    draw_rect(ARENA, Color("#283036"))
+    var palette: Dictionary = crypt_room_palette()
+    draw_rect(ARENA, palette["floor"])
     for row in range(10):
         for col in range(22):
             var offset := 22.0 if row % 2 == 1 else 0.0
             var tile := Rect2(ARENA.position + Vector2(8.0 + 47.0 * col + offset, 8.0 + 50.0 * row), Vector2(44, 47))
             if tile.end.x >= ARENA.end.x or tile.end.y >= ARENA.end.y:
                 continue
-            var tint := Color("#32383f") if (col * 3 + row * 5 + room_variant) % 7 == 0 else Color("#2d343b")
+            var tint: Color = palette["stone"] if (col * 3 + row * 5 + room_variant) % 7 == 0 else palette["floor"]
             draw_rect(tile, tint)
             draw_rect(tile, Color("#202830"), false, 1.0)
     for x in range(90, 1050, 160):
         draw_rect(Rect2(x, 66, 40, 14), Color("#545c65"))
         draw_rect(Rect2(x, 576, 40, 14), Color("#545c65"))
-        draw_circle(Vector2(x + 20, 84), 5.0, Color("#af8262"))
+        draw_circle(Vector2(x + 20, 84), 5.0, palette["accent"])
     # Свет факелов и каменная арка на восточной стене.
     for torch_pos in [Vector2(100, 170), Vector2(100, 460), Vector2(1015, 165), Vector2(1015, 465)]:
         draw_circle(torch_pos, 19.0, Color("#a96d45", 0.12))
@@ -741,6 +761,10 @@ func draw_crypt_environment() -> void:
     draw_rect(Rect2(1049, 258, 59, 112), Color("#161f28"))
     draw_rect(Rect2(1050, 264, 10, 100), Color("#7a7780"))
     draw_rect(Rect2(1097, 264, 10, 100), Color("#7a7780"))
+    for pillar in [Vector2(132, 125), Vector2(1020, 125), Vector2(132, 519), Vector2(1020, 519)]:
+        draw_rect(Rect2(pillar + Vector2(-16, -13), Vector2(32, 26)), Color("#1d252c"))
+        draw_rect(Rect2(pillar + Vector2(-12, -12), Vector2(24, 22)), palette["stone"])
+        draw_line(pillar + Vector2(-9, -7), pillar + Vector2(9, -7), palette["accent"], 2.0)
 
 func _draw() -> void:
     draw_crypt_environment()
@@ -884,8 +908,7 @@ func _draw() -> void:
         draw_label("ЭТАЖ: %d/10  ИССЛЕДОВАНО: %d" % [room_index + 1, visited_rooms.size()], Vector2(390, 63), 15, Color("#e7d3a8"))
         for direction in door_neighbors():
             var door_point: Vector2 = DOOR_POINTS[direction]
-            draw_circle(door_point, 17.0, Color("#4b8b78") if door_available() else Color("#643e4b"))
-            draw_circle(door_point, 10.0, Color("#c4dbba") if door_available() else Color("#a58c90"))
+            draw_crypt_door_marker(door_point, door_available())
     draw_rect(DASH_BUTTON, Color("#497b80") if dash_cooldown <= 0.0 and run_state == "playing" and not reward_available and not shop_open else Color("#353c46"))
     draw_label("РЫВОК / ПРОБЕЛ" if dash_cooldown <= 0.0 else "РЫВОК %.1f С" % dash_cooldown, DASH_BUTTON.position + Vector2(14, 26), 16, Color("#fff2c5"))
     draw_rect(HELP_BUTTON, Color("#526d9b") if help_visible else Color("#343b47"))
@@ -902,7 +925,7 @@ func _draw() -> void:
         draw_label("КЛИК ПО КАРТОЧКЕ — ВЫБОР ПУТИ", Vector2(354, 343), 17)
         draw_label("ПРОБЕЛ / РЫВОК — УКЛОНЕНИЕ ОТ АТАК", Vector2(354, 378), 15)
         draw_label("ПКМ У ДВЕРИ — ПЕРЕХОД", Vector2(354, 409), 16)
-        draw_label("H  -  Close this help panel", Vector2(354, 438), 16, Color("#d5c592"))
-        draw_label("The action pauses while help is open.", Vector2(354, 469), 14, Color("#9da9bf"))
+        draw_label("H — ЗАКРЫТЬ ПОДСКАЗКУ", Vector2(354, 438), 16, Color("#d5c592"))
+        draw_label("Пока открыта помощь, игра на паузе.", Vector2(354, 469), 14, Color("#9da9bf"))
         draw_rect(HELP_CLOSE_BUTTON, Color("#527d70"))
         draw_label("ПРОДОЛЖИТЬ", HELP_CLOSE_BUTTON.position + Vector2(12.0, 31.0), 17, Color.WHITE)
