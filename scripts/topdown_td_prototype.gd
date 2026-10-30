@@ -5,6 +5,9 @@ var sfx: Node
 const SLOT_POSITIONS := [Vector2(280, 190), Vector2(430, 190), Vector2(590, 190), Vector2(750, 190), Vector2(280, 440), Vector2(430, 440), Vector2(590, 440), Vector2(750, 440)]
 const COSTS := {"bone": 30, "fire": 45, "necro": 60}
 const WAVE_BUTTON := Rect2(65, 545, 170, 60)
+const REPAIR_BUTTON := Rect2(485, 474, 225, 54)
+const REPAIR_COST := 25
+const REPAIR_HP := 20
 const HELP_BUTTON := Rect2(987.0, 10.0, 150.0, 46.0)
 const HELP_CLOSE_BUTTON := Rect2(720.0, 471.0, 130.0, 43.0)
 const TARGET_BUTTON := Rect2(716, 76, 299, 46)
@@ -99,6 +102,17 @@ func upcoming_wave_summary() -> String:
         3:
             return "ОСАДА: БОСС + ПОЛЕВОЙ ЛЕКАРЬ"
     return ""
+
+func repair_altar() -> bool:
+    # Repair is a preparation action; never allow mid-wave or after victory/defeat.
+    if defense_state != "playing" or not enemies.is_empty() or wave_number >= 3:
+        return false
+    if altar_hp <= 0 or altar_hp >= 100 or coins < REPAIR_COST:
+        return false
+    coins -= REPAIR_COST
+    altar_hp = mini(100, altar_hp + REPAIR_HP)
+    queue_redraw()
+    return true
 
 func start_wave() -> bool:
     if defense_state != "playing" or not enemies.is_empty() or wave_number >= 3 or altar_hp <= 0:
@@ -585,6 +599,9 @@ func _unhandled_input(event: InputEvent) -> void:
             queue_redraw()
         elif event.button_index == MOUSE_BUTTON_LEFT:
             var point := get_global_mouse_position()
+            if REPAIR_BUTTON.has_point(point):
+                repair_altar()
+                return
             if WAVE_BUTTON.has_point(point):
                 start_wave()
                 return
@@ -706,6 +723,9 @@ func _draw() -> void:
         draw_rect(TARGET_BUTTON, Color("#e5c985"), false, 2.0)
         var priority: String = str(slots[selected_slot].get("target_priority", "nearest"))
         draw_string(ThemeDB.fallback_font, TARGET_BUTTON.position + Vector2(9, 29), "ЦЕЛЬ: " + str(TARGET_LABELS[priority]), HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color("#fff1c9"))
+    var repair_ready: bool = defense_state == "playing" and enemies.is_empty() and wave_number < 3 and altar_hp > 0 and altar_hp < 100 and coins >= REPAIR_COST
+    draw_rect(REPAIR_BUTTON, Color("#527b75") if repair_ready else Color("#454b54"))
+    draw_string(ThemeDB.fallback_font, REPAIR_BUTTON.position + Vector2(12, 33), "РЕМОНТ +20 / 25 ЗОЛ.", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#fff1ce") if repair_ready else Color("#abb2b5"))
     draw_rect(WAVE_BUTTON, Color("#487d6b") if enemies.is_empty() and wave_number < 3 and altar_hp > 0 else Color("#454b54"))
     draw_string(ThemeDB.fallback_font, Vector2(78, 581), "НАЧАТЬ ВОЛНУ", HORIZONTAL_ALIGNMENT_LEFT, -1, 19, Color.WHITE)
     if enemies.is_empty() and defense_state == "playing":
