@@ -665,6 +665,11 @@ func run_tests() -> void:
     check(is_equal_approx(frost_rules.multiplier(frost_enemy), 0.45), "Slow cap prevents full immobilization")
     frost_rules.advance(frost_enemy, 2.0)
     check(is_equal_approx(frost_rules.multiplier(frost_enemy), 1.0), "Frost expires and restores speed")
+    var frost_stats = load("res://scripts/td/td_tower_stats.gd")
+    var frost_damage = load("res://scripts/td/td_tower_damage.gd")
+    check(frost_stats.SHOP_ORDER.size() == 4 and frost_stats.SHOP_ORDER[3] == "frost", "Frost becomes fourth mouse-selected tower")
+    check(frost_stats.COSTS["frost"] == 50 and frost_stats.RANGES["frost"] == 145.0, "Frost shop cost and range configured")
+    check(frost_damage.direct_damage("frost", 1, "", 0, 0) == 1, "Frost direct damage is intentionally low")
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
