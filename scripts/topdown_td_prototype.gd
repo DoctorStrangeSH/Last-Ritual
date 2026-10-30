@@ -28,7 +28,7 @@ const TARGET_PRIORITIES := ["nearest", "support", "front"]
 const TARGET_LABELS := {"nearest": "БЛИЖАЙШИЙ", "support": "ПОДДЕРЖКА", "front": "У ВОРОТ"}
 var slots: Array[Dictionary] = []
 var specialization_open := false
-const SPECIALIZATION_BUTTONS := [Rect2(315, 325, 220, 70), Rect2(555, 325, 220, 70)]
+const SPECIALIZATION_BUTTONS := [Rect2(303, 400, 239, 39), Rect2(612, 400, 239, 39)]
 const SPECIALIZATION_LABELS = TD_TOWER_STATS.SPECIALIZATION_LABELS
 var selected_type := ""
 var selected_slot := -1
@@ -1336,11 +1336,21 @@ func _draw() -> void:
             draw_string(ThemeDB.fallback_font, EVENT_BUTTONS[i].position + Vector2(8, 37), labels[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color.WHITE)
     if specialization_open and selected_slot >= 0 and selected_slot < slots.size():
         draw_rect(Rect2(0, 65, 1152, 469), Color(0.015, 0.025, 0.04, 0.72))
-        draw_rect(Rect2(275, 260, 560, 175), Color("#202c38"))
-        draw_rect(Rect2(275, 260, 560, 175), Color("#d5c592"), false, 2.0)
-        draw_string(ThemeDB.fallback_font, Vector2(350, 300), "ВЫБЕРИТЕ СПЕЦИАЛИЗАЦИЮ", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color("#f4dfb7"))
-        draw_rect(SPECIALIZATION_BUTTONS[0], Color("#805d49"))
-        draw_rect(SPECIALIZATION_BUTTONS[1], Color("#426d6a"))
-        var labels: Array = SPECIALIZATION_LABELS[str(slots[selected_slot]["tower"])]
-        draw_string(ThemeDB.fallback_font, Vector2(322, 365), str(labels[0]), HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color.WHITE)
-        draw_string(ThemeDB.fallback_font, Vector2(563, 365), str(labels[1]), HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color.WHITE)
+        # A compact side-by-side comparison, instead of two unexplained path names.
+        draw_rect(Rect2(260, 216, 632, 259), Color("#172632", 0.98))
+        draw_rect(Rect2(260, 216, 632, 259), Color("#d5c592"), false, 2.0)
+        draw_string(ThemeDB.fallback_font, Vector2(375, 248), "ВЫБЕРИ ПУТЬ РАЗВИТИЯ", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color("#f4dfb7"))
+        var kind: String = str(slots[selected_slot]["tower"])
+        for index in range(2):
+            var path: String = "siege" if index == 0 else "swarm"
+            var details: Dictionary = TD_TOWER_TOOLTIPS.specialization_info(kind, path, int(slots[selected_slot]["level"]))
+            var left: float = 277.0 + 309.0 * index
+            var card: Rect2 = Rect2(left, 270, 293, 184)
+            draw_rect(card, Color("#263744") if index == 0 else Color("#24433f"))
+            draw_rect(card, Color("#dfc48a") if index == 0 else Color("#91d9c5"), false, 1.5)
+            draw_string(ThemeDB.fallback_font, Vector2(left + 10, 297), str(details["title"]), HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#f9e5bb"))
+            draw_string(ThemeDB.fallback_font, Vector2(left + 10, 325), str(details["line1"]), HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color.WHITE)
+            draw_string(ThemeDB.fallback_font, Vector2(left + 10, 350), str(details["line2"]), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#c6d5de"))
+            draw_string(ThemeDB.fallback_font, Vector2(left + 10, 377), "УРОН: %d  •  КД: %.2f с" % [int(details["damage"]), float(details["cooldown"])], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#aedac9"))
+            draw_rect(SPECIALIZATION_BUTTONS[index], Color("#76593b") if index == 0 else Color("#3a7164"))
+            draw_string(ThemeDB.fallback_font, Vector2(left + 90, 427), "ВЫБРАТЬ", HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color.WHITE)

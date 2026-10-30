@@ -39,3 +39,34 @@ static func upgrade_info(kind: String, level: int, specialization: String, fire_
         "specialization": "На 2 ур. выбери путь башни." if level == 1 else ("Специализация сохранится." if not maxed else "Максимальный уровень."),
         "effect": str(DETAILS[kind]["effect"])
     }
+
+const PATH_DETAILS := {
+    "bone": {
+        "siege": ["БАЛЛИСТА • ПРОБОЙ", "+2 урона за попадание.", "Костяной снаряд пробивает строй."],
+        "swarm": ["КОСТЯНОЙ РОЙ", "Атака раз в 0,45 с вместо 0,8 с.", "На 1 меньше урона за удар."]
+    },
+    "fire": {
+        "siege": ["ИНФЕРНО • ЖАР", "+2 прямого урона.", "Горение сильнее на 2; длится 4 с."],
+        "swarm": ["ИСКРЫ • ОХВАТ", "До 3 целей за атаку.", "Быстрее, но -1 прямого урона."]
+    },
+    "necro": {
+        "siege": ["ЖНЕЦ • МОЩЬ", "Дух наносит 4 вместо 2 урона.", "Живёт 5 вместо 4 секунд."],
+        "swarm": ["ЛЕГИОН • ЧИСЛО", "Призыв после 2 убийств вместо 3.", "Быстрее атака, -1 прямого урона."]
+    },
+    "frost": {
+        "siege": ["МОРОЗ • СИЛА", "Замедление 40% вместо 25%.", "+2 прямого урона за атаку."],
+        "swarm": ["МЕТЕЛЬ • ОХВАТ", "До 3 целей; замедление 20%.", "Быстрее атака, -1 прямого урона."]
+    }
+}
+
+static func specialization_info(kind: String, path: String, level: int) -> Dictionary:
+    if not PATH_DETAILS.has(kind) or not PATH_DETAILS[kind].has(path):
+        return {}
+    var lines: Array = PATH_DETAILS[kind][path]
+    return {
+        "title": str(lines[0]),
+        "line1": str(lines[1]),
+        "line2": str(lines[2]),
+        "damage": DAMAGE.direct_damage(kind, level, path, 0, 0),
+        "cooldown": 0.45 if path == "swarm" else 0.8
+    }
