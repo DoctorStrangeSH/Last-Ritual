@@ -837,6 +837,13 @@ func run_tests() -> void:
         check(trail_styles.shot_trail_style("frost")["impact"] == "crystal", "Frost shots show ice crystals")
         check(trail_styles.shot_trail_style("bone")["width"] > trail_styles.shot_trail_style("frost")["width"], "Bone shots are visually heavier than frost")
         trail_styles.queue_free()
+    if specialization_balance_scene != null:
+        var trail_budget_game = specialization_balance_scene.instantiate()
+        root.add_child(trail_budget_game)
+        check(trail_budget_game.visible_shot_trail_start(0) == 0, "Empty attack effects need no draw budget")
+        check(trail_budget_game.visible_shot_trail_start(10) == 0, "Small battles retain every hit effect")
+        check(trail_budget_game.visible_shot_trail_start(80) == 52, "Large battles draw only the latest 28 shot traces")
+        trail_budget_game.queue_free()
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
