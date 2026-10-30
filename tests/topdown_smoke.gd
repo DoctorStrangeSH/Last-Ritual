@@ -440,6 +440,25 @@ func run_tests() -> void:
     check(stats.RANGES == {"bone": 135.0, "fire": 160.0, "necro": 125.0}, "Tower stats module preserves independent attack radii")
     check(stats.DAMAGES == {"bone": 2, "fire": 1, "necro": 3}, "Tower stats module preserves damage")
     check(stats.SPECIALIZATION_LABELS["fire"][1] == "ИСКРЫ: 3 ЦЕЛИ", "Tower stats module keeps specialization labels")
+    if specialization_balance_scene != null:
+        var range_game = specialization_balance_scene.instantiate()
+        root.add_child(range_game)
+        check(range_game.choose_tower("fire"), "Hover range selects fire for preview")
+        range_game.hovered_slot = 0
+        check(is_equal_approx(float(range_game.tower_range_preview().get("range", 0.0)), 160.0), "Empty build site previews selected fire range")
+        range_game.hovered_slot = -1
+        check(range_game.tower_range_preview().is_empty(), "No preview without hover or selection")
+        check(range_game.build_tower(0), "Hover range places tower")
+        range_game.hovered_slot = -1
+        check(is_equal_approx(float(range_game.tower_range_preview().get("range", 0.0)), 160.0), "Selected tower keeps range visible")
+        range_game.hovered_slot = 0
+        range_game.help_visible = true
+        check(range_game.tower_range_preview().is_empty(), "Help overlay hides attack radius")
+        range_game.help_visible = false
+        range_game.select_slot(0)
+        range_game.hovered_slot = 1
+        check(is_equal_approx(float(range_game.tower_range_preview().get("range", 0.0)), 160.0), "Selected tower range available when hovering empty site")
+        range_game.queue_free()
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
