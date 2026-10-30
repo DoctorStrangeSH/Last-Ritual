@@ -594,6 +594,20 @@ func run_tests() -> void:
         check(strategy_budget.tower_build_budget("bone", 2) + strategy_budget.tower_build_budget("fire", 2) + strategy_budget.tower_build_budget("necro", 2) == 195, "All three level-two towers require later income")
         check(strategy_budget.tower_build_budget("unknown", 2) == -1 and strategy_budget.tower_build_budget("bone", 4) == -1, "Invalid tower budgets rejected")
         strategy_budget.queue_free()
+    if specialization_balance_scene != null:
+        var siege_status = specialization_balance_scene.instantiate()
+        root.add_child(siege_status)
+        check("ПОДГОТОВКА: 1 / 6" in siege_status.siege_progress_label(), "Siege HUD identifies first preparation")
+        check(siege_status.start_wave() and "ОБОРОНА: 1 / 6" in siege_status.siege_progress_label(), "Siege HUD identifies active first wave")
+        siege_status.enemies.clear()
+        check("ПОДГОТОВКА: 2 / 6" in siege_status.siege_progress_label(), "Siege HUD identifies next preparation")
+        siege_status.wave_number = siege_status.SIEGE_WAVES
+        check(siege_status.siege_progress_label() == "ПОСЛЕДНЯЯ ВОЛНА", "Siege HUD awaits final clear")
+        siege_status.defense_state = "won"
+        check(siege_status.siege_progress_label() == "ОСАДА ОТБИТА", "Siege HUD identifies victory")
+        siege_status.defense_state = "lost"
+        check(siege_status.siege_progress_label() == "ОБОРОНА ПРОВАЛЕНА", "Siege HUD identifies defeat")
+        siege_status.queue_free()
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
