@@ -334,6 +334,41 @@ func run_tests() -> void:
         check(swarm_foe["hp"] == 94, "Bone swarm fires its second shot while Ballista reloads")
         check(bone_swarm.coins == 100 and ballista.coins == 100, "Neither bone benchmark awards gold without a kill")
         bone_swarm.queue_free()
+    # Bone piercing benchmark: aligned targets can be hit, side targets cannot.
+    # Small-HP runner proxy demonstrates Ballista's burst vs Swarm's cadence.
+    if specialization_balance_scene != null:
+        for bone_path in ["siege", "swarm"]:
+            var piercing = specialization_balance_scene.instantiate()
+            root.add_child(piercing)
+            check(piercing.choose_tower("bone") and piercing.build_tower(0), "Piercing benchmark builds bone tower " + bone_path)
+            check(piercing.upgrade_selected() and piercing.choose_specialization(bone_path), "Piercing benchmark chooses " + bone_path)
+            var base: Vector2 = piercing.slots[0]["pos"]
+            var front: Dictionary = {"pos": base + Vector2(20, 0), "hp": 100, "delay": 0.0, "role": "runner"}
+            var behind_a: Dictionary = {"pos": base + Vector2(60, 0), "hp": 100, "delay": 0.0, "role": "brute"}
+            var behind_b: Dictionary = {"pos": base + Vector2(100, 0), "hp": 100, "delay": 0.0, "role": "brute"}
+            var side: Dictionary = {"pos": base + Vector2(60, 45), "hp": 100, "delay": 0.0, "role": "runner"}
+            piercing.enemies.append_array([front, behind_a, behind_b, side])
+            piercing.attack_with_towers(0.01)
+            var expected_hit: int = 94 if bone_path == "siege" else 97
+            check(front["hp"] == expected_hit and behind_a["hp"] == expected_hit and behind_b["hp"] == expected_hit, "Bone pierces three aligned targets: " + bone_path)
+            check(side["hp"] == 100, "Bone does not pierce off-axis fourth target: " + bone_path)
+            check(piercing.coins == 100, "Piercing without kills grants no gold: " + bone_path)
+            piercing.queue_free()
+
+        for bone_path in ["siege", "swarm"]:
+            var runner_game = specialization_balance_scene.instantiate()
+            root.add_child(runner_game)
+            check(runner_game.choose_tower("bone") and runner_game.build_tower(0), "Runner benchmark builds tower: " + bone_path)
+            check(runner_game.upgrade_selected() and runner_game.choose_specialization(bone_path), "Runner benchmark selects path: " + bone_path)
+            var runner: Dictionary = {"pos": runner_game.slots[0]["pos"] + Vector2(30, 0), "hp": 5, "delay": 0.0, "role": "runner"}
+            runner_game.enemies.append(runner)
+            runner_game.attack_with_towers(0.01)
+            check(runner_game.enemies.is_empty() == (bone_path == "siege"), "Ballista instantly stops 5-HP runner, Swarm needs another shot: " + bone_path)
+            if bone_path == "swarm":
+                runner_game.attack_with_towers(0.45)
+                check(runner_game.enemies.is_empty(), "Swarm defeats 5-HP runner on second shot")
+            check(runner_game.enemies_defeated == 1 and runner_game.coins == 105, "Runner kill pays exactly once: " + bone_path)
+            runner_game.queue_free()
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
