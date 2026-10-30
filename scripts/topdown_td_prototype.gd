@@ -4,6 +4,7 @@ const SFX_SCRIPT = preload("res://scripts/procedural_sfx.gd")
 const TD_SYNERGY_RULES = preload("res://scripts/td/td_synergy_rules.gd")
 const TD_TOWER_STATS = preload("res://scripts/td/td_tower_stats.gd")
 const TD_TOWER_DAMAGE = preload("res://scripts/td/td_tower_damage.gd")
+const TD_TARGETING = preload("res://scripts/td/td_targeting.gd")
 var sfx: Node
 const SLOT_POSITIONS := [Vector2(280, 190), Vector2(430, 190), Vector2(590, 190), Vector2(750, 190), Vector2(280, 440), Vector2(430, 440), Vector2(590, 440), Vector2(750, 440)]
 const COSTS = TD_TOWER_STATS.COSTS
@@ -393,28 +394,7 @@ func tower_synergy_damage(slot_id: int, enemy: Dictionary) -> int:
 func choose_tower_target(slot_id: int) -> Dictionary:
     if slot_id < 0 or slot_id >= slots.size():
         return {}
-    var tower: Dictionary = slots[slot_id]
-    var kind: String = str(tower["tower"])
-    if kind == "" or not TOWER_RANGE.has(kind):
-        return {}
-    var priority: String = str(tower.get("target_priority", "nearest"))
-    var best: Dictionary = {}
-    var best_score := -INF
-    for enemy in enemies:
-        if float(enemy.get("delay", 0.0)) > 0.0:
-            continue
-        var distance: float = tower["pos"].distance_to(enemy["pos"])
-        if distance > float(TOWER_RANGE[kind]):
-            continue
-        var score: float = -distance
-        if priority == "support":
-            score += 10000.0 if str(enemy.get("role", "")) == "healer" else 0.0
-        elif priority == "front":
-            score = float(enemy["pos"].x)
-        if score > best_score:
-            best_score = score
-            best = enemy
-    return best
+    return TD_TARGETING.choose(slots[slot_id], enemies, TOWER_RANGE)
 
 func cycle_target_priority() -> bool:
     if selected_slot < 0 or selected_slot >= slots.size() or slots[selected_slot]["tower"] == "":
