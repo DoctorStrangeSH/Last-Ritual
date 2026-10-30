@@ -263,6 +263,16 @@ func run_tests() -> void:
         links_game.slots[1]["tower"] = ""
         check(links_game.tower_synergy_links(0).is_empty(), "No synergy link for empty neighbor")
         links_game.queue_free()
+    var scouting_scene = load("res://scenes/topdown_td_prototype.tscn")
+    if scouting_scene != null:
+        var scouting = scouting_scene.instantiate()
+        root.add_child(scouting)
+        check("ПЕХОТА" in scouting.upcoming_wave_summary(), "First wave scouting warns about infantry")
+        scouting.wave_number = 1
+        check("БЕГУНЫ" in scouting.upcoming_wave_summary(), "Second wave scouting warns about runners")
+        scouting.wave_number = 2
+        check("БОСС" in scouting.upcoming_wave_summary(), "Final wave scouting warns about boss")
+        scouting.queue_free()
     var td_scene := load("res://scenes/topdown_td_prototype.tscn") as PackedScene
     check(td_scene != null, "Top-down TD scene loads")
     if td_scene != null:

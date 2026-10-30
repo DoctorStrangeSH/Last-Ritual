@@ -85,6 +85,18 @@ func hero_attack(target: Vector2) -> bool:
     queue_redraw()
     return true
 
+func upcoming_wave_summary() -> String:
+    if wave_number >= 3:
+        return "ВСЕ ВОЛНЫ ОТБИТЫ"
+    match wave_number + 1:
+        1:
+            return "РАЗВЕДКА: МЕДЛЕННАЯ ПЕХОТА"
+        2:
+            return "УГРОЗА: БЕГУНЫ + БРОНИРОВАННЫЕ"
+        3:
+            return "ОСАДА: БЕГУНЫ + БРОНЯ + БОСС"
+    return ""
+
 func start_wave() -> bool:
     if defense_state != "playing" or not enemies.is_empty() or wave_number >= 3 or altar_hp <= 0:
         return false
@@ -628,6 +640,9 @@ func _draw() -> void:
     draw_string(ThemeDB.fallback_font, Vector2(66, 45), "АЛТАРЬ %d / 100     ВОЛНА %d / 3     ЗОЛОТО %d" % [altar_hp, wave_number, coins], HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color.WHITE)
     draw_rect(WAVE_BUTTON, Color("#487d6b") if enemies.is_empty() and wave_number < 3 and altar_hp > 0 else Color("#454b54"))
     draw_string(ThemeDB.fallback_font, Vector2(78, 581), "НАЧАТЬ ВОЛНУ", HORIZONTAL_ALIGNMENT_LEFT, -1, 19, Color.WHITE)
+    if enemies.is_empty() and defense_state == "playing":
+        draw_rect(Rect2(62, 487, 410, 42), Color("#263d43", 0.96))
+        draw_string(ThemeDB.fallback_font, Vector2(74, 515), upcoming_wave_summary(), HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#f2d89c"))
     for path in PATHS:
         draw_fortress_road(path)
     for enemy in enemies:
