@@ -671,6 +671,26 @@ func run_tests() -> void:
         check(hard_td.start_wave() and hard_td.enemies.back()["role"] == "boss" and hard_td.enemies.back()["hp"] == 85, "Nightmare boss gains durability")
         hard_td.enemies.clear()
         hard_td.queue_free()
+    # Crypt tactics change by preset, without spawning extra enemies or hiding threats.
+    var tactics_scene = load("res://scenes/topdown_night_prototype.tscn") as PackedScene
+    if tactics_scene != null:
+        var tactics_probe = tactics_scene.instantiate()
+        root.add_child(tactics_probe)
+        tactics_probe.difficulty = 0
+        tactics_probe.open_room(0, 0)
+        check(tactics_probe.enemies.size() == 2 and tactics_probe.enemies[0]["role"] == "regular", "Normal crypt keeps one melee and one ranged enemy")
+        tactics_probe.difficulty = 1
+        tactics_probe.open_room(0, 0)
+        check(tactics_probe.enemies.size() == 2 and tactics_probe.enemies[0]["role"] == "flanker" and tactics_probe.enemies[1]["ranged"], "Hard crypt introduces flanker while keeping ranged pressure")
+        check(tactics_probe.enemies[0]["hp"] == 5 and float(tactics_probe.enemies[0]["speed"]) > 100.0, "Hard flanker receives existing difficulty scaling")
+        tactics_probe.difficulty = 2
+        tactics_probe.open_room(0, 0)
+        check(tactics_probe.enemies.size() == 2 and tactics_probe.enemies[0]["role"] == "champion" and tactics_probe.enemies[1]["ranged"], "Nightmare crypt introduces armored champion and ranged unit")
+        check(tactics_probe.enemies[0]["hp"] == 10, "Nightmare crypt armor has predictable durability")
+        var encounter_snapshot: Array = tactics_probe.enemies.duplicate(true)
+        tactics_probe.open_room(0, 0)
+        check(tactics_probe.enemies == encounter_snapshot, "Crypt encounters stay deterministic across identical retries")
+        tactics_probe.queue_free()
     var hard_night_scene := load("res://scenes/topdown_night_prototype.tscn") as PackedScene
     if hard_night_scene != null:
         var hard_night = hard_night_scene.instantiate()

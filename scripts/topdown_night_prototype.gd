@@ -72,6 +72,16 @@ func _ready() -> void:
     add_child(sfx)
     open_room(0)
 
+func crypt_vanguard_profile() -> Dictionary:
+    # One readable threat changes with difficulty; the ranged opponent stays put.
+    # This remains deterministic for a given difficulty and room.
+    match difficulty:
+        1:
+            return {"role": "flanker", "hp": 3, "speed": 100.0}
+        2:
+            return {"role": "champion", "hp": 6, "speed": 70.0}
+    return {"role": "regular", "hp": 3, "speed": 65.0}
+
 func open_room(index: int, override_variant: int = -1) -> void:
     room_index = index if exploration_enabled else clampi(index, 0, 2)
     player_pos = Vector2(160.0, 325.0)
@@ -131,7 +141,8 @@ func open_room(index: int, override_variant: int = -1) -> void:
     match room_variant:
         0:
             # Crypt: predictable melee + a ranged shooter with room to learn dodge.
-            spawn_enemy(Vector2(570.0, 240.0), 3, 65.0, false)
+            var vanguard: Dictionary = crypt_vanguard_profile()
+            spawn_enemy(Vector2(570.0, 240.0), int(vanguard["hp"]), float(vanguard["speed"]), false, str(vanguard["role"]))
             spawn_enemy(Vector2(730.0, 370.0), 3, 85.0, true)
         1:
             # Ambush: two lightly-armored flankers approach from opposing lanes.
