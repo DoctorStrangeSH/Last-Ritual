@@ -732,6 +732,15 @@ func run_tests() -> void:
         var preserved_bonus: Dictionary = combo_panel.tower_synergy_preview(0)
         check(preserved_bonus.has("flat") and preserved_bonus.has("burning"), "Frost help does not replace legacy synergy data")
         combo_panel.queue_free()
+    if specialization_balance_scene != null:
+        var linked_spirit_game = specialization_balance_scene.instantiate()
+        root.add_child(linked_spirit_game)
+        linked_spirit_game.spawn_necro_spirit(Vector2.ZERO, false, true)
+        check(linked_spirit_game.summoned_spirits.size() == 1 and bool(linked_spirit_game.summoned_spirits[0]["frost_link"]), "Necro frost link is carried by summoned spirit")
+        linked_spirit_game.summoned_spirits.clear()
+        linked_spirit_game.spawn_necro_spirit(Vector2.ZERO)
+        check(not bool(linked_spirit_game.summoned_spirits[0]["frost_link"]), "Normal necro spirit does not inherit frost link")
+        linked_spirit_game.queue_free()
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()

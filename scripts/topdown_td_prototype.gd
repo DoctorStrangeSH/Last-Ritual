@@ -463,14 +463,16 @@ func attack_with_towers(delta: float) -> void:
                     var spirit_threshold: int = 2 if tower.get("specialization", "") == "swarm" else 3
                     if necro_kill_streak >= spirit_threshold:
                         necro_kill_streak = 0
-                        spawn_necro_spirit(tower["pos"], tower.get("specialization", "") == "siege")
+                        spawn_necro_spirit(tower["pos"], tower.get("specialization", "") == "siege", has_adjacent_tower(slot_id, "frost"))
         tower_cooldowns[slot_id] = 0.45 if tower.get("specialization", "") == "swarm" else 0.8
     queue_redraw()
 
-func spawn_necro_spirit(origin: Vector2, empowered: bool = false) -> void:
+func spawn_necro_spirit(origin: Vector2, empowered: bool = false, frost_link: bool = false) -> void:
     if summoned_spirits.size() >= 2:
         return
-    summoned_spirits.append(TD_NECRO_SPIRITS.create(origin, empowered))
+    var spirit: Dictionary = TD_NECRO_SPIRITS.create(origin, empowered)
+    spirit["frost_link"] = frost_link
+    summoned_spirits.append(spirit)
 
 func tick_necro_spirits(delta: float) -> void:
     for spirit in summoned_spirits.duplicate():
@@ -483,6 +485,10 @@ func tick_necro_spirits(delta: float) -> void:
             continue
         var target: Dictionary = TD_NECRO_SPIRITS.select_target(spirit, enemies)
         if not target.is_empty():
+            # Frost towers near necromancers let their spirits reinforce control,
+            # without granting another unconditional direct-damage bonus.
+            if float(target.get("frost_time", 0.0)) > 0.0 and spirit.get("frost_link", false):
+                TD_FROST_EFFECT.apply(target, 1.0, 0.25)
             target["hp"] -= int(spirit["damage"])
             shot_trails.append({"from": spirit["pos"], "to": target["pos"], "time": 0.15})
             spirit["cooldown"] = 0.75
