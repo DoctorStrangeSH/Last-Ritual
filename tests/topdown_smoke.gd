@@ -436,9 +436,9 @@ func run_tests() -> void:
     check(synergy_rules.preview("necro", true, true) == {"flat": 1, "burning": 1}, "Module: necromancy combines both sources")
     check(synergy_rules.preview("necro", false, false) == {"flat": 0, "burning": 0}, "Module: no phantom synergy")
     var stats = load("res://scripts/td/td_tower_stats.gd")
-    check(stats.COSTS == {"bone": 30, "fire": 45, "necro": 60}, "Tower stats module preserves prices")
-    check(stats.RANGES == {"bone": 135.0, "fire": 160.0, "necro": 125.0}, "Tower stats module preserves independent attack radii")
-    check(stats.DAMAGES == {"bone": 2, "fire": 1, "necro": 3}, "Tower stats module preserves damage")
+    check(stats.COSTS == {"bone": 30, "fire": 45, "necro": 60, "frost": 50}, "Tower stats module preserves prices")
+    check(stats.RANGES == {"bone": 135.0, "fire": 160.0, "necro": 125.0, "frost": 145.0}, "Tower stats module preserves independent attack radii")
+    check(stats.DAMAGES == {"bone": 2, "fire": 1, "necro": 3, "frost": 1}, "Tower stats module preserves damage")
     check(stats.SPECIALIZATION_LABELS["fire"][1] == "ИСКРЫ: 3 ЦЕЛИ", "Tower stats module keeps specialization labels")
     if specialization_balance_scene != null:
         var range_game = specialization_balance_scene.instantiate()
@@ -609,7 +609,7 @@ func run_tests() -> void:
         check(siege_status.siege_progress_label() == "ОБОРОНА ПРОВАЛЕНА", "Siege HUD identifies defeat")
         siege_status.queue_free()
     var shop_catalog = load("res://scripts/td/td_tower_stats.gd")
-    check(shop_catalog.SHOP_ORDER == ["bone", "fire", "necro"], "Tower shop keeps current mouse ordering")
+    check(shop_catalog.SHOP_ORDER == ["bone", "fire", "necro", "frost"], "Tower shop keeps current mouse ordering")
     check(shop_catalog.DISPLAY_NAMES.size() == shop_catalog.SHOP_ORDER.size(), "Tower shop labels cover all entries")
     for kind in shop_catalog.SHOP_ORDER:
         check(shop_catalog.COSTS.has(kind) and shop_catalog.RANGES.has(kind) and shop_catalog.DAMAGES.has(kind) and shop_catalog.DISPLAY_NAMES.has(kind), "Tower shop entry has complete base stats and name")
@@ -665,6 +665,11 @@ func run_tests() -> void:
     check(is_equal_approx(frost_rules.multiplier(frost_enemy), 0.45), "Slow cap prevents full immobilization")
     frost_rules.advance(frost_enemy, 2.0)
     check(is_equal_approx(frost_rules.multiplier(frost_enemy), 1.0), "Frost expires and restores speed")
+    var frost_stats = load("res://scripts/td/td_tower_stats.gd")
+    var frost_damage = load("res://scripts/td/td_tower_damage.gd")
+    check(frost_stats.SHOP_ORDER.size() == 4 and frost_stats.SHOP_ORDER[3] == "frost", "Frost becomes fourth mouse-selected tower")
+    check(frost_stats.COSTS["frost"] == 50 and frost_stats.RANGES["frost"] == 145.0, "Frost shop cost and range configured")
+    check(frost_damage.direct_damage("frost", 1, "", 0, 0) == 1, "Frost direct damage is intentionally low")
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
