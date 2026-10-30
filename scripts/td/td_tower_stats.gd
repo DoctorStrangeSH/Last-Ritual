@@ -8,3 +8,7 @@ const SPECIALIZATION_LABELS := {
     "fire": ["ИНФЕРНО: ПЛАМЯ", "ИСКРЫ: 3 ЦЕЛИ"],
     "necro": ["ЖНЕЦ: СИЛА ДУХОВ", "ЛЕГИОН: БОЛЬШЕ ДУХОВ"]
 }
+
+# Ordered catalogue shared by tower shop input and rendering.
+const SHOP_ORDER := ["bone", "fire", "necro"]
+const DISPLAY_NAMES := {"bone": "КОСТЯНАЯ", "fire": "ОГНЕННАЯ", "necro": "НЕКРОМАНТ"}
