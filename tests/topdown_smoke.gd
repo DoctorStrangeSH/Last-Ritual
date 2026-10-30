@@ -251,6 +251,18 @@ func run_tests() -> void:
         synergy.slots[1]["tower"] = "bone"
         check(synergy.tower_synergy_damage(0, burning_foe) == 1, "Nearby bone tower supports necromancer")
         synergy.queue_free()
+    var link_scene = load("res://scenes/topdown_td_prototype.tscn")
+    if link_scene != null:
+        var links_game = link_scene.instantiate()
+        root.add_child(links_game)
+        links_game.slots[0]["tower"] = "bone"
+        links_game.slots[1]["tower"] = "fire"
+        check(links_game.tower_synergy_links(0).has(1), "Selected bone tower highlights adjacent fire link")
+        links_game.slots[1]["tower"] = "necro"
+        check(links_game.tower_synergy_links(0).has(1), "Bone highlights nearby necromancer support")
+        links_game.slots[1]["tower"] = ""
+        check(links_game.tower_synergy_links(0).is_empty(), "No synergy link for empty neighbor")
+        links_game.queue_free()
     var td_scene := load("res://scenes/topdown_td_prototype.tscn") as PackedScene
     check(td_scene != null, "Top-down TD scene loads")
     if td_scene != null:
