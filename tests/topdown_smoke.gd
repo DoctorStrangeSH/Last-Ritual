@@ -584,6 +584,16 @@ func run_tests() -> void:
         check(int(income.siege_economy_forecast()["enemies"]) == 46, "Later siege day adds six attackers")
         check(int(income.siege_economy_forecast()["maximum_gold"]) == 380, "Later siege income scales with attackers")
         income.queue_free()
+    if specialization_balance_scene != null:
+        var strategy_budget = specialization_balance_scene.instantiate()
+        root.add_child(strategy_budget)
+        check(strategy_budget.tower_build_budget("bone", 3) == 90, "Bone level three requires 90 total gold")
+        check(strategy_budget.tower_build_budget("fire", 3) == 105, "Fire level three requires 105 total gold")
+        check(strategy_budget.tower_build_budget("necro", 3) == 120, "Necro level three requires 120 total gold")
+        check(strategy_budget.tower_build_budget("bone", 1) + strategy_budget.tower_build_budget("fire", 1) + strategy_budget.tower_build_budget("necro", 1) == 135, "Starting 150 gold permits all three tower schools")
+        check(strategy_budget.tower_build_budget("bone", 2) + strategy_budget.tower_build_budget("fire", 2) + strategy_budget.tower_build_budget("necro", 2) == 195, "All three level-two towers require later income")
+        check(strategy_budget.tower_build_budget("unknown", 2) == -1 and strategy_budget.tower_build_budget("bone", 4) == -1, "Invalid tower budgets rejected")
+        strategy_budget.queue_free()
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()

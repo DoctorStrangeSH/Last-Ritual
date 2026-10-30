@@ -198,6 +198,17 @@ func choose_interwave_event(choice: String) -> bool:
     queue_redraw()
     return true
 
+func tower_build_budget(kind: String, level: int) -> int:
+    # Full investment cost; a pure helper for balance audits and future UI.
+    if not COSTS.has(kind) or level < 1 or level > 3:
+        return -1
+    var total: int = int(COSTS[kind])
+    if level >= 2:
+        total += 20
+    if level >= 3:
+        total += 40
+    return total
+
 func siege_economy_forecast() -> Dictionary:
     # Deterministic upper-bound income: assumes every spawned enemy is defeated.
     # Escaped enemies, repairs, and optional council choices change actual coins.
