@@ -1,6 +1,7 @@
 extends Node2D
 ## V2 independent top-down TD construction slice. No paths or wave spawning yet.
 const SFX_SCRIPT = preload("res://scripts/procedural_sfx.gd")
+const TD_SYNERGY_RULES = preload("res://scripts/td/td_synergy_rules.gd")
 var sfx: Node
 const SLOT_POSITIONS := [Vector2(280, 190), Vector2(430, 190), Vector2(590, 190), Vector2(750, 190), Vector2(280, 440), Vector2(430, 440), Vector2(590, 440), Vector2(750, 440)]
 const COSTS := {"bone": 30, "fire": 45, "necro": 60}
@@ -266,23 +267,15 @@ func tower_synergy_links(slot_id: int) -> Array[int]:
     return links
 
 func tower_synergy_preview(slot_id: int) -> Dictionary:
-    # Shared by damage calculation and the inspector: never advertise a bonus
-    # that does not actually apply to the selected tower.
-    var flat := 0
-    var burning := 0
+    # Shared rule for battle and inspector, with adjacency derived from slots.
     if slot_id < 0 or slot_id >= slots.size():
-        return {"flat": flat, "burning": burning}
+        return {"flat": 0, "burning": 0}
     var kind: String = str(slots[slot_id]["tower"])
-    if kind == "bone" and has_adjacent_tower(slot_id, "fire"):
-        burning = 2
-    elif kind == "fire" and has_adjacent_tower(slot_id, "bone"):
-        # Bone supports follow-up fire shots against targets already burning.
-        # The first hit remains unchanged; the inspector uses this same rule.
-        burning = 1
-    elif kind == "necro":
-        flat = 1 if has_adjacent_tower(slot_id, "bone") else 0
-        burning = 1 if has_adjacent_tower(slot_id, "fire") else 0
-    return {"flat": flat, "burning": burning}
+    return TD_SYNERGY_RULES.preview(
+        kind,
+        has_adjacent_tower(slot_id, "fire"),
+        has_adjacent_tower(slot_id, "bone")
+    )
 
 func tower_synergy_damage(slot_id: int, enemy: Dictionary) -> int:
     var bonus: Dictionary = tower_synergy_preview(slot_id)
