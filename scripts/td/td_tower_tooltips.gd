@@ -73,3 +73,22 @@ static func specialization_info(kind: String, path: String, level: int) -> Dicti
         "damage": DAMAGE.direct_damage(kind, level, path, 0, 0),
         "cooldown": 0.45 if path == "swarm" else 0.8
     }
+
+## Synergy wording is based on td_synergy_rules.gd and frost/necro combat handlers.
+static func synergy_lines(kind: String, near_fire: bool, near_bone: bool, near_frost: bool) -> Array[String]:
+    var lines: Array[String] = []
+    if kind == "bone":
+        lines.append(("АКТИВНО" if near_fire else "НУЖЕН ОГОНЬ") + ": +2 урона горящим врагам.")
+        lines.append(("АКТИВНО" if near_frost else "НУЖЕН ЛЁД") + ": +1 урона замедленным.")
+    elif kind == "fire":
+        lines.append(("АКТИВНО" if near_bone else "НУЖНЫ КОСТИ") + ": +1 урона горящим врагам.")
+        lines.append(("АКТИВНО" if near_frost else "НУЖЕН ЛЁД") + ": +1 урона замедленным.")
+    elif kind == "necro":
+        lines.append(("АКТИВНО" if near_bone else "НУЖНЫ КОСТИ") + ": +1 урона любому врагу.")
+        lines.append(("АКТИВНО" if near_fire else "НУЖЕН ОГОНЬ") + ": +1 урона горящим.")
+        lines.append(("АКТИВНО" if near_frost else "НУЖЕН ЛЁД") + ": духи продлевают заморозку.")
+    elif kind == "frost":
+        lines.append("САМАЯ СИНЕРГИЯ: замедление открывает бонусы.")
+        lines.append("КОСТИ И ОГОНЬ: +1 по замедленным.")
+        lines.append("НЕКРОМАНТ: духи продлевают заморозку.")
+    return lines

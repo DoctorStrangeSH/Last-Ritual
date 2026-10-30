@@ -924,6 +924,12 @@ func run_tests() -> void:
         check("2 ПУТИ" in str(first["extra"]), "Level two upgrade explains specialization choice: " + upgrade_kind)
         var third: Dictionary = upgrade_tips.upgrade_info(upgrade_kind, 2, "swarm", 0, 0)
         check(is_equal_approx(float(third["attack_interval"]), 0.45) and "НЕ МЕНЯЮТСЯ" in str(third["extra"]), "Third-level preview preserves swarm attack cadence: " + upgrade_kind)
+    var synergy_tooltips = load("res://scripts/td/td_tower_tooltips.gd")
+    var bone_active: Array[String] = synergy_tooltips.synergy_lines("bone", true, false, true)
+    check(bone_active.size() == 2 and bone_active[0].begins_with("АКТИВНО") and bone_active[1].begins_with("АКТИВНО"), "Bone tooltip marks active fire and frost combinations")
+    var necro_inactive: Array[String] = synergy_tooltips.synergy_lines("necro", false, false, false)
+    check(necro_inactive.size() == 3 and necro_inactive[0].begins_with("НУЖНЫ КОСТИ"), "Necro tooltip explains missing neighbours")
+    check(synergy_tooltips.synergy_lines("frost", false, false, false).size() == 3, "Frost tooltip documents all three school pairings")
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
