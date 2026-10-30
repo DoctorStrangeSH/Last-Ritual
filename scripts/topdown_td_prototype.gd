@@ -10,6 +10,7 @@ const WAVE_BUTTON := Rect2(65, 545, 170, 60)
 const REPAIR_BUTTON := Rect2(485, 474, 225, 54)
 const MOVE_BUTTON := Rect2(730, 474, 155, 54)
 var moving_tower := false
+const SIEGE_WAVES := 6
 const REPAIR_COST := 25
 const REPAIR_HP := 20
 const HELP_BUTTON := Rect2(987.0, 10.0, 150.0, 46.0)
@@ -104,7 +105,7 @@ func hero_attack(target: Vector2) -> bool:
     return true
 
 func upcoming_wave_summary() -> String:
-    if wave_number >= 3:
+    if wave_number >= SIEGE_WAVES:
         return "ВСЕ ВОЛНЫ ОТБИТЫ"
     if siege_day == 2:
         return "ДЕНЬ 2: НАЛЁТ БЕГУНОВ / ВОЛНА %d" % (wave_number + 1)
@@ -116,12 +117,18 @@ func upcoming_wave_summary() -> String:
         2:
             return "УГРОЗА: БЕГУНЫ + БРОНЯ + ЛЕКАРЬ"
         3:
-            return "ОСАДА: БОСС + ПОЛЕВОЙ ЛЕКАРЬ"
+            return "НАТИСК: БРОНЯ И БЕГУНЫ"
+        4:
+            return "ПОДКРЕПЛЕНИЯ: ЛЕКАРИ"
+        5:
+            return "ШТУРМ: СМЕШАННЫЕ ОТРЯДЫ"
+        6:
+            return "ФИНАЛ: БОСС + ПОЛЕВОЙ ЛЕКАРЬ"
     return ""
 
 func repair_altar() -> bool:
     # Repair is a preparation action; never allow mid-wave or after victory/defeat.
-    if defense_state != "playing" or not enemies.is_empty() or wave_number >= 3:
+    if defense_state != "playing" or not enemies.is_empty() or wave_number >= SIEGE_WAVES:
         return false
     if altar_hp <= 0 or altar_hp >= 100 or coins < REPAIR_COST:
         return false
@@ -141,6 +148,8 @@ func siege_enemy_role(wave: int, index: int) -> String:
         return "runner"
     if siege_day >= 3 and index % 2 == 0:
         return "brute"
+    if wave >= 5 and index % 4 == 0:
+        return "brute"
     if wave >= 2 and index % 3 == 0:
         return "runner"
     if wave >= 2 and index % 3 == 1:
@@ -158,7 +167,7 @@ func siege_spawn_delay(wave: int, index: int, role: String) -> float:
     return base_delay
 
 func start_wave() -> bool:
-    if defense_state != "playing" or not enemies.is_empty() or wave_number >= 3 or altar_hp <= 0:
+    if defense_state != "playing" or not enemies.is_empty() or wave_number >= SIEGE_WAVES or altar_hp <= 0:
         return false
     moving_tower = false
     wave_number += 1
@@ -174,7 +183,7 @@ func start_wave() -> bool:
         var support_hp: int = 8 + wave_number * 2 + difficulty * 2
         enemies.append({"lane": 1, "pos": paths[1][0], "waypoint": 1, "hp": support_hp, "max_hp": support_hp, "speed": 62.0, "role": "healer", "delay": 1.5, "heal_timer": 1.0})
         enemies_spawned += 1
-    if wave_number == 3:
+    if wave_number == SIEGE_WAVES:
         enemies.append({"lane": 0, "pos": paths[0][0], "waypoint": 1, "hp": 55 + difficulty * 15 + (20 if siege_day >= 3 else 0), "speed": 28.0 * (1.0 + 0.15 * difficulty), "role": "boss", "delay": 3.0, "boss_charge": 0.0, "boss_warning": false, "interrupt_hits": 0})
         enemies_spawned += 1
     queue_redraw()
@@ -475,7 +484,7 @@ func restart_defense() -> void:
 func _process(delta: float) -> void:
     if help_visible or defense_state != "playing":
         return
-    if wave_number == 3 and enemies.is_empty():
+    if wave_number == SIEGE_WAVES and enemies.is_empty():
         defense_state = "won"
         queue_redraw()
         return
@@ -562,7 +571,7 @@ func choose_tower(kind: String) -> bool:
 
 func can_modify_towers() -> bool:
     # Construction, upgrading and selling are strategic inter-wave decisions.
-    return defense_state == "playing" and enemies.is_empty() and wave_number < 3 and not specialization_open
+    return defense_state == "playing" and enemies.is_empty() and wave_number < SIEGE_WAVES and not specialization_open
 
 func build_tower(slot_id: int) -> bool:
     if not can_modify_towers():
@@ -583,14 +592,14 @@ func build_tower(slot_id: int) -> bool:
     return true
 
 func can_relocate_tower(source_id: int, destination_id: int) -> bool:
-    if defense_state != "playing" or not enemies.is_empty() or wave_number >= 3:
+    if defense_state != "playing" or not enemies.is_empty() or wave_number >= SIEGE_WAVES:
         return false
     if source_id < 0 or source_id >= slots.size() or destination_id < 0 or destination_id >= slots.size():
         return false
     return source_id != destination_id and slots[source_id]["tower"] != "" and slots[destination_id]["tower"] == ""
 
 func begin_tower_relocation() -> bool:
-    if selected_slot < 0 or selected_slot >= slots.size() or slots[selected_slot]["tower"] == "" or not enemies.is_empty() or defense_state != "playing" or wave_number >= 3 or specialization_open:
+    if selected_slot < 0 or selected_slot >= slots.size() or slots[selected_slot]["tower"] == "" or not enemies.is_empty() or defense_state != "playing" or wave_number >= SIEGE_WAVES or specialization_open:
         return false
     selected_type = ""
     moving_tower = true
@@ -971,14 +980,14 @@ func _draw() -> void:
         draw_string(ThemeDB.fallback_font, Vector2(858, 228), "УЛУЧШ.: %s" % ("МАКС." if int(info["upgrade_cost"]) == 0 else "%d ЗОЛ." % int(info["upgrade_cost"])), HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#e7cf98"))
         if int(info["synergy_flat"]) > 0 or int(info["synergy_burning"]) > 0:
             draw_string(ThemeDB.fallback_font, Vector2(858, 253), "БОНУС: +%d / +%d ГОРЯЩ." % [int(info["synergy_flat"]), int(info["synergy_burning"])], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#e4c990"))
-    var repair_ready: bool = defense_state == "playing" and enemies.is_empty() and wave_number < 3 and altar_hp > 0 and altar_hp < 100 and coins >= REPAIR_COST
-    var can_move: bool = selected_slot >= 0 and selected_slot < slots.size() and slots[selected_slot]["tower"] != "" and defense_state == "playing" and enemies.is_empty() and wave_number < 3
+    var repair_ready: bool = defense_state == "playing" and enemies.is_empty() and wave_number < SIEGE_WAVES and altar_hp > 0 and altar_hp < 100 and coins >= REPAIR_COST
+    var can_move: bool = selected_slot >= 0 and selected_slot < slots.size() and slots[selected_slot]["tower"] != "" and defense_state == "playing" and enemies.is_empty() and wave_number < SIEGE_WAVES
     if can_move:
         draw_rect(MOVE_BUTTON, Color("#ac8b52") if moving_tower else Color("#486f80"))
         draw_string(ThemeDB.fallback_font, MOVE_BUTTON.position + Vector2(8, 32), "ВЫБЕРИ МЕСТО" if moving_tower else "ПЕРЕНЕСТИ", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#fff1c9"))
     draw_rect(REPAIR_BUTTON, Color("#527b75") if repair_ready else Color("#454b54"))
     draw_string(ThemeDB.fallback_font, REPAIR_BUTTON.position + Vector2(12, 33), "РЕМОНТ +20 / 25 ЗОЛ.", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#fff1ce") if repair_ready else Color("#abb2b5"))
-    draw_rect(WAVE_BUTTON, Color("#487d6b") if enemies.is_empty() and wave_number < 3 and altar_hp > 0 else Color("#454b54"))
+    draw_rect(WAVE_BUTTON, Color("#487d6b") if enemies.is_empty() and wave_number < SIEGE_WAVES and altar_hp > 0 else Color("#454b54"))
     draw_string(ThemeDB.fallback_font, Vector2(78, 581), "НАЧАТЬ ВОЛНУ", HORIZONTAL_ALIGNMENT_LEFT, -1, 19, Color.WHITE)
     if enemies.is_empty() and defense_state == "playing":
         draw_rect(Rect2(62, 487, 410, 42), Color("#263d43", 0.96))
