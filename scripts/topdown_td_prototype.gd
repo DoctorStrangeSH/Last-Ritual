@@ -8,6 +8,7 @@ const TD_TARGETING = preload("res://scripts/td/td_targeting.gd")
 const TD_BURN_EFFECT = preload("res://scripts/td/td_burn_effect.gd")
 const TD_MULTIHIT = preload("res://scripts/td/td_multihit.gd")
 const TD_NECRO_SPIRITS = preload("res://scripts/td/td_necro_spirits.gd")
+const TD_FROST_EFFECT = preload("res://scripts/td/td_frost_effect.gd")
 var sfx: Node
 const SLOT_POSITIONS := [Vector2(280, 190), Vector2(430, 190), Vector2(590, 190), Vector2(750, 190), Vector2(280, 440), Vector2(430, 440), Vector2(590, 440), Vector2(750, 440)]
 const COSTS = TD_TOWER_STATS.COSTS
@@ -314,7 +315,7 @@ func advance_enemies(delta: float) -> void:
         var position: Vector2 = enemy["pos"]
         # Полный остаток движения за кадр проходит все достигнутые повороты.
         # Без этого враг задерживается на каждой точке и зависит от FPS.
-        var remaining := float(enemy.get("speed", 85.0)) * siege_captain_speed_multiplier(enemy) * delta
+        var remaining := float(enemy.get("speed", 85.0)) * siege_captain_speed_multiplier(enemy) * TD_FROST_EFFECT.multiplier(enemy) * delta
         while remaining > 0.0 and waypoint < path.size():
             var target: Vector2 = path[waypoint]
             var distance := position.distance_to(target)
