@@ -758,6 +758,25 @@ func draw_defender_figure(pos: Vector2) -> void:
     draw_circle(pos + Vector2(4, -14), 2.5, Color("#142229"))
     draw_line(pos + Vector2(13, -4), pos + Vector2(25, -25), Color("#c6d7df"), 4.0)
 
+func selected_tower_info() -> Dictionary:
+    if selected_slot < 0 or selected_slot >= slots.size():
+        return {}
+    var tower: Dictionary = slots[selected_slot]
+    var kind: String = str(tower.get("tower", ""))
+    if kind == "":
+        return {}
+    var damage: int = int(TOWER_DAMAGE[kind]) * int(tower["level"])
+    if str(tower.get("specialization", "")) == "siege":
+        damage += 2
+    elif str(tower.get("specialization", "")) == "swarm":
+        damage = maxi(1, damage - 1)
+    if kind == "fire":
+        damage += fire_synergy_bonus
+    elif kind == "bone":
+        damage += bone_synergy_bonus
+    var upgrade_cost: int = 20 * int(tower["level"]) if int(tower["level"]) < 3 else 0
+    return {"kind": kind, "level": int(tower["level"]), "damage": damage, "priority": str(tower.get("target_priority", "nearest")), "specialization": str(tower.get("specialization", "")), "links": tower_synergy_links(selected_slot).size(), "upgrade_cost": upgrade_cost}
+
 func _draw() -> void:
     draw_fortress_ground()
     if defense_state != "playing":
@@ -771,10 +790,24 @@ func _draw() -> void:
         draw_rect(TARGET_BUTTON, Color("#e5c985"), false, 2.0)
         var priority: String = str(slots[selected_slot].get("target_priority", "nearest"))
         draw_string(ThemeDB.fallback_font, TARGET_BUTTON.position + Vector2(9, 29), "ЦЕЛЬ: " + str(TARGET_LABELS[priority]), HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color("#fff1c9"))
+    var info: Dictionary = selected_tower_info()
+    if not info.is_empty():
+        var tower_title: String = "КОСТЯНАЯ" if info["kind"] == "bone" else "ОГНЕННАЯ" if info["kind"] == "fire" else "НЕКРОМАНТ"
+        var specialization_label: String = "НЕ ВЫБРАНА"
+        if str(info["specialization"]) != "":
+            var label_index: int = 0 if info["specialization"] == "siege" else 1
+            specialization_label = str(SPECIALIZATION_LABELS[str(info["kind"])][label_index]).split(":")[0]
+        draw_rect(Rect2(845, 129, 280, 130), Color("#17272e", 0.95))
+        draw_rect(Rect2(845, 129, 280, 130), Color("#a4b9a7"), false, 2.0)
+        draw_string(ThemeDB.fallback_font, Vector2(858, 151), "%s / УР. %d" % [tower_title, int(info["level"])], HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color("#fff0c6"))
+        draw_string(ThemeDB.fallback_font, Vector2(858, 177), "УРОН: %d  СВЯЗИ: %d" % [int(info["damage"]), int(info["links"])], HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
+        draw_string(ThemeDB.fallback_font, Vector2(858, 202), "ПУТЬ: %s" % specialization_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#b9e4d6"))
+        draw_string(ThemeDB.fallback_font, Vector2(858, 228), "УЛУЧШ.: %s" % ("МАКС." if int(info["upgrade_cost"]) == 0 else "%d ЗОЛ." % int(info["upgrade_cost"])), HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#e7cf98"))
     var repair_ready: bool = defense_state == "playing" and enemies.is_empty() and wave_number < 3 and altar_hp > 0 and altar_hp < 100 and coins >= REPAIR_COST
     var can_move: bool = selected_slot >= 0 and selected_slot < slots.size() and slots[selected_slot]["tower"] != "" and defense_state == "playing" and enemies.is_empty() and wave_number < 3
-    draw_rect(MOVE_BUTTON, Color("#ac8b52") if moving_tower else Color("#486f80") if can_move else Color("#454b54"))
-    draw_string(ThemeDB.fallback_font, MOVE_BUTTON.position + Vector2(8, 32), "ВЫБЕРИ МЕСТО" if moving_tower else "ПЕРЕНЕСТИ", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#fff1c9"))
+    if can_move:
+        draw_rect(MOVE_BUTTON, Color("#ac8b52") if moving_tower else Color("#486f80"))
+        draw_string(ThemeDB.fallback_font, MOVE_BUTTON.position + Vector2(8, 32), "ВЫБЕРИ МЕСТО" if moving_tower else "ПЕРЕНЕСТИ", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#fff1c9"))
     draw_rect(REPAIR_BUTTON, Color("#527b75") if repair_ready else Color("#454b54"))
     draw_string(ThemeDB.fallback_font, REPAIR_BUTTON.position + Vector2(12, 33), "РЕМОНТ +20 / 25 ЗОЛ.", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#fff1ce") if repair_ready else Color("#abb2b5"))
     draw_rect(WAVE_BUTTON, Color("#487d6b") if enemies.is_empty() and wave_number < 3 and altar_hp > 0 else Color("#454b54"))
@@ -850,10 +883,11 @@ func _draw() -> void:
         draw_rect(card, Color("#e5c985") if selected_type == tower_ids[i] else Color("#796b65"), false, 2.0)
         draw_string(ThemeDB.fallback_font, card.position + Vector2(9, 23), tower_names[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
         draw_string(ThemeDB.fallback_font, card.position + Vector2(9, 49), "%d ЗОЛОТА" % COSTS[tower_ids[i]], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#e5c985"))
-    draw_rect(Rect2(880, 545, 110, 55), Color("#518b78"))
-    draw_string(ThemeDB.fallback_font, Vector2(883, 579), "УЛУЧШИТЬ", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color.WHITE)
-    draw_rect(Rect2(1010, 545, 110, 55), Color("#914c59"))
-    draw_string(ThemeDB.fallback_font, Vector2(1020, 579), "ПРОДАТЬ", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color.WHITE)
+    if not selected_tower_info().is_empty():
+        draw_rect(Rect2(880, 545, 110, 55), Color("#518b78"))
+        draw_string(ThemeDB.fallback_font, Vector2(883, 579), "УЛУЧШИТЬ", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color.WHITE)
+        draw_rect(Rect2(1010, 545, 110, 55), Color("#914c59"))
+        draw_string(ThemeDB.fallback_font, Vector2(1020, 579), "ПРОДАТЬ", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color.WHITE)
 
     draw_rect(HELP_BUTTON, Color("#526d9b") if help_visible else Color("#343b47"))
     draw_rect(HELP_BUTTON, Color("#d5c592"), false, 1.5)
