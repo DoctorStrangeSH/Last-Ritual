@@ -369,6 +369,32 @@ func run_tests() -> void:
                 check(runner_game.enemies.is_empty(), "Swarm defeats 5-HP runner on second shot")
             check(runner_game.enemies_defeated == 1 and runner_game.coins == 105, "Runner kill pays exactly once: " + bone_path)
             runner_game.queue_free()
+    # Necromancy benchmark: equal 80 gold investments, distinct spirit roles.
+    # Reaper has empowered spirits, Legion reaches summons faster; both obey cap.
+    if specialization_balance_scene != null:
+        for necro_path in ["siege", "swarm"]:
+            var necro_balance = specialization_balance_scene.instantiate()
+            root.add_child(necro_balance)
+            check(necro_balance.choose_tower("necro") and necro_balance.build_tower(0), "Necro benchmark builds tower: " + necro_path)
+            check(necro_balance.upgrade_selected() and necro_balance.choose_specialization(necro_path), "Necro benchmark chooses path: " + necro_path)
+            check(necro_balance.coins == 70, "Both necromancer paths cost 80 gold: " + necro_path)
+            # Put three low-health enemies in range, one per forced shot.
+            # Reset cooldown between shots to isolate kill-trigger thresholds.
+            for kill_index in range(3):
+                var sacrifice: Dictionary = {"pos": necro_balance.slots[0]["pos"] + Vector2(25, 0), "hp": 1, "delay": 0.0}
+                necro_balance.enemies.append(sacrifice)
+                necro_balance.tower_cooldowns[0] = 0.0
+                necro_balance.attack_with_towers(0.01)
+                var expected_spirits: int = (1 if kill_index >= 1 else 0) if necro_path == "swarm" else (1 if kill_index >= 2 else 0)
+                check(necro_balance.summoned_spirits.size() == expected_spirits, "Necro summon cadence after kill %d: %s" % [kill_index + 1, necro_path])
+            check(necro_balance.coins == 85 and necro_balance.enemies_defeated == 3, "Necro kills award gold once: " + necro_path)
+            var summoned: Dictionary = necro_balance.summoned_spirits[0]
+            check(int(summoned["damage"]) == (4 if necro_path == "siege" else 2), "Reaper spirit deals more damage than Legion: " + necro_path)
+            check(is_equal_approx(float(summoned["life"]), 5.0 if necro_path == "siege" else 4.0), "Reaper spirit lasts longer: " + necro_path)
+            necro_balance.spawn_necro_spirit(necro_balance.slots[0]["pos"], necro_path == "siege")
+            necro_balance.spawn_necro_spirit(necro_balance.slots[0]["pos"], necro_path == "siege")
+            check(necro_balance.summoned_spirits.size() == 2, "Necromancy spirit cap remains two: " + necro_path)
+            necro_balance.queue_free()
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
