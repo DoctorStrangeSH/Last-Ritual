@@ -774,7 +774,10 @@ func run_tests() -> void:
         var active_captain := {"role": "captain", "pos": Vector2.ZERO, "delay": 0.0}
         var controlled_grunt := {"role": "grunt", "pos": Vector2(30, 0), "delay": 0.0}
         var controlled_boss := {"role": "boss", "pos": Vector2(40, 0), "delay": 0.0}
-        control_game.enemies = [active_captain, controlled_grunt, controlled_boss]
+        control_game.enemies.clear()
+        control_game.enemies.append(active_captain)
+        control_game.enemies.append(controlled_grunt)
+        control_game.enemies.append(controlled_boss)
         control_game.TD_FROST_EFFECT.apply(controlled_grunt, 2.0, 0.9)
         control_game.TD_FROST_EFFECT.apply(controlled_boss, 2.0, 0.9)
         check(is_equal_approx(control_game.enemy_movement_multiplier(controlled_grunt), 0.54), "Captain morale and frost combine predictably for common foes")
