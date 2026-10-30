@@ -138,6 +138,16 @@ func siege_enemy_role(wave: int, index: int) -> String:
         return "brute"
     return "grunt"
 
+func siege_spawn_delay(wave: int, index: int, role: String) -> float:
+    var base_delay := float(index) * 0.7
+    # Raiders arrive early in tight packs, while heavy siege units approach
+    # more slowly. The first day keeps its existing beginner-friendly timing.
+    if siege_day == 2 and role == "runner":
+        return base_delay * 0.5
+    if siege_day >= 3 and role == "brute":
+        return base_delay + 0.8
+    return base_delay
+
 func start_wave() -> bool:
     if defense_state != "playing" or not enemies.is_empty() or wave_number >= 3 or altar_hp <= 0:
         return false
@@ -149,7 +159,7 @@ func start_wave() -> bool:
         var role: String = siege_enemy_role(wave_number, i)
         var hp := ((7 + wave_number) if role == "brute" else (2 + wave_number if role == "runner" else 3 + wave_number)) + difficulty * 2 + (3 if siege_day >= 3 else 0)
         var speed := (135.0 if role == "runner" else (55.0 if role == "brute" else 85.0)) * (1.0 + 0.15 * difficulty)
-        enemies.append({"lane": i % PATHS.size(), "pos": PATHS[i % PATHS.size()][0], "waypoint": 1, "hp": hp, "max_hp": hp, "speed": speed, "role": role, "delay": float(i) * 0.7})
+        enemies.append({"lane": i % PATHS.size(), "pos": PATHS[i % PATHS.size()][0], "waypoint": 1, "hp": hp, "max_hp": hp, "speed": speed, "role": role, "delay": siege_spawn_delay(wave_number, i, role)})
         enemies_spawned += 1
     if wave_number >= 2:
         var support_hp: int = 8 + wave_number * 2 + difficulty * 2
