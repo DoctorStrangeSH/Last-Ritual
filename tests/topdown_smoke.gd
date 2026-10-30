@@ -323,6 +323,25 @@ func run_tests() -> void:
         check(restored_priority.slots[0]["target_priority"] == "front", "Selected target policy persists")
         priority_game.queue_free()
         restored_priority.queue_free()
+    var repair_scene = load("res://scenes/topdown_td_prototype.tscn")
+    if repair_scene != null:
+        var repairs = repair_scene.instantiate()
+        root.add_child(repairs)
+        repairs.altar_hp = 65
+        repairs.coins = 50
+        check(repairs.repair_altar(), "Repair works between waves")
+        check(repairs.altar_hp == 85 and repairs.coins == 25, "Repair spends 25 gold for 20 altar health")
+        check(repairs.repair_altar(), "Second repair works when funds remain")
+        check(repairs.altar_hp == 100 and repairs.coins == 0, "Repair health is capped at 100")
+        check(not repairs.repair_altar(), "Cannot repair fully healed altar")
+        repairs.altar_hp = 40
+        repairs.coins = 100
+        repairs.enemies.append({"role": "grunt"})
+        check(not repairs.repair_altar(), "Cannot repair during active enemy wave")
+        repairs.enemies.clear()
+        repairs.wave_number = 3
+        check(not repairs.repair_altar(), "Cannot repair after final wave")
+        repairs.queue_free()
     var td_scene := load("res://scenes/topdown_td_prototype.tscn") as PackedScene
     check(td_scene != null, "Top-down TD scene loads")
     if td_scene != null:
