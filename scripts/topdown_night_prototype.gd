@@ -766,6 +766,33 @@ func draw_crypt_environment() -> void:
         draw_rect(Rect2(pillar + Vector2(-12, -12), Vector2(24, 22)), palette["stone"])
         draw_line(pillar + Vector2(-9, -7), pillar + Vector2(9, -7), palette["accent"], 2.0)
 
+func night_enemy_visual_role(enemy: Dictionary) -> String:
+    var role: String = str(enemy.get("role", "regular"))
+    if role in ["boss", "champion", "flanker"]:
+        return role
+    return "ranged" if bool(enemy.get("ranged", false)) else "regular"
+
+func draw_night_enemy_mark(enemy: Dictionary) -> void:
+    var center: Vector2 = enemy["pos"]
+    match night_enemy_visual_role(enemy):
+        "boss":
+            for offset in [-16.0, 16.0]:
+                draw_colored_polygon(PackedVector2Array([center + Vector2(offset - 9, -23), center + Vector2(offset, -43), center + Vector2(offset + 9, -23)]), Color("#e5bead"))
+            draw_circle(center + Vector2(-9, -5), 4.0, Color("#272037"))
+            draw_circle(center + Vector2(9, -5), 4.0, Color("#272037"))
+        "champion":
+            draw_rect(Rect2(center + Vector2(-15, -13), Vector2(30, 10)), Color("#d7d5ce"))
+            draw_rect(Rect2(center + Vector2(-11, 1), Vector2(22, 11)), Color("#564e60"))
+        "flanker":
+            draw_colored_polygon(PackedVector2Array([center + Vector2(14, 0), center + Vector2(-11, -12), center + Vector2(-5, 0), center + Vector2(-11, 12)]), Color("#403244"))
+        "ranged":
+            draw_arc(center, 11.0, -PI / 2.0, PI / 2.0, 18, Color("#f9e5b2"), 3.0)
+            draw_line(center + Vector2(-8, -13), center + Vector2(11, 0), Color("#f9e5b2"), 2.0)
+            draw_line(center + Vector2(-8, 13), center + Vector2(11, 0), Color("#f9e5b2"), 2.0)
+        _:
+            draw_circle(center + Vector2(-6, -4), 3.0, Color("#3d2a32"))
+            draw_circle(center + Vector2(6, -4), 3.0, Color("#3d2a32"))
+
 func _draw() -> void:
     draw_crypt_environment()
     for wall in obstacles:
@@ -813,16 +840,7 @@ func _draw() -> void:
         var enemy_color: Color = Color("#fff1d1") if float(enemy.get("hit_flash", 0.0)) > 0.0 else (Color("#aa70d6") if enemy["ranged"] else Color("#e3b967") if enemy.get("role", "") == "flanker" else Color("#b46773") if enemy.get("role", "") == "champion" else Color("#cf646c"))
         var enemy_radius: float = 34.0 if enemy.get("role", "") == "boss" else 25.0 if enemy.get("role", "") == "champion" else 16.0 if enemy.get("role", "") == "flanker" else 19.0
         draw_circle(enemy["pos"], 23.0 if float(enemy.get("hit_flash", 0.0)) > 0.0 else enemy_radius, enemy_color)
-        # Чёткие символы ролей: противника можно узнать без различения цветов.
-        if enemy.get("role", "") == "flanker":
-            draw_line(enemy["pos"] + Vector2(-9, -9), enemy["pos"] + Vector2(9, 9), Color("#241e30"), 3.0)
-            draw_line(enemy["pos"] + Vector2(9, -9), enemy["pos"] + Vector2(-9, 9), Color("#241e30"), 3.0)
-        elif enemy["ranged"]:
-            draw_arc(enemy["pos"], 9.0, 0.0, TAU, 20, Color("#f9e5b2"), 2.0)
-            draw_circle(enemy["pos"], 3.0, Color("#f9e5b2"))
-        elif enemy.get("role", "") == "champion":
-            draw_rect(Rect2(enemy["pos"] + Vector2(-8, -8), Vector2(16, 16)), Color("#f9e5b2"), false, 3.0)
-
+        draw_night_enemy_mark(enemy)
         if enemy.get("role", "") == "boss":
             draw_arc(enemy["pos"], 42.0, 0.0, TAU, 48, Color("#ffc47f"), 5.0)
             draw_label("СТРАЖ РИТУАЛА", enemy["pos"] + Vector2(-72, -59), 16, Color("#ffe6bd"))
@@ -839,7 +857,9 @@ func _draw() -> void:
         draw_rect(Rect2(387, 91, 380, 44), Color("#314f47"))
         draw_label(reward_notice, Vector2(414, 119), 19, Color("#fff1c8"))
     if reward_available:
-        draw_circle(Vector2(576, 325), 24.0, Color("#f4d78c"))
+        draw_circle(Vector2(576, 325), 30.0, Color("#534864"))
+        draw_colored_polygon(PackedVector2Array([Vector2(576, 290), Vector2(596, 325), Vector2(576, 360), Vector2(556, 325)]), Color("#efcc91"))
+        draw_circle(Vector2(576, 325), 8.0, Color("#fff2c7"))
         draw_label("ВЫБЕРИТЕ РЕЛИКВИЮ", Vector2(480, 425), 23)
         var palette := [Color("#526d9b"), Color("#a16a36"), Color("#863c54")]
         for i in range(RELIC_RECTS.size()):
@@ -850,6 +870,8 @@ func _draw() -> void:
             draw_label(RELIC_EFFECTS[i], RELIC_RECTS[i].position + Vector2(10, 50), 12)
     if shrine_open:
         draw_rect(Rect2(260, 206, 635, 218), Color("#26313e"))
+        draw_rect(Rect2(260, 206, 635, 218), Color("#b9a47c"), false, 2.0)
+        draw_circle(Vector2(577, 285), 18.0, Color("#688f8b"))
         draw_label("ДРЕВНИЙ АЛТАРЬ — ВЫБЕРИТЕ ДАР", Vector2(340, 255), 23, Color("#f3d7ad"))
         var options := ["+15 ЗДОРОВЬЯ", "-10 ЗД / +1 УРОН", "ОТКАЗАТЬСЯ"]
         for i in range(SHRINE_BUTTONS.size()):
@@ -857,6 +879,9 @@ func _draw() -> void:
             draw_label(options[i], SHRINE_BUTTONS[i].position + Vector2(8, 35), 16)
     if shop_open:
         draw_rect(Rect2(285.0, 205.0, 570.0, 220.0), Color("#263b45"))
+        draw_rect(Rect2(285.0, 205.0, 570.0, 220.0), Color("#a6bcaa"), false, 2.0)
+        draw_circle(Vector2(578, 284), 16.0, Color("#e5cc97"))
+        draw_rect(Rect2(565, 273, 26, 19), Color("#56716a"))
         draw_label("СТРАНСТВУЮЩИЙ ТОРГОВЕЦ — ДУШИ %d" % night_souls, Vector2(359, 255), 23)
         for i in range(SHOP_RECTS.size()):
             draw_rect(SHOP_RECTS[i], Color("#4e8373") if i < 2 else Color("#775e6d"))
