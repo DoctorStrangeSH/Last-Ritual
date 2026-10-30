@@ -265,6 +265,10 @@ func tower_synergy_preview(slot_id: int) -> Dictionary:
     var kind: String = str(slots[slot_id]["tower"])
     if kind == "bone" and has_adjacent_tower(slot_id, "fire"):
         burning = 2
+    elif kind == "fire" and has_adjacent_tower(slot_id, "bone"):
+        # Bone supports follow-up fire shots against targets already burning.
+        # The first hit remains unchanged; the inspector uses this same rule.
+        burning = 1
     elif kind == "necro":
         flat = 1 if has_adjacent_tower(slot_id, "bone") else 0
         burning = 1 if has_adjacent_tower(slot_id, "fire") else 0
