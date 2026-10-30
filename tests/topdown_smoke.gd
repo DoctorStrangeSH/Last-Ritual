@@ -805,6 +805,16 @@ func run_tests() -> void:
         check(ambush_colors["floor"] != elite_colors["floor"], "Ambush and elite rooms have distinct floor palettes")
         check(night_art.DOOR_POINTS.size() == 4, "Night door markers preserve four directional positions")
         night_art.queue_free()
+    var silhouette_scene = load("res://scenes/topdown_night_prototype.tscn")
+    if silhouette_scene != null:
+        var art_check = silhouette_scene.instantiate()
+        root.add_child(art_check)
+        check(art_check.night_enemy_visual_role({"role": "boss", "ranged": false}) == "boss", "Night boss has unique visual role")
+        check(art_check.night_enemy_visual_role({"role": "champion", "ranged": false}) == "champion", "Night armored enemy has unique visual role")
+        check(art_check.night_enemy_visual_role({"role": "flanker", "ranged": false}) == "flanker", "Night flanker has unique visual role")
+        check(art_check.night_enemy_visual_role({"role": "regular", "ranged": true}) == "ranged", "Night ranged enemy shows bow")
+        check(art_check.night_enemy_visual_role({"role": "regular", "ranged": false}) == "regular", "Night melee enemy shows distinct face")
+        art_check.queue_free()
     var packed := load("res://scenes/topdown_night_prototype.tscn") as PackedScene
     check(packed != null, "Top-down entry scene loads")
     if packed == null:
