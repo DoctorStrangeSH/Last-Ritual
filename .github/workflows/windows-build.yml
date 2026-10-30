@@ -38,7 +38,11 @@ jobs:
           mkdir -p build/windows
           timeout 180s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --export-release "Windows Desktop" build/windows/LastRitual.exe
           test -s build/windows/LastRitual.exe
-      - uses: actions/upload-artifact@v4
+      # GitHub can exhaust shared artifact quota independently of build/test success.
+      # Keep script tests and Windows export as mandatory quality gates.
+      - name: Upload Windows EXE (best effort when artifact quota is exhausted)
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
         with:
           name: LastRitual-Windows
           path: build/windows/*
