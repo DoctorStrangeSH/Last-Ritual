@@ -429,6 +429,12 @@ func run_tests() -> void:
         check(assault_timing.start_wave(), "Day three timed assault starts")
         check(assault_timing.enemies[0]["role"] == "brute" and is_equal_approx(float(assault_timing.enemies[0]["delay"]), 0.8), "Delayed armored vanguard appears in actual wave")
         assault_timing.queue_free()
+    # Pure rules can be tested without creating a full TD scene.
+    var synergy_rules = load("res://scripts/td/td_synergy_rules.gd")
+    check(synergy_rules.preview("bone", true, false) == {"flat": 0, "burning": 2}, "Module: fire supports bone")
+    check(synergy_rules.preview("fire", false, true) == {"flat": 0, "burning": 1}, "Module: bone supports burning fire")
+    check(synergy_rules.preview("necro", true, true) == {"flat": 1, "burning": 1}, "Module: necromancy combines both sources")
+    check(synergy_rules.preview("necro", false, false) == {"flat": 0, "burning": 0}, "Module: no phantom synergy")
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
