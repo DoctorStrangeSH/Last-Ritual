@@ -520,6 +520,31 @@ func run_tests() -> void:
         formations.siege_day = 3
         check(formations.siege_enemy_role(4, 0) == "brute", "Armored-siege day retains brute signature")
         formations.queue_free()
+    if specialization_balance_scene != null:
+        var commander_game = specialization_balance_scene.instantiate()
+        root.add_child(commander_game)
+        var footman := {"role": "grunt", "pos": Vector2(150, 300), "delay": 0.0}
+        var commander := {"role": "captain", "pos": Vector2(180, 300), "delay": 0.0}
+        commander_game.enemies.append(footman)
+        check(is_equal_approx(commander_game.siege_captain_speed_multiplier(footman), 1.0), "Troops do not accelerate without commander")
+        commander_game.enemies.append(commander)
+        check(is_equal_approx(commander_game.siege_captain_speed_multiplier(footman), 1.2), "Nearby commander rallies footmen")
+        check(is_equal_approx(commander_game.siege_captain_speed_multiplier(commander), 1.0), "Commander does not buff itself")
+        commander["delay"] = 2.0
+        check(is_equal_approx(commander_game.siege_captain_speed_multiplier(footman), 1.0), "Commander cannot rally before entering")
+        commander["delay"] = 0.0
+        commander["pos"] = Vector2(600, 300)
+        check(is_equal_approx(commander_game.siege_captain_speed_multiplier(footman), 1.0), "Commander aura has limited range")
+        commander_game.enemies.clear()
+        commander_game.wave_number = 4
+        check(commander_game.start_wave(), "Commander wave starts")
+        var found_commander := false
+        for foe in commander_game.enemies:
+            if str(foe.get("role", "")) == "captain":
+                found_commander = true
+        check(found_commander, "Fifth wave fields a commander")
+        check(commander_game.enemy_visual_profile("captain")["mark"] == "command", "Commander has distinct silhouette")
+        commander_game.queue_free()
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
