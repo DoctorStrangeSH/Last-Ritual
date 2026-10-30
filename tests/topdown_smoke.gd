@@ -251,16 +251,27 @@ func run_tests() -> void:
         var burning_foe := {"burn_time": 2.0}
         check(synergy.has_adjacent_tower(0, "fire"), "Adjacent fire tower activates bone synergy")
         check(synergy.tower_synergy_damage(0, burning_foe) == 2, "Bone gains damage against burning foe beside fire tower")
+        check(synergy.tower_synergy_preview(0) == {"flat": 0, "burning": 2}, "Bone inspector identifies burning-only fire synergy")
         check(synergy.tower_synergy_damage(0, {"burn_time": 0.0}) == 0, "No bonus without burning")
         synergy.slots[1]["tower"] = ""
         check(synergy.tower_synergy_damage(0, burning_foe) == 0, "No bonus without nearby fire tower")
         synergy.slots[0]["tower"] = "necro"
         synergy.slots[1]["tower"] = "bone"
         check(synergy.tower_synergy_damage(0, burning_foe) == 1, "Nearby bone tower supports necromancer")
+        var necro_preview: Dictionary = synergy.tower_synergy_preview(0)
+        check(int(necro_preview["flat"]) == 1 and int(necro_preview["burning"]) == 0, "Necromancer inspector reports bone link as unconditional damage")
+
         synergy.slots[1]["tower"] = "fire"
         check(synergy.tower_synergy_links(0).has(1) and synergy.tower_synergy_links(1).has(0), "Nearby fire and necromancer towers show a reciprocal synergy link")
         check(synergy.tower_synergy_damage(0, burning_foe) == 1, "Necromancer gains one bonus damage against burning enemy near fire tower")
+        necro_preview = synergy.tower_synergy_preview(0)
+        check(int(necro_preview["flat"]) == 0 and int(necro_preview["burning"]) == 1, "Necromancer inspector distinguishes fire link as burning-only")
+        synergy.selected_slot = 0
+        var necro_info: Dictionary = synergy.selected_tower_info()
+        check(int(necro_info["synergy_flat"]) == 0 and int(necro_info["synergy_burning"]) == 1, "Selected tower card uses the same bonuses as combat")
+
         check(synergy.tower_synergy_damage(0, {"burn_time": 0.0}) == 0, "Fire necromancy combo does not increase damage against normal targets")
+        check(synergy.tower_synergy_preview(-1) == {"flat": 0, "burning": 0}, "Invalid slot never shows phantom synergy")
         synergy.slots[1]["tower"] = "bone"
         synergy.slots[2]["tower"] = "fire"
         check(synergy.tower_synergy_damage(0, burning_foe) == 1, "Distant fire tower does not provide extra burn bonus")
