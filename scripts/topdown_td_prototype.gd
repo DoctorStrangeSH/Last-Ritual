@@ -63,6 +63,7 @@ var enemies_escaped := 0
 var enemies_defeated := 0
 var tower_cooldowns: Dictionary = {}
 var shot_trails: Array[Dictionary] = []
+var performance_overlay_visible := false
 const TOWER_RANGE = TD_TOWER_STATS.RANGES
 const TOWER_DAMAGE = TD_TOWER_STATS.DAMAGES
 const HERO_SPEED := 215.0
@@ -752,6 +753,10 @@ func tower_range_preview() -> Dictionary:
     return {}
 
 func _unhandled_input(event: InputEvent) -> void:
+    if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F3:
+        performance_overlay_visible = not performance_overlay_visible
+        queue_redraw()
+        return
     if event is InputEventMouseMotion:
         hovered_slot = slot_at(event.position)
         queue_redraw()
@@ -1101,6 +1106,26 @@ func selected_tower_info() -> Dictionary:
     var synergy: Dictionary = tower_synergy_preview(selected_slot)
     return {"kind": kind, "level": int(tower["level"]), "damage": damage, "priority": str(tower.get("target_priority", "nearest")), "specialization": str(tower.get("specialization", "")), "links": tower_synergy_links(selected_slot).size(), "synergy_flat": int(synergy["flat"]), "synergy_burning": int(synergy["burning"]), "upgrade_cost": upgrade_cost}
 
+func performance_snapshot() -> Dictionary:
+    return {
+        "fps": Engine.get_frames_per_second(),
+        "enemies": enemies.size(),
+        "spirits": summoned_spirits.size(),
+        "trails_stored": shot_trails.size(),
+        "trails_visible": mini(shot_trails.size(), MAX_VISIBLE_SHOT_TRAILS)
+    }
+
+func draw_performance_overlay() -> void:
+    if not performance_overlay_visible:
+        return
+    var stats: Dictionary = performance_snapshot()
+    draw_rect(Rect2(899, 313, 235, 121), Color("#101c23", 0.91))
+    draw_rect(Rect2(899, 313, 235, 121), Color("#9db5c1"), false, 1.0)
+    draw_string(ThemeDB.fallback_font, Vector2(910, 334), "ДИАГНОСТИКА [F3]", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#daf0fa"))
+    draw_string(ThemeDB.fallback_font, Vector2(910, 356), "FPS: %d" % int(stats["fps"]), HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color.WHITE)
+    draw_string(ThemeDB.fallback_font, Vector2(910, 378), "ВРАГИ: %d  ДУХИ: %d" % [int(stats["enemies"]), int(stats["spirits"])], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color.WHITE)
+    draw_string(ThemeDB.fallback_font, Vector2(910, 400), "ЭФФЕКТЫ: %d / %d" % [int(stats["trails_visible"]), int(stats["trails_stored"])], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color.WHITE)
+
 func _draw() -> void:
     draw_fortress_ground()
     if defense_state != "playing":
@@ -1185,6 +1210,7 @@ func _draw() -> void:
                 var impact: Vector2 = trail["to"]
                 draw_colored_polygon(PackedVector2Array([impact + Vector2(0, -8), impact + Vector2(5, 0), impact + Vector2(0, 8), impact + Vector2(-5, 0)]), Color("#c4f3ff", opacity))
     draw_defender_figure(hero_pos)
+    draw_performance_overlay()
     if selected_slot >= 0 and selected_slot < slots.size() and slots[selected_slot]["tower"] != "":
         var linked: Array[int] = tower_synergy_links(selected_slot)
         for linked_id in linked:
