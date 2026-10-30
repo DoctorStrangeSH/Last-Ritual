@@ -980,7 +980,7 @@ func run_tests() -> void:
         root.add_child(hard_td)
         hard_td.difficulty = 2
         check(hard_td.start_wave() and hard_td.enemies[0]["role"] == "brute" and hard_td.enemies[0]["hp"] == 12 and float(hard_td.enemies[0]["speed"]) > 55.0 and hard_td.enemies[1]["role"] == "runner" and float(hard_td.enemies[1]["speed"]) > 135.0, "Nightmare TD opening wave has durable armor and fast runner")
-        hard_td.wave_number = 2
+        hard_td.wave_number = 5
         hard_td.enemies.clear()
         check(hard_td.start_wave() and hard_td.enemies.back()["role"] == "boss" and hard_td.enemies.back()["hp"] == 85, "Nightmare boss gains durability")
         hard_td.enemies.clear()
