@@ -459,6 +459,16 @@ func run_tests() -> void:
         range_game.hovered_slot = 1
         check(is_equal_approx(float(range_game.tower_range_preview().get("range", 0.0)), 160.0), "Selected tower range available when hovering empty site")
         range_game.queue_free()
+    var td_layouts = load("res://scripts/td/td_path_layouts.gd")
+    check(td_layouts.layout_count() >= 3, "TD path catalog offers distinct routes")
+    for seed_value in range(12):
+        var paths: Array = td_layouts.layout_for_seed(seed_value)
+        check(paths == td_layouts.layout_for_seed(seed_value), "TD path choice reproducible by seed")
+        check(paths.size() == 2, "TD layouts retain two enemy lanes")
+        for lane_id in range(2):
+            check(paths[lane_id].size() >= 8, "TD route contains multiple bends")
+            check(paths[lane_id][0] == td_layouts.LAYOUTS[0][lane_id][0] and paths[lane_id][-1] == td_layouts.LAYOUTS[0][lane_id][-1], "TD route retains entry and altar")
+    check(td_layouts.layout_for_seed(0) != td_layouts.layout_for_seed(1), "Different seeds can choose different fortress routes")
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
