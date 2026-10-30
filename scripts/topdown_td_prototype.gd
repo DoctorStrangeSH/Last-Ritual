@@ -851,7 +851,7 @@ func _unhandled_input(event: InputEvent) -> void:
             if WAVE_BUTTON.has_point(point):
                 start_wave()
                 return
-            var types := ["bone", "fire", "necro"]
+            var types: Array = TD_TOWER_STATS.SHOP_ORDER
             for i in range(types.size()):
                 if Rect2(260.0 + i * 210.0, 550.0, 180.0, 64.0).has_point(point):
                     choose_tower(types[i])
@@ -1165,13 +1165,12 @@ func _draw() -> void:
             draw_arc(pos, 39, 0, TAU, 32, Color("#d8d0a1"), 3)
         if selected_type != "" and not occupied and hovered_slot == i:
             draw_arc(pos, 39, 0, TAU, 32, Color("#78b8b4"), 2)
-    var tower_names := ["КОСТЯНАЯ", "ОГНЕННАЯ", "НЕКРОМАНТ"]
-    var tower_ids := ["bone", "fire", "necro"]
-    for i in range(3):
+    var tower_ids: Array = TD_TOWER_STATS.SHOP_ORDER
+    for i in range(tower_ids.size()):
         var card := Rect2(260.0 + i * 210.0, 550.0, 180.0, 64.0)
         draw_rect(card, Color("#4f746f") if selected_type == tower_ids[i] else Color("#514b52"))
         draw_rect(card, Color("#e5c985") if selected_type == tower_ids[i] else Color("#796b65"), false, 2.0)
-        draw_string(ThemeDB.fallback_font, card.position + Vector2(9, 23), tower_names[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
+        draw_string(ThemeDB.fallback_font, card.position + Vector2(9, 23), str(TD_TOWER_STATS.DISPLAY_NAMES[tower_ids[i]]), HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
         draw_string(ThemeDB.fallback_font, card.position + Vector2(9, 49), "%d ЗОЛОТА" % COSTS[tower_ids[i]], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#e5c985"))
     if not selected_tower_info().is_empty():
         draw_rect(Rect2(880, 545, 110, 55), Color("#518b78") if can_modify_towers() else Color("#454b54"))
