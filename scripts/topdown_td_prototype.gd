@@ -64,6 +64,9 @@ var enemies_defeated := 0
 var tower_cooldowns: Dictionary = {}
 var shot_trails: Array[Dictionary] = []
 var performance_overlay_visible := false
+var debug_peak_enemies := 0
+var debug_peak_frame_ms := 0.0
+var debug_last_frame_ms := 0.0
 const TOWER_RANGE = TD_TOWER_STATS.RANGES
 const TOWER_DAMAGE = TD_TOWER_STATS.DAMAGES
 const HERO_SPEED := 215.0
@@ -547,6 +550,7 @@ func restart_defense() -> void:
     queue_redraw()
 
 func _process(delta: float) -> void:
+    sample_performance(delta)
     if help_visible or defense_state != "playing":
         return
     if wave_number == SIEGE_WAVES and enemies.is_empty():
@@ -1106,9 +1110,19 @@ func selected_tower_info() -> Dictionary:
     var synergy: Dictionary = tower_synergy_preview(selected_slot)
     return {"kind": kind, "level": int(tower["level"]), "damage": damage, "priority": str(tower.get("target_priority", "nearest")), "specialization": str(tower.get("specialization", "")), "links": tower_synergy_links(selected_slot).size(), "synergy_flat": int(synergy["flat"]), "synergy_burning": int(synergy["burning"]), "upgrade_cost": upgrade_cost}
 
+func sample_performance(delta: float) -> void:
+    if not performance_overlay_visible:
+        return
+    debug_last_frame_ms = maxf(delta, 0.0) * 1000.0
+    debug_peak_frame_ms = maxf(debug_peak_frame_ms, debug_last_frame_ms)
+    debug_peak_enemies = maxi(debug_peak_enemies, enemies.size())
+
 func performance_snapshot() -> Dictionary:
     return {
         "fps": Engine.get_frames_per_second(),
+        "frame_ms": debug_last_frame_ms,
+        "peak_frame_ms": debug_peak_frame_ms,
+        "peak_enemies": debug_peak_enemies,
         "enemies": enemies.size(),
         "spirits": summoned_spirits.size(),
         "trails_stored": shot_trails.size(),
@@ -1119,12 +1133,14 @@ func draw_performance_overlay() -> void:
     if not performance_overlay_visible:
         return
     var stats: Dictionary = performance_snapshot()
-    draw_rect(Rect2(899, 313, 235, 121), Color("#101c23", 0.91))
+    draw_rect(Rect2(899, 289, 235, 171), Color("#101c23", 0.91))
     draw_rect(Rect2(899, 313, 235, 121), Color("#9db5c1"), false, 1.0)
     draw_string(ThemeDB.fallback_font, Vector2(910, 334), "ДИАГНОСТИКА [F3]", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#daf0fa"))
     draw_string(ThemeDB.fallback_font, Vector2(910, 356), "FPS: %d" % int(stats["fps"]), HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color.WHITE)
     draw_string(ThemeDB.fallback_font, Vector2(910, 378), "ВРАГИ: %d  ДУХИ: %d" % [int(stats["enemies"]), int(stats["spirits"])], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color.WHITE)
     draw_string(ThemeDB.fallback_font, Vector2(910, 400), "ЭФФЕКТЫ: %d / %d" % [int(stats["trails_visible"]), int(stats["trails_stored"])], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color.WHITE)
+    draw_string(ThemeDB.fallback_font, Vector2(910, 421), "КАДР: %.1f / ПИК %.1f мс" % [float(stats["frame_ms"]), float(stats["peak_frame_ms"])], HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#f7d5a2"))
+    draw_string(ThemeDB.fallback_font, Vector2(910, 445), "ПИК ВРАГОВ: %d" % int(stats["peak_enemies"]), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#f7d5a2"))
 
 func _draw() -> void:
     draw_fortress_ground()
