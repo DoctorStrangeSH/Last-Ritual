@@ -1003,6 +1003,12 @@ func draw_enemy_figure(enemy: Dictionary) -> void:
             draw_line(pos + Vector2(-4, 7), pos + Vector2(4, 7), Color("#ffe1bc"), 2.0)
     draw_enemy_status_markers(enemy, radius)
 
+const MAX_VISIBLE_SHOT_TRAILS := 28
+
+func visible_shot_trail_start(total: int) -> int:
+    # Keep recent impacts; never change hit detection, damage or stored trails.
+    return maxi(0, total - MAX_VISIBLE_SHOT_TRAILS)
+
 func shot_trail_style(kind: String) -> Dictionary:
     match kind:
         "bone":
@@ -1152,7 +1158,8 @@ func _draw() -> void:
     for spirit in summoned_spirits:
         draw_circle(spirit["pos"], 10.0, Color("#6de6b2"))
         draw_circle(spirit["pos"], 5.0, Color("#d8fff0"))
-    for trail in shot_trails:
+    for trail_index in range(visible_shot_trail_start(shot_trails.size()), shot_trails.size()):
+        var trail: Dictionary = shot_trails[trail_index]
         var shot_kind: String = str(trail.get("kind", "hero"))
         var shot_color: Color = tower_visual_color(shot_kind)
         var opacity: float = clampf(float(trail.get("time", 0.18)) / 0.18, 0.0, 1.0)
