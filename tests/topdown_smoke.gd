@@ -756,6 +756,18 @@ func run_tests() -> void:
     check(is_equal_approx(frost_cap_rules.multiplier(cap_target), 0.45), "Repeated chills cannot fully immobilize an enemy")
     frost_cap_rules.advance(cap_target, 1.0)
     check(is_equal_approx(frost_cap_rules.multiplier(cap_target), 1.0), "Repeated chill expires without permanent slow")
+    var elite_frost = load("res://scripts/td/td_frost_effect.gd")
+    var boss_chill := {"role": "boss"}
+    var captain_chill := {"role": "captain"}
+    var grunt_chill := {"role": "grunt"}
+    elite_frost.apply(boss_chill, 2.0, 0.9)
+    elite_frost.apply(captain_chill, 2.0, 0.9)
+    elite_frost.apply(grunt_chill, 2.0, 0.9)
+    check(is_equal_approx(elite_frost.multiplier(boss_chill), 0.70), "Boss retains at least 70 percent movement under frost")
+    check(is_equal_approx(elite_frost.multiplier(captain_chill), 0.60), "Captain retains at least 60 percent movement under frost")
+    check(is_equal_approx(elite_frost.multiplier(grunt_chill), 0.45), "Normal enemy keeps original frost cap")
+    elite_frost.advance(boss_chill, 2.0)
+    check(is_equal_approx(elite_frost.multiplier(boss_chill), 1.0), "Boss frost resistance retains normal expiration")
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
