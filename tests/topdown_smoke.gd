@@ -435,6 +435,11 @@ func run_tests() -> void:
     check(synergy_rules.preview("fire", false, true) == {"flat": 0, "burning": 1}, "Module: bone supports burning fire")
     check(synergy_rules.preview("necro", true, true) == {"flat": 1, "burning": 1}, "Module: necromancy combines both sources")
     check(synergy_rules.preview("necro", false, false) == {"flat": 0, "burning": 0}, "Module: no phantom synergy")
+    var stats = load("res://scripts/td/td_tower_stats.gd")
+    check(stats.COSTS == {"bone": 30, "fire": 45, "necro": 60}, "Tower stats module preserves prices")
+    check(stats.RANGES == {"bone": 135.0, "fire": 160.0, "necro": 125.0}, "Tower stats module preserves independent attack radii")
+    check(stats.DAMAGES == {"bone": 2, "fire": 1, "necro": 3}, "Tower stats module preserves damage")
+    check(stats.SPECIALIZATION_LABELS["fire"][1] == "ИСКРЫ: 3 ЦЕЛИ", "Tower stats module keeps specialization labels")
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()

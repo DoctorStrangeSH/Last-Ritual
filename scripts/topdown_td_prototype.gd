@@ -2,9 +2,10 @@ extends Node2D
 ## V2 independent top-down TD construction slice. No paths or wave spawning yet.
 const SFX_SCRIPT = preload("res://scripts/procedural_sfx.gd")
 const TD_SYNERGY_RULES = preload("res://scripts/td/td_synergy_rules.gd")
+const TD_TOWER_STATS = preload("res://scripts/td/td_tower_stats.gd")
 var sfx: Node
 const SLOT_POSITIONS := [Vector2(280, 190), Vector2(430, 190), Vector2(590, 190), Vector2(750, 190), Vector2(280, 440), Vector2(430, 440), Vector2(590, 440), Vector2(750, 440)]
-const COSTS := {"bone": 30, "fire": 45, "necro": 60}
+const COSTS = TD_TOWER_STATS.COSTS
 const WAVE_BUTTON := Rect2(65, 545, 170, 60)
 const REPAIR_BUTTON := Rect2(485, 474, 225, 54)
 const MOVE_BUTTON := Rect2(730, 474, 155, 54)
@@ -19,7 +20,7 @@ const TARGET_LABELS := {"nearest": "БЛИЖАЙШИЙ", "support": "ПОДДЕ�
 var slots: Array[Dictionary] = []
 var specialization_open := false
 const SPECIALIZATION_BUTTONS := [Rect2(315, 325, 220, 70), Rect2(555, 325, 220, 70)]
-const SPECIALIZATION_LABELS := {"bone": ["БАЛЛИСТА: +2 УРОН", "РОЙ: СКОРОСТЬ"], "fire": ["ИНФЕРНО: ПЛАМЯ", "ИСКРЫ: 3 ЦЕЛИ"], "necro": ["ЖНЕЦ: СИЛА ДУХОВ", "ЛЕГИОН: БОЛЬШЕ ДУХОВ"]}
+const SPECIALIZATION_LABELS = TD_TOWER_STATS.SPECIALIZATION_LABELS
 var selected_type := ""
 var selected_slot := -1
 var coins := 150
@@ -45,8 +46,8 @@ var enemies_escaped := 0
 var enemies_defeated := 0
 var tower_cooldowns: Dictionary = {}
 var shot_trails: Array[Dictionary] = []
-const TOWER_RANGE := {"bone": 135.0, "fire": 160.0, "necro": 125.0}
-const TOWER_DAMAGE := {"bone": 2, "fire": 1, "necro": 3}
+const TOWER_RANGE = TD_TOWER_STATS.RANGES
+const TOWER_DAMAGE = TD_TOWER_STATS.DAMAGES
 const HERO_SPEED := 215.0
 const HERO_ATTACK_RANGE := 150.0
 var hero_pos := Vector2(560.0, 420.0)
