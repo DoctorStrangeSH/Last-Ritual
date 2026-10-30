@@ -1156,7 +1156,9 @@ func selected_tower_info() -> Dictionary:
         damage += bone_synergy_bonus
     var upgrade_cost: int = 20 * int(tower["level"]) if int(tower["level"]) < 3 else 0
     var synergy: Dictionary = tower_synergy_preview(selected_slot)
-    return {"kind": kind, "level": int(tower["level"]), "damage": damage, "priority": str(tower.get("target_priority", "nearest")), "specialization": str(tower.get("specialization", "")), "links": tower_synergy_links(selected_slot).size(), "synergy_flat": int(synergy["flat"]), "synergy_burning": int(synergy["burning"]), "upgrade_cost": upgrade_cost}
+    var explanation: Dictionary = TD_TOWER_TOOLTIPS.shop_info(kind)
+    var attack_delay: float = 0.45 if str(tower.get("specialization", "")) == "swarm" else 0.8
+    return {"range": int(TOWER_RANGE[kind]), "attack_delay": attack_delay, "effect": str(explanation.get("effect", "")), "kind": kind, "level": int(tower["level"]), "damage": damage, "priority": str(tower.get("target_priority", "nearest")), "specialization": str(tower.get("specialization", "")), "links": tower_synergy_links(selected_slot).size(), "synergy_flat": int(synergy["flat"]), "synergy_burning": int(synergy["burning"]), "upgrade_cost": upgrade_cost}
 
 func performance_snapshot() -> Dictionary:
     return {
@@ -1199,17 +1201,20 @@ func _draw() -> void:
         if str(info["specialization"]) != "":
             var label_index: int = 0 if info["specialization"] == "siege" else 1
             specialization_label = str(SPECIALIZATION_LABELS[str(info["kind"])][label_index]).split(":")[0]
-        draw_rect(Rect2(845, 129, 280, 181), Color("#17272e", 0.95))
-        draw_rect(Rect2(845, 129, 280, 181), Color("#a4b9a7"), false, 2.0)
-        draw_string(ThemeDB.fallback_font, Vector2(858, 151), "%s / УР. %d" % [tower_title, int(info["level"])], HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color("#fff0c6"))
-        draw_string(ThemeDB.fallback_font, Vector2(858, 177), "УРОН: %d  СВЯЗИ: %d" % [int(info["damage"]), int(info["links"])], HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
-        draw_string(ThemeDB.fallback_font, Vector2(858, 202), "ПУТЬ: %s" % specialization_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#b9e4d6"))
-        draw_string(ThemeDB.fallback_font, Vector2(858, 228), "УЛУЧШ.: %s" % ("МАКС." if int(info["upgrade_cost"]) == 0 else "%d ЗОЛ." % int(info["upgrade_cost"])), HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#e7cf98"))
+        draw_rect(Rect2(845, 129, 280, 258), Color("#17272e", 0.96))
+        draw_rect(Rect2(845, 129, 280, 258), Color("#a4b9a7"), false, 2.0)
+        draw_string(ThemeDB.fallback_font, Vector2(858, 151), "%s / УР. %d" % [tower_title, int(info["level"])], HORIZONTAL_ALIGNMENT_LEFT, 255, 17, Color("#fff0c6"))
+        draw_string(ThemeDB.fallback_font, Vector2(858, 176), "УРОН: %d   СВЯЗИ: %d" % [int(info["damage"]), int(info["links"])], HORIZONTAL_ALIGNMENT_LEFT, 255, 16, Color.WHITE)
+        draw_string(ThemeDB.fallback_font, Vector2(858, 199), "РАДИУС: %d   АТАКА: %.2f С" % [int(info["range"]), float(info["attack_delay"])], HORIZONTAL_ALIGNMENT_LEFT, 255, 15, Color("#b3dce0"))
+        draw_string(ThemeDB.fallback_font, Vector2(858, 222), "ПУТЬ: %s" % specialization_label, HORIZONTAL_ALIGNMENT_LEFT, 255, 14, Color("#b9e4d6"))
+        draw_string(ThemeDB.fallback_font, Vector2(858, 246), "УЛУЧШ.: %s" % ("МАКС." if int(info["upgrade_cost"]) == 0 else "%d ЗОЛ." % int(info["upgrade_cost"])), HORIZONTAL_ALIGNMENT_LEFT, 255, 14, Color("#e7cf98"))
+        draw_string(ThemeDB.fallback_font, Vector2(858, 272), str(info["effect"]), HORIZONTAL_ALIGNMENT_LEFT, 255, 13, Color("#e2e5e0"))
         var frost_status: String = frost_synergy_status(selected_slot)
         if int(info["synergy_flat"]) > 0 or int(info["synergy_burning"]) > 0:
-            draw_string(ThemeDB.fallback_font, Vector2(858, 253), "БОНУС: +%d / +%d ГОРЯЩ." % [int(info["synergy_flat"]), int(info["synergy_burning"])], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#e4c990"))
+            draw_string(ThemeDB.fallback_font, Vector2(858, 301), "БОНУС: +%d / +%d ГОРЯЩ." % [int(info["synergy_flat"]), int(info["synergy_burning"])], HORIZONTAL_ALIGNMENT_LEFT, 255, 13, Color("#e4c990"))
         if frost_status != "":
-            draw_string(ThemeDB.fallback_font, Vector2(858, 279), frost_status, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#a4e9ff"))
+            draw_string(ThemeDB.fallback_font, Vector2(858, 325), frost_status, HORIZONTAL_ALIGNMENT_LEFT, 255, 13, Color("#a4e9ff"))
+        draw_string(ThemeDB.fallback_font, Vector2(858, 368), "НАВЕДИ НА «УЛУЧШИТЬ»" , HORIZONTAL_ALIGNMENT_LEFT, 255, 13, Color("#c8c3a8"))
     var repair_ready: bool = defense_state == "playing" and enemies.is_empty() and wave_number < SIEGE_WAVES and altar_hp > 0 and altar_hp < 100 and coins >= REPAIR_COST
     var can_move: bool = selected_slot >= 0 and selected_slot < slots.size() and slots[selected_slot]["tower"] != "" and defense_state == "playing" and enemies.is_empty() and wave_number < SIEGE_WAVES
     if can_move:
