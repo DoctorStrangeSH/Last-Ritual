@@ -815,6 +815,19 @@ func run_tests() -> void:
         var common_marker: Vector2 = icon_layout.enemy_status_marker_position(common_icons, 13.0, 1, 3)
         check(common_marker.y < 240.0 and is_equal_approx(common_marker.x, 400.0), "Ordinary status indicators remain above enemies")
         icon_layout.queue_free()
+    if specialization_balance_scene != null:
+        var edge_icons = specialization_balance_scene.instantiate()
+        root.add_child(edge_icons)
+        var right_boss := {"role": "boss", "pos": Vector2(1130, 260)}
+        var right_marker: Vector2 = edge_icons.enemy_status_marker_position(right_boss, 29.0, 1, 3)
+        check(right_marker.x < 1130.0, "Boss markers flip to the left at right screen edge")
+        var top_enemy := {"role": "grunt", "pos": Vector2(100, 5)}
+        var top_marker: Vector2 = edge_icons.enemy_status_marker_position(top_enemy, 13.0, 0, 2)
+        check(top_marker.y > 5.0, "Normal status markers move below enemy near top screen edge")
+        var corner_enemy := {"role": "grunt", "pos": Vector2(1, 1)}
+        var corner_marker: Vector2 = edge_icons.enemy_status_marker_position(corner_enemy, 13.0, 0, 3)
+        check(corner_marker.x >= 6.0 and corner_marker.y >= 6.0, "Status marker remains inside viewport at corner")
+        edge_icons.queue_free()
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
