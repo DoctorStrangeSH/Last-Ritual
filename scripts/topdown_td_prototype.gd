@@ -940,8 +940,15 @@ func draw_enemy_status_markers(enemy: Dictionary, radius: float) -> void:
     for index in range(markers.size()):
         var center: Vector2 = enemy["pos"] + Vector2((float(index) - float(markers.size() - 1) * 0.5) * 16.0, -radius - 14.0)
         var marker_color: Color = Color("#a4e9ff") if markers[index] == "frost" else (Color("#ffaf61") if markers[index] == "burn" else Color("#f0da91"))
-        draw_circle(center, 5.0, Color("#18242b"))
-        draw_circle(center, 3.5, marker_color)
+        # Different silhouettes remain legible in crowds and without color vision.
+        draw_circle(center, 6.0, Color("#18242b"))
+        match markers[index]:
+            "frost":
+                draw_colored_polygon(PackedVector2Array([center + Vector2(0, -4), center + Vector2(4, 0), center + Vector2(0, 4), center + Vector2(-4, 0)]), marker_color)
+            "burn":
+                draw_circle(center, 3.5, marker_color)
+            "command":
+                draw_colored_polygon(PackedVector2Array([center + Vector2(0, -4), center + Vector2(4, 4), center + Vector2(-4, 4)]), marker_color)
 
 func draw_enemy_figure(enemy: Dictionary) -> void:
     var role: String = str(enemy.get("role", "grunt"))

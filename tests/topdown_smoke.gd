@@ -798,6 +798,13 @@ func run_tests() -> void:
         marker_game.enemies.clear()
         check(marker_game.enemy_status_markers(status_foe).size() == 2, "Commander indicator disappears after commander is defeated")
         marker_game.queue_free()
+    if specialization_balance_scene != null:
+        var display_state_game = specialization_balance_scene.instantiate()
+        root.add_child(display_state_game)
+        check(display_state_game.enemy_status_markers({"frost_time": 0.0, "burn_time": 0.0}).is_empty(), "Expired effects do not clutter marker row")
+        check(display_state_game.enemy_status_markers({"frost_time": 1.0, "burn_time": 1.0}) == ["frost", "burn"], "Effect marker order stays stable when multiple statuses overlap")
+        check(display_state_game.enemy_status_markers({"frost_time": 0.0, "burn_time": 1.0}) == ["burn"], "Removing frost immediately compacts marker row")
+        display_state_game.queue_free()
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
