@@ -794,7 +794,7 @@ func run_tests() -> void:
         check(not td.help_visible, "TD controls help closes cleanly")
         check(not td.sfx.play_effect("unknown"), "Audio helper rejects unknown effects safely")
         check(td.slots.size() == 8, "TD has eight fixed construction slots")
-        for lane in td.PATHS:
+        for lane in td.paths:
             check(lane.size() >= 7, "Fortress route has multiple meaningful bends")
             for segment_index in range(1, lane.size()):
                 check(lane[segment_index].distance_to(lane[segment_index - 1]) > 10.0, "Route has no duplicate adjacent waypoints")
@@ -806,10 +806,10 @@ func run_tests() -> void:
                     var t: float = clampf((slot["pos"] - a).dot(b - a) / (b - a).length_squared(), 0.0, 1.0)
                     clearance = minf(clearance, slot["pos"].distance_to(a.lerp(b, t)))
                 check(clearance >= 42.0, "Tower slots stay outside road corridor")
-        var first_lane: Array = td.PATHS[0]
+        var first_lane: Array = td.paths[0]
         var first_direction: Vector2 = (first_lane[1] - first_lane[0]).normalized()
         check((first_lane[3] - first_lane[2]).normalized().distance_to(first_direction) > 0.2, "Upper lane is not straight")
-        var second_lane: Array = td.PATHS[1]
+        var second_lane: Array = td.paths[1]
         check((second_lane[3] - second_lane[2]).normalized().distance_to((second_lane[1] - second_lane[0]).normalized()) > 0.2, "Lower lane is not straight")
         td.enemies.append({"lane": 0, "pos": first_lane[0], "waypoint": 1, "hp": 999, "speed": 85.0, "delay": 0.0})
         td.advance_enemies(8.0)
@@ -902,7 +902,7 @@ func run_tests() -> void:
         check(not td.start_wave(), "TD victory blocks further waves")
         td.restart_defense()
         td.altar_hp = 10
-        td.enemies.append({"lane": 0, "pos": td.PATHS[0][td.PATHS[0].size() - 1], "waypoint": td.PATHS[0].size() - 1, "hp": 1, "delay": 0.0})
+        td.enemies.append({"lane": 0, "pos": td.paths[0][td.paths[0].size() - 1], "waypoint": td.paths[0].size() - 1, "hp": 1, "delay": 0.0})
         td.advance_enemies(0.01)
         check(td.defense_state == "lost" and td.altar_hp == 0, "TD altar defeat ends defense")
         check(not td.start_wave(), "TD defeat blocks more waves")
