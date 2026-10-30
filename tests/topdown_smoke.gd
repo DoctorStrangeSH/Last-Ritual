@@ -220,6 +220,21 @@ func run_tests() -> void:
         check(spec_next.slots[0]["specialization"] == "siege", "Restored tower keeps specialization")
         spec_game.queue_free()
         spec_next.queue_free()
+    var school_scene = load("res://scenes/topdown_td_prototype.tscn")
+    if school_scene != null:
+        var school = school_scene.instantiate()
+        root.add_child(school)
+        school.choose_tower("fire")
+        check(school.build_tower(0), "Build fire specialization tower")
+        school.coins = 200
+        school.select_slot(0)
+        check(school.upgrade_selected() and school.choose_specialization("siege"), "Fire chooses Inferno")
+        var burning := {"burn_time": 0.0, "hp": 20}
+        school.apply_burn(burning)
+        check(int(burning["burn_damage"]) >= 1, "Fire burn effect initializes")
+        school.spawn_necro_spirit(Vector2(200, 200), true)
+        check(school.summoned_spirits.size() == 1 and int(school.summoned_spirits[0]["damage"]) == 4, "Reaper creates empowered spirit")
+        school.queue_free()
     var td_scene := load("res://scenes/topdown_td_prototype.tscn") as PackedScene
     check(td_scene != null, "Top-down TD scene loads")
     if td_scene != null:
