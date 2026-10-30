@@ -11,6 +11,7 @@ const REPAIR_BUTTON := Rect2(485, 474, 225, 54)
 const MOVE_BUTTON := Rect2(730, 474, 155, 54)
 var moving_tower := false
 const SIEGE_WAVES := 6
+const EVENT_BUTTONS := [Rect2(220, 305, 225, 65), Rect2(463, 305, 225, 65), Rect2(706, 305, 225, 65)]
 const REPAIR_COST := 25
 const REPAIR_HP := 20
 const HELP_BUTTON := Rect2(987.0, 10.0, 150.0, 46.0)
@@ -49,6 +50,8 @@ var altar_hp := 100
 var defense_state := "playing" # playing, won, lost
 var help_visible := false
 const RESTART_BUTTON := Rect2(455, 350, 242, 58)
+var interwave_choice := ""
+var next_wave_extra_hp := 0
 var enemies_spawned := 0
 var enemies_escaped := 0
 var enemies_defeated := 0
@@ -166,16 +169,39 @@ func siege_spawn_delay(wave: int, index: int, role: String) -> float:
         return base_delay + 0.8
     return base_delay
 
+func can_choose_interwave_event() -> bool:
+    return defense_state == "playing" and wave_number == 3 and enemies.is_empty() and interwave_choice == "" and not specialization_open and not help_visible
+
+func choose_interwave_event(choice: String) -> bool:
+    if not can_choose_interwave_event() or not ["raid", "repair", "safe"].has(choice):
+        return false
+    interwave_choice = choice
+    match choice:
+        "raid":
+            coins += 35
+            next_wave_extra_hp = 3
+        "repair":
+            altar_hp = mini(100, altar_hp + 20)
+        "safe":
+            coins += 15
+    queue_redraw()
+    return true
+
 func start_wave() -> bool:
     if defense_state != "playing" or not enemies.is_empty() or wave_number >= SIEGE_WAVES or altar_hp <= 0:
         return false
+    # Skipping the event is allowed, but the reward cannot be claimed later.
+    if wave_number == 3 and interwave_choice == "":
+        interwave_choice = "skipped"
     moving_tower = false
     wave_number += 1
     enemies_spawned = 0
     var count := wave_number + 2 + (1 if siege_day >= 2 else 0)
+    var encounter_extra_hp: int = next_wave_extra_hp
+    next_wave_extra_hp = 0
     for i in range(count):
         var role: String = siege_enemy_role(wave_number, i)
-        var hp := ((7 + wave_number) if role == "brute" else (2 + wave_number if role == "runner" else 3 + wave_number)) + difficulty * 2 + (3 if siege_day >= 3 else 0)
+        var hp := ((7 + wave_number) if role == "brute" else (2 + wave_number if role == "runner" else 3 + wave_number)) + difficulty * 2 + (3 if siege_day >= 3 else 0) + encounter_extra_hp
         var speed := (135.0 if role == "runner" else (55.0 if role == "brute" else 85.0)) * (1.0 + 0.15 * difficulty)
         enemies.append({"lane": i % paths.size(), "pos": paths[i % paths.size()][0], "waypoint": 1, "hp": hp, "max_hp": hp, "speed": speed, "role": role, "delay": siege_spawn_delay(wave_number, i, role)})
         enemies_spawned += 1
@@ -460,6 +486,8 @@ func restart_defense() -> void:
     altar_hp = 100
     wave_number = 0
     enemies_spawned = 0
+    interwave_choice = ""
+    next_wave_extra_hp = 0
     enemies_escaped = 0
     enemies_defeated = 0
     coins = 150
@@ -705,6 +733,11 @@ func _unhandled_input(event: InputEvent) -> void:
             if HELP_CLOSE_BUTTON.has_point(event.position):
                 toggle_controls_help()
             return
+    if can_choose_interwave_event() and event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+        for i in range(EVENT_BUTTONS.size()):
+            if EVENT_BUTTONS[i].has_point(event.position):
+                choose_interwave_event(["raid", "repair", "safe"][i])
+                return
     if specialization_open:
         if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
             if SPECIALIZATION_BUTTONS[0].has_point(event.position):
@@ -959,7 +992,7 @@ func _draw() -> void:
         draw_string(ThemeDB.fallback_font, Vector2(485, 301), "ПОБЕДА" if defense_state == "won" else "АЛТАРЬ ПАЛ", HORIZONTAL_ALIGNMENT_LEFT, -1, 28, Color.WHITE)
         draw_rect(RESTART_BUTTON, Color("#8ca9bc"))
         draw_string(ThemeDB.fallback_font, Vector2(480, 386), "НАЧАТЬ ЗАНОВО", HORIZONTAL_ALIGNMENT_LEFT, -1, 20, Color.WHITE)
-    draw_string(ThemeDB.fallback_font, Vector2(66, 45), "АЛТАРЬ %d / 100     ВОЛНА %d / 3     ЗОЛОТО %d" % [altar_hp, wave_number, coins], HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color.WHITE)
+    draw_string(ThemeDB.fallback_font, Vector2(66, 45), "АЛТАРЬ %d / 100     ВОЛНА %d / 6     ЗОЛОТО %d" % [altar_hp, wave_number, coins], HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color.WHITE)
     if selected_slot >= 0 and selected_slot < slots.size() and slots[selected_slot]["tower"] != "":
         draw_rect(TARGET_BUTTON, Color("#385a63"))
         draw_rect(TARGET_BUTTON, Color("#e5c985"), false, 2.0)
@@ -992,6 +1025,14 @@ func _draw() -> void:
     if enemies.is_empty() and defense_state == "playing":
         draw_rect(Rect2(62, 487, 410, 42), Color("#263d43", 0.96))
         draw_string(ThemeDB.fallback_font, Vector2(74, 515), upcoming_wave_summary(), HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#f2d89c"))
+    if can_choose_interwave_event():
+        draw_rect(Rect2(184, 205, 785, 186), Color("#1d3038", 0.97))
+        draw_rect(Rect2(184, 205, 785, 186), Color("#d7ba80"), false, 2.0)
+        draw_string(ThemeDB.fallback_font, Vector2(235, 257), "ВОЕННЫЙ СОВЕТ: ВЫБЕРИ ПОДГОТОВКУ", HORIZONTAL_ALIGNMENT_LEFT, -1, 21, Color("#f5e6bc"))
+        var labels := ["ОБОЗ: +35 / +3 HP ВРАГАМ", "АЛТАРЬ: +20 HP", "ЗАПАС: +15 ЗОЛОТА"]
+        for i in range(EVENT_BUTTONS.size()):
+            draw_rect(EVENT_BUTTONS[i], Color("#53695d"))
+            draw_string(ThemeDB.fallback_font, EVENT_BUTTONS[i].position + Vector2(8, 37), labels[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color.WHITE)
     for path in paths:
         draw_fortress_road(path)
     draw_fortress_atmosphere()
