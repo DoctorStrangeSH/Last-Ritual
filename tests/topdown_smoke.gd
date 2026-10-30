@@ -508,6 +508,18 @@ func run_tests() -> void:
         rest_council.altar_hp = 60
         check(rest_council.choose_interwave_event("repair") and rest_council.altar_hp == 80, "War council can heal the altar")
         rest_council.queue_free()
+    # Stage 182: later waves have readable, deterministic tactical roles.
+    if specialization_balance_scene != null:
+        var formations = specialization_balance_scene.instantiate()
+        root.add_child(formations)
+        check(formations.siege_enemy_role(4, 0) == "runner" and formations.siege_enemy_role(4, 1) == "brute", "Wave four mixes swift vanguard and armored escort")
+        check(formations.siege_enemy_role(5, 0) == "brute" and formations.siege_enemy_role(5, 1) == "runner", "Wave five emphasizes pressure from both enemy classes")
+        check(formations.siege_enemy_role(6, 0) == "brute" and formations.siege_enemy_role(6, 1) == "runner", "Final wave escorts boss with mixed threats")
+        formations.siege_day = 2
+        check(formations.siege_enemy_role(4, 0) == "runner", "Swift-raid day retains runner signature")
+        formations.siege_day = 3
+        check(formations.siege_enemy_role(4, 0) == "brute", "Armored-siege day retains brute signature")
+        formations.queue_free()
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
