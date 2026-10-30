@@ -631,6 +631,13 @@ func run_tests() -> void:
     probe_tower["target_priority"] = "front"
     check(target_rules.choose(probe_tower, probe_enemies, {"bone": 135.0}) == healer_foe, "Target module prioritizes enemy near gate")
     check(target_rules.choose(probe_tower, probe_enemies, {"bone": 30.0}) == near_foe, "Target module excludes out-of-range enemies")
+    var burn_rules = load("res://scripts/td/td_burn_effect.gd")
+    var burned_foe := {"hp": 9}
+    burn_rules.apply(burned_foe, 1)
+    check(int(burned_foe["burn_damage"]) == 2 and is_equal_approx(float(burned_foe["burn_time"]), 3.0), "Burn module initializes duration and synergy damage")
+    check(not burn_rules.advance(burned_foe, 0.5) and int(burned_foe["hp"]) == 7, "Burn module applies first tick")
+    check(not burn_rules.advance(burned_foe, 1.0) and int(burned_foe["hp"]) == 3, "Burn module handles multiple ticks per frame")
+    check(burn_rules.advance(burned_foe, 1.5) and int(burned_foe["hp"]) <= 0, "Burn module resolves lethal expiration tick")
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
