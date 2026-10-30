@@ -469,6 +469,26 @@ func run_tests() -> void:
             check(paths[lane_id].size() >= 8, "TD route contains multiple bends")
             check(paths[lane_id][0] == td_layouts.LAYOUTS[0][lane_id][0] and paths[lane_id][-1] == td_layouts.LAYOUTS[0][lane_id][-1], "TD route retains entry and altar")
     check(td_layouts.layout_for_seed(0) != td_layouts.layout_for_seed(1), "Different seeds can choose different fortress routes")
+    # Per-run map is stable across phases, while a fresh run can choose a new seed.
+    if specialization_balance_scene != null:
+        var first_map = specialization_balance_scene.instantiate()
+        root.add_child(first_map)
+        first_map.set_fortress_map_seed(4)
+        check(first_map.paths == first_map.TD_PATH_LAYOUTS.layout_for_seed(4), "TD uses selected seed layout")
+        var map_snapshot: Dictionary = first_map.export_fortress_state()
+        var second_map = specialization_balance_scene.instantiate()
+        root.add_child(second_map)
+        second_map.set_fortress_map_seed(4)
+        check(second_map.import_fortress_state(map_snapshot), "TD restores fortress with matching map")
+        check(second_map.paths == first_map.paths, "Same seed keeps layout between days")
+        var other_map = specialization_balance_scene.instantiate()
+        root.add_child(other_map)
+        other_map.set_fortress_map_seed(5)
+        check(not other_map.import_fortress_state(map_snapshot), "TD rejects state from another map")
+        check(other_map.paths != first_map.paths, "Different map seed changes fortress roads")
+        first_map.queue_free()
+        second_map.queue_free()
+        other_map.queue_free()
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
@@ -774,7 +794,7 @@ func run_tests() -> void:
         check(not td.help_visible, "TD controls help closes cleanly")
         check(not td.sfx.play_effect("unknown"), "Audio helper rejects unknown effects safely")
         check(td.slots.size() == 8, "TD has eight fixed construction slots")
-        for lane in td.PATHS:
+        for lane in td.paths:
             check(lane.size() >= 7, "Fortress route has multiple meaningful bends")
             for segment_index in range(1, lane.size()):
                 check(lane[segment_index].distance_to(lane[segment_index - 1]) > 10.0, "Route has no duplicate adjacent waypoints")
@@ -786,10 +806,10 @@ func run_tests() -> void:
                     var t: float = clampf((slot["pos"] - a).dot(b - a) / (b - a).length_squared(), 0.0, 1.0)
                     clearance = minf(clearance, slot["pos"].distance_to(a.lerp(b, t)))
                 check(clearance >= 42.0, "Tower slots stay outside road corridor")
-        var first_lane: Array = td.PATHS[0]
+        var first_lane: Array = td.paths[0]
         var first_direction: Vector2 = (first_lane[1] - first_lane[0]).normalized()
         check((first_lane[3] - first_lane[2]).normalized().distance_to(first_direction) > 0.2, "Upper lane is not straight")
-        var second_lane: Array = td.PATHS[1]
+        var second_lane: Array = td.paths[1]
         check((second_lane[3] - second_lane[2]).normalized().distance_to((second_lane[1] - second_lane[0]).normalized()) > 0.2, "Lower lane is not straight")
         td.enemies.append({"lane": 0, "pos": first_lane[0], "waypoint": 1, "hp": 999, "speed": 85.0, "delay": 0.0})
         td.advance_enemies(8.0)
@@ -882,7 +902,7 @@ func run_tests() -> void:
         check(not td.start_wave(), "TD victory blocks further waves")
         td.restart_defense()
         td.altar_hp = 10
-        td.enemies.append({"lane": 0, "pos": td.PATHS[0][td.PATHS[0].size() - 1], "waypoint": td.PATHS[0].size() - 1, "hp": 1, "delay": 0.0})
+        td.enemies.append({"lane": 0, "pos": td.paths[0][td.paths[0].size() - 1], "waypoint": td.paths[0].size() - 1, "hp": 1, "delay": 0.0})
         td.advance_enemies(0.01)
         check(td.defense_state == "lost" and td.altar_hp == 0, "TD altar defeat ends defense")
         check(not td.start_wave(), "TD defeat blocks more waves")
