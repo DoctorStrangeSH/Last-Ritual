@@ -446,6 +446,25 @@ func run_tests() -> void:
         check(scenery.fortress_altar_center() == Vector2(1041, 314), "Altar artwork remains anchored at original objective location")
         check(scenery.fortress_altar_center().x > 900.0, "Altar artwork stays on defended east side")
         scenery.queue_free()
+    # Different difficulties must demand different tower strategies, not just extra HP.
+    var difficulty_scene = load("res://scenes/topdown_td_prototype.tscn")
+    if difficulty_scene != null:
+        var encounter_probe = difficulty_scene.instantiate()
+        root.add_child(encounter_probe)
+        encounter_probe.difficulty = 0
+        check(encounter_probe.siege_enemy_role(1, 0) == "grunt" and encounter_probe.siege_enemy_role(1, 1) == "grunt", "Normal opening wave retains accessible grunts")
+        encounter_probe.difficulty = 1
+        check(encounter_probe.siege_enemy_role(1, 0) == "grunt" and encounter_probe.siege_enemy_role(1, 1) == "runner", "Hard opening wave introduces a fast enemy")
+        encounter_probe.difficulty = 2
+        check(encounter_probe.siege_enemy_role(1, 0) == "brute" and encounter_probe.siege_enemy_role(1, 1) == "runner", "Nightmare opening wave mixes armor and speed")
+        check(encounter_probe.start_wave(), "Nightmare first wave can start")
+        check(encounter_probe.enemies[0]["role"] == "brute" and encounter_probe.enemies[1]["role"] == "runner", "Spawned enemies follow selected difficulty composition")
+        encounter_probe.difficulty = 0
+        encounter_probe.siege_day = 2
+        check(encounter_probe.siege_enemy_role(2, 0) == "runner", "Day two still features raiders on Normal")
+        encounter_probe.siege_day = 3
+        check(encounter_probe.siege_enemy_role(2, 0) == "brute", "Day three still features armor on Normal")
+        encounter_probe.queue_free()
     var td_scene := load("res://scenes/topdown_td_prototype.tscn") as PackedScene
     check(td_scene != null, "Top-down TD scene loads")
     if td_scene != null:
