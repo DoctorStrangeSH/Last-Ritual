@@ -787,6 +787,17 @@ func run_tests() -> void:
         control_game.TD_FROST_EFFECT.advance(controlled_grunt, 2.0)
         check(is_equal_approx(control_game.enemy_movement_multiplier(controlled_grunt), 1.0), "Chill expiration restores regular movement after captain defeat")
         control_game.queue_free()
+    if specialization_balance_scene != null:
+        var marker_game = specialization_balance_scene.instantiate()
+        root.add_child(marker_game)
+        var status_foe := {"role": "grunt", "pos": Vector2(20, 0), "delay": 0.0, "frost_time": 1.0, "burn_time": 1.0}
+        check(marker_game.enemy_status_markers(status_foe) == ["frost", "burn"], "Enemy markers combine chill and fire without duplicates")
+        var aura_captain := {"role": "captain", "pos": Vector2.ZERO, "delay": 0.0}
+        marker_game.enemies.append(aura_captain)
+        check(marker_game.enemy_status_markers(status_foe) == ["frost", "burn", "command"], "Enemy indicators show commander aura alongside status effects")
+        marker_game.enemies.clear()
+        check(marker_game.enemy_status_markers(status_foe).size() == 2, "Commander indicator disappears after commander is defeated")
+        marker_game.queue_free()
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
