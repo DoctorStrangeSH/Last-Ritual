@@ -815,6 +815,19 @@ func run_tests() -> void:
         check(art_check.night_enemy_visual_role({"role": "regular", "ranged": true}) == "ranged", "Night ranged enemy shows bow")
         check(art_check.night_enemy_visual_role({"role": "regular", "ranged": false}) == "regular", "Night melee enemy shows distinct face")
         art_check.queue_free()
+    var warning_scene = load("res://scenes/topdown_night_prototype.tscn")
+    if warning_scene != null:
+        var warning_probe = warning_scene.instantiate()
+        root.add_child(warning_probe)
+        check(warning_probe.current_room_progress() == "КОМНАТА 1 / 3", "Standalone night progress matches three-room mode")
+        check(warning_probe.current_room_caption() == "СКЛЕП", "Standalone night room name is localized")
+        check(is_equal_approx(warning_probe.attack_warning_progress(0.5, 1.0), 0.5), "Threat marker shows half charge")
+        check(is_equal_approx(warning_probe.attack_warning_progress(0.0, 1.0), 1.0), "Threat marker fills at strike time")
+        check(is_equal_approx(warning_probe.attack_warning_progress(2.0, 1.0), 0.0), "Threat marker clamps before start")
+        warning_probe.enable_floor_exploration(1777)
+        check(warning_probe.current_room_progress().begins_with("ОТКРЫТО 1 / "), "Exploration HUD counts discovered rooms instead of showing a false 3-room limit")
+        check(warning_probe.current_room_caption() != "", "Exploration room type has a readable caption")
+        warning_probe.queue_free()
     var packed := load("res://scenes/topdown_night_prototype.tscn") as PackedScene
     check(packed != null, "Top-down entry scene loads")
     if packed == null:

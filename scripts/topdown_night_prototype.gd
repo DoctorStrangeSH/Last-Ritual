@@ -793,6 +793,21 @@ func draw_night_enemy_mark(enemy: Dictionary) -> void:
             draw_circle(center + Vector2(-6, -4), 3.0, Color("#3d2a32"))
             draw_circle(center + Vector2(6, -4), 3.0, Color("#3d2a32"))
 
+func current_room_caption() -> String:
+    if exploration_enabled and not floor_data.is_empty():
+        var rooms: Array = floor_data.get("rooms", [])
+        if room_index >= 0 and room_index < rooms.size():
+            return str(rooms[room_index].get("kind", "КОМНАТА"))
+    return ["СКЛЕП", "ЗАСАДА", "ЭЛИТА"][clampi(room_variant, 0, 2)]
+
+func current_room_progress() -> String:
+    if exploration_enabled:
+        return "ОТКРЫТО %d / %d" % [visited_rooms.size(), floor_data.get("rooms", []).size()]
+    return "КОМНАТА %d / 3" % (room_index + 1)
+
+func attack_warning_progress(remaining: float, duration: float) -> float:
+    return clampf(1.0 - remaining / maxf(duration, 0.01), 0.0, 1.0)
+
 func _draw() -> void:
     draw_crypt_environment()
     for wall in obstacles:
@@ -805,8 +820,8 @@ func _draw() -> void:
     draw_circle(player_pos, 22.0 if player_hit_flash > 0.0 else 17.0, Color("#fff1d1") if player_hit_flash > 0.0 else (Color("#80dbed") if invulnerable_time <= 0.0 or int(invulnerable_time * 16.0) % 2 == 0 else Color("#4c657a")))
     draw_rect(Rect2(48.0, 25.0, 220.0, 18.0), Color("#442c37"))
     draw_rect(Rect2(48.0, 25.0, 220.0 * float(player_hp) / 100.0, 18.0), Color("#cf657a"))
-    draw_label("ЗДОРОВЬЕ %d/100  КОМНАТА %d/3  %s  ДУШИ %d  РЕЛИКВИИ %d" % [player_hp, room_index + 1, ROOM_KINDS[room_variant], night_souls, relics.size()], Vector2(280, 41), 17)
-    draw_label(ROOM_TACTICS[room_variant], Vector2(77, 108), 15, Color("#e7d3a8"))
+    draw_label("ЗДОРОВЬЕ %d/100  %s  ДУШИ %d  РЕЛИКВИИ %d" % [player_hp, current_room_progress(), night_souls, relics.size()], Vector2(280, 41), 17)
+    draw_label(current_room_caption(), Vector2(77, 108), 16, Color("#e7d3a8"))
     if route_boon != "":
         draw_label(route_boon, Vector2(300, 65), 14, Color("#d5c592"))
     if run_state == "won":
@@ -823,19 +838,23 @@ func _draw() -> void:
         var melee_remaining: float = float(enemy.get("melee_warning", 0.0))
         if ranged_remaining > 0.0:
             var aim: Vector2 = enemy["attack_target"]
-            var ranged_charge: float = 1.0 - ranged_remaining / RANGED_WARNING
+            var ranged_charge: float = attack_warning_progress(ranged_remaining, RANGED_WARNING)
             draw_line(enemy["pos"], aim, Color("#ffbc76", 0.45 + ranged_charge * 0.55), 3.0)
             draw_arc(aim, 24.0, -PI / 2.0, -PI / 2.0 + TAU * ranged_charge, 32, Color("#ffbc76"), 4.0)
+            draw_circle(aim, 4.0 + 4.0 * ranged_charge, Color("#ffbc76", 0.45 + 0.4 * ranged_charge))
         elif melee_remaining > 0.0:
             var attack_at: Vector2 = enemy["attack_target"]
-            var melee_charge: float = 1.0 - melee_remaining / float(enemy.get("melee_warning_duration", MELEE_WARNING))
+            var melee_charge: float = attack_warning_progress(melee_remaining, float(enemy.get("melee_warning_duration", MELEE_WARNING)))
             draw_arc(attack_at, MELEE_HIT_RADIUS, -PI / 2.0, -PI / 2.0 + TAU * melee_charge, 32, Color("#ff7b89"), 5.0)
+            draw_line(attack_at + Vector2(-9, 0), attack_at + Vector2(9, 0), Color("#ffb7a7", 0.5 + 0.5 * melee_charge), 2.0)
         if enemy.get("role", "") == "boss" and float(enemy.get("ritual_warning", 0.0)) > 0.0:
             var ritual_target: Vector2 = enemy.get("ritual_target", player_pos)
             var second_phase: bool = int(enemy["hp"]) <= 15
             var ritual_radius := 76.0 if second_phase else 58.0
             draw_circle(ritual_target, ritual_radius, Color("#bb5264", 0.25))
-            draw_arc(ritual_target, ritual_radius, 0.0, TAU, 48, Color("#ffd495"), 4.0)
+            var ritual_duration: float = 0.65 if second_phase else 0.95
+            var ritual_progress: float = attack_warning_progress(float(enemy["ritual_warning"]), ritual_duration)
+            draw_arc(ritual_target, ritual_radius, -PI / 2.0, -PI / 2.0 + TAU * ritual_progress, 48, Color("#ffd495"), 4.0)
             draw_label("РИТУАЛЬНЫЙ УДАР — УКЛОНИСЬ!", ritual_target + Vector2(-143, -91), 14, Color("#ffe3a8"))
         var enemy_color: Color = Color("#fff1d1") if float(enemy.get("hit_flash", 0.0)) > 0.0 else (Color("#aa70d6") if enemy["ranged"] else Color("#e3b967") if enemy.get("role", "") == "flanker" else Color("#b46773") if enemy.get("role", "") == "champion" else Color("#cf646c"))
         var enemy_radius: float = 34.0 if enemy.get("role", "") == "boss" else 25.0 if enemy.get("role", "") == "champion" else 16.0 if enemy.get("role", "") == "flanker" else 19.0
