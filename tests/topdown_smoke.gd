@@ -273,6 +273,30 @@ func run_tests() -> void:
         scouting.wave_number = 2
         check("БОСС" in scouting.upcoming_wave_summary(), "Final wave scouting warns about boss")
         scouting.queue_free()
+    var healer_scene = load("res://scenes/topdown_td_prototype.tscn")
+    if healer_scene != null:
+        var healer_game = healer_scene.instantiate()
+        root.add_child(healer_game)
+        healer_game.wave_number = 1
+        check(healer_game.start_wave(), "Second wave with supporting healer starts")
+        var supporting_healer: Dictionary = {}
+        var damaged_ally: Dictionary = {}
+        for foe in healer_game.enemies:
+            if str(foe.get("role", "")) == "healer":
+                supporting_healer = foe
+            elif damaged_ally.is_empty():
+                damaged_ally = foe
+        check(not supporting_healer.is_empty(), "Second wave spawns a support healer")
+        if not supporting_healer.is_empty() and not damaged_ally.is_empty():
+            supporting_healer["delay"] = 0.0
+            damaged_ally["delay"] = 0.0
+            damaged_ally["pos"] = supporting_healer["pos"] + Vector2(40, 0)
+            damaged_ally["hp"] = int(damaged_ally["max_hp"]) - 2
+            var before_healing: int = int(damaged_ally["hp"])
+            healer_game.tick_support_enemies(1.1)
+            check(int(damaged_ally["hp"]) > before_healing, "Support healer restores injured ally")
+            check(int(damaged_ally["hp"]) <= int(damaged_ally["max_hp"]), "Healer cannot exceed maximum HP")
+        healer_game.queue_free()
     var td_scene := load("res://scenes/topdown_td_prototype.tscn") as PackedScene
     check(td_scene != null, "Top-down TD scene loads")
     if td_scene != null:
