@@ -741,6 +741,21 @@ func run_tests() -> void:
         linked_spirit_game.spawn_necro_spirit(Vector2.ZERO)
         check(not bool(linked_spirit_game.summoned_spirits[0]["frost_link"]), "Normal necro spirit does not inherit frost link")
         linked_spirit_game.queue_free()
+    if specialization_balance_scene != null:
+        var necro_help = specialization_balance_scene.instantiate()
+        root.add_child(necro_help)
+        necro_help.slots[0]["tower"] = "necro"
+        check("ЛЁД РЯДОМ" in necro_help.frost_synergy_status(0), "Necro inspector explains missing frost tower")
+        necro_help.slots[1]["tower"] = "frost"
+        check("ДУХИ ПРОДЛЕВАЮТ ХОЛОД" in necro_help.frost_synergy_status(0), "Necro inspector confirms frozen spirit synergy")
+        necro_help.queue_free()
+    var frost_cap_rules = load("res://scripts/td/td_frost_effect.gd")
+    var cap_target := {"frost_time": 0.4, "frost_strength": 0.25}
+    for repeat_index in range(12):
+        frost_cap_rules.apply(cap_target, 1.0, 0.9)
+    check(is_equal_approx(frost_cap_rules.multiplier(cap_target), 0.45), "Repeated chills cannot fully immobilize an enemy")
+    frost_cap_rules.advance(cap_target, 1.0)
+    check(is_equal_approx(frost_cap_rules.multiplier(cap_target), 1.0), "Repeated chill expires without permanent slow")
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
