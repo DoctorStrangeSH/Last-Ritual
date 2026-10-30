@@ -73,7 +73,7 @@ func hero_attack(target: Vector2) -> bool:
             best_distance = distance
     if best.is_empty():
         return false
-    shot_trails.append({"from": hero_pos, "to": best["pos"], "time": 0.18})
+    shot_trails.append({"from": hero_pos, "to": best["pos"], "time": 0.18, "kind": "hero"})
     best["hp"] -= 2
     sfx.play_effect("hit")
     if best.get("role", "") == "boss" and best.get("boss_warning", false) and best["hp"] > 0:
@@ -318,7 +318,7 @@ func attack_with_towers(delta: float) -> void:
         elif kind == "bone":
             damage += bone_synergy_bonus
         for hit_target in hit_targets:
-            shot_trails.append({"from": tower["pos"], "to": hit_target["pos"], "time": 0.18})
+            shot_trails.append({"from": tower["pos"], "to": hit_target["pos"], "time": 0.18, "kind": kind})
             hit_target["hp"] -= damage + tower_synergy_damage(slot_id, hit_target)
             if kind == "fire" and hit_target["hp"] > 0:
                 apply_burn(hit_target)
@@ -774,25 +774,43 @@ func draw_enemy_figure(enemy: Dictionary) -> void:
             draw_circle(pos + Vector2(5, -3), 3.0, Color("#332d34"))
             draw_line(pos + Vector2(-4, 7), pos + Vector2(4, 7), Color("#ffe1bc"), 2.0)
 
-func draw_tower_figure(pos: Vector2, kind: String, level: int) -> void:
-    draw_rect(Rect2(pos + Vector2(-16, -21), Vector2(32, 35)), Color("#18242b"))
-    draw_rect(Rect2(pos + Vector2(-13, -24), Vector2(26, 30)), Color("#667482"))
-    draw_rect(Rect2(pos + Vector2(-10, 1), Vector2(20, 13)), Color("#303942"))
+func tower_visual_color(kind: String) -> Color:
     match kind:
         "bone":
-            draw_line(pos + Vector2(-12, -16), pos + Vector2(12, -16), Color("#e8dfc1"), 5.0)
-            draw_line(pos + Vector2(-8, -23), pos + Vector2(-8, -7), Color("#e8dfc1"), 4.0)
-            draw_line(pos + Vector2(8, -23), pos + Vector2(8, -7), Color("#e8dfc1"), 4.0)
-            draw_circle(pos + Vector2(0, -15), 5.0, Color("#a8eee0"))
+            return Color("#e8dfc1")
         "fire":
-            draw_colored_polygon(PackedVector2Array([pos + Vector2(-9, -12), pos + Vector2(-3, -34), pos + Vector2(2, -24), pos + Vector2(9, -39), pos + Vector2(11, -11)]), Color("#ee844c"))
-            draw_circle(pos + Vector2(1, -15), 7.0, Color("#ffe5a1"))
+            return Color("#ffad62")
         "necro":
-            draw_line(pos + Vector2(0, -9), pos + Vector2(0, -40), Color("#c9c5dd"), 4.0)
-            draw_circle(pos + Vector2(0, -42), 9.0, Color("#6ad7bc"))
-            draw_circle(pos + Vector2(0, -42), 4.0, Color("#d8fff2"))
+            return Color("#79e4c5")
+    return Color("#ffda8e")
+
+func draw_tower_figure(pos: Vector2, kind: String, level: int) -> void:
+    # The stone pedestal stays neutral; each weapon has its own silhouette.
+    draw_rect(Rect2(pos + Vector2(-18, -19), Vector2(36, 33)), Color("#18242b"))
+    draw_rect(Rect2(pos + Vector2(-15, -21), Vector2(30, 29)), Color("#667482"))
+    draw_rect(Rect2(pos + Vector2(-13, 2), Vector2(26, 11)), Color("#303942"))
+    match kind:
+        "bone":
+            # A wide crossbow with two ivory limbs.
+            draw_line(pos + Vector2(-22, -22), pos + Vector2(0, -30), Color("#e8dfc1"), 5.0)
+            draw_line(pos + Vector2(0, -30), pos + Vector2(22, -22), Color("#e8dfc1"), 5.0)
+            draw_line(pos + Vector2(-20, -23), pos + Vector2(20, -23), Color("#9ebec0"), 2.0)
+            draw_line(pos + Vector2(0, -8), pos + Vector2(0, -35), Color("#654b3e"), 5.0)
+            draw_circle(pos + Vector2(0, -27), 5.0, Color("#e6f5e3"))
+        "fire":
+            # A brazier and three tapered flame tongues.
+            draw_colored_polygon(PackedVector2Array([pos + Vector2(-17, -12), pos + Vector2(-12, -24), pos + Vector2(-5, -18), pos + Vector2(0, -43), pos + Vector2(7, -24), pos + Vector2(15, -36), pos + Vector2(18, -12)]), Color("#ed6f47"))
+            draw_colored_polygon(PackedVector2Array([pos + Vector2(-8, -12), pos + Vector2(0, -32), pos + Vector2(6, -20), pos + Vector2(10, -12)]), Color("#ffe19b"))
+            draw_rect(Rect2(pos + Vector2(-19, -14), Vector2(38, 7)), Color("#493d42"))
+            draw_circle(pos + Vector2(0, -17), 5.0, Color("#fff4c0"))
+        "necro":
+            # A tall spire with a floating green soul.
+            draw_colored_polygon(PackedVector2Array([pos + Vector2(-14, -8), pos + Vector2(-7, -35), pos + Vector2(0, -48), pos + Vector2(7, -35), pos + Vector2(14, -8)]), Color("#4d486b"))
+            draw_line(pos + Vector2(-14, -20), pos + Vector2(14, -20), Color("#c9c5dd"), 3.0)
+            draw_circle(pos + Vector2(0, -47), 11.0, Color("#398b86"))
+            draw_circle(pos + Vector2(0, -47), 6.0, Color("#caffec"))
     if level > 1:
-        draw_arc(pos, 32.0, -PI / 2.0, -PI / 2.0 + TAU * float(level - 1) / 3.0, 28, Color("#f5dc8c"), 3.0)
+        draw_arc(pos, 34.0, -PI / 2.0, -PI / 2.0 + TAU * float(level - 1) / 3.0, 28, tower_visual_color(kind), 3.0)
 
 func draw_defender_figure(pos: Vector2) -> void:
     draw_circle(pos + Vector2(2, 12), 16.0, Color("#142029"))
@@ -881,7 +899,14 @@ func _draw() -> void:
         draw_circle(spirit["pos"], 10.0, Color("#6de6b2"))
         draw_circle(spirit["pos"], 5.0, Color("#d8fff0"))
     for trail in shot_trails:
-        draw_line(trail["from"], trail["to"], Color("#ffda8e"), 4.0)
+        var shot_kind: String = str(trail.get("kind", "hero"))
+        var shot_color: Color = tower_visual_color(shot_kind)
+        var opacity: float = clampf(float(trail.get("time", 0.18)) / 0.18, 0.0, 1.0)
+        draw_line(trail["from"], trail["to"], Color(shot_color.r, shot_color.g, shot_color.b, opacity), 3.0)
+        if shot_kind == "fire":
+            draw_circle(trail["to"], 5.0 * opacity + 2.0, Color("#ffd9a0", opacity * 0.7))
+        elif shot_kind == "necro":
+            draw_circle(trail["to"], 4.0 * opacity + 1.0, Color("#86f6ce", opacity * 0.8))
     draw_defender_figure(hero_pos)
     if selected_slot >= 0 and selected_slot < slots.size() and slots[selected_slot]["tower"] != "":
         var linked: Array[int] = tower_synergy_links(selected_slot)
