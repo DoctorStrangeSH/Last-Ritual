@@ -242,6 +242,36 @@ func run_tests() -> void:
         school.spawn_necro_spirit(Vector2(200, 200), true)
         check(school.summoned_spirits.size() == 1 and int(school.summoned_spirits[0]["damage"]) == 4, "Reaper creates empowered spirit")
         school.queue_free()
+    # A three-second fire effect must land all six half-second ticks,
+    # including the tick exactly when burn_time reaches zero.
+    var fire_timing_scene = load("res://scenes/topdown_td_prototype.tscn") as PackedScene
+    if fire_timing_scene != null:
+        var fire_timing = fire_timing_scene.instantiate()
+        root.add_child(fire_timing)
+        var steady_foe := {"hp": 10, "pos": Vector2(400, 300), "delay": 0.0}
+        fire_timing.enemies.append(steady_foe)
+        fire_timing.apply_burn(steady_foe)
+        for tick_index in range(6):
+            fire_timing.tick_burning(0.5)
+        check(steady_foe["hp"] == 4 and is_equal_approx(float(steady_foe["burn_time"]), 0.0), "Fire burn applies all six scheduled ticks including expiration")
+        fire_timing.tick_burning(0.5)
+        check(steady_foe["hp"] == 4, "Expired burn never deals damage twice")
+        fire_timing.enemies.clear()
+        var lagged_foe := {"hp": 10, "pos": Vector2(400, 300), "delay": 0.0}
+        fire_timing.enemies.append(lagged_foe)
+        fire_timing.apply_burn(lagged_foe)
+        fire_timing.tick_burning(5.0)
+        check(lagged_foe["hp"] == 4 and is_equal_approx(float(lagged_foe["burn_time"]), 0.0), "Large frame applies the same finite burn damage without extending duration")
+        fire_timing.enemies.clear()
+        var lethal_foe := {"hp": 3, "pos": Vector2(400, 300), "delay": 0.0}
+        fire_timing.enemies.append(lethal_foe)
+        fire_timing.apply_burn(lethal_foe)
+        var coins_before_fire: int = fire_timing.coins
+        var kills_before_fire: int = fire_timing.enemies_defeated
+        fire_timing.tick_burning(5.0)
+        fire_timing.tick_burning(5.0)
+        check(fire_timing.enemies.is_empty() and fire_timing.coins == coins_before_fire + 5 and fire_timing.enemies_defeated == kills_before_fire + 1, "Lethal burn grants exactly one kill and one gold reward")
+        fire_timing.queue_free()
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
