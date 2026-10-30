@@ -828,6 +828,15 @@ func run_tests() -> void:
         var corner_marker: Vector2 = edge_icons.enemy_status_marker_position(corner_enemy, 13.0, 0, 3)
         check(corner_marker.x >= 6.0 and corner_marker.y >= 6.0, "Status marker remains inside viewport at corner")
         edge_icons.queue_free()
+    if specialization_balance_scene != null:
+        var trail_styles = specialization_balance_scene.instantiate()
+        root.add_child(trail_styles)
+        check(trail_styles.shot_trail_style("bone")["impact"] == "shard", "Bone shots show a distinctive impact shard")
+        check(trail_styles.shot_trail_style("fire")["impact"] == "ember", "Fire shots retain glowing ember hits")
+        check(trail_styles.shot_trail_style("necro")["impact"] == "spirit", "Necro shots retain spirit glow")
+        check(trail_styles.shot_trail_style("frost")["impact"] == "crystal", "Frost shots show ice crystals")
+        check(trail_styles.shot_trail_style("bone")["width"] > trail_styles.shot_trail_style("frost")["width"], "Bone shots are visually heavier than frost")
+        trail_styles.queue_free()
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
