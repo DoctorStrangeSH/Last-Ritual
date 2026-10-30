@@ -884,6 +884,16 @@ func run_tests() -> void:
         hover_game.selected_slot = 0
         check(str(hover_game.tooltip_at(Vector2(915, 571))["mode"]) == "upgrade", "Hover on upgrade button takes priority over overlapping shop card")
         hover_game.queue_free()
+    for specialization_kind in ["bone", "fire", "necro", "frost"]:
+        for path_name in ["siege", "swarm"]:
+            var spec_tip: Dictionary = tooltip_data.specialization_info(specialization_kind, path_name, 2)
+            check(not spec_tip.is_empty() and str(spec_tip["title"]) != "" and str(spec_tip["line1"]) != "" and str(spec_tip["line2"]) != "", "Specialization shows full description: " + specialization_kind + "/" + path_name)
+            check(int(spec_tip["damage"]) > 0 and float(spec_tip["cooldown"]) > 0.0, "Specialization shows valid damage and cooldown: " + specialization_kind + "/" + path_name)
+    if specialization_balance_scene != null:
+        var specs_ui = specialization_balance_scene.instantiate()
+        root.add_child(specs_ui)
+        check(not specs_ui.SPECIALIZATION_BUTTONS[0].intersects(specs_ui.SPECIALIZATION_BUTTONS[1]), "Specialization action areas are separate")
+        specs_ui.queue_free()
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
