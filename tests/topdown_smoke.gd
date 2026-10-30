@@ -401,6 +401,22 @@ func run_tests() -> void:
                 brute_count += 1
         check(brute_count >= 2, "Armored siege fields more brutes")
         siege.queue_free()
+    var inspector_scene = load("res://scenes/topdown_td_prototype.tscn")
+    if inspector_scene != null:
+        var inspector = inspector_scene.instantiate()
+        root.add_child(inspector)
+        check(inspector.selected_tower_info().is_empty(), "Tower detail card hidden without selected tower")
+        inspector.choose_tower("bone")
+        check(inspector.build_tower(0), "Build tower for detail card")
+        var details: Dictionary = inspector.selected_tower_info()
+        check(details["kind"] == "bone" and int(details["level"]) == 1, "Card shows tower type and level")
+        check(int(details["upgrade_cost"]) == 20, "Card shows upgrade price")
+        inspector.coins = 80
+        inspector.upgrade_selected()
+        inspector.choose_specialization("siege")
+        details = inspector.selected_tower_info()
+        check(details["specialization"] == "siege" and int(details["damage"]) > 0, "Card updates with specialization and damage")
+        inspector.queue_free()
     var td_scene := load("res://scenes/topdown_td_prototype.tscn") as PackedScene
     check(td_scene != null, "Top-down TD scene loads")
     if td_scene != null:
