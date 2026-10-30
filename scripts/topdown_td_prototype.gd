@@ -23,6 +23,7 @@ const SPECIALIZATION_BUTTONS := [Rect2(315, 325, 220, 70), Rect2(555, 325, 220, 
 const SPECIALIZATION_LABELS = TD_TOWER_STATS.SPECIALIZATION_LABELS
 var selected_type := ""
 var selected_slot := -1
+var hovered_slot := -1
 var coins := 150
 var difficulty := 0 # 0 normal, 1 hard, 2 nightmare
 var siege_day := 1 # 1 normal, 2 swift raiders, 3 armored siege
@@ -656,7 +657,26 @@ func toggle_controls_help() -> void:
     help_visible = not help_visible
     queue_redraw()
 
+func tower_range_preview() -> Dictionary:
+    if help_visible or specialization_open or defense_state != "playing":
+        return {}
+    var id: int = hovered_slot
+    if id >= 0 and id < slots.size():
+        var kind: String = str(slots[id]["tower"])
+        if kind == "" and selected_type != "" and not moving_tower:
+            kind = selected_type
+        if TOWER_RANGE.has(kind):
+            return {"pos": slots[id]["pos"], "range": float(TOWER_RANGE[kind]), "kind": kind}
+    if selected_slot >= 0 and selected_slot < slots.size():
+        var selected_kind: String = str(slots[selected_slot]["tower"])
+        if TOWER_RANGE.has(selected_kind):
+            return {"pos": slots[selected_slot]["pos"], "range": float(TOWER_RANGE[selected_kind]), "kind": selected_kind}
+    return {}
+
 func _unhandled_input(event: InputEvent) -> void:
+    if event is InputEventMouseMotion:
+        hovered_slot = slot_at(event.position)
+        queue_redraw()
     if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_H:
         toggle_controls_help()
         return
@@ -997,6 +1017,13 @@ func _draw() -> void:
         if not linked.is_empty():
             draw_rect(Rect2(56, 75, 320, 42), Color("#263b39", 0.95))
             draw_string(ThemeDB.fallback_font, Vector2(72, 102), "СИНЕРГИЯ: %d СВЯЗЕЙ" % linked.size(), HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color("#f1dba1"))
+    var range_preview: Dictionary = tower_range_preview()
+    if not range_preview.is_empty():
+        var range_color: Color = tower_visual_color(str(range_preview["kind"]))
+        var center: Vector2 = range_preview["pos"]
+        var radius: float = float(range_preview["range"])
+        draw_circle(center, radius, Color(range_color.r, range_color.g, range_color.b, 0.09))
+        draw_arc(center, radius, 0.0, TAU, 96, Color(range_color.r, range_color.g, range_color.b, 0.8), 2.0)
     for i in range(slots.size()):
         var pos: Vector2 = slots[i]["pos"]
         var occupied: bool = slots[i]["tower"] != ""
@@ -1015,8 +1042,8 @@ func _draw() -> void:
             draw_arc(pos, 42.0, 0.0, TAU, 36, Color("#a4e4ba"), 4.0)
         if selected_slot == i:
             draw_arc(pos, 39, 0, TAU, 32, Color("#d8d0a1"), 3)
-        if selected_type != "" and not occupied and pos.distance_to(get_global_mouse_position()) < 36:
-            draw_arc(pos, 80, 0, TAU, 48, Color("#78b8b4"), 2)
+        if selected_type != "" and not occupied and hovered_slot == i:
+            draw_arc(pos, 39, 0, TAU, 32, Color("#78b8b4"), 2)
     var tower_names := ["КОСТЯНАЯ", "ОГНЕННАЯ", "НЕКРОМАНТ"]
     var tower_ids := ["bone", "fire", "necro"]
     for i in range(3):
