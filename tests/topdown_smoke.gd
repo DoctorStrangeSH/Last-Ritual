@@ -414,6 +414,21 @@ func run_tests() -> void:
             check(economy.sell_selected() and economy.coins == 120 - base_cost, "Level three sale returns 30 gold " + economy_kind)
             check(economy.slots[0]["tower"] == "" and int(economy.slots[0]["level"]) == 0, "Sale clears slot " + economy_kind)
             economy.queue_free()
+    # Stage 174: day-specific timing must be predictable without changing
+    # beginner day-one timing or enemy economy and role counts.
+    if specialization_balance_scene != null:
+        var assault_timing = specialization_balance_scene.instantiate()
+        root.add_child(assault_timing)
+        check(is_equal_approx(assault_timing.siege_spawn_delay(2, 2, "runner"), 1.4), "Day one keeps original runner delay")
+        assault_timing.siege_day = 2
+        check(is_equal_approx(assault_timing.siege_spawn_delay(2, 2, "runner"), 0.7), "Day two runner pack arrives twice as quickly")
+        check(is_equal_approx(assault_timing.siege_spawn_delay(2, 1, "brute"), 0.7), "Day two non-runners keep normal pacing")
+        assault_timing.siege_day = 3
+        check(is_equal_approx(assault_timing.siege_spawn_delay(2, 2, "brute"), 2.2), "Day three armored reinforcement is staggered")
+        check(is_equal_approx(assault_timing.siege_spawn_delay(2, 1, "runner"), 0.7), "Day three runners keep baseline timing")
+        check(assault_timing.start_wave(), "Day three timed assault starts")
+        check(assault_timing.enemies[0]["role"] == "brute" and is_equal_approx(float(assault_timing.enemies[0]["delay"]), 0.8), "Delayed armored vanguard appears in actual wave")
+        assault_timing.queue_free()
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
