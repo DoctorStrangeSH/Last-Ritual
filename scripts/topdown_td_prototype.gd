@@ -935,10 +935,17 @@ func enemy_status_markers(enemy: Dictionary) -> Array[String]:
         markers.append("command")
     return markers
 
+func enemy_status_marker_position(enemy: Dictionary, radius: float, index: int, count: int) -> Vector2:
+    var position: Vector2 = enemy.get("pos", Vector2.ZERO)
+    if str(enemy.get("role", "")) == "boss":
+        # Keep boss crown, warning arc/title and health bar unobstructed.
+        return position + Vector2(radius + 27.0, (float(index) - float(count - 1) * 0.5) * 16.0)
+    return position + Vector2((float(index) - float(count - 1) * 0.5) * 16.0, -radius - 14.0)
+
 func draw_enemy_status_markers(enemy: Dictionary, radius: float) -> void:
     var markers: Array[String] = enemy_status_markers(enemy)
     for index in range(markers.size()):
-        var center: Vector2 = enemy["pos"] + Vector2((float(index) - float(markers.size() - 1) * 0.5) * 16.0, -radius - 14.0)
+        var center: Vector2 = enemy_status_marker_position(enemy, radius, index, markers.size())
         var marker_color: Color = Color("#a4e9ff") if markers[index] == "frost" else (Color("#ffaf61") if markers[index] == "burn" else Color("#f0da91"))
         # Different silhouettes remain legible in crowds and without color vision.
         draw_circle(center, 6.0, Color("#18242b"))
