@@ -3,6 +3,7 @@ extends Node2D
 const SFX_SCRIPT = preload("res://scripts/procedural_sfx.gd")
 const TD_SYNERGY_RULES = preload("res://scripts/td/td_synergy_rules.gd")
 const TD_TOWER_STATS = preload("res://scripts/td/td_tower_stats.gd")
+const TD_TOWER_TOOLTIPS = preload("res://scripts/td/td_tower_tooltips.gd")
 const TD_TOWER_DAMAGE = preload("res://scripts/td/td_tower_damage.gd")
 const TD_TARGETING = preload("res://scripts/td/td_targeting.gd")
 const TD_BURN_EFFECT = preload("res://scripts/td/td_burn_effect.gd")
@@ -752,6 +753,50 @@ func tower_range_preview() -> Dictionary:
             return {"pos": slots[selected_slot]["pos"], "range": float(TOWER_RANGE[selected_kind]), "kind": selected_kind}
     return {}
 
+func tower_shop_rect(index: int) -> Rect2:
+    return Rect2(260.0 + index * 210.0, 550.0, 180.0, 64.0)
+
+func tooltip_at(point: Vector2) -> Dictionary:
+    if help_visible or specialization_open or defense_state != "playing":
+        return {}
+    if not selected_tower_info().is_empty() and Rect2(880, 545, 110, 55).has_point(point):
+        var tower: Dictionary = slots[selected_slot]
+        var upgrade: Dictionary = TD_TOWER_TOOLTIPS.upgrade_info(
+            str(tower["tower"]), int(tower["level"]), str(tower.get("specialization", "")), fire_synergy_bonus, bone_synergy_bonus
+        )
+        upgrade["mode"] = "upgrade"
+        upgrade["available"] = can_modify_towers() and coins >= int(upgrade["cost"]) and not bool(upgrade["maxed"])
+        return upgrade
+    var types: Array = TD_TOWER_STATS.SHOP_ORDER
+    for i in range(types.size()):
+        if tower_shop_rect(i).has_point(point):
+            var shop: Dictionary = TD_TOWER_TOOLTIPS.shop_info(str(types[i]))
+            shop["mode"] = "shop"
+            shop["available"] = coins >= int(shop["cost"])
+            return shop
+    return {}
+
+func draw_tower_tooltip(point: Vector2) -> void:
+    var tip: Dictionary = tooltip_at(point)
+    if tip.is_empty():
+        return
+    var panel := Rect2(370, 320, 430, 205)
+    draw_rect(panel, Color("#101c28", 0.98))
+    draw_rect(panel, Color("#e4c78c"), false, 2.0)
+    draw_rect(Rect2(panel.position, Vector2(panel.size.x, 5)), Color("#83c5c3"))
+    draw_string(ThemeDB.fallback_font, Vector2(388, 350), str(tip["title"]), HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color("#ffe8b4"))
+    if str(tip["mode"]) == "shop":
+        draw_string(ThemeDB.fallback_font, Vector2(388, 377), str(tip["role"]), HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#98d9da"))
+        draw_string(ThemeDB.fallback_font, Vector2(388, 403), "УРОН: %d     РАДИУС: %d" % [int(tip["damage"]), int(tip["range"])], HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color.WHITE)
+        draw_string(ThemeDB.fallback_font, Vector2(388, 429), str(tip["effect"]), HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#e0e8ec"))
+        draw_string(ThemeDB.fallback_font, Vector2(388, 457), str(tip["combo"]), HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#9bcfe5"))
+    else:
+        draw_string(ThemeDB.fallback_font, Vector2(388, 379), "УРОН: %d  →  %d" % [int(tip["current_damage"]), int(tip["next_damage"])], HORIZONTAL_ALIGNMENT_LEFT, -1, 20, Color("#bce8ca"))
+        draw_string(ThemeDB.fallback_font, Vector2(388, 408), str(tip["specialization"]), HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#d6dce6"))
+        draw_string(ThemeDB.fallback_font, Vector2(388, 442), str(tip["effect"]), HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#e0e8ec"))
+    var cost_label: String = "МАКСИМАЛЬНЫЙ УРОВЕНЬ" if bool(tip.get("maxed", false)) else ("СТОИМОСТЬ: %d ЗОЛОТА" % int(tip["cost"]))
+    draw_string(ThemeDB.fallback_font, Vector2(388, 498), cost_label if bool(tip["available"]) or bool(tip.get("maxed", false)) else cost_label + "  •  НЕДОСТАТОЧНО", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#e8cd83") if bool(tip["available"]) else Color("#ed9a89"))
+
 func _unhandled_input(event: InputEvent) -> void:
     if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F3:
         performance_overlay_visible = not performance_overlay_visible
@@ -824,17 +869,17 @@ func _unhandled_input(event: InputEvent) -> void:
             if WAVE_BUTTON.has_point(point):
                 start_wave()
                 return
-            var types: Array = TD_TOWER_STATS.SHOP_ORDER
-            for i in range(types.size()):
-                if Rect2(230.0 + i * 150.0, 550.0, 140.0, 64.0).has_point(point):
-                    choose_tower(types[i])
-                    return
-            if Rect2(880, 545, 110, 55).has_point(point):
+            if not selected_tower_info().is_empty() and Rect2(880, 545, 110, 55).has_point(point):
                 upgrade_selected()
                 return
-            if Rect2(1010, 545, 110, 55).has_point(point):
+            if not selected_tower_info().is_empty() and Rect2(1010, 545, 110, 55).has_point(point):
                 sell_selected()
                 return
+            var types: Array = TD_TOWER_STATS.SHOP_ORDER
+            for i in range(types.size()):
+                if tower_shop_rect(i).has_point(point):
+                    choose_tower(types[i])
+                    return
             var id := slot_at(point)
             if selected_type != "":
                 build_tower(id)
@@ -1250,7 +1295,7 @@ func _draw() -> void:
             draw_arc(pos, 39, 0, TAU, 32, Color("#78b8b4"), 2)
     var tower_ids: Array = TD_TOWER_STATS.SHOP_ORDER
     for i in range(tower_ids.size()):
-        var card := Rect2(260.0 + i * 210.0, 550.0, 180.0, 64.0)
+        var card := tower_shop_rect(i)
         draw_rect(card, Color("#4f746f") if selected_type == tower_ids[i] else Color("#514b52"))
         draw_rect(card, Color("#e5c985") if selected_type == tower_ids[i] else Color("#796b65"), false, 2.0)
         draw_string(ThemeDB.fallback_font, card.position + Vector2(9, 23), str(TD_TOWER_STATS.DISPLAY_NAMES[tower_ids[i]]), HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
@@ -1279,6 +1324,8 @@ func _draw() -> void:
         draw_string(ThemeDB.fallback_font, Vector2(326, 490), "Игра на паузе — H или «Продолжить»", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#d5c592"))
         draw_rect(HELP_CLOSE_BUTTON, Color("#527d70"))
         draw_string(ThemeDB.fallback_font, HELP_CLOSE_BUTTON.position + Vector2(11.0, 29.0), "ПРОДОЛЖИТЬ", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
+    if not help_visible:
+        draw_tower_tooltip(get_global_mouse_position())
     if can_choose_interwave_event():
         draw_rect(Rect2(184, 205, 785, 186), Color("#1d3038", 0.97))
         draw_rect(Rect2(184, 205, 785, 186), Color("#d7ba80"), false, 2.0)

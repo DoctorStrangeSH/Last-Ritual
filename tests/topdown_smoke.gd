@@ -866,6 +866,24 @@ func run_tests() -> void:
         check(int(snapshot["trails_stored"]) == 35 and int(snapshot["trails_visible"]) == 28, "Performance overlay reports rendered and stored traces separately")
         check(int(snapshot["enemies"]) == debug_game.enemies.size() and int(snapshot["spirits"]) == debug_game.summoned_spirits.size(), "Performance overlay counts active enemies and spirits")
         debug_game.queue_free()
+    var tooltip_data = load("res://scripts/td/td_tower_tooltips.gd")
+    for kind in ["bone", "fire", "necro", "frost"]:
+        var shop_details: Dictionary = tooltip_data.shop_info(kind)
+        check(not shop_details.is_empty() and int(shop_details["cost"]) > 0 and int(shop_details["range"]) > 0, "Tower shop tooltip documents cost and radius: " + kind)
+        check(str(shop_details["effect"]) != "" and str(shop_details["combo"]) != "", "Tower shop tooltip explains behavior and synergy: " + kind)
+        var next_upgrade: Dictionary = tooltip_data.upgrade_info(kind, 1, "", 0, 0)
+        check(int(next_upgrade["cost"]) == 20 and int(next_upgrade["next_damage"]) > int(next_upgrade["current_damage"]), "First upgrade preview has exact cost and damage: " + kind)
+        check(bool(tooltip_data.upgrade_info(kind, 3, "siege", 0, 0)["maxed"]), "Level three tooltip reports maximum level: " + kind)
+    if specialization_balance_scene != null:
+        var hover_game = specialization_balance_scene.instantiate()
+        root.add_child(hover_game)
+        var shop_box: Rect2 = hover_game.tower_shop_rect(1)
+        check(hover_game.tooltip_at(shop_box.get_center())["title"] == "ОГНЕННАЯ", "Hover position agrees with the displayed fire shop card")
+        hover_game.slots[0]["tower"] = "bone"
+        hover_game.slots[0]["level"] = 1
+        hover_game.selected_slot = 0
+        check(str(hover_game.tooltip_at(Vector2(915, 571))["mode"]) == "upgrade", "Hover on upgrade button takes priority over overlapping shop card")
+        hover_game.queue_free()
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
