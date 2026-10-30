@@ -799,8 +799,9 @@ func draw_tower_tooltip(point: Vector2) -> void:
         draw_string(ThemeDB.fallback_font, Vector2(388, 457), str(tip["combo"]), HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#9bcfe5"))
     else:
         draw_string(ThemeDB.fallback_font, Vector2(388, 379), "УРОН: %d  →  %d" % [int(tip["current_damage"]), int(tip["next_damage"])], HORIZONTAL_ALIGNMENT_LEFT, -1, 20, Color("#bce8ca"))
-        draw_string(ThemeDB.fallback_font, Vector2(388, 408), str(tip["specialization"]), HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#d6dce6"))
-        draw_string(ThemeDB.fallback_font, Vector2(388, 442), str(tip["effect"]), HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#e0e8ec"))
+        draw_string(ThemeDB.fallback_font, Vector2(388, 407), "РАДИУС: %d   ИНТЕРВАЛ: %.2f с" % [int(tip["range"]), float(tip["attack_interval"])], HORIZONTAL_ALIGNMENT_LEFT, 403, 16, Color("#a8d9df"))
+        draw_string(ThemeDB.fallback_font, Vector2(388, 434), str(tip["extra"]), HORIZONTAL_ALIGNMENT_LEFT, 403, 15, Color("#f3d7a2"))
+        draw_string(ThemeDB.fallback_font, Vector2(388, 461), str(tip["specialization"]), HORIZONTAL_ALIGNMENT_LEFT, 403, 14, Color("#d6dce6"))
     var cost_label: String = "МАКСИМАЛЬНЫЙ УРОВЕНЬ" if bool(tip.get("maxed", false)) else ("СТОИМОСТЬ: %d ЗОЛОТА" % int(tip["cost"]))
     draw_string(ThemeDB.fallback_font, Vector2(388, 498), cost_label if bool(tip["available"]) or bool(tip.get("maxed", false)) else cost_label + "  •  НЕДОСТАТОЧНО", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#e8cd83") if bool(tip["available"]) else Color("#ed9a89"))
 

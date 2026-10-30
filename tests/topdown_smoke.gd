@@ -917,6 +917,13 @@ func run_tests() -> void:
         var info_after: Dictionary = selected_details.selected_tower_info()
         check(is_equal_approx(float(info_after["attack_delay"]), 0.45), "Swarm tower inspector reflects faster attacks")
         selected_details.queue_free()
+    var upgrade_tips = load("res://scripts/td/td_tower_tooltips.gd")
+    for upgrade_kind in ["bone", "fire", "necro", "frost"]:
+        var first: Dictionary = upgrade_tips.upgrade_info(upgrade_kind, 1, "", 0, 0)
+        check(int(first["range"]) > 0 and is_equal_approx(float(first["attack_interval"]), 0.8), "Upgrade preview shows genuine range and interval: " + upgrade_kind)
+        check("2 ПУТИ" in str(first["extra"]), "Level two upgrade explains specialization choice: " + upgrade_kind)
+        var third: Dictionary = upgrade_tips.upgrade_info(upgrade_kind, 2, "swarm", 0, 0)
+        check(is_equal_approx(float(third["attack_interval"]), 0.45) and "НЕ МЕНЯЮТСЯ" in str(third["extra"]), "Third-level preview preserves swarm attack cadence: " + upgrade_kind)
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
