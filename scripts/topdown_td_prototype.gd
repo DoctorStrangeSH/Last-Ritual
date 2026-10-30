@@ -7,6 +7,9 @@ const COSTS := {"bone": 30, "fire": 45, "necro": 60}
 const WAVE_BUTTON := Rect2(65, 545, 170, 60)
 const HELP_BUTTON := Rect2(987.0, 10.0, 150.0, 46.0)
 const HELP_CLOSE_BUTTON := Rect2(720.0, 471.0, 130.0, 43.0)
+const TARGET_BUTTON := Rect2(716, 76, 299, 46)
+const TARGET_PRIORITIES := ["nearest", "support", "front"]
+const TARGET_LABELS := {"nearest": "БЛИЖАЙШИЙ", "support": "ПОДДЕРЖКА", "front": "У ВОРОТ"}
 var slots: Array[Dictionary] = []
 var specialization_open := false
 const SPECIALIZATION_BUTTONS := [Rect2(315, 325, 220, 70), Rect2(555, 325, 220, 70)]
@@ -223,6 +226,41 @@ func tower_synergy_damage(slot_id: int, enemy: Dictionary) -> int:
         return 1
     return 0
 
+func choose_tower_target(slot_id: int) -> Dictionary:
+    if slot_id < 0 or slot_id >= slots.size():
+        return {}
+    var tower: Dictionary = slots[slot_id]
+    var kind: String = str(tower["tower"])
+    if kind == "" or not TOWER_RANGE.has(kind):
+        return {}
+    var priority: String = str(tower.get("target_priority", "nearest"))
+    var best: Dictionary = {}
+    var best_score := -INF
+    for enemy in enemies:
+        if float(enemy.get("delay", 0.0)) > 0.0:
+            continue
+        var distance: float = tower["pos"].distance_to(enemy["pos"])
+        if distance > float(TOWER_RANGE[kind]):
+            continue
+        var score: float = -distance
+        if priority == "support":
+            score += 10000.0 if str(enemy.get("role", "")) == "healer" else 0.0
+        elif priority == "front":
+            score = float(enemy["pos"].x)
+        if score > best_score:
+            best_score = score
+            best = enemy
+    return best
+
+func cycle_target_priority() -> bool:
+    if selected_slot < 0 or selected_slot >= slots.size() or slots[selected_slot]["tower"] == "":
+        return false
+    var current: String = str(slots[selected_slot].get("target_priority", "nearest"))
+    var index: int = TARGET_PRIORITIES.find(current)
+    slots[selected_slot]["target_priority"] = TARGET_PRIORITIES[(index + 1) % TARGET_PRIORITIES.size()]
+    queue_redraw()
+    return true
+
 func attack_with_towers(delta: float) -> void:
     for slot_id in range(slots.size()):
         var tower: Dictionary = slots[slot_id]
@@ -233,17 +271,10 @@ func attack_with_towers(delta: float) -> void:
         tower_cooldowns[slot_id] = cooldown
         if cooldown > 0.0:
             continue
-        var target: Dictionary = {}
-        var nearest := INF
-        for enemy in enemies:
-            if enemy["delay"] > 0.0:
-                continue
-            var distance: float = tower["pos"].distance_to(enemy["pos"])
-            if distance < nearest and distance <= TOWER_RANGE[kind]:
-                nearest = distance
-                target = enemy
+        var target: Dictionary = choose_tower_target(slot_id)
         if target.is_empty():
             continue
+        var nearest: float = tower["pos"].distance_to(target["pos"])
         var hit_targets: Array = [target]
         if kind == "bone":
             var direction: Vector2 = (target["pos"] - tower["pos"]).normalized()
@@ -396,13 +427,13 @@ func _ready() -> void:
     sfx = SFX_SCRIPT.new()
     add_child(sfx)
     for i in range(SLOT_POSITIONS.size()):
-        slots.append({"id": i, "pos": SLOT_POSITIONS[i], "tower": "", "level": 0, "specialization": ""})
+        slots.append({"id": i, "pos": SLOT_POSITIONS[i], "tower": "", "level": 0, "specialization": "", "target_priority": "nearest"})
     queue_redraw()
 
 func export_fortress_state() -> Dictionary:
     var buildings: Array[Dictionary] = []
     for slot in slots:
-        buildings.append({"tower": str(slot["tower"]), "level": int(slot["level"]), "specialization": str(slot.get("specialization", ""))})
+        buildings.append({"tower": str(slot["tower"]), "level": int(slot["level"]), "specialization": str(slot.get("specialization", "")), "target_priority": str(slot.get("target_priority", "nearest"))})
     return {"buildings": buildings, "coins": coins, "altar_hp": altar_hp}
 
 func import_fortress_state(state: Dictionary) -> bool:
@@ -414,6 +445,8 @@ func import_fortress_state(state: Dictionary) -> bool:
         var kind: String = str(building.get("tower", ""))
         var level: int = int(building.get("level", 0))
         var spec: String = str(building.get("specialization", ""))
+        if not TARGET_PRIORITIES.has(str(building.get("target_priority", "nearest"))):
+            return false
         if spec != "" and (level < 2 or not ["siege", "swarm"].has(spec)):
             return false
         if kind != "" and not COSTS.has(kind):
@@ -424,6 +457,7 @@ func import_fortress_state(state: Dictionary) -> bool:
         slots[i]["tower"] = str(buildings[i]["tower"])
         slots[i]["level"] = int(buildings[i]["level"])
         slots[i]["specialization"] = str(buildings[i].get("specialization", ""))
+        slots[i]["target_priority"] = str(buildings[i].get("target_priority", "nearest"))
     coins = maxi(0, int(state.get("coins", coins)))
     altar_hp = clampi(int(state.get("altar_hp", altar_hp)), 1, 100)
     tower_cooldowns.clear()
@@ -455,6 +489,7 @@ func build_tower(slot_id: int) -> bool:
     slots[slot_id]["tower"] = selected_type
     slots[slot_id]["level"] = 1
     slots[slot_id]["specialization"] = ""
+    slots[slot_id]["target_priority"] = "nearest"
     tower_cooldowns[slot_id] = 0.0
     selected_type = ""
     selected_slot = slot_id
@@ -497,6 +532,7 @@ func sell_selected() -> bool:
     slots[selected_slot]["tower"] = ""
     slots[selected_slot]["level"] = 0
     slots[selected_slot]["specialization"] = ""
+    slots[selected_slot]["target_priority"] = "nearest"
     tower_cooldowns.erase(selected_slot)
     selected_slot = -1
     queue_redraw()
@@ -534,6 +570,9 @@ func _unhandled_input(event: InputEvent) -> void:
             restart_defense()
         return
     if defense_state != "playing":
+        return
+    if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT and TARGET_BUTTON.has_point(event.position) and selected_slot >= 0:
+        cycle_target_priority()
         return
     if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
         selected_type = ""
@@ -662,6 +701,11 @@ func _draw() -> void:
         draw_rect(RESTART_BUTTON, Color("#8ca9bc"))
         draw_string(ThemeDB.fallback_font, Vector2(480, 386), "НАЧАТЬ ЗАНОВО", HORIZONTAL_ALIGNMENT_LEFT, -1, 20, Color.WHITE)
     draw_string(ThemeDB.fallback_font, Vector2(66, 45), "АЛТАРЬ %d / 100     ВОЛНА %d / 3     ЗОЛОТО %d" % [altar_hp, wave_number, coins], HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color.WHITE)
+    if selected_slot >= 0 and selected_slot < slots.size() and slots[selected_slot]["tower"] != "":
+        draw_rect(TARGET_BUTTON, Color("#385a63"))
+        draw_rect(TARGET_BUTTON, Color("#e5c985"), false, 2.0)
+        var priority: String = str(slots[selected_slot].get("target_priority", "nearest"))
+        draw_string(ThemeDB.fallback_font, TARGET_BUTTON.position + Vector2(9, 29), "ЦЕЛЬ: " + str(TARGET_LABELS[priority]), HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color("#fff1c9"))
     draw_rect(WAVE_BUTTON, Color("#487d6b") if enemies.is_empty() and wave_number < 3 and altar_hp > 0 else Color("#454b54"))
     draw_string(ThemeDB.fallback_font, Vector2(78, 581), "НАЧАТЬ ВОЛНУ", HORIZONTAL_ALIGNMENT_LEFT, -1, 19, Color.WHITE)
     if enemies.is_empty() and defense_state == "playing":

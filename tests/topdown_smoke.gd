@@ -297,6 +297,32 @@ func run_tests() -> void:
             check(int(damaged_ally["hp"]) > before_healing, "Support healer restores injured ally")
             check(int(damaged_ally["hp"]) <= int(damaged_ally["max_hp"]), "Healer cannot exceed maximum HP")
         healer_game.queue_free()
+    var priority_scene = load("res://scenes/topdown_td_prototype.tscn")
+    if priority_scene != null:
+        var priority_game = priority_scene.instantiate()
+        root.add_child(priority_game)
+        priority_game.choose_tower("bone")
+        check(priority_game.build_tower(0), "Priority tower is built")
+        priority_game.enemies.clear()
+        var origin: Vector2 = priority_game.slots[0]["pos"]
+        var grunt := {"pos": origin + Vector2(20, 0), "role": "grunt", "hp": 9, "delay": 0.0}
+        var healer := {"pos": origin + Vector2(90, 0), "role": "healer", "hp": 9, "delay": 0.0}
+        priority_game.enemies.append(grunt)
+        priority_game.enemies.append(healer)
+        check(priority_game.choose_tower_target(0) == grunt, "Nearest policy targets closest enemy")
+        check(priority_game.cycle_target_priority(), "Tower target policy cycles with mouse button action")
+        check(priority_game.choose_tower_target(0) == healer, "Support policy prioritizes healer in range")
+        priority_game.cycle_target_priority()
+        check(priority_game.choose_tower_target(0) == healer, "Front policy targets enemy closest to gates")
+        healer["delay"] = 3.0
+        check(priority_game.choose_tower_target(0) == grunt, "Unavailable support enemies are ignored")
+        var priority_save: Dictionary = priority_game.export_fortress_state()
+        var restored_priority = priority_scene.instantiate()
+        root.add_child(restored_priority)
+        check(restored_priority.import_fortress_state(priority_save), "Targeting priority survives day transition")
+        check(restored_priority.slots[0]["target_priority"] == "front", "Selected target policy persists")
+        priority_game.queue_free()
+        restored_priority.queue_free()
     var td_scene := load("res://scenes/topdown_td_prototype.tscn") as PackedScene
     check(td_scene != null, "Top-down TD scene loads")
     if td_scene != null:
