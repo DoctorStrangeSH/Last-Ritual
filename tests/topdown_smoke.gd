@@ -613,6 +613,12 @@ func run_tests() -> void:
     check(shop_catalog.DISPLAY_NAMES.size() == shop_catalog.SHOP_ORDER.size(), "Tower shop labels cover all entries")
     for kind in shop_catalog.SHOP_ORDER:
         check(shop_catalog.COSTS.has(kind) and shop_catalog.RANGES.has(kind) and shop_catalog.DAMAGES.has(kind) and shop_catalog.DISPLAY_NAMES.has(kind), "Tower shop entry has complete base stats and name")
+    var tower_damage_rules = load("res://scripts/td/td_tower_damage.gd")
+    check(tower_damage_rules.direct_damage("bone", 2, "siege", 0, 0) == 6, "Damage module preserves ballista damage")
+    check(tower_damage_rules.direct_damage("bone", 2, "swarm", 0, 0) == 3, "Damage module preserves bone swarm damage")
+    check(tower_damage_rules.direct_damage("fire", 2, "siege", 2, 0) == 6, "Damage module preserves fire bonus")
+    check(tower_damage_rules.direct_damage("necro", 2, "swarm", 0, 0) == 5, "Damage module preserves necro swarm damage")
+    check(tower_damage_rules.direct_damage("unknown", 1, "", 0, 0) == 0, "Damage module rejects unknown tower types")
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
