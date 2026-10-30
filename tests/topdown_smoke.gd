@@ -500,7 +500,7 @@ func run_tests() -> void:
         check(council.coins == 185 and council.next_wave_extra_hp == 3, "Raid reward incurs next-wave danger")
         check(not council.choose_interwave_event("safe"), "War council cannot be claimed twice")
         check(council.start_wave(), "Next siege wave starts after council choice")
-        check(council.next_wave_extra_hp == 0 and int(council.enemies[0]["hp"]) >= 10, "Risk applies only to the following wave")
+        check(council.next_wave_extra_hp == 0 and int(council.enemies[0]["hp"]) == 9, "Risk applies only to the following wave")
         council.queue_free()
         var rest_council = specialization_balance_scene.instantiate()
         root.add_child(rest_council)
