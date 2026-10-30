@@ -930,6 +930,20 @@ func run_tests() -> void:
     var necro_inactive: Array[String] = synergy_tooltips.synergy_lines("necro", false, false, false)
     check(necro_inactive.size() == 3 and necro_inactive[0].begins_with("НУЖНЫ КОСТИ"), "Necro tooltip explains missing neighbours")
     check(synergy_tooltips.synergy_lines("frost", false, false, false).size() == 3, "Frost tooltip documents all three school pairings")
+    if specialization_balance_scene != null:
+        var modal_tooltip_game = specialization_balance_scene.instantiate()
+        root.add_child(modal_tooltip_game)
+        check(modal_tooltip_game.tower_tooltips_available(), "Tower tooltips work in normal defense")
+        modal_tooltip_game.wave_number = 3
+        modal_tooltip_game.interwave_choice = ""
+        modal_tooltip_game.enemies.clear()
+        check(modal_tooltip_game.can_choose_interwave_event() and not modal_tooltip_game.tower_tooltips_available(), "Council hides shop and synergy hover panels")
+        var coins_before_modal: int = modal_tooltip_game.coins
+        modal_tooltip_game._unhandled_input(left_click_event(modal_tooltip_game.tower_shop_rect(0).get_center()))
+        check(modal_tooltip_game.selected_type == "" and modal_tooltip_game.coins == coins_before_modal, "Council blocks shop interactions outside its own buttons")
+        modal_tooltip_game.interwave_choice = "safe"
+        check(modal_tooltip_game.tower_tooltips_available(), "Tower tooltips restore when council closes")
+        modal_tooltip_game.queue_free()
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()

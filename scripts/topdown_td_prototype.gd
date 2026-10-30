@@ -756,8 +756,12 @@ func tower_range_preview() -> Dictionary:
 func tower_shop_rect(index: int) -> Rect2:
     return Rect2(260.0 + index * 210.0, 550.0, 180.0, 64.0)
 
+func tower_tooltips_available() -> bool:
+    # Modal choices must have exclusive focus: no shop hints behind them.
+    return defense_state == "playing" and not help_visible and not specialization_open and not can_choose_interwave_event()
+
 func tooltip_at(point: Vector2) -> Dictionary:
-    if help_visible or specialization_open or defense_state != "playing":
+    if not tower_tooltips_available():
         return {}
     if not selected_tower_info().is_empty() and Rect2(880, 545, 110, 55).has_point(point):
         var tower: Dictionary = slots[selected_slot]
@@ -795,7 +799,7 @@ func selected_synergy_lines() -> Array[String]:
     )
 
 func draw_synergy_tooltip(point: Vector2) -> void:
-    if help_visible or specialization_open or selected_tower_info().is_empty():
+    if not tower_tooltips_available() or selected_tower_info().is_empty():
         return
     if not Rect2(845, 129, 280, 258).has_point(point):
         return
@@ -850,11 +854,14 @@ func _unhandled_input(event: InputEvent) -> void:
             if HELP_CLOSE_BUTTON.has_point(event.position):
                 toggle_controls_help()
             return
-    if can_choose_interwave_event() and event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-        for i in range(EVENT_BUTTONS.size()):
-            if EVENT_BUTTONS[i].has_point(event.position):
-                choose_interwave_event(["raid", "repair", "safe"][i])
-                return
+    if can_choose_interwave_event():
+        if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+            for i in range(EVENT_BUTTONS.size()):
+                if EVENT_BUTTONS[i].has_point(event.position):
+                    choose_interwave_event(["raid", "repair", "safe"][i])
+                    return
+        # Prevent clicks on the shop and towers while the council is open.
+        return
     if specialization_open:
         if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
             if SPECIALIZATION_BUTTONS[0].has_point(event.position):
