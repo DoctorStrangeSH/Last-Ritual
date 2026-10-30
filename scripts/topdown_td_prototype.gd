@@ -151,6 +151,14 @@ func siege_enemy_role(wave: int, index: int) -> String:
         return "runner"
     if siege_day >= 3 and index % 2 == 0:
         return "brute"
+    # Late siege formations deliberately change the tactical target mix.
+    # Preserve difficulty-specific day-one encounters and daily themes.
+    if wave == 4 and siege_day == 1:
+        return "runner" if index % 4 == 0 else ("brute" if index % 4 == 1 else "grunt")
+    if wave == 5 and siege_day == 1:
+        return "brute" if index % 3 == 0 else ("runner" if index % 3 == 1 else "grunt")
+    if wave >= 6 and siege_day == 1:
+        return "brute" if index % 2 == 0 else "runner"
     if wave >= 5 and index % 4 == 0:
         return "brute"
     if wave >= 2 and index % 3 == 0:
