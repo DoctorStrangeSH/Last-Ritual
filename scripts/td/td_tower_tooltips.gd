@@ -35,6 +35,9 @@ static func upgrade_info(kind: String, level: int, specialization: String, fire_
         "cost": 0 if maxed else level * 20,
         "current_damage": current_damage,
         "next_damage": next_damage,
+        "range": int(STATS.RANGES[kind]),
+        "attack_interval": 0.45 if specialization == "swarm" else 0.8,
+        "extra": "ОТКРОЮТСЯ 2 ПУТИ РАЗВИТИЯ" if level == 1 else ("ЭФФЕКТ И РАДИУС НЕ МЕНЯЮТСЯ" if not maxed else "БАШНЯ ПОЛНОСТЬЮ УЛУЧШЕНА"),
         "next_level": mini(level + 1, 3),
         "specialization": "На 2 ур. выбери путь башни." if level == 1 else ("Специализация сохранится." if not maxed else "Максимальный уровень."),
         "effect": str(DETAILS[kind]["effect"])
