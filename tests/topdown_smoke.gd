@@ -678,6 +678,17 @@ func run_tests() -> void:
     var frost_foes := [frost_primary, frost_second, frost_third, frost_fourth]
     check(frost_multihit.targets({"tower": "frost", "pos": Vector2.ZERO, "specialization": "siege"}, frost_primary, frost_foes, 145.0).size() == 1, "Frost specialization focuses one target")
     check(frost_multihit.targets({"tower": "frost", "pos": Vector2.ZERO, "specialization": "swarm"}, frost_primary, frost_foes, 145.0).size() == 3, "Blizzard slows up to three enemies")
+    # Stage 199: all four school budgets and frost specialization behavior.
+    if specialization_balance_scene != null:
+        var four_school = specialization_balance_scene.instantiate()
+        root.add_child(four_school)
+        check(four_school.tower_build_budget("frost", 1) == 50, "Frost starts at 50 gold")
+        check(four_school.tower_build_budget("frost", 2) == 70, "Frost upgrade requires 20 more gold")
+        check(four_school.tower_build_budget("frost", 3) == 110, "Frost level three full investment is 110")
+        check(four_school.tower_build_budget("bone", 1) + four_school.tower_build_budget("fire", 1) + four_school.tower_build_budget("necro", 1) + four_school.tower_build_budget("frost", 1) == 185, "Four-school starting defense costs more than 150 gold")
+        check(four_school.choose_tower("frost") and four_school.build_tower(0), "Frost tower can be selected and built by shared controls")
+        check(int(four_school.slots[0]["level"]) == 1 and str(four_school.slots[0]["tower"]) == "frost", "Frost occupies tower slot")
+        four_school.queue_free()
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
