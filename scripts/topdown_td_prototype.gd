@@ -119,6 +119,7 @@ func repair_altar() -> bool:
 func start_wave() -> bool:
     if defense_state != "playing" or not enemies.is_empty() or wave_number >= 3 or altar_hp <= 0:
         return false
+    moving_tower = false
     wave_number += 1
     enemies_spawned = 0
     var count := wave_number + 2
@@ -387,6 +388,8 @@ func tick_burning(delta: float) -> void:
                 break
 
 func restart_defense() -> void:
+    moving_tower = false
+    specialization_open = false
     help_visible = false
     defense_state = "playing"
     altar_hp = 100
@@ -409,6 +412,8 @@ func restart_defense() -> void:
     for slot in slots:
         slot["tower"] = ""
         slot["level"] = 0
+        slot["specialization"] = ""
+        slot["target_priority"] = "nearest"
     queue_redraw()
 
 func _process(delta: float) -> void:
