@@ -619,7 +619,7 @@ func run_tests() -> void:
     if run_scene != null:
         check(run_scene != null, "Unified day-night run scene loads")
         var layout_probe = run_scene.instantiate()
-        check(layout_probe.DIFFICULTY_BUTTONS.size() == 3 and layout_probe.DAY_BUTTON.position.y > layout_probe.DIFFICULTY_BUTTONS[0].end.y, "Hub difficulty and phase controls have vertical separation")
+        check(layout_probe.DIFFICULTY_BUTTONS.size() == 3 and layout_probe.START_RUN_BUTTON.position.y > layout_probe.DIFFICULTY_BUTTONS[0].end.y, "Difficulty and single start button have vertical separation")
         check(layout_probe.META_HERO_BUTTON.position.y >= 474 and layout_probe.META_TREASURY_BUTTON.position.y >= 474, "Permanent upgrades sit in lower hub panel")
         check(not layout_probe.META_HERO_BUTTON.intersects(layout_probe.META_TREASURY_BUTTON), "Permanent upgrade cards do not overlap")
         check(layout_probe.AUDIO_MUTE_BUTTON.intersects(Rect2(72, 32, 1008, 112)) and not layout_probe.AUDIO_MUTE_BUTTON.intersects(layout_probe.AUDIO_UP_BUTTON), "Audio controls fit in the header without overlap")
