@@ -708,15 +708,36 @@ func draw_fortress_ground() -> void:
     for entry_y in [285.0, 345.0]:
         draw_rect(Rect2(24, entry_y - 32.0, 40, 64), Color("#121b22"))
         draw_rect(Rect2(40, entry_y - 23.0, 6, 46), Color("#b67861"))
-    # Алтарь: подлинная цель нападения, видимая на карте.
-    draw_circle(Vector2(1041, 314), 47.0, Color("#18383c"))
-    draw_arc(Vector2(1041, 314), 38.0, 0.0, TAU, 48, Color("#6ac4b2"), 4.0)
-    draw_circle(Vector2(1041, 314), 19.0, Color("#6b4f78"))
-    draw_circle(Vector2(1041, 314), 9.0, Color("#e1b57e"))
     draw_rect(Rect2(0, 0, 1152, 64), Color("#131a27"))
     draw_line(Vector2(0, 64), Vector2(1152, 64), Color("#a08157"), 2.0)
     draw_rect(Rect2(0, 534, 1152, 114), Color("#141b27"))
     draw_line(Vector2(0, 534), Vector2(1152, 534), Color("#8c775b"), 2.0)
+
+func fortress_altar_center() -> Vector2:
+    return Vector2(1041, 314)
+
+func draw_fortress_atmosphere() -> void:
+    # Quiet environmental accents are placed away from build pads and both lanes.
+    for corner in [Vector2(118, 144), Vector2(965, 159), Vector2(118, 443), Vector2(962, 447)]:
+        draw_circle(corner + Vector2(3, 4), 18.0, Color("#1b2828"))
+        draw_rect(Rect2(corner + Vector2(-13, -10), Vector2(26, 20)), Color("#4c5a55"))
+        draw_rect(Rect2(corner + Vector2(-9, -6), Vector2(18, 12)), Color("#334b47"))
+        draw_line(corner + Vector2(-8, 0), corner + Vector2(8, 0), Color("#7e9787"), 2.0)
+    # Tiny banners beside the eastern gate identify the defended side.
+    for banner_y in [230.0, 390.0]:
+        draw_line(Vector2(1008, banner_y - 16), Vector2(1008, banner_y + 23), Color("#c9b590"), 3.0)
+        draw_colored_polygon(PackedVector2Array([Vector2(1010, banner_y - 14), Vector2(1030, banner_y - 10), Vector2(1025, banner_y + 10), Vector2(1010, banner_y + 7)]), Color("#658878"))
+    # The altar is painted AFTER roads, so the objective cannot disappear beneath them.
+    var center := fortress_altar_center()
+    draw_circle(center + Vector2(4, 6), 51.0, Color("#17252c"))
+    draw_circle(center, 43.0, Color("#234347"))
+    draw_arc(center, 40.0, 0.0, TAU, 48, Color("#72c5b7"), 4.0)
+    for angle in [0.0, PI / 2.0, PI, PI * 1.5]:
+        var point := center + Vector2(cos(angle), sin(angle)) * 39.0
+        draw_circle(point, 5.0, Color("#e4bd81"))
+    draw_colored_polygon(PackedVector2Array([center + Vector2(0, -30), center + Vector2(21, 0), center + Vector2(0, 28), center + Vector2(-21, 0)]), Color("#745b89"))
+    draw_colored_polygon(PackedVector2Array([center + Vector2(0, -19), center + Vector2(11, 0), center + Vector2(0, 16), center + Vector2(-11, 0)]), Color("#d9b78c"))
+    draw_circle(center, 6.0, Color("#fff0c5"))
 
 func draw_fortress_road(path: Array) -> void:
     for index in range(path.size() - 1):
@@ -861,6 +882,7 @@ func _draw() -> void:
         draw_string(ThemeDB.fallback_font, Vector2(74, 515), upcoming_wave_summary(), HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#f2d89c"))
     for path in PATHS:
         draw_fortress_road(path)
+    draw_fortress_atmosphere()
     for enemy in enemies:
         if enemy["delay"] <= 0.0:
             if enemy.get("role", "") == "boss":
