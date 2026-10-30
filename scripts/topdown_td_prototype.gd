@@ -326,6 +326,7 @@ func advance_enemies(delta: float) -> void:
                 position = target
                 remaining -= distance
                 waypoint += 1
+        TD_FROST_EFFECT.advance(enemy, delta)
         enemy["pos"] = position
         enemy["waypoint"] = waypoint
         if waypoint >= path.size():
@@ -427,6 +428,8 @@ func attack_with_towers(delta: float) -> void:
         for hit_target in hit_targets:
             shot_trails.append({"from": tower["pos"], "to": hit_target["pos"], "time": 0.18, "kind": kind})
             hit_target["hp"] -= damage + tower_synergy_damage(slot_id, hit_target)
+            if kind == "frost" and hit_target["hp"] > 0:
+                TD_FROST_EFFECT.apply(hit_target, 2.0, 0.4 if tower.get("specialization", "") == "siege" else 0.25)
             if kind == "fire" and hit_target["hp"] > 0:
                 apply_burn(hit_target)
                 if tower.get("specialization", "") == "siege":
@@ -791,7 +794,7 @@ func _unhandled_input(event: InputEvent) -> void:
                 return
             var types: Array = TD_TOWER_STATS.SHOP_ORDER
             for i in range(types.size()):
-                if Rect2(260.0 + i * 210.0, 550.0, 180.0, 64.0).has_point(point):
+                if Rect2(230.0 + i * 150.0, 550.0, 140.0, 64.0).has_point(point):
                     choose_tower(types[i])
                     return
             if Rect2(880, 545, 110, 55).has_point(point):
@@ -935,6 +938,8 @@ func tower_visual_color(kind: String) -> Color:
             return Color("#ffad62")
         "necro":
             return Color("#79e4c5")
+        "frost":
+            return Color("#a4e9ff")
     return Color("#ffda8e")
 
 func draw_tower_figure(pos: Vector2, kind: String, level: int) -> void:
@@ -962,6 +967,9 @@ func draw_tower_figure(pos: Vector2, kind: String, level: int) -> void:
             draw_line(pos + Vector2(-14, -20), pos + Vector2(14, -20), Color("#c9c5dd"), 3.0)
             draw_circle(pos + Vector2(0, -47), 11.0, Color("#398b86"))
             draw_circle(pos + Vector2(0, -47), 6.0, Color("#caffec"))
+        "frost":
+            draw_colored_polygon(PackedVector2Array([pos + Vector2(0, -47), pos + Vector2(-16, -21), pos + Vector2(0, -9), pos + Vector2(16, -21)]), Color("#a4e9ff"))
+            draw_line(pos + Vector2(0, -45), pos + Vector2(0, -10), Color("#e6faff"), 3.0)
     if level > 1:
         draw_arc(pos, 34.0, -PI / 2.0, -PI / 2.0 + TAU * float(level - 1) / 3.0, 28, tower_visual_color(kind), 3.0)
 
@@ -1009,7 +1017,7 @@ func _draw() -> void:
         draw_string(ThemeDB.fallback_font, TARGET_BUTTON.position + Vector2(9, 29), "ЦЕЛЬ: " + str(TARGET_LABELS[priority]), HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color("#fff1c9"))
     var info: Dictionary = selected_tower_info()
     if not info.is_empty():
-        var tower_title: String = "КОСТЯНАЯ" if info["kind"] == "bone" else "ОГНЕННАЯ" if info["kind"] == "fire" else "НЕКРОМАНТ"
+        var tower_title: String = str(TD_TOWER_STATS.DISPLAY_NAMES.get(str(info["kind"]), "БАШНЯ"))
         var specialization_label: String = "НЕ ВЫБРАНА"
         if str(info["specialization"]) != "":
             var label_index: int = 0 if info["specialization"] == "siege" else 1
