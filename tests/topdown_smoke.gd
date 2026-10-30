@@ -894,6 +894,16 @@ func run_tests() -> void:
         root.add_child(specs_ui)
         check(not specs_ui.SPECIALIZATION_BUTTONS[0].intersects(specs_ui.SPECIALIZATION_BUTTONS[1]), "Specialization action areas are separate")
         specs_ui.queue_free()
+    if specialization_balance_scene != null:
+        var fit_game = specialization_balance_scene.instantiate()
+        root.add_child(fit_game)
+        var left_card: Rect2 = fit_game.specialization_card_rect(0)
+        var right_card: Rect2 = fit_game.specialization_card_rect(1)
+        check(left_card.end.x < right_card.position.x, "Specialization comparison cards have non-overlapping text areas")
+        for button_idx in range(2):
+            var button: Rect2 = fit_game.SPECIALIZATION_BUTTONS[button_idx]
+            check(fit_game.specialization_card_rect(button_idx).encloses(button), "Specialization button stays inside corresponding comparison card")
+        fit_game.queue_free()
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
