@@ -3,6 +3,7 @@ extends Node2D
 const SFX_SCRIPT = preload("res://scripts/procedural_sfx.gd")
 const TD_SYNERGY_RULES = preload("res://scripts/td/td_synergy_rules.gd")
 const TD_TOWER_STATS = preload("res://scripts/td/td_tower_stats.gd")
+const TD_TOWER_DAMAGE = preload("res://scripts/td/td_tower_damage.gd")
 var sfx: Node
 const SLOT_POSITIONS := [Vector2(280, 190), Vector2(430, 190), Vector2(590, 190), Vector2(750, 190), Vector2(280, 440), Vector2(430, 440), Vector2(590, 440), Vector2(750, 440)]
 const COSTS = TD_TOWER_STATS.COSTS
@@ -457,15 +458,7 @@ func attack_with_towers(delta: float) -> void:
                 var across: float = absf(direction.cross(relative))
                 if along > nearest and along <= TOWER_RANGE[kind] and across <= 24.0:
                     hit_targets.append(candidate)
-        var damage: int = int(TOWER_DAMAGE[kind]) * int(tower["level"])
-        if tower.get("specialization", "") == "siege":
-            damage += 2
-        elif tower.get("specialization", "") == "swarm":
-            damage = maxi(1, damage - 1)
-        if kind == "fire":
-            damage += fire_synergy_bonus
-        elif kind == "bone":
-            damage += bone_synergy_bonus
+        var damage: int = TD_TOWER_DAMAGE.direct_damage(kind, int(tower["level"]), str(tower.get("specialization", "")), fire_synergy_bonus, bone_synergy_bonus)
         for hit_target in hit_targets:
             shot_trails.append({"from": tower["pos"], "to": hit_target["pos"], "time": 0.18, "kind": kind})
             hit_target["hp"] -= damage + tower_synergy_damage(slot_id, hit_target)
