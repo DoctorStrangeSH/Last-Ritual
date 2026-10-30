@@ -10,6 +10,7 @@ const HELP_CLOSE_BUTTON := Rect2(720.0, 471.0, 130.0, 43.0)
 var slots: Array[Dictionary] = []
 var specialization_open := false
 const SPECIALIZATION_BUTTONS := [Rect2(315, 325, 220, 70), Rect2(555, 325, 220, 70)]
+const SPECIALIZATION_LABELS := {"bone": ["БАЛЛИСТА: +2 УРОН", "РОЙ: БЫСТРЕЕ"], "fire": ["ИНФЕРНО: +2 УРОН", "ИСКРЫ: БЫСТРЕЕ"], "necro": ["ЖНЕЦ: +2 УРОН", "ЛЕГИОН: БЫСТРЕЕ"]}
 var selected_type := ""
 var selected_slot := -1
 var coins := 150
@@ -575,8 +576,10 @@ func _draw() -> void:
         draw_string(ThemeDB.fallback_font, Vector2(350, 300), "ВЫБЕРИТЕ СПЕЦИАЛИЗАЦИЮ", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color("#f4dfb7"))
         draw_rect(SPECIALIZATION_BUTTONS[0], Color("#805d49"))
         draw_rect(SPECIALIZATION_BUTTONS[1], Color("#426d6a"))
-        draw_string(ThemeDB.fallback_font, Vector2(335, 365), "БАЛЛИСТА: +2 УРОН", HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color.WHITE)
-        draw_string(ThemeDB.fallback_font, Vector2(570, 365), "РОЙ: БЫСТРЕЕ АТАКИ", HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color.WHITE)
+        if selected_slot >= 0:
+            var labels: Array = SPECIALIZATION_LABELS[str(slots[selected_slot]["tower"])]
+            draw_string(ThemeDB.fallback_font, Vector2(325, 365), labels[0], HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
+            draw_string(ThemeDB.fallback_font, Vector2(565, 365), labels[1], HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
     draw_fortress_ground()
     if defense_state != "playing":
         draw_rect(Rect2(345, 225, 460, 210), Color("#285849") if defense_state == "won" else Color("#693943"))
