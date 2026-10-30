@@ -866,6 +866,21 @@ func run_tests() -> void:
         check(int(snapshot["trails_stored"]) == 35 and int(snapshot["trails_visible"]) == 28, "Performance overlay reports rendered and stored traces separately")
         check(int(snapshot["enemies"]) == debug_game.enemies.size() and int(snapshot["spirits"]) == debug_game.summoned_spirits.size(), "Performance overlay counts active enemies and spirits")
         debug_game.queue_free()
+    if specialization_balance_scene != null:
+        var perf_peak_game = specialization_balance_scene.instantiate()
+        root.add_child(perf_peak_game)
+        perf_peak_game.sample_performance(0.05)
+        check(is_equal_approx(perf_peak_game.debug_peak_frame_ms, 0.0), "Hidden performance panel does not collect frame samples")
+        perf_peak_game.performance_overlay_visible = true
+        perf_peak_game.enemies.append({"role": "grunt", "pos": Vector2.ZERO, "hp": 10, "delay": 0.0})
+        perf_peak_game.sample_performance(0.04)
+        perf_peak_game.enemies.clear()
+        perf_peak_game.sample_performance(0.02)
+        var peak_stats: Dictionary = perf_peak_game.performance_snapshot()
+        check(is_equal_approx(float(peak_stats["frame_ms"]), 20.0), "Frame time reflects latest frame delta")
+        check(is_equal_approx(float(peak_stats["peak_frame_ms"]), 40.0), "Frame time peak retains slowest sampled frame")
+        check(int(peak_stats["peak_enemies"]) == 1, "Enemy peak persists after enemies leave screen")
+        perf_peak_game.queue_free()
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
