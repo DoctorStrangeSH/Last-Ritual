@@ -553,7 +553,7 @@ func run_tests() -> void:
         scouting.wave_number = 1
         check("БЕГУНЫ" in scouting.upcoming_wave_summary(), "Second wave scouting warns about runners")
         scouting.wave_number = 2
-        check("НАТИСК" in scouting.upcoming_wave_summary(), "Final wave scouting warns about boss")
+        check("НАТИСК" in scouting.upcoming_wave_summary(), "Third wave scouting warns about armored pressure")
         scouting.queue_free()
     var healer_scene = load("res://scenes/topdown_td_prototype.tscn")
     if healer_scene != null:
@@ -900,7 +900,7 @@ func run_tests() -> void:
         check(td.boss_feedback_time == 0.0 and td.boss_feedback_text == "" and td.summoned_spirits.is_empty(), "Defense restart clears boss feedback and necro summons")
         check(td.defense_state == "playing" and td.wave_number == 0 and td.altar_hp == 100, "TD restart resets wave and altar")
         check(td.slots[0]["tower"] == "" and td.coins == 150, "TD restart clears towers and restores economy")
-        td.wave_number = 3
+        td.wave_number = 6
         td.enemies.clear()
         td._process(0.0)
         check(td.defense_state == "won", "TD victory after final cleared wave")
