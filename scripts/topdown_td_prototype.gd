@@ -18,7 +18,7 @@ const TARGET_LABELS := {"nearest": "БЛИЖАЙШИЙ", "support": "ПОДДЕ�
 var slots: Array[Dictionary] = []
 var specialization_open := false
 const SPECIALIZATION_BUTTONS := [Rect2(315, 325, 220, 70), Rect2(555, 325, 220, 70)]
-const SPECIALIZATION_LABELS := {"bone": ["БАЛЛИСТА: +2 УРОН", "РОЙ: СКОРОСТЬ"], "fire": ["ИНФЕРНО: ПЛАМЯ", "ИСКРЫ: ЧАСТЫЕ УДАРЫ"], "necro": ["ЖНЕЦ: СИЛА ДУХОВ", "ЛЕГИОН: БОЛЬШЕ ДУХОВ"]}
+const SPECIALIZATION_LABELS := {"bone": ["БАЛЛИСТА: +2 УРОН", "РОЙ: СКОРОСТЬ"], "fire": ["ИНФЕРНО: ПЛАМЯ", "ИСКРЫ: 3 ЦЕЛИ"], "necro": ["ЖНЕЦ: СИЛА ДУХОВ", "ЛЕГИОН: БОЛЬШЕ ДУХОВ"]}
 var selected_type := ""
 var selected_slot := -1
 var coins := 150
@@ -324,6 +324,14 @@ func attack_with_towers(delta: float) -> void:
             continue
         var nearest: float = tower["pos"].distance_to(target["pos"])
         var hit_targets: Array = [target]
+        if kind == "fire" and tower.get("specialization", "") == "swarm":
+            # Sparks distribute ordinary burns across a group. Inferno remains
+            # the stronger single-target burn, while Sparks can affect 3 foes.
+            for candidate in enemies:
+                if candidate == target or float(candidate.get("delay", 0.0)) > 0.0 or hit_targets.size() >= 3:
+                    continue
+                if tower["pos"].distance_to(candidate["pos"]) <= TOWER_RANGE[kind]:
+                    hit_targets.append(candidate)
         if kind == "bone":
             var direction: Vector2 = (target["pos"] - tower["pos"]).normalized()
             for candidate in enemies:
