@@ -9,7 +9,10 @@ static func apply(enemy: Dictionary, duration: float = 2.0, strength: float = 0.
 static func multiplier(enemy: Dictionary) -> float:
     if float(enemy.get("frost_time", 0.0)) <= 0.0:
         return 1.0
-    return maxf(MIN_SPEED_MULTIPLIER, 1.0 - float(enemy.get("frost_strength", 0.0)))
+    # Elites retain enough movement to remain threatening even under renewed chill.
+    var role: String = str(enemy.get("role", ""))
+    var minimum: float = 0.70 if role == "boss" else (0.60 if role == "captain" else MIN_SPEED_MULTIPLIER)
+    return maxf(minimum, 1.0 - float(enemy.get("frost_strength", 0.0)))
 
 static func advance(enemy: Dictionary, delta: float) -> void:
     if float(enemy.get("frost_time", 0.0)) > 0.0:
