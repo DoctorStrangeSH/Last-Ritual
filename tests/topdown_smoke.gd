@@ -768,6 +768,25 @@ func run_tests() -> void:
     check(is_equal_approx(elite_frost.multiplier(grunt_chill), 0.45), "Normal enemy keeps original frost cap")
     elite_frost.advance(boss_chill, 2.0)
     check(is_equal_approx(elite_frost.multiplier(boss_chill), 1.0), "Boss frost resistance retains normal expiration")
+    if specialization_balance_scene != null:
+        var control_game = specialization_balance_scene.instantiate()
+        root.add_child(control_game)
+        var active_captain := {"role": "captain", "pos": Vector2.ZERO, "delay": 0.0}
+        var controlled_grunt := {"role": "grunt", "pos": Vector2(30, 0), "delay": 0.0}
+        var controlled_boss := {"role": "boss", "pos": Vector2(40, 0), "delay": 0.0}
+        control_game.enemies.clear()
+        control_game.enemies.append(active_captain)
+        control_game.enemies.append(controlled_grunt)
+        control_game.enemies.append(controlled_boss)
+        control_game.TD_FROST_EFFECT.apply(controlled_grunt, 2.0, 0.9)
+        control_game.TD_FROST_EFFECT.apply(controlled_boss, 2.0, 0.9)
+        check(is_equal_approx(control_game.enemy_movement_multiplier(controlled_grunt), 0.54), "Captain morale and frost combine predictably for common foes")
+        check(is_equal_approx(control_game.enemy_movement_multiplier(controlled_boss), 0.84), "Boss keeps resistance even beside active captain")
+        control_game.enemies.erase(active_captain)
+        check(is_equal_approx(control_game.enemy_movement_multiplier(controlled_grunt), 0.45), "Defeating captain removes morale without clearing frost")
+        control_game.TD_FROST_EFFECT.advance(controlled_grunt, 2.0)
+        check(is_equal_approx(control_game.enemy_movement_multiplier(controlled_grunt), 1.0), "Chill expiration restores regular movement after captain defeat")
+        control_game.queue_free()
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
