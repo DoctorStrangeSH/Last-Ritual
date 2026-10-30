@@ -427,6 +427,13 @@ func run_tests() -> void:
         check(silhouettes.enemy_visual_profile("boss")["mark"] == "boss", "Boss silhouette is distinct")
         check(float(silhouettes.enemy_visual_profile("boss")["radius"]) > float(silhouettes.enemy_visual_profile("grunt")["radius"]), "Boss silhouette remains visually largest")
         silhouettes.queue_free()
+    var scenery_scene = load("res://scenes/topdown_td_prototype.tscn")
+    if scenery_scene != null:
+        var scenery = scenery_scene.instantiate()
+        root.add_child(scenery)
+        check(scenery.fortress_altar_center() == Vector2(1041, 314), "Altar artwork remains anchored at original objective location")
+        check(scenery.fortress_altar_center().x > 900.0, "Altar artwork stays on defended east side")
+        scenery.queue_free()
     var td_scene := load("res://scenes/topdown_td_prototype.tscn") as PackedScene
     check(td_scene != null, "Top-down TD scene loads")
     if td_scene != null:
