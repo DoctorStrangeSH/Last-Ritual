@@ -198,6 +198,15 @@ func choose_interwave_event(choice: String) -> bool:
     queue_redraw()
     return true
 
+func siege_economy_forecast() -> Dictionary:
+    # Deterministic upper-bound income: assumes every spawned enemy is defeated.
+    # Escaped enemies, repairs, and optional council choices change actual coins.
+    var total_enemies := 0
+    for wave_index in range(1, SIEGE_WAVES + 1):
+        total_enemies += int(wave_enemy_budget(wave_index)["total"])
+    var gross_gold: int = total_enemies * 5
+    return {"enemies": total_enemies, "kill_gold": gross_gold, "starting_gold": 150, "maximum_gold": 150 + gross_gold}
+
 func wave_enemy_budget(next_wave: int) -> Dictionary:
     # Deterministic forecast shared with regression tests and future UI.
     if next_wave < 1 or next_wave > SIEGE_WAVES:
