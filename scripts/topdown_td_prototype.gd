@@ -392,6 +392,16 @@ func tower_synergy_preview(slot_id: int) -> Dictionary:
         has_adjacent_tower(slot_id, "bone")
     )
 
+func frost_synergy_status(slot_id: int) -> String:
+    if slot_id < 0 or slot_id >= slots.size():
+        return ""
+    var kind: String = str(slots[slot_id].get("tower", ""))
+    if kind != "bone" and kind != "fire":
+        return ""
+    if has_adjacent_tower(slot_id, "frost"):
+        return "ЛЁД + КОСТИ: +1 ПО ЗАМЕДЛ." if kind == "bone" else "ТЕРМОУДАР: +1 ПО ЗАМЕДЛ."
+    return "РЯДОМ НУЖНА ЛЕДЯНАЯ БАШНЯ"
+
 func tower_synergy_damage(slot_id: int, enemy: Dictionary) -> int:
     var bonus: Dictionary = tower_synergy_preview(slot_id)
     var frost_pierce_bonus: int = 0
@@ -1036,7 +1046,10 @@ func _draw() -> void:
         draw_string(ThemeDB.fallback_font, Vector2(858, 177), "УРОН: %d  СВЯЗИ: %d" % [int(info["damage"]), int(info["links"])], HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
         draw_string(ThemeDB.fallback_font, Vector2(858, 202), "ПУТЬ: %s" % specialization_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#b9e4d6"))
         draw_string(ThemeDB.fallback_font, Vector2(858, 228), "УЛУЧШ.: %s" % ("МАКС." if int(info["upgrade_cost"]) == 0 else "%d ЗОЛ." % int(info["upgrade_cost"])), HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#e7cf98"))
-        if int(info["synergy_flat"]) > 0 or int(info["synergy_burning"]) > 0:
+        var frost_status: String = frost_synergy_status(selected_slot)
+        if frost_status != "":
+            draw_string(ThemeDB.fallback_font, Vector2(858, 253), frost_status, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#a4e9ff"))
+        elif int(info["synergy_flat"]) > 0 or int(info["synergy_burning"]) > 0:
             draw_string(ThemeDB.fallback_font, Vector2(858, 253), "БОНУС: +%d / +%d ГОРЯЩ." % [int(info["synergy_flat"]), int(info["synergy_burning"])], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#e4c990"))
     var repair_ready: bool = defense_state == "playing" and enemies.is_empty() and wave_number < SIEGE_WAVES and altar_hp > 0 and altar_hp < 100 and coins >= REPAIR_COST
     var can_move: bool = selected_slot >= 0 and selected_slot < slots.size() and slots[selected_slot]["tower"] != "" and defense_state == "playing" and enemies.is_empty() and wave_number < SIEGE_WAVES
