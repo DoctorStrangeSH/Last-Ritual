@@ -647,6 +647,15 @@ func run_tests() -> void:
     check(multihit.targets({"tower": "bone", "pos": Vector2.ZERO}, multihit_primary, multihit_foes, 135.0).size() == 2, "Bone pierce hits lined-up enemies but ignores side and pending enemies")
     check(multihit.targets({"tower": "fire", "pos": Vector2.ZERO, "specialization": "swarm"}, multihit_primary, multihit_foes, 135.0).size() == 3, "Sparks hit up to three active enemies")
     check(multihit.targets({"tower": "fire", "pos": Vector2.ZERO, "specialization": "siege"}, multihit_primary, multihit_foes, 135.0).size() == 1, "Inferno retains single-target attack")
+    var spirit_rules = load("res://scripts/td/td_necro_spirits.gd")
+    var normal_spirit: Dictionary = spirit_rules.create(Vector2.ZERO, false)
+    var empowered_spirit: Dictionary = spirit_rules.create(Vector2.ZERO, true)
+    check(normal_spirit["damage"] == 2 and is_equal_approx(float(normal_spirit["life"]), 4.0), "Base necro spirit retains lifespan and damage")
+    check(empowered_spirit["damage"] == 4 and is_equal_approx(float(empowered_spirit["life"]), 5.0), "Empowered necro spirit retains lifespan and damage")
+    var spirit_target := {"pos": Vector2(50, 0), "delay": 0.0}
+    var spirit_pending := {"pos": Vector2(10, 0), "delay": 1.0}
+    check(spirit_rules.select_target(normal_spirit, [spirit_pending, spirit_target]) == spirit_target, "Spirit ignores pending enemies")
+    check(spirit_rules.select_target(normal_spirit, [{"pos": Vector2(180, 0), "delay": 0.0}]).is_empty(), "Spirit respects target radius")
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
