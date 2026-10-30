@@ -107,6 +107,17 @@ func hero_attack(target: Vector2) -> bool:
     queue_redraw()
     return true
 
+func siege_progress_label() -> String:
+    if defense_state == "won":
+        return "ОСАДА ОТБИТА"
+    if defense_state == "lost":
+        return "ОБОРОНА ПРОВАЛЕНА"
+    if wave_number >= SIEGE_WAVES:
+        return "ПОСЛЕДНЯЯ ВОЛНА"
+    if enemies.is_empty():
+        return "ПОДГОТОВКА: %d / %d" % [wave_number + 1, SIEGE_WAVES]
+    return "ОБОРОНА: %d / %d" % [wave_number, SIEGE_WAVES]
+
 func upcoming_wave_summary() -> String:
     if wave_number >= SIEGE_WAVES:
         return "ВСЕ ВОЛНЫ ОТБИТЫ"
@@ -1051,7 +1062,8 @@ func _draw() -> void:
         draw_string(ThemeDB.fallback_font, Vector2(485, 301), "ПОБЕДА" if defense_state == "won" else "АЛТАРЬ ПАЛ", HORIZONTAL_ALIGNMENT_LEFT, -1, 28, Color.WHITE)
         draw_rect(RESTART_BUTTON, Color("#8ca9bc"))
         draw_string(ThemeDB.fallback_font, Vector2(480, 386), "НАЧАТЬ ЗАНОВО", HORIZONTAL_ALIGNMENT_LEFT, -1, 20, Color.WHITE)
-    draw_string(ThemeDB.fallback_font, Vector2(66, 45), "АЛТАРЬ %d / 100     ВОЛНА %d / 6     ЗОЛОТО %d" % [altar_hp, wave_number, coins], HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color.WHITE)
+    draw_string(ThemeDB.fallback_font, Vector2(66, 45), "АЛТАРЬ %d / 100     ВОЛНА %d / %d     ЗОЛОТО %d" % [altar_hp, wave_number, SIEGE_WAVES, coins], HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color.WHITE)
+    draw_string(ThemeDB.fallback_font, Vector2(710, 45), siege_progress_label(), HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#e8d6a8"))
     if selected_slot >= 0 and selected_slot < slots.size() and slots[selected_slot]["tower"] != "":
         draw_rect(TARGET_BUTTON, Color("#385a63"))
         draw_rect(TARGET_BUTTON, Color("#e5c985"), false, 2.0)
