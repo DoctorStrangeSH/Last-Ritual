@@ -398,7 +398,11 @@ func tower_synergy_damage(slot_id: int, enemy: Dictionary) -> int:
     if slot_id >= 0 and slot_id < slots.size() and str(slots[slot_id].get("tower", "")) == "bone":
         if has_adjacent_tower(slot_id, "frost") and float(enemy.get("frost_time", 0.0)) > 0.0:
             frost_pierce_bonus = 1
-    return int(bonus["flat"]) + (int(bonus["burning"]) if float(enemy.get("burn_time", 0.0)) > 0.0 else 0) + frost_pierce_bonus
+    var thermal_shock_bonus: int = 0
+    if slot_id >= 0 and slot_id < slots.size() and str(slots[slot_id].get("tower", "")) == "fire":
+        if has_adjacent_tower(slot_id, "frost") and float(enemy.get("frost_time", 0.0)) > 0.0:
+            thermal_shock_bonus = 1
+    return int(bonus["flat"]) + (int(bonus["burning"]) if float(enemy.get("burn_time", 0.0)) > 0.0 else 0) + frost_pierce_bonus + thermal_shock_bonus
 
 func choose_tower_target(slot_id: int) -> Dictionary:
     if slot_id < 0 or slot_id >= slots.size():
