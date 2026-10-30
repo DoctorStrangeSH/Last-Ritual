@@ -25,8 +25,7 @@ var active_game: Node2D
 var last_phase := "day"
 const META_HERO_BUTTON := Rect2(210, 510, 300, 65)
 const META_TREASURY_BUTTON := Rect2(642, 510, 300, 65)
-const DAY_BUTTON := Rect2(210, 338, 300, 82)
-const NIGHT_BUTTON := Rect2(642, 338, 300, 82)
+const START_RUN_BUTTON := Rect2(376, 337, 400, 85)
 const REWARD_BUTTONS := [Rect2(80, 370, 225, 100), Rect2(350, 370, 225, 100), Rect2(620, 370, 225, 100), Rect2(890, 370, 225, 100)]
 const AUDIO_MUTE_BUTTON := Rect2(810, 52, 96, 42)
 const AUDIO_DOWN_BUTTON := Rect2(916, 52, 38, 42)
@@ -84,7 +83,7 @@ func expected_phase() -> String:
     return "day" if phase_count % 2 == 0 else "night"
 
 func start_phase(kind: String) -> bool:
-    if phase != "hub" or kind != expected_phase():
+    if (phase != "hub" and phase != "transition") or kind != expected_phase():
         return false
     if active_game != null:
         active_game.queue_free()
@@ -113,6 +112,11 @@ func start_phase(kind: String) -> bool:
     queue_redraw()
     return true
 
+func start_run() -> bool:
+    if phase != "hub" or phase_count != 0:
+        return false
+    return start_phase("day")
+
 func finish_phase(won: bool) -> void:
     if phase != "day" and phase != "night":
         return
@@ -131,9 +135,14 @@ func finish_phase(won: bool) -> void:
         meta.record_phase_clear()
         meta.award(1 + difficulty)
         phase_count += 1
-        phase = "victory" if phase_count >= 6 else "reward"
-        if phase == "victory":
+        if phase_count >= 6:
+            phase = "victory"
             meta.record_result(true)
+        elif expected_phase() == "night":
+            phase = "transition"
+            start_phase("night")
+        else:
+            phase = "reward"
     meta.save_profile()
     queue_redraw()
 
@@ -153,9 +162,8 @@ func choose_run_reward(kind: String) -> bool:
             run_necro_kill_bonus += 3
         _:
             return false
-    phase = "hub"
-    queue_redraw()
-    return true
+    phase = "transition"
+    return start_phase(expected_phase())
 
 func _process(_delta: float) -> void:
     if active_game == null:
@@ -202,11 +210,8 @@ func _input(event: InputEvent) -> void:
             queue_redraw()
             get_viewport().set_input_as_handled()
             return
-        if expected_phase() == "day" and DAY_BUTTON.has_point(point):
-            start_phase("day")
-            get_viewport().set_input_as_handled()
-        elif expected_phase() == "night" and NIGHT_BUTTON.has_point(point):
-            start_phase("night")
+        if START_RUN_BUTTON.has_point(point):
+            start_run()
             get_viewport().set_input_as_handled()
     elif phase == "reward":
         for i in range(REWARD_BUTTONS.size()):
@@ -255,25 +260,20 @@ func _draw() -> void:
             draw_string(ThemeDB.fallback_font, AUDIO_DOWN_BUTTON.position + Vector2(13, 27), "-", HORIZONTAL_ALIGNMENT_LEFT, -1, 21, Color.WHITE)
             draw_string(ThemeDB.fallback_font, AUDIO_UP_BUTTON.position + Vector2(13, 27), "+", HORIZONTAL_ALIGNMENT_LEFT, -1, 21, Color.WHITE)
             draw_string(ThemeDB.fallback_font, Vector2(810, 118), "ГРОМКОСТЬ %d%%" % roundi(audio_volume * 100.0), HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#e7d3a8"))
-            draw_rect(Rect2(72, 160, 1008, 300), Color("#1a2232"))
-            draw_string(ThemeDB.fallback_font, Vector2(104, 198), "ЭТАП %d / 6" % (phase_count + 1), HORIZONTAL_ALIGNMENT_LEFT, -1, 21, Color.WHITE)
-            draw_string(ThemeDB.fallback_font, Vector2(300, 198), "ВЫБЕРИТЕ СЛОЖНОСТЬ", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#9da9bf"))
-            var next_phase := expected_phase()
+            draw_rect(Rect2(72, 160, 1008, 299), Color("#1a2232"))
+            draw_string(ThemeDB.fallback_font, Vector2(104, 198), "НОВЫЙ ЗАБЕГ", HORIZONTAL_ALIGNMENT_LEFT, -1, 28, Color("#e7d3a8"))
+            draw_string(ThemeDB.fallback_font, Vector2(104, 223), "3 дня обороны и 3 ночи в подземелье", HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color("#b5c9d3"))
+            draw_string(ThemeDB.fallback_font, Vector2(104, 273), "СЛОЖНОСТЬ", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#d3c6ad"))
             for i in range(DIFFICULTY_BUTTONS.size()):
                 draw_rect(DIFFICULTY_BUTTONS[i], Color("#906a3d") if difficulty == i else Color("#343b47"))
-                draw_string(ThemeDB.fallback_font, DIFFICULTY_BUTTONS[i].position + Vector2(18, 35), DIFFICULTY_NAMES[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color.WHITE)
-            var difficulty_help := ["Обычные враги - 1 осколок за этап", "Сильные враги - 2 осколка за этап", "Опасные враги - 3 осколка за этап"]
-            draw_string(ThemeDB.fallback_font, Vector2(280, 318), difficulty_help[difficulty], HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#e7d3a8"))
-            draw_rect(DAY_BUTTON, Color("#527d70") if next_phase == "day" else Color("#343b47"))
-            draw_rect(NIGHT_BUTTON, Color("#594d78") if next_phase == "night" else Color("#343b47"))
-            draw_string(ThemeDB.fallback_font, DAY_BUTTON.position + Vector2(30, 35), "ДЕНЬ: ОБОРОНА" if next_phase == "day" else "ДЕНЬ: ПРОЙДЕН", HORIZONTAL_ALIGNMENT_LEFT, -1, 21, Color.WHITE)
-            draw_string(ThemeDB.fallback_font, DAY_BUTTON.position + Vector2(30, 59), "Стройте башни и защищайте алтарь", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#c7d5d0"))
-            draw_string(ThemeDB.fallback_font, NIGHT_BUTTON.position + Vector2(30, 35), "НОЧЬ: ПОИСК" if next_phase == "night" else "НОЧЬ: ЗАКРЫТА", HORIZONTAL_ALIGNMENT_LEFT, -1, 21, Color.WHITE)
-            draw_string(ThemeDB.fallback_font, NIGHT_BUTTON.position + Vector2(30, 59), "Сражайтесь и ищите реликвии", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#d2c9e4"))
-            draw_string(ThemeDB.fallback_font, Vector2(104, 447), "РЕЛИКВИИ", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#9da9bf"))
-            draw_string(ThemeDB.fallback_font, Vector2(220, 447), "УРОН +%d  ЗОЛОТО +%d  ОГОНЬ +%d  КОСТИ +%d  НЕКРО +%d" % [run_damage_bonus, run_gold_bonus, run_fire_bonus, run_bone_tower_bonus, run_necro_kill_bonus], HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#c7c9d1"))
+                draw_rect(DIFFICULTY_BUTTONS[i], Color("#d8c59b") if difficulty == i else Color("#606b75"), false, 2.0)
+                draw_string(ThemeDB.fallback_font, DIFFICULTY_BUTTONS[i].position + Vector2(35, 35), DIFFICULTY_NAMES[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color.WHITE)
+            draw_rect(START_RUN_BUTTON, Color("#527d70"))
+            draw_rect(START_RUN_BUTTON, Color("#b5dfbf"), false, 3.0)
+            draw_string(ThemeDB.fallback_font, START_RUN_BUTTON.position + Vector2(91, 48), "НАЧАТЬ ЗАБЕГ", HORIZONTAL_ALIGNMENT_LEFT, -1, 25, Color.WHITE)
+            draw_string(ThemeDB.fallback_font, Vector2(234, 444), "День → ночь → награда → следующий день. Переходы автоматические.", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#c7d5d0"))
             draw_rect(Rect2(72, 474, 1008, 105), Color("#1a2232"))
-            draw_string(ThemeDB.fallback_font, Vector2(100, 500), "ПОСТОЯННЫЕ УЛУЧШЕНИЯ", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#9da9bf"))
+            draw_string(ThemeDB.fallback_font, Vector2(100, 500), "УЛУЧШЕНИЯ МЕЖДУ ЗАБЕГАМИ", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#9da9bf"))
             draw_string(ThemeDB.fallback_font, Vector2(820, 500), "ОСКОЛКИ: %d" % meta.fragments, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#e7d3a8"))
             draw_rect(META_HERO_BUTTON, Color("#526d9b") if meta.hero_level < 3 and meta.fragments >= meta.hero_level + 1 else Color("#343b47"))
             draw_rect(META_TREASURY_BUTTON, Color("#527d70") if meta.treasury_level < 3 and meta.fragments >= meta.treasury_level + 1 else Color("#343b47"))
@@ -289,11 +289,11 @@ func _draw() -> void:
                 badges.append("МАСТЕР РИТУАЛА +6")
             draw_string(ThemeDB.fallback_font, Vector2(104, 630), "ДОСТИЖЕНИЯ: " + (", ".join(badges) if not badges.is_empty() else "Проходите этапы для открытия"), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#e7d3a8"))
         "reward":
-            draw_string(ThemeDB.fallback_font, Vector2(410, 235), "ВЫБЕРИТЕ РЕЛИКВИЮ", HORIZONTAL_ALIGNMENT_LEFT, -1, 26, Color.WHITE)
-            var names := ["КОСТИ: +1 УРОН", "УГОЛЬ: СКОРОСТЬ И ОГОНЬ", "ЗОЛОТО: +30 В НАЧАЛЕ", "НЕКРО: +3 ЗОЛОТА"]
+            draw_string(ThemeDB.fallback_font, Vector2(410, 235), "НОЧЬ ЗАВЕРШЕНА — ВЫБЕРИТЕ НАГРАДУ", HORIZONTAL_ALIGNMENT_LEFT, -1, 26, Color.WHITE)
+            var names := ["КОСТИ: +1 УРОН", "УГОЛЬ: ОГОНЬ", "ЗОЛОТО: +30", "НЕКРО: +3 ЗА УБИЙСТВО"]
             for i in range(REWARD_BUTTONS.size()):
                 draw_rect(REWARD_BUTTONS[i], [Color("#526d9b"), Color("#a16a36"), Color("#927447"), Color("#4e7668")][i])
-                draw_string(ThemeDB.fallback_font, REWARD_BUTTONS[i].position + Vector2(12, 55), names[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color.WHITE)
+                draw_string(ThemeDB.fallback_font, REWARD_BUTTONS[i].position + Vector2(9, 55), names[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color.WHITE)
         "defeat", "victory":
             draw_string(ThemeDB.fallback_font, Vector2(400, 260), "РИТУАЛ ЗАВЕРШЁН" if phase == "victory" else "ЗАБЕГ ОКОНЧЕН", HORIZONTAL_ALIGNMENT_LEFT, -1, 32, Color.WHITE)
             draw_string(ThemeDB.fallback_font, Vector2(400, 320), "Пройдено этапов: %d / 6" % completed_phases, HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color("#c7c9d1"))
