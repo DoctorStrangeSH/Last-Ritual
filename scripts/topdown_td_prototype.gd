@@ -533,7 +533,13 @@ func choose_tower(kind: String) -> bool:
     queue_redraw()
     return true
 
+func can_modify_towers() -> bool:
+    # Construction, upgrading and selling are strategic inter-wave decisions.
+    return defense_state == "playing" and enemies.is_empty() and wave_number < 3 and not specialization_open
+
 func build_tower(slot_id: int) -> bool:
+    if not can_modify_towers():
+        return false
     if slot_id < 0 or slot_id >= slots.size() or not COSTS.has(selected_type):
         return false
     if slots[slot_id]["tower"] != "" or coins < COSTS[selected_type]:
@@ -590,6 +596,8 @@ func select_slot(slot_id: int) -> bool:
     return true
 
 func upgrade_selected() -> bool:
+    if not can_modify_towers():
+        return false
     if selected_slot < 0 or slots[selected_slot]["tower"] == "":
         return false
     var cost: int = 20 * int(slots[selected_slot]["level"])
@@ -611,6 +619,8 @@ func choose_specialization(path: String) -> bool:
     return true
 
 func sell_selected() -> bool:
+    if not can_modify_towers():
+        return false
     if selected_slot < 0 or slots[selected_slot]["tower"] == "":
         return false
     coins += 10 * int(slots[selected_slot]["level"])
@@ -998,9 +1008,9 @@ func _draw() -> void:
         draw_string(ThemeDB.fallback_font, card.position + Vector2(9, 23), tower_names[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
         draw_string(ThemeDB.fallback_font, card.position + Vector2(9, 49), "%d ЗОЛОТА" % COSTS[tower_ids[i]], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#e5c985"))
     if not selected_tower_info().is_empty():
-        draw_rect(Rect2(880, 545, 110, 55), Color("#518b78"))
+        draw_rect(Rect2(880, 545, 110, 55), Color("#518b78") if can_modify_towers() else Color("#454b54"))
         draw_string(ThemeDB.fallback_font, Vector2(883, 579), "УЛУЧШИТЬ", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color.WHITE)
-        draw_rect(Rect2(1010, 545, 110, 55), Color("#914c59"))
+        draw_rect(Rect2(1010, 545, 110, 55), Color("#914c59") if can_modify_towers() else Color("#454b54"))
         draw_string(ThemeDB.fallback_font, Vector2(1020, 579), "ПРОДАТЬ", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color.WHITE)
 
     draw_rect(HELP_BUTTON, Color("#526d9b") if help_visible else Color("#343b47"))
