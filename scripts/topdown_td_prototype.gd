@@ -92,9 +92,9 @@ func upcoming_wave_summary() -> String:
         1:
             return "РАЗВЕДКА: МЕДЛЕННАЯ ПЕХОТА"
         2:
-            return "УГРОЗА: БЕГУНЫ + БРОНИРОВАННЫЕ"
+            return "УГРОЗА: БЕГУНЫ + БРОНЯ + ЛЕКАРЬ"
         3:
-            return "ОСАДА: БЕГУНЫ + БРОНЯ + БОСС"
+            return "ОСАДА: БОСС + ПОЛЕВОЙ ЛЕКАРЬ"
     return ""
 
 func start_wave() -> bool:
@@ -107,13 +107,36 @@ func start_wave() -> bool:
         var role := "runner" if wave_number >= 2 and i % 3 == 0 else ("brute" if wave_number >= 2 and i % 3 == 1 else "grunt")
         var hp := ((7 + wave_number) if role == "brute" else (2 + wave_number if role == "runner" else 3 + wave_number)) + difficulty * 2
         var speed := (135.0 if role == "runner" else (55.0 if role == "brute" else 85.0)) * (1.0 + 0.15 * difficulty)
-        enemies.append({"lane": i % PATHS.size(), "pos": PATHS[i % PATHS.size()][0], "waypoint": 1, "hp": hp, "speed": speed, "role": role, "delay": float(i) * 0.7})
+        enemies.append({"lane": i % PATHS.size(), "pos": PATHS[i % PATHS.size()][0], "waypoint": 1, "hp": hp, "max_hp": hp, "speed": speed, "role": role, "delay": float(i) * 0.7})
+        enemies_spawned += 1
+    if wave_number >= 2:
+        var support_hp: int = 8 + wave_number * 2 + difficulty * 2
+        enemies.append({"lane": 1, "pos": PATHS[1][0], "waypoint": 1, "hp": support_hp, "max_hp": support_hp, "speed": 62.0, "role": "healer", "delay": 1.5, "heal_timer": 1.0})
         enemies_spawned += 1
     if wave_number == 3:
         enemies.append({"lane": 0, "pos": PATHS[0][0], "waypoint": 1, "hp": 55 + difficulty * 15, "speed": 28.0 * (1.0 + 0.15 * difficulty), "role": "boss", "delay": 3.0, "boss_charge": 0.0, "boss_warning": false, "interrupt_hits": 0})
         enemies_spawned += 1
     queue_redraw()
     return true
+
+func tick_support_enemies(delta: float) -> void:
+    for support in enemies:
+        if str(support.get("role", "")) != "healer" or float(support.get("delay", 0.0)) > 0.0:
+            continue
+        support["heal_timer"] = float(support.get("heal_timer", 1.0)) - delta
+        if float(support["heal_timer"]) > 0.0:
+            continue
+        support["heal_timer"] = 1.0
+        var healed := 0
+        for ally in enemies:
+            if ally == support or float(ally.get("delay", 0.0)) > 0.0:
+                continue
+            if support["pos"].distance_to(ally["pos"]) <= 135.0 and int(ally["hp"]) < int(ally.get("max_hp", ally["hp"])):
+                ally["hp"] = mini(int(ally["hp"]) + 2, int(ally["max_hp"]))
+                healed += 1
+                if healed >= 2:
+                    break
+    queue_redraw()
 
 func advance_enemies(delta: float) -> void:
     for enemy in enemies.duplicate():
@@ -357,6 +380,7 @@ func _process(delta: float) -> void:
     if Input.is_key_pressed(KEY_S): move_direction.y += 1.0
     move_hero(move_direction, delta)
     advance_enemies(delta)
+    tick_support_enemies(delta)
     tick_boss(delta)
     tick_burning(delta)
     attack_with_towers(delta)
@@ -659,6 +683,11 @@ func _draw() -> void:
                 draw_rect(Rect2(enemy["pos"] + Vector2(-28.0, -43.0), Vector2(56.0 * clampf(float(enemy["hp"]) / float(55 + difficulty * 15), 0.0, 1.0), 5.0)), Color("#df7b94"))
             else:
                 draw_circle(enemy["pos"], 16.0 if enemy.get("role", "grunt") == "brute" else 10.0 if enemy.get("role", "grunt") == "runner" else 12.0, Color("#8591b8") if enemy.get("role", "grunt") == "brute" else Color("#efc36f") if enemy.get("role", "grunt") == "runner" else Color("#c67f64"))
+                if enemy.get("role", "") == "healer":
+                    draw_circle(enemy["pos"], 17.0, Color("#427f71"))
+                    draw_line(enemy["pos"] + Vector2(-9, 0), enemy["pos"] + Vector2(9, 0), Color("#d8ffe0"), 4.0)
+                    draw_line(enemy["pos"] + Vector2(0, -9), enemy["pos"] + Vector2(0, 9), Color("#d8ffe0"), 4.0)
+                    draw_arc(enemy["pos"], 135.0, 0.0, TAU, 48, Color("#65b99b", 0.22), 1.5)
     if boss_feedback_time > 0.0:
         draw_rect(Rect2(385, 71, 382, 42), Color("#314f47") if boss_feedback_text == "АТАКА ПРЕРВАНА!" else Color("#683c46"))
         draw_string(ThemeDB.fallback_font, Vector2(407, 98), boss_feedback_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 21, Color("#fff0cf"))
