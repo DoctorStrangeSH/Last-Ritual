@@ -305,6 +305,10 @@ func siege_captain_speed_multiplier(enemy: Dictionary) -> float:
             return 1.2
     return 1.0
 
+func enemy_movement_multiplier(enemy: Dictionary) -> float:
+    # One authoritative movement rule for frost and captain morale.
+    return siege_captain_speed_multiplier(enemy) * TD_FROST_EFFECT.multiplier(enemy)
+
 func advance_enemies(delta: float) -> void:
     for enemy in enemies.duplicate():
         if enemy["delay"] > 0.0:
@@ -315,7 +319,7 @@ func advance_enemies(delta: float) -> void:
         var position: Vector2 = enemy["pos"]
         # Полный остаток движения за кадр проходит все достигнутые повороты.
         # Без этого враг задерживается на каждой точке и зависит от FPS.
-        var remaining := float(enemy.get("speed", 85.0)) * siege_captain_speed_multiplier(enemy) * TD_FROST_EFFECT.multiplier(enemy) * delta
+        var remaining := float(enemy.get("speed", 85.0)) * enemy_movement_multiplier(enemy) * delta
         while remaining > 0.0 and waypoint < path.size():
             var target: Vector2 = path[waypoint]
             var distance := position.distance_to(target)
