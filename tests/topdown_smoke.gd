@@ -272,6 +272,38 @@ func run_tests() -> void:
         fire_timing.tick_burning(5.0)
         check(fire_timing.enemies.is_empty() and fire_timing.coins == coins_before_fire + 5 and fire_timing.enemies_defeated == kills_before_fire + 1, "Lethal burn grants exactly one kill and one gold reward")
         fire_timing.queue_free()
+    # Same 65-gold fire investment, distinct roles: Inferno wins against
+    # one durable foe, while Sparks distributes ordinary burns to a group.
+    var specialization_balance_scene = load("res://scenes/topdown_td_prototype.tscn") as PackedScene
+    if specialization_balance_scene != null:
+        var sparks = specialization_balance_scene.instantiate()
+        root.add_child(sparks)
+        check(sparks.choose_tower("fire") and sparks.build_tower(0), "Sparks benchmark purchases fire tower")
+        check(sparks.upgrade_selected() and sparks.choose_specialization("swarm"), "Sparks benchmark invests in level two")
+        check(sparks.coins == 85, "Fire level-two build costs 45 plus 20 gold")
+        var sparks_foes: Array[Dictionary] = []
+        for offset in [Vector2(20, 10), Vector2(50, 10), Vector2(80, 10), Vector2(110, 10)]:
+            var foe: Dictionary = {"pos": sparks.slots[0]["pos"] + offset, "hp": 100, "delay": 0.0}
+            sparks.enemies.append(foe)
+            sparks_foes.append(foe)
+        sparks.attack_with_towers(1.0)
+        check(sparks_foes[0].has("burn_time") and sparks_foes[1].has("burn_time") and sparks_foes[2].has("burn_time"), "Sparks ignites three enemies with a single volley")
+        check(not sparks_foes[3].has("burn_time"), "Sparks target cap stops at three enemies")
+        sparks.tick_burning(3.0)
+        check(sparks_foes[0]["hp"] == 93 and sparks_foes[1]["hp"] == 93 and sparks_foes[2]["hp"] == 93 and sparks_foes[3]["hp"] == 100, "Sparks deals ordinary burn damage across its three targets")
+        check(sparks.coins == 85, "Burning without a kill grants no additional gold")
+        sparks.queue_free()
+
+        var inferno = specialization_balance_scene.instantiate()
+        root.add_child(inferno)
+        check(inferno.choose_tower("fire") and inferno.build_tower(0), "Inferno benchmark purchases fire tower")
+        check(inferno.upgrade_selected() and inferno.choose_specialization("siege"), "Inferno benchmark uses equal gold investment")
+        var sturdy_foe: Dictionary = {"pos": inferno.slots[0]["pos"] + Vector2(20, 10), "hp": 100, "delay": 0.0}
+        inferno.enemies.append(sturdy_foe)
+        inferno.attack_with_towers(1.0)
+        inferno.tick_burning(3.0)
+        check(inferno.coins == 85 and sturdy_foe["hp"] == 78, "Inferno spends the same gold but burns down a single armored target faster")
+        inferno.queue_free()
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
