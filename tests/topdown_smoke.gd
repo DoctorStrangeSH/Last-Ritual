@@ -485,6 +485,39 @@ func run_tests() -> void:
         encounter_probe.siege_day = 3
         check(encounter_probe.siege_enemy_role(2, 0) == "brute", "Day three still features armor on Normal")
         encounter_probe.queue_free()
+    # Tower economy transactions are allowed only during preparation.
+    var economy_scene = load("res://scenes/topdown_td_prototype.tscn") as PackedScene
+    if economy_scene != null:
+        var economy_probe = economy_scene.instantiate()
+        root.add_child(economy_probe)
+        check(economy_probe.can_modify_towers(), "Tower purchases allowed before the first wave")
+        economy_probe.choose_tower("bone")
+        check(economy_probe.build_tower(0), "Economy probe buys initial tower")
+        economy_probe.coins = 200
+        economy_probe.select_slot(0)
+        check(economy_probe.start_wave(), "Economy probe starts combat")
+        var locked_coins: int = economy_probe.coins
+        var locked_level: int = int(economy_probe.slots[0]["level"])
+        economy_probe.choose_tower("necro")
+        check(not economy_probe.can_modify_towers(), "Combat suspends all tower transactions")
+        check(not economy_probe.build_tower(1), "Cannot purchase a tower while enemies are present")
+        economy_probe.select_slot(0)
+        check(not economy_probe.upgrade_selected() and not economy_probe.sell_selected(), "Cannot upgrade or sell a selected tower during combat")
+        check(economy_probe.coins == locked_coins and economy_probe.slots[0]["level"] == locked_level and economy_probe.slots[0]["tower"] == "bone", "Rejected combat transactions preserve gold and towers")
+        economy_probe.enemies.clear()
+        check(economy_probe.can_modify_towers(), "Building resumes between waves")
+        economy_probe.choose_tower("necro")
+        check(economy_probe.build_tower(1), "Building is possible after wave cleared")
+        economy_probe.select_slot(0)
+        check(economy_probe.upgrade_selected(), "Upgrading is possible between waves")
+        check(not economy_probe.can_modify_towers() and not economy_probe.sell_selected(), "Specialization choice cannot be skipped by selling or another upgrade")
+        check(economy_probe.choose_specialization("siege") and economy_probe.can_modify_towers(), "Finishing specialization restores preparations")
+        economy_probe.wave_number = 3
+        check(not economy_probe.can_modify_towers() and not economy_probe.sell_selected(), "Completed final wave locks the economy")
+        economy_probe.defense_state = "lost"
+        economy_probe.wave_number = 1
+        check(not economy_probe.can_modify_towers() and not economy_probe.upgrade_selected(), "Defeat locks tower economy")
+        economy_probe.queue_free()
     var td_scene := load("res://scenes/topdown_td_prototype.tscn") as PackedScene
     check(td_scene != null, "Top-down TD scene loads")
     if td_scene != null:
@@ -535,6 +568,7 @@ func run_tests() -> void:
         check(not td.build_tower(0), "Occupied slot rejects duplicate building")
         check(td.choose_tower("necro") and td.build_tower(1), "Different tower uses its own build slot")
         check(td.select_slot(0) and td.upgrade_selected(), "Click selected tower to upgrade")
+        check(td.choose_specialization("siege"), "Choose specialization before selling the upgraded tower")
         check(td.sell_selected() and td.slots[0]["tower"] == "", "Sold tower frees slot")
         check(td.choose_tower("fire") and td.build_tower(0), "Freed slot can be built again")
         td.coins = 0
