@@ -562,6 +562,17 @@ func run_tests() -> void:
                 check(budget_game.start_wave(), "Budgeted wave starts on day %d wave %d" % [day_index, wave_index])
                 check(budget_game.enemies.size() == int(budget["total"]), "Actual spawns match budget on day %d wave %d" % [day_index, wave_index])
         budget_game.queue_free()
+    if specialization_balance_scene != null:
+        var pacing = specialization_balance_scene.instantiate()
+        root.add_child(pacing)
+        check(is_equal_approx(pacing.siege_spawn_delay(1, 4, "grunt"), 2.8), "Opening wave retains readable spacing")
+        check(is_equal_approx(pacing.siege_spawn_delay(3, 4, "grunt"), 2.48), "Middle waves accelerate moderately")
+        check(is_equal_approx(pacing.siege_spawn_delay(6, 4, "grunt"), 2.2), "Final siege uses tighter enemy cadence")
+        pacing.siege_day = 2
+        check(is_equal_approx(pacing.siege_spawn_delay(6, 4, "runner"), 1.1), "Fast raider day retains its distinct pacing")
+        pacing.siege_day = 3
+        check(is_equal_approx(pacing.siege_spawn_delay(6, 4, "brute"), 3.0), "Armored siege retains staggered reinforcements")
+        pacing.queue_free()
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()
