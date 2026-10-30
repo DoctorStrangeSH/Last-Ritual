@@ -121,6 +121,23 @@ func repair_altar() -> bool:
     queue_redraw()
     return true
 
+func siege_enemy_role(wave: int, index: int) -> String:
+    # Difficulty changes the encounter composition, not just enemy numbers.
+    # The normal preset preserves the original wave design.
+    if difficulty >= 2 and wave == 1 and index == 0:
+        return "brute"
+    if difficulty >= 1 and wave == 1 and index == 1:
+        return "runner"
+    if siege_day == 2 and index % 2 == 0:
+        return "runner"
+    if siege_day >= 3 and index % 2 == 0:
+        return "brute"
+    if wave >= 2 and index % 3 == 0:
+        return "runner"
+    if wave >= 2 and index % 3 == 1:
+        return "brute"
+    return "grunt"
+
 func start_wave() -> bool:
     if defense_state != "playing" or not enemies.is_empty() or wave_number >= 3 or altar_hp <= 0:
         return false
@@ -129,7 +146,7 @@ func start_wave() -> bool:
     enemies_spawned = 0
     var count := wave_number + 2 + (1 if siege_day >= 2 else 0)
     for i in range(count):
-        var role := "runner" if siege_day == 2 and i % 2 == 0 else "brute" if siege_day >= 3 and i % 2 == 0 else "runner" if wave_number >= 2 and i % 3 == 0 else "brute" if wave_number >= 2 and i % 3 == 1 else "grunt"
+        var role: String = siege_enemy_role(wave_number, i)
         var hp := ((7 + wave_number) if role == "brute" else (2 + wave_number if role == "runner" else 3 + wave_number)) + difficulty * 2 + (3 if siege_day >= 3 else 0)
         var speed := (135.0 if role == "runner" else (55.0 if role == "brute" else 85.0)) * (1.0 + 0.15 * difficulty)
         enemies.append({"lane": i % PATHS.size(), "pos": PATHS[i % PATHS.size()][0], "waypoint": 1, "hp": hp, "max_hp": hp, "speed": speed, "role": role, "delay": float(i) * 0.7})
