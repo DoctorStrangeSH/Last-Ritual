@@ -670,6 +670,14 @@ func run_tests() -> void:
     check(frost_stats.SHOP_ORDER.size() == 4 and frost_stats.SHOP_ORDER[3] == "frost", "Frost becomes fourth mouse-selected tower")
     check(frost_stats.COSTS["frost"] == 50 and frost_stats.RANGES["frost"] == 145.0, "Frost shop cost and range configured")
     check(frost_damage.direct_damage("frost", 1, "", 0, 0) == 1, "Frost direct damage is intentionally low")
+    var frost_multihit = load("res://scripts/td/td_multihit.gd")
+    var frost_primary := {"pos": Vector2(40, 0), "delay": 0.0}
+    var frost_second := {"pos": Vector2(70, 0), "delay": 0.0}
+    var frost_third := {"pos": Vector2(100, 0), "delay": 0.0}
+    var frost_fourth := {"pos": Vector2(110, 0), "delay": 0.0}
+    var frost_foes := [frost_primary, frost_second, frost_third, frost_fourth]
+    check(frost_multihit.targets({"tower": "frost", "pos": Vector2.ZERO, "specialization": "siege"}, frost_primary, frost_foes, 145.0).size() == 1, "Frost specialization focuses one target")
+    check(frost_multihit.targets({"tower": "frost", "pos": Vector2.ZERO, "specialization": "swarm"}, frost_primary, frost_foes, 145.0).size() == 3, "Blizzard slows up to three enemies")
     var synergy_scene = load("res://scenes/topdown_td_prototype.tscn")
     if synergy_scene != null:
         var synergy = synergy_scene.instantiate()

@@ -429,7 +429,7 @@ func attack_with_towers(delta: float) -> void:
             shot_trails.append({"from": tower["pos"], "to": hit_target["pos"], "time": 0.18, "kind": kind})
             hit_target["hp"] -= damage + tower_synergy_damage(slot_id, hit_target)
             if kind == "frost" and hit_target["hp"] > 0:
-                TD_FROST_EFFECT.apply(hit_target, 2.0, 0.4 if tower.get("specialization", "") == "siege" else 0.25)
+                TD_FROST_EFFECT.apply(hit_target, 2.0, 0.4 if tower.get("specialization", "") == "siege" else (0.20 if tower.get("specialization", "") == "swarm" else 0.25))
             if kind == "fire" and hit_target["hp"] > 0:
                 apply_burn(hit_target)
                 if tower.get("specialization", "") == "siege":
