@@ -925,6 +925,24 @@ func enemy_visual_profile(role: String) -> Dictionary:
             return {"radius": 29.0, "color": Color("#9a4268"), "mark": "boss"}
     return {"radius": 13.0, "color": Color("#c67f64"), "mark": "grunt"}
 
+func enemy_status_markers(enemy: Dictionary) -> Array[String]:
+    var markers: Array[String] = []
+    if float(enemy.get("frost_time", 0.0)) > 0.0:
+        markers.append("frost")
+    if float(enemy.get("burn_time", 0.0)) > 0.0:
+        markers.append("burn")
+    if siege_captain_speed_multiplier(enemy) > 1.0:
+        markers.append("command")
+    return markers
+
+func draw_enemy_status_markers(enemy: Dictionary, radius: float) -> void:
+    var markers: Array[String] = enemy_status_markers(enemy)
+    for index in range(markers.size()):
+        var center: Vector2 = enemy["pos"] + Vector2((float(index) - float(markers.size() - 1) * 0.5) * 16.0, -radius - 14.0)
+        var marker_color: Color = Color("#a4e9ff") if markers[index] == "frost" else (Color("#ffaf61") if markers[index] == "burn" else Color("#f0da91"))
+        draw_circle(center, 5.0, Color("#18242b"))
+        draw_circle(center, 3.5, marker_color)
+
 func draw_enemy_figure(enemy: Dictionary) -> void:
     var role: String = str(enemy.get("role", "grunt"))
     var pos: Vector2 = enemy["pos"]
@@ -959,6 +977,7 @@ func draw_enemy_figure(enemy: Dictionary) -> void:
             draw_circle(pos + Vector2(-5, -3), 3.0, Color("#332d34"))
             draw_circle(pos + Vector2(5, -3), 3.0, Color("#332d34"))
             draw_line(pos + Vector2(-4, 7), pos + Vector2(4, 7), Color("#ffe1bc"), 2.0)
+    draw_enemy_status_markers(enemy, radius)
 
 func tower_visual_color(kind: String) -> Color:
     match kind:
