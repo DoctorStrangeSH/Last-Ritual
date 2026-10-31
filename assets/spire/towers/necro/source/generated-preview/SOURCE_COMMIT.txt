@@ -1,0 +1,3 @@
+Generated preview snapshot, NOT approved production assets.
+Source commit: a466342bf7f0152f8861f59a499c5fdef5d3d85f
+Generator: tools/export_necro_layers.gd
