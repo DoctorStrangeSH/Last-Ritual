@@ -1,3 +1,5 @@
+> **31.10.2026:** #247 exact-head CI success, merged e062691. #248 — smoke-аудит 30 сочетаний день/волна, без изменения боевого баланса. Windows QA ещё требуется.
+
 > **31.10.2026:** #246 merged 81c1780 after exact-head CI success. #247 adds prioritized short countertips to scouting panel; no combat changes. CI and Windows QA pending.
 
 > **31.10.2026:** #245 merged e327611 после успешного CI. #246 добавляет прогноз специальных врагов перед волной из фактических функций спавна. Windows QA нужен.
