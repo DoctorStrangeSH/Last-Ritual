@@ -1,3 +1,14 @@
+## 31.10.2026 — audit of user-uploaded tower PNGs
+
+Four original uploaded Foozle tower sets in PR #262 inspected by their actual sprite sheets:
+- original `bone` → `ballista`, physical crossbow and arrows;
+- original `fire` → `fire`, flame turret with fire shots (intended small-area fire);
+- original `frost` → `spark`, electric emitter with green spark bullets (not ice);
+- original `necro` → `pulse`, prism emitter with circular shockwave (not necromancy).
+- new `necro` and `frost` are **additional** towers, currently blank upload slots pending integration of generated art.
+
+PR #262 source tree temporarily lacked many tracked main files; it must be reconciled with current main before merging. Rebuilding its tree on main restores gameplay/docs while preserving all the uploaded PNG blobs. See `assets/spire/towers/README.md` for folder mapping and pending gameplay migration; never change save IDs without backwards compatibility.
+
 > **31.10.2026 — asset licensing update:** PR #260 merged (`113d759`); exact-head PR CI and main CI succeeded. `docs/FREE_ASSET_CATALOG.md` is the current shortlist. Verified official sources: Kenney Tower Defense Top-Down / Roguelike Caves & Dungeons / Tiny Dungeon / Roguelike-RPG (CC0; RPG pack is 16x16 and 3/4 perspective), Screaming Brain Top Down Dungeon Pack (2,256 tiles, CC0) and Tiny Top Down Pack (100 32x32 tiles, CC0). These are candidates only; not imported. Preserve Foozle as primary tower visual style. Next: extract BuilderPack PNGs with their Readme/license, create Godot preview, verify frame order/FPS, then test dungeon packs in isolated preview before selecting. Main CI after #260 succeeded: 41200309274.\n\n> **31.10.2026 update:** PR #259 merged (`629f1f8`), exact-head CI success. It adds verified Foozle BuilderPack sheet geometry and contact-sheet generator; this does not yet import original animation PNGs or confirm frame order/FPS. `docs/FREE_ASSET_CATALOG.md` lists vetted external asset candidates and licensing rules (Kenney CC0, Screaming Brain CC0, LPC CC-BY-SA/GPL). Next: check main CI run 41200095541, then preview original Foozle animation sheets in Godot and selectively add external assets with source/license files. Never claim manual QA without running the game.
 
 > **Текущий статус 31.10.2026:** PR #253 и #254 объединены; #254 merge commit `aed18a2`. Main CI после #253 success; после #254 запущен новый workflow. Процедурные эффекты строительства/продажи (0,42 с) есть в main. Это НЕ оригинальные покадровые BuilderPack-анимации. #217 остаётся открытым, конфликтует с main и требует переноса; не мержить как есть. Ручная Windows QA не подтверждена. Следующие задачи: проверить main CI после #254, затем реализовать оригинальные BuilderPack construction/collapse и подключить наземных/летающих врагов с лицензиями.
