@@ -1,3 +1,5 @@
+> **31.10.2026:** #246 merged 81c1780 after exact-head CI success. #247 adds prioritized short countertips to scouting panel; no combat changes. CI and Windows QA pending.
+
 > **31.10.2026:** #245 merged e327611 после успешного CI. #246 добавляет прогноз специальных врагов перед волной из фактических функций спавна. Windows QA нужен.
 
 > **31.10.2026:** #244 merged fa9997f после exact-head CI success. #245: командир поздних дней входит в строй лекаря, создавая отряд сопровождения; CI/Windows QA требуется.
