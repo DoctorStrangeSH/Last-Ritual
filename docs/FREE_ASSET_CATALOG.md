@@ -11,7 +11,7 @@
 | Kenney — Tiny Dungeon | Пиксельные тайлы подземелья 16×16, пропсы | CC0 1.0 | https://kenney.nl/assets/tiny-dungeon |
 | Kenney — Pixel UI Pack | Иконки, панели и кнопки; проверить стилистическую совместимость | CC0 1.0 | https://kenney.nl/assets/pixel-ui-pack |
 | Kenney — Pixel Pack | Дополнительные пиксельные объекты и эффекты | CC0 1.0 | https://kenney.nl/assets/pixel-pack |
-| Screaming Brain Studios — Top-Down Dungeon Pack | Альтернативные подземелья/пропсы; проверить разрешение и стиль | CC0 / Public Domain (по заявлению автора) | https://screamingbrainstudios.com/downloads/ |
+| Screaming Brain Studios — Top Down Dungeon Pack | 2,256 top-down dungeon tiles; полезен для ночных комнат, но визуально проверить стиль | CC0 1.0 | https://screamingbrainstudios.itch.io/top-down-dungeon-pack |\n| Screaming Brain Studios — Tiny Top Down Pack | 100 плиток 32×32 и 10 дверей; лёгкий кандидат для тестовой комнаты | CC0 1.0 | https://screamingbrainstudios.itch.io/tiny-top-down-pack |\n| Kenney — Roguelike/RPG Pack | 1,700 тайлов 16×16; богатый набор, но 3/4 perspective — не смешивать с ортографическим Foozle без теста | CC0 1.0 | https://kenney.nl/assets/roguelike-rpg-pack |
 
 Kenney подтверждает, что его игровые ассеты на страницах паков распространяются под CC0 и могут использоваться в коммерческих проектах без обязательной атрибуции: https://kenney.nl/support . Для каждого скачанного пакета всё равно сохранять приложенный LICENSE/README.
 
@@ -23,7 +23,7 @@ Kenney подтверждает, что его игровые ассеты на 
 
 Источник: https://github.com/OpenGameArt/LiberatedPixelCup
 
-## Художественные правила отбора
+## Проверка официальных источников (31.10.2026)\n- Kenney Tower Defense (Top-Down), Roguelike Caves & Dungeons, Tiny Dungeon и Roguelike/RPG Pack явно помечены CC0 на официальных страницах Kenney.\n- Screaming Brain Studios заявляет CC0/Public Domain для всех паков; страницы Top Down Dungeon Pack и Tiny Top Down Pack отдельно указывают CC0.\n- Kenney Roguelike/RPG Pack имеет 16×16 сетку и 3/4 вид; считать его кандидатом для отдельного арт-направления/прототипа, не готовым к смешиванию с Foozle.\n\n## Художественные правила отбора
 
 1. Основной стиль Last Ritual — top-down pixel art; предпочтительны читаемые силуэты и одинаковая перспектива.
 2. В первую очередь использовать уже купленный/переданный Foozle Spire Pack для башен, строительства и монстров: он формирует единый визуальный язык.
