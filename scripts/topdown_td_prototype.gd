@@ -1196,6 +1196,12 @@ func draw_enemy_figure(enemy: Dictionary) -> void:
             draw_circle(pos + Vector2(-5, -3), 3.0, Color("#332d34"))
             draw_circle(pos + Vector2(5, -3), 3.0, Color("#332d34"))
             draw_line(pos + Vector2(-4, 7), pos + Vector2(4, 7), Color("#ffe1bc"), 2.0)
+    if role == "brute" and siege_day >= 3:
+        # An outlined shield is readable even without color recognition.
+        var shield_center: Vector2 = pos + Vector2(0, -radius - 15)
+        draw_colored_polygon(PackedVector2Array([shield_center + Vector2(-7, -6), shield_center + Vector2(7, -6), shield_center + Vector2(7, 3), shield_center + Vector2(0, 9), shield_center + Vector2(-7, 3)]), Color("#263d54"))
+        draw_line(shield_center + Vector2(-6, -6), shield_center + Vector2(6, -6), Color("#f0d8aa"), 2.0)
+        draw_line(shield_center + Vector2(0, -3), shield_center + Vector2(0, 5), Color("#f0d8aa"), 2.0)
     draw_enemy_status_markers(enemy, radius)
 
 const MAX_STORED_SHOT_TRAILS := 64
@@ -1509,6 +1515,7 @@ func _draw() -> void:
         draw_string(ThemeDB.fallback_font, Vector2(326, 367), "Клик по полю — атака героя по курсору", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
         draw_string(ThemeDB.fallback_font, Vector2(326, 407), "ПКМ / Esc — отменить выбор башни", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
         draw_string(ThemeDB.fallback_font, Vector2(326, 447), "НАЧАТЬ ВОЛНУ — запустить врагов", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
+        draw_string(ThemeDB.fallback_font, Vector2(326, 467), "ЩИТ над тяжёлым врагом: броня с дня 3, огонь её пробивает", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#ffdba7"))
         draw_string(ThemeDB.fallback_font, Vector2(326, 490), "Игра на паузе — H или «Продолжить»", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#d5c592"))
         draw_rect(HELP_CLOSE_BUTTON, Color("#527d70"))
         draw_string(ThemeDB.fallback_font, HELP_CLOSE_BUTTON.position + Vector2(11.0, 29.0), "ПРОДОЛЖИТЬ", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
