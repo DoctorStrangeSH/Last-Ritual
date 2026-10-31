@@ -2538,16 +2538,16 @@ func run_tests() -> void:
     if tower_visuals != null:
         for kind in ["bone", "fire", "necro", "frost"]:
             for level in range(1, 4):
-                var base_path: String = tower_visual_asset_check.path_for(kind, level, "base")
-                var weapon_path: String = tower_visual_asset_check.path_for(kind, level, "weapon")
+                var base_path: String = tower_visuals.path_for(kind, level, "base")
+                var weapon_path: String = tower_visuals.path_for(kind, level, "weapon")
                 var base_image: Texture2D = load(base_path)
                 var weapon_image: Texture2D = load(weapon_path)
                 check(base_image != null and weapon_image != null, "Layered %s tower level %d loads both textures" % [kind, level])
                 if weapon_image != null:
-                    var region: Rect2 = tower_visual_asset_check.weapon_frame_region(kind)
+                    var region: Rect2 = tower_visuals.weapon_frame_region(kind)
                     check(region.size.x <= weapon_image.get_width() and region.size.y <= weapon_image.get_height(), "Weapon frame region fits source sprite sheet")
-        check(tower_visual_asset_check.path_for("invalid", 1, "base") == "", "Unknown tower does not resolve to Foozle artwork")
-        check(tower_visual_asset_check.path_for("bone", 4, "base") == "", "Invalid upgrade level does not resolve to Foozle artwork")
+        check(tower_visuals.path_for("invalid", 1, "base") == "", "Unknown tower does not resolve to Foozle artwork")
+        check(tower_visuals.path_for("bone", 4, "base") == "", "Invalid upgrade level does not resolve to Foozle artwork")
     var projectile_maps = load("res://scripts/td/td_tower_visuals.gd")
     for kind in ["bone", "fire", "necro", "frost"]:
         for level in range(1, 4):
