@@ -261,6 +261,28 @@ func wave_enemy_budget(next_wave: int) -> Dictionary:
     var boss: int = 1 if next_wave == SIEGE_WAVES else 0
     return {"ordinary": ordinary, "support": support, "captain": captain, "boss": boss, "total": ordinary + support + captain + boss}
 
+func wave_lane_assignments(enemy_count: int, next_wave: int) -> Array[int]:
+    # Each group of lane_count enemies covers every lane once, but their
+    # order is shuffled per wave and run seed. No run-time global RNG leaks.
+    var result: Array[int] = []
+    if enemy_count <= 0 or paths.is_empty():
+        return result
+    var lane_rng := RandomNumberGenerator.new()
+    lane_rng.seed = int(fortress_map_seed) * 797 + next_wave * 3571 + siege_day * 10007 + difficulty * 97
+    var order: Array[int] = []
+    for enemy_index in range(enemy_count):
+        if enemy_index % paths.size() == 0:
+            order.clear()
+            for lane_id in range(paths.size()):
+                order.append(lane_id)
+            for index in range(order.size() - 1, 0, -1):
+                var swap_index: int = lane_rng.randi_range(0, index)
+                var previous: int = order[index]
+                order[index] = order[swap_index]
+                order[swap_index] = previous
+        result.append(order[enemy_index % paths.size()])
+    return result
+
 func start_wave() -> bool:
     if defense_state != "playing" or not enemies.is_empty() or wave_number >= SIEGE_WAVES or altar_hp <= 0:
         return false
@@ -271,6 +293,7 @@ func start_wave() -> bool:
     wave_number += 1
     enemies_spawned = 0
     var count: int = int(wave_enemy_budget(wave_number)["ordinary"])
+    var wave_lanes: Array[int] = wave_lane_assignments(count, wave_number)
     var encounter_extra_hp: int = next_wave_extra_hp
     next_wave_extra_hp = 0
     for i in range(count):
@@ -278,7 +301,8 @@ func start_wave() -> bool:
         var day_hp: int = maxi(0, siege_day - 2) * 3
         var hp := ((7 + wave_number) if role == "brute" else (2 + wave_number if role == "runner" else 3 + wave_number)) + difficulty * 2 + day_hp + encounter_extra_hp
         var speed := (135.0 if role == "runner" else (55.0 if role == "brute" else 85.0)) * (1.0 + 0.15 * difficulty)
-        enemies.append({"lane": i % paths.size(), "pos": paths[i % paths.size()][0], "waypoint": 1, "hp": hp, "max_hp": hp, "speed": speed, "role": role, "delay": siege_spawn_delay(wave_number, i, role)})
+        var lane_id: int = wave_lanes[i]
+        enemies.append({"lane": lane_id, "pos": paths[lane_id][0], "waypoint": 1, "hp": hp, "max_hp": hp, "speed": speed, "role": role, "delay": siege_spawn_delay(wave_number, i, role)})
         enemies_spawned += 1
     var budget: Dictionary = wave_enemy_budget(wave_number)
     for support_index in range(int(budget["support"])):
