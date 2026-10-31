@@ -128,3 +128,20 @@ jobs:
               --prerelease
           fi
           echo "Download: https://github.com/$GITHUB_REPOSITORY/releases/download/windows-preview/LastRitual.exe"
+      - name: Package and publish Soul Altar PNG candidates
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          timeout 120s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --script res://tools/export_necro_layers.gd
+          preview_dir="build/art-preview/necro"
+          test "$(find "$preview_dir" -maxdepth 1 -type f -name '*.png' | wc -l)" -eq 11
+          (
+            cd "$preview_dir"
+            sha256sum -- *.png > SHA256SUMS.txt
+            printf '%s\n'               'Last Ritual | Soul Altar | PNG candidates (NOT production-ready)'               "Git commit: $GITHUB_SHA"               '11 images: 3 base, 3 weapon, 3 assembled, 2 specialization previews.'               'Original editable SVG files are tracked under assets/spire/towers/necro/source/.'               'These previews are not used by runtime; require art approval.'               > README.txt
+            zip -q -9 "$OLDPWD/build/windows/SoulAltar-art-preview.zip" ./*.png README.txt SHA256SUMS.txt
+          )
+          test -s build/windows/SoulAltar-art-preview.zip
+          gh release upload windows-preview build/windows/SoulAltar-art-preview.zip --clobber
+          echo "Preview: https://github.com/$GITHUB_REPOSITORY/releases/download/windows-preview/SoulAltar-art-preview.zip"
