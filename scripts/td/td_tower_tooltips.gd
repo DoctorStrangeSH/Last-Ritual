@@ -3,7 +3,7 @@ extends RefCounted
 const STATS = preload("res://scripts/td/td_tower_stats.gd")
 const DAMAGE = preload("res://scripts/td/td_tower_damage.gd")
 const DETAILS := {
-    "bone": {"role": "СНАЙПЕР • ПРЯМОЙ УРОН", "effect": "Сильные одиночные попадания.", "combo": "Рядом с ледяной: +1 по замедленным."},
+    "bone": {"role": "ПРОБОЙ • УРОН ПО СТРОЮ", "effect": "Снаряд поражает до 3 врагов на одной линии.", "combo": "Рядом со льдом: +1 по замедленным."},
     "fire": {"role": "ПОДЖОГ • УРОН СО ВРЕМЕНЕМ", "effect": "Поджигает выживших после попадания.", "combo": "Рядом с ледяной: +1 по замедленным."},
     "necro": {"role": "ПРИЗЫВ • ПОДДЕРЖКА", "effect": "Убийства помогают призывать духов.", "combo": "Рядом со льдом духи продлевают холод."},
     "frost": {"role": "КОНТРОЛЬ • ЗАМЕДЛЕНИЕ", "effect": "Замедляет выживших на 2 секунды.", "combo": "Даёт бонусы костям, огню и духам."}
@@ -88,7 +88,7 @@ static func synergy_lines(kind: String, near_fire: bool, near_bone: bool, near_f
         lines.append(("АКТИВНО" if near_fire else "НУЖЕН ОГОНЬ") + ": +1 урона горящим.")
         lines.append(("АКТИВНО" if near_frost else "НУЖЕН ЛЁД") + ": духи продлевают заморозку.")
     elif kind == "frost":
-        lines.append("САМАЯ СИНЕРГИЯ: замедление открывает бонусы.")
+        lines.append("ЛЕДЯНОЙ КОНТРОЛЬ: замедление открывает бонусы.")
         lines.append("КОСТИ И ОГОНЬ: +1 по замедленным.")
         lines.append("НЕКРОМАНТ: духи продлевают заморозку.")
     return lines
