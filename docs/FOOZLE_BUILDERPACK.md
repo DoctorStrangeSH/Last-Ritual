@@ -16,6 +16,26 @@ python tools/import_foozle_builderpack.py /path/to/Foozle_2DS0021_Spire_BuilderP
 - `Tower_Collapse.png` — 3328×192 RGBA (13 465 байт).
 - `Wisp_Animations.png` — 576×384 RGBA (12 335 байт).
 
+## Точная геометрия исходных листов
+
+Проверены оригинальные PNG непосредственно из ZIP (ZIP CRC проходит):
+
+| Лист | Размер | Сетка геометрических ячеек | Всего ячеек |
+|---|---:|---:|---:|
+| Tower Construction | 1152×1536 | 6×8 по 192×192 | 48 |
+| Tower Collapse | 3328×192 | 26×1 по 128×192 | 26 |
+| Wisp Animations | 576×384 | 9×6 по 64×64 | 54 |
+
+Это точные размеры сетки, вычисленные по исходным размерам и визуально размеченные в contact sheet. Они **не доказывают**, что все ячейки — кадры одной последовательности: в Construction заметны несколько блоков с готовыми башнями и строительными частицами. Порядок, группировка и FPS остаются неподтверждёнными.
+
+Для повторного анализа запустить:
+
+```bash
+python tools/analyze_foozle_builderpack.py /path/to/Foozle_2DS0021_Spire_BuilderPack.zip
+```
+
+Скрипт создаёт подписанные contact sheets и `frames.json` в `build/foozle_builderpack_preview/` (не игровые ресурсы и не коммитить автоматически).
+
 ## Важные ограничения
 
 - Это оригинальные листы спрайтов, а не готовые Godot SpriteFrames.
