@@ -19,6 +19,12 @@ const WEAPON_CELL_HEIGHT := {"bone": 96, "fire": 64, "necro": 48, "frost": 128}
 ## Switchable preview gate: disable to instantly restore the original pulse art.
 const NECRO_EXPERIMENTAL_ART := true
 const NECRO_EXPERIMENTAL_ROOT := "res://assets/spire/towers/necro/experimental/"
+## Frost art is still an experimental candidate. Flip false to restore Spark art.
+const FROST_EXPERIMENTAL_ART := true
+const FROST_EXPERIMENTAL_ROOT := "res://assets/spire/towers/frost/experimental/"
+
+static func uses_experimental_frost(kind: String) -> bool:
+    return FROST_EXPERIMENTAL_ART and kind == "frost"
 
 static func uses_experimental_necro(kind: String) -> bool:
     return NECRO_EXPERIMENTAL_ART and kind == "necro"
@@ -29,6 +35,8 @@ static func specialization_preview_path(kind: String, specialization: String) ->
     return NECRO_EXPERIMENTAL_ROOT + "specialization_%s_level_3.png" % specialization
 
 static func path_for(kind: String, level: int, layer: String) -> String:
+    if uses_experimental_frost(kind) and level >= 1 and level <= 3 and ["base", "weapon"].has(layer):
+        return FROST_EXPERIMENTAL_ROOT + "%s_level_%d.png" % [layer, level]
     if uses_experimental_necro(kind) and level >= 1 and level <= 3 and ["base", "weapon"].has(layer):
         return NECRO_EXPERIMENTAL_ROOT + "%s_level_%d.png" % [layer, level]
     if not FOLDERS.has(kind) or level < 1 or level > 3:
@@ -41,6 +49,8 @@ static func path_for(kind: String, level: int, layer: String) -> String:
     return ""
 
 static func weapon_frame_region(kind: String) -> Rect2:
+    if uses_experimental_frost(kind):
+        return Rect2(0, 0, 128, 128)
     if uses_experimental_necro(kind):
         return Rect2(0, 0, 128, 128)
     if not WEAPON_CELL_WIDTH.has(kind):
@@ -82,6 +92,11 @@ const PROJECTILE_CELL := {"bone": Vector2i(8, 8), "fire": Vector2i(32, 32), "nec
 const IMPACT_CELL := {"bone": Vector2i(64, 64), "fire": Vector2i(64, 64), "frost": Vector2i(64, 64)}
 
 static func vfx_path(kind: String, level: int, layer: String) -> String:
+    if kind == "frost" and FROST_EXPERIMENTAL_ART and level >= 1 and level <= 3:
+        if layer == "projectiles":
+            return "res://assets/spire/towers/frost/vfx/ice_shard_projectile_8f.png"
+        if layer == "weapon_impact":
+            return "res://assets/spire/towers/frost/vfx/ice_burst_impact_8f.png"
     # Authored necromancer atlases are shared by all three upgrade levels.
     # Do not change base/weapon mapping or saved tower kinds.
     if kind == "necro" and level >= 1 and level <= 3:
@@ -99,6 +114,11 @@ static func vfx_path(kind: String, level: int, layer: String) -> String:
     return ""
 
 static func vfx_frame_size(kind: String, layer: String) -> Vector2i:
+    if kind == "frost" and FROST_EXPERIMENTAL_ART:
+        if layer == "projectiles":
+            return Vector2i(32, 32)
+        if layer == "weapon_impact":
+            return Vector2i(64, 64)
     if kind == "necro":
         if layer == "projectiles":
             return Vector2i(32, 32)

@@ -1345,11 +1345,11 @@ func draw_tower_figure(pos: Vector2, kind: String, level: int, specialization: S
     # endlessly cycling sprite-sheet cells as if they were building frames.
     var base_texture: Texture2D = cached_tower_texture(TOWER_VISUALS.path_for(kind, level, "base"))
     var weapon_texture: Texture2D = cached_tower_texture(TOWER_VISUALS.path_for(kind, level, "weapon"))
-    if TOWER_VISUALS.uses_experimental_necro(kind) and base_texture != null and weapon_texture != null:
+    if (TOWER_VISUALS.uses_experimental_necro(kind) or TOWER_VISUALS.uses_experimental_frost(kind)) and base_texture != null and weapon_texture != null:
         # Two images share a 128px transparent canvas and must keep one pivot.
         # For specialization L3 the atlas contains an assembled tower.
         var target := Rect2(pos + Vector2(-33, -53), Vector2(66, 66))
-        var specialized_path: String = TOWER_VISUALS.specialization_preview_path(kind, specialization) if level == 3 else ""
+        var specialized_path: String = TOWER_VISUALS.specialization_preview_path(kind, specialization) if kind == "necro" and level == 3 else ""
         var specialized_texture: Texture2D = cached_tower_texture(specialized_path)
         if specialized_texture != null:
             draw_texture_rect(specialized_texture, target, false)
@@ -1559,7 +1559,7 @@ func _draw() -> void:
             var cell: Vector2i = TOWER_VISUALS.vfx_frame_size(shot_kind, "projectiles")
             var progress: float = 1.0 - opacity
             var point: Vector2 = (trail["from"] as Vector2).lerp(trail["to"] as Vector2, progress)
-            var projectile_region: Rect2 = TOWER_VISUALS.frame_region(projectile, cell, mini(int(progress * 8.0), 7)) if shot_kind == "necro" else TOWER_VISUALS.first_frame_region(projectile, cell)
+            var projectile_region: Rect2 = TOWER_VISUALS.frame_region(projectile, cell, mini(int(progress * 8.0), 7)) if shot_kind == "necro" or (shot_kind == "frost" and TOWER_VISUALS.uses_experimental_frost("frost")) else TOWER_VISUALS.first_frame_region(projectile, cell)
             if projectile_region.size != Vector2.ZERO:
                 draw_texture_rect_region(projectile, Rect2(point - Vector2(7, 7), Vector2(14, 14)), projectile_region, Color.WHITE)
         else:
@@ -1568,7 +1568,7 @@ func _draw() -> void:
         var impact_sprite: Texture2D = cached_tower_texture(impact_path)
         if impact_sprite != null:
             var impact_cell: Vector2i = TOWER_VISUALS.vfx_frame_size(shot_kind, "weapon_impact")
-            var frame_count: int = 8 if shot_kind == "necro" else 6
+            var frame_count: int = 8 if shot_kind == "necro" or (shot_kind == "frost" and TOWER_VISUALS.uses_experimental_frost("frost")) else 6
             var frame: int = mini(int((1.0 - opacity) * float(frame_count)), frame_count - 1)
             var region: Rect2 = TOWER_VISUALS.frame_region(impact_sprite, impact_cell, frame)
             if region.size != Vector2.ZERO:

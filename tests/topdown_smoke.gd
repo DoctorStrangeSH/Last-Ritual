@@ -2562,6 +2562,23 @@ func run_tests() -> void:
         check(spec_texture != null and spec_texture.get_size() == Vector2(128, 128), "Necro specialization PNG imports as aligned overlay: %s" % necro_spec)
     check(tower_visuals.specialization_preview_path("fire", "siege") == "", "Other tower schools have no necro overlay")
     check(tower_visuals.specialization_preview_path("necro", "invalid") == "", "Invalid specialization has no preview")
+    check(tower_visuals.uses_experimental_frost("frost"), "Frost experimental crystal art enabled")
+    check(not tower_visuals.uses_experimental_frost("fire"), "Experimental frost art does not change other schools")
+    for frost_level in range(1, 4):
+        for layer_name in ["base", "weapon"]:
+            var frost_layer_path: String = tower_visuals.path_for("frost", frost_level, layer_name)
+            check(frost_layer_path.contains("/frost/experimental/"), "Frost art maps own %s level %d" % [layer_name, frost_level])
+            var frost_layer_tex: Texture2D = load(frost_layer_path)
+            check(frost_layer_tex != null and frost_layer_tex.get_size() == Vector2(128, 128), "Frost art %s L%d imports 128px" % [layer_name, frost_level])
+    check(tower_visuals.vfx_frame_size("frost", "projectiles") == Vector2i(32, 32), "Frost projectile cells are 32px")
+    check(tower_visuals.vfx_frame_size("frost", "weapon_impact") == Vector2i(64, 64), "Frost impact cells are 64px")
+    var frost_shard: Texture2D = load(tower_visuals.vfx_path("frost", 1, "projectiles"))
+    var frost_burst: Texture2D = load(tower_visuals.vfx_path("frost", 1, "weapon_impact"))
+    check(frost_shard != null and frost_shard.get_size() == Vector2(256, 32), "Frost 8-frame projectile PNG imported")
+    check(frost_burst != null and frost_burst.get_size() == Vector2(512, 64), "Frost 8-frame impact PNG imported")
+    if frost_burst != null:
+        check(tower_visuals.frame_region(frost_burst, Vector2i(64, 64), 7).size == Vector2(64, 64), "Last Frost impact frame available")
+        check(tower_visuals.frame_region(frost_burst, Vector2i(64, 64), 8).size == Vector2.ZERO, "Frost invalid impact frame rejected")
     var projectile_maps = load("res://scripts/td/td_tower_visuals.gd")
     for kind in ["bone", "fire", "necro", "frost"]:
         for level in range(1, 4):
