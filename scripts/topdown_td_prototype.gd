@@ -7,6 +7,7 @@ const TD_TOWER_TOOLTIPS = preload("res://scripts/td/td_tower_tooltips.gd")
 const TD_TOWER_DAMAGE = preload("res://scripts/td/td_tower_damage.gd")
 const TD_TARGETING = preload("res://scripts/td/td_targeting.gd")
 const TD_BURN_EFFECT = preload("res://scripts/td/td_burn_effect.gd")
+const TD_ENEMY_ARMOR = preload("res://scripts/td/td_enemy_armor.gd")
 const TD_EMBER_HEART = preload("res://scripts/td/td_ember_heart.gd")
 const TD_MULTIHIT = preload("res://scripts/td/td_multihit.gd")
 const TD_NECRO_SPIRITS = preload("res://scripts/td/td_necro_spirits.gd")
@@ -532,7 +533,8 @@ func attack_with_towers(delta: float) -> void:
         var damage: int = TD_TOWER_DAMAGE.direct_damage(kind, int(tower["level"]), str(tower.get("specialization", "")), fire_synergy_bonus, bone_synergy_bonus)
         for hit_target in hit_targets:
             shot_trails.append({"from": tower["pos"], "to": hit_target["pos"], "time": 0.18, "kind": kind})
-            hit_target["hp"] -= damage + tower_synergy_damage(slot_id, hit_target)
+            var raw_hit: int = damage + tower_synergy_damage(slot_id, hit_target)
+            hit_target["hp"] -= TD_ENEMY_ARMOR.tower_hit_damage(str(hit_target.get("role", "")), kind, siege_day, raw_hit)
             if kind == "frost" and hit_target["hp"] > 0:
                 TD_FROST_EFFECT.apply(hit_target, 2.0, 0.4 if tower.get("specialization", "") == "siege" else (0.20 if tower.get("specialization", "") == "swarm" else 0.25))
             if kind == "fire" and hit_target["hp"] > 0:
