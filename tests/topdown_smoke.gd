@@ -2304,7 +2304,7 @@ func run_tests() -> void:
         var council_unique: Dictionary = {}
         for offer in council_a:
             council_unique[offer] = true
-        check(council_unique.size() == 3 and council_unique.has("raid") and council_unique.has("repair") and council_unique.has("safe"), "Council exposes only three implemented rewards, no duplicates")
+        check(council_unique.size() == 3 and ["raid", "repair", "safe", "blood"].has(council_a[0]), "Council offers three unique implemented rewards")
         council_rng_game.queue_free()
     if boon_scene != null:
         var frost_game = boon_scene.instantiate()
@@ -2328,5 +2328,32 @@ func run_tests() -> void:
         check(not frost_game.eternal_frost_claimed, "Restart clears Eternal Frost")
         frost_game.queue_free()
         frost_next.queue_free()
+    if boon_scene != null:
+        var blood_game = boon_scene.instantiate()
+        root.add_child(blood_game)
+        var base_damage: int = blood_game.tower_synergy_damage(0, {})
+        blood_game.wave_number = 3
+        blood_game.altar_hp = 10
+        # Locate a deterministic run whose 3-of-4 offers contain Blood Pact.
+        for map_seed in range(32):
+            blood_game.set_fortress_map_seed(map_seed)
+            if blood_game.council_offers().has("blood"):
+                break
+        check(blood_game.council_offers().has("blood"), "Blood Pact appears in seeded council offers")
+        check(blood_game.choose_interwave_event("blood"), "Blood Pact may be selected from offered rewards")
+        check(blood_game.altar_hp == 1 and blood_game.blood_pact_claimed, "Blood Pact consumes HP without killing altar")
+        check(blood_game.tower_synergy_damage(0, {}) == base_damage + 1, "Blood Pact increases tower damage")
+        check(not blood_game.choose_interwave_event("blood"), "Blood Pact cannot be chosen twice")
+        var blood_state: Dictionary = blood_game.export_fortress_state()
+        var blood_next = boon_scene.instantiate()
+        root.add_child(blood_next)
+        blood_next.set_fortress_map_seed(blood_game.fortress_map_seed)
+        check(blood_next.import_fortress_state(blood_state) and blood_next.blood_pact_claimed, "Blood Pact persists across days")
+        blood_state.erase("blood_pact_claimed")
+        check(blood_next.import_fortress_state(blood_state) and not blood_next.blood_pact_claimed, "Old fortress snapshot loads without Blood Pact")
+        blood_game.restart_defense()
+        check(not blood_game.blood_pact_claimed, "Restart clears Blood Pact")
+        blood_game.queue_free()
+        blood_next.queue_free()
     print("TOPDOWN SMOKE RESULT: ", "PASS" if failures == 0 else str(failures) + " FAILURES")
     quit(0 if failures == 0 else 1)
