@@ -1,0 +1,30 @@
+{
+  "collection": "Last Ritual original AI-generated concept art",
+  "generated": "2026-10-31",
+  "status": "source-concept; not gameplay-ready",
+  "archive_filename": "LastRitual_Art_Source_2026-10-31.zip",
+  "library_path": "/Last Ritual/Art Sources/LastRitual_Art_Source_2026-10-31.zip",
+  "library_file_id": "libfile_93652e51e27c819189ea8175f359ae85",
+  "items": [
+    {
+      "path": "docs/art/source/concepts/six_tower_concept_board_v1.png",
+      "bytes": 2891656,
+      "sha256": "8b206f3167dd02bf9aa85cd40e305dbc5570fe075a04da168c46246a7fcd4ccf"
+    },
+    {
+      "path": "docs/art/source/concepts/six_tower_ui_board_v1.png",
+      "bytes": 2772788,
+      "sha256": "2412c079c1468310624bf2afbaa2216f2f3d287d732c36c3bf28bc720ad97cc7"
+    },
+    {
+      "path": "docs/art/source/concepts/necro_tower_concept_levels_v1.png",
+      "bytes": 1465368,
+      "sha256": "5ef1d6532cc95ffd94e1871dab3113e40d1a129929c0f053e"
+    },
+    {
+      "path": "docs/art/source/concepts/frost_tower_concept_levels_v1.png",
+      "bytes": 1444313,
+      "sha256": "393965d58241080cb41e5b282bbf35a2130fcaf1d716286ad3131fecb30475e6"
+    }
+  ]
+}
