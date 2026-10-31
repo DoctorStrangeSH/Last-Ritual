@@ -29,7 +29,9 @@ jobs:
           set -euo pipefail
           timeout 120s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --editor --quit
           timeout 120s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --script res://tools/export_necro_layers.gd
+          timeout 120s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --script res://tools/export_necro_vfx.gd
           test "$(find build/art-preview/necro -maxdepth 1 -name '*.png' -type f | wc -l)" -eq 12
+          test "$(find build/art-preview/necro-vfx -maxdepth 1 -name '*.png' -type f | wc -l)" -eq 2
       - name: Snapshot generated PNGs on a review branch
         env:
           SOURCE_SHA: ${{ github.sha }}
@@ -41,9 +43,11 @@ jobs:
           dest="assets/spire/towers/necro/source/generated-preview"
           mkdir -p "$dest"
           cp build/art-preview/necro/*.png "$dest/"
+          mkdir -p "$dest/vfx"
+          cp build/art-preview/necro-vfx/*.png "$dest/vfx/"
           (
             cd "$dest"
-            sha256sum -- *.png > SHA256SUMS.txt
+            sha256sum -- *.png vfx/*.png > SHA256SUMS.txt
             printf 'Generated preview snapshot, NOT approved production assets.\nSource commit: %s\nGenerator: tools/export_necro_layers.gd\n' "$SOURCE_SHA" > SOURCE_COMMIT.txt
           )
           git add "$dest"
@@ -51,4 +55,4 @@ jobs:
           git push origin "HEAD:refs/heads/$snapshot_branch"
           echo "### PNG source snapshot" >> "$GITHUB_STEP_SUMMARY"
           echo "Review branch: \`$snapshot_branch\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "12 PNGs saved to Git; do not merge before artistic QA." >> "$GITHUB_STEP_SUMMARY"
+          echo "14 PNGs saved to Git: 12 tower previews and 2 VFX atlases; do not merge before artistic QA." >> "$GITHUB_STEP_SUMMARY"
