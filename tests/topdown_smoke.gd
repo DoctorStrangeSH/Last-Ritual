@@ -2393,5 +2393,12 @@ func run_tests() -> void:
     check(armor.tower_hit_damage("brute", "bone", 2, 4) == 4, "Early siege brutes retain familiar difficulty")
     check(armor.tower_hit_damage("runner", "bone", 5, 4) == 4, "Runners do not acquire heavy armor")
     check(armor.tower_hit_damage("brute", "necro", 5, 1) == 1, "Heavy armor never nullifies a tower hit")
+    if boon_scene != null:
+        var armor_ui_game = boon_scene.instantiate()
+        root.add_child(armor_ui_game)
+        check(armor_ui_game.siege_day == 1, "Armor shield is not displayed during first day")
+        armor_ui_game.siege_day = 3
+        check(armor_ui_game.enemy_visual_profile("brute")["mark"] == "armor", "Armored brute keeps recognizable armor silhouette")
+        armor_ui_game.queue_free()
     print("TOPDOWN SMOKE RESULT: ", "PASS" if failures == 0 else str(failures) + " FAILURES")
     quit(0 if failures == 0 else 1)
