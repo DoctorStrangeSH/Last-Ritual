@@ -1,0 +1,13 @@
+Foozle Spire — Tower Packs 1, 2, 3, 4
+Distributed by Foozle (foozle.io); commissioned from Baldur.
+License: Creative Commons Zero (CC0 1.0)
+https://creativecommons.org/publicdomain/zero/1.0/
+
+Artwork may be used and modified in commercial projects. Attribution is not required.
+The compact 256x256 atlas is a derivative of original PNG sprites:
+- bone: Tower 01, base and level 01 weapon
+- fire: Tower 03, base and level 01 weapon
+- frost: Tower 07, base and level 01 weapon
+- necro: Tower 05, base and level 01 weapon
+Four frames per tower at 64x64 cells, rows bone/fire/frost/necro.
+Original source files and their individual Readme.txt licenses were supplied by the project owner.
