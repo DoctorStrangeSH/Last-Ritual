@@ -15,6 +15,8 @@ const SLOT_POSITIONS := [Vector2(280, 190), Vector2(430, 190), Vector2(590, 190)
 const COSTS = TD_TOWER_STATS.COSTS
 const WAVE_BUTTON := Rect2(65, 545, 170, 60)
 const REPAIR_BUTTON := Rect2(485, 474, 225, 54)
+const UPGRADE_BUTTON := Rect2(892, 474, 110, 54)
+const SELL_BUTTON := Rect2(1010, 474, 110, 54)
 const MOVE_BUTTON := Rect2(730, 474, 155, 54)
 var moving_tower := false
 const SIEGE_WAVES := 6
@@ -818,7 +820,7 @@ func tower_tooltips_available() -> bool:
 func tooltip_at(point: Vector2) -> Dictionary:
     if not tower_tooltips_available():
         return {}
-    if not selected_tower_info().is_empty() and Rect2(880, 545, 110, 55).has_point(point):
+    if not selected_tower_info().is_empty() and UPGRADE_BUTTON.has_point(point):
         var tower: Dictionary = slots[selected_slot]
         var upgrade: Dictionary = TD_TOWER_TOOLTIPS.upgrade_info(
             str(tower["tower"]), int(tower["level"]), str(tower.get("specialization", "")), fire_synergy_bonus, bone_synergy_bonus
@@ -960,10 +962,10 @@ func _unhandled_input(event: InputEvent) -> void:
             if WAVE_BUTTON.has_point(point):
                 start_wave()
                 return
-            if not selected_tower_info().is_empty() and Rect2(880, 545, 110, 55).has_point(point):
+            if not selected_tower_info().is_empty() and UPGRADE_BUTTON.has_point(point):
                 upgrade_selected()
                 return
-            if not selected_tower_info().is_empty() and Rect2(1010, 545, 110, 55).has_point(point):
+            if not selected_tower_info().is_empty() and SELL_BUTTON.has_point(point):
                 sell_selected()
                 return
             var types: Array = TD_TOWER_STATS.SHOP_ORDER
@@ -1416,10 +1418,10 @@ func _draw() -> void:
         draw_string(ThemeDB.fallback_font, card.position + Vector2(9, 23), str(TD_TOWER_STATS.DISPLAY_NAMES[tower_ids[i]]), HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
         draw_string(ThemeDB.fallback_font, card.position + Vector2(9, 49), "%d ЗОЛОТА" % COSTS[tower_ids[i]], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#e5c985"))
     if not selected_tower_info().is_empty():
-        draw_rect(Rect2(880, 545, 110, 55), Color("#518b78") if can_modify_towers() else Color("#454b54"))
-        draw_string(ThemeDB.fallback_font, Vector2(883, 579), "УЛУЧШИТЬ", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color.WHITE)
-        draw_rect(Rect2(1010, 545, 110, 55), Color("#914c59") if can_modify_towers() else Color("#454b54"))
-        draw_string(ThemeDB.fallback_font, Vector2(1020, 579), "ПРОДАТЬ", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color.WHITE)
+        draw_rect(UPGRADE_BUTTON, Color("#518b78") if can_modify_towers() else Color("#454b54"))
+        draw_string(ThemeDB.fallback_font, UPGRADE_BUTTON.position + Vector2(4, 34), "УЛУЧШИТЬ", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color.WHITE)
+        draw_rect(SELL_BUTTON, Color("#914c59") if can_modify_towers() else Color("#454b54"))
+        draw_string(ThemeDB.fallback_font, SELL_BUTTON.position + Vector2(8, 34), "ПРОДАТЬ", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color.WHITE)
 
     # Draw the HUD after roads and world sprites, so the map never hides labels.
     draw_rect(Rect2(50, 5, 920, 53), Color("#14242c", 0.94))
