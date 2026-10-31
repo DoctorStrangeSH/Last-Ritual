@@ -2444,5 +2444,27 @@ func run_tests() -> void:
         check(tip_game.scouting_counter_tip({"runner": 3}).begins_with("РАЗВЕДЧИКИ"), "Runners suggest frost towers")
         check(tip_game.scouting_counter_tip({}).is_empty(), "No advice after final wave")
         tip_game.queue_free()
+    # Five-day progression audit: every wave is spawnable and has consistent counts.
+    if boon_scene != null:
+        var audit_game = boon_scene.instantiate()
+        root.add_child(audit_game)
+        for audit_day in range(1, 6):
+            audit_game.siege_day = audit_day
+            var previous_total := 0
+            for audit_wave in range(1, audit_game.SIEGE_WAVES + 1):
+                var audit_budget: Dictionary = audit_game.wave_enemy_budget(audit_wave)
+                var ordinary_count: int = int(audit_budget["ordinary"])
+                var sum_count: int = ordinary_count + int(audit_budget["support"]) + int(audit_budget["captain"]) + int(audit_budget["boss"])
+                check(sum_count == int(audit_budget["total"]) and ordinary_count > 0, "Day %d wave %d enemy budget is consistent" % [audit_day, audit_wave])
+                check(int(audit_budget["total"]) >= previous_total, "Day %d wave %d does not shrink enemy count" % [audit_day, audit_wave])
+                previous_total = int(audit_budget["total"])
+                var role_counts := {"runner": 0, "brute": 0, "grunt": 0}
+                for audit_index in range(ordinary_count):
+                    var role_name: String = audit_game.siege_enemy_role(audit_wave, audit_index)
+                    check(role_counts.has(role_name), "Day %d wave %d has supported regular enemy roles" % [audit_day, audit_wave])
+                    if role_counts.has(role_name):
+                        role_counts[role_name] += 1
+                check(role_counts["runner"] + role_counts["brute"] + role_counts["grunt"] == ordinary_count, "Day %d wave %d role counts match budget" % [audit_day, audit_wave])
+        audit_game.queue_free()
     print("TOPDOWN SMOKE RESULT: ", "PASS" if failures == 0 else str(failures) + " FAILURES")
     quit(0 if failures == 0 else 1)

@@ -1,3 +1,5 @@
+> **31.10.2026, #248:** #247 merged e062691 после CI success. Test-only PR на все 5 дней × 6 волн: бюджет/роли/численность, дорожная карта обновлена. Ночь не менять, merge после exact-head CI.
+
 > **31.10.2026, #247:** #246 merged 81c1780. Next PR adds contextual one-line tip to forecast (boss/captain/armor/runner/healer priority), smoke tests; no night changes. Merge only on exact-head green CI.
 
 > **31.10.2026, #246:** #245 merged e327611 после CI success. Следующий PR показывает разведку следующей волны (brute/runner/support/captain/boss), вычисляемую из существующих функций. Ночь без изменений; merge после exact-head CI.
