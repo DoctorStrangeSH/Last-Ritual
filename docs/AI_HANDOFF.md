@@ -1,3 +1,5 @@
+> **31.10.2026 fire splash stage:** Added `scripts/td/td_fire_splash.gd`; fire now uses up to two extra nearby targets within 32px of main target after existing TD_MULTIHIT selection. Existing cooldown, damage, burn, saving and type ID stay intact; display name «Огненная турель». Check exact-head CI and manual Windows balance. Six-tower roster remains pending; no migration performed.
+
 > **31.10.2026 — PR #263 (visual-only):** Godot existing gameplay IDs remain `bone/fire/necro/frost` for save compatibility. Layered renderer maps them to original Foozle folders `ballista/fire/pulse/spark`; selects base and weapon per upgrade level 1–3; shows static pose (first sprite sheet cell) instead of endless atlas cycling. Original sources are preserved in assets/spire/towers. Projectile/impact are not wired yet. New necro/frost additions remain pending; old IDs are not renamed in runtime. Exact-head CI and Windows playtest needed before claiming success.
 
 ## 31.10.2026 — audit of user-uploaded tower PNGs
