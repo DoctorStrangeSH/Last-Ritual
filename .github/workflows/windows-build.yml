@@ -146,4 +146,6 @@ jobs:
           )
           test -s build/windows/SoulAltar-art-preview.zip
           gh release upload windows-preview build/windows/SoulAltar-art-preview.zip --clobber
+          gh release upload windows-preview "$preview_dir/contact_sheet.png" --clobber
+          echo "Gallery: https://github.com/$GITHUB_REPOSITORY/releases/download/windows-preview/contact_sheet.png"
           echo "Preview: https://github.com/$GITHUB_REPOSITORY/releases/download/windows-preview/SoulAltar-art-preview.zip"
