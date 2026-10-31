@@ -1023,6 +1023,62 @@ func run_tests() -> void:
     var necro_inactive: Array[String] = synergy_tooltips.synergy_lines("necro", false, false, false)
     check(necro_inactive.size() == 3 and necro_inactive[0].begins_with("НУЖНЫ КОСТИ"), "Necro tooltip explains missing neighbours")
     check(synergy_tooltips.synergy_lines("frost", false, false, false).size() == 3, "Frost tooltip documents all three school pairings")
+    check("3 врагов" in str(synergy_tooltips.shop_info("bone")["effect"]), "Bone tower tooltip truthfully describes up to three pierced enemies")
+    # UI and real damage must share the same formula for every school/path/level.
+    if specialization_balance_scene != null:
+        var formula_game = specialization_balance_scene.instantiate()
+        root.add_child(formula_game)
+        formula_game.fire_synergy_bonus = 2
+        formula_game.bone_synergy_bonus = 1
+        for audit_kind in ["bone", "fire", "necro", "frost"]:
+            for audit_level in range(1, 4):
+                for audit_path in ["", "siege", "swarm"]:
+                    if audit_level == 1 and audit_path != "":
+                        continue
+                    formula_game.slots[0]["tower"] = audit_kind
+                    formula_game.slots[0]["level"] = audit_level
+                    formula_game.slots[0]["specialization"] = audit_path
+                    var ui_damage: int = int(formula_game.tower_info_for_slot(0)["damage"])
+                    var combat_damage: int = formula_game.TD_TOWER_DAMAGE.direct_damage(audit_kind, audit_level, audit_path, 2, 1)
+                    check(ui_damage == combat_damage, "Inspector damage matches combat for " + audit_kind + "/" + audit_path + " level " + str(audit_level))
+        formula_game.queue_free()
+    # Test damage actually applied during firing, not only preview helper values.
+    if specialization_balance_scene != null:
+        var combat_synergies: Array[Dictionary] = [
+            {"tower": "bone", "partner": "fire", "status": "burn_time", "bonus": 2},
+            {"tower": "fire", "partner": "bone", "status": "burn_time", "bonus": 1},
+            {"tower": "necro", "partner": "bone", "status": "", "bonus": 1},
+            {"tower": "necro", "partner": "fire", "status": "burn_time", "bonus": 1},
+            {"tower": "bone", "partner": "frost", "status": "frost_time", "bonus": 1},
+            {"tower": "fire", "partner": "frost", "status": "frost_time", "bonus": 1}
+        ]
+        for synergy_case in combat_synergies:
+            var hit_game = specialization_balance_scene.instantiate()
+            root.add_child(hit_game)
+            hit_game.slots[0]["tower"] = str(synergy_case["tower"])
+            hit_game.slots[0]["level"] = 1
+            hit_game.slots[1]["tower"] = str(synergy_case["partner"])
+            hit_game.slots[1]["level"] = 1
+            # The partner contributes its proximity bonus, not an extra attack.
+            hit_game.tower_cooldowns[1] = 99.0
+            var tested_enemy: Dictionary = {"pos": hit_game.slots[0]["pos"] + Vector2(25, 0), "hp": 100, "delay": 0.0}
+            if str(synergy_case["status"]) != "":
+                tested_enemy[str(synergy_case["status"])] = 2.0
+            hit_game.enemies.append(tested_enemy)
+            var basic_hit: int = hit_game.TD_TOWER_DAMAGE.direct_damage(str(synergy_case["tower"]), 1, "", 0, 0)
+            hit_game.attack_with_towers(0.01)
+            check(int(tested_enemy["hp"]) == 100 - basic_hit - int(synergy_case["bonus"]), "Combat applies real pair bonus: " + str(synergy_case["tower"]) + "+" + str(synergy_case["partner"]))
+            check(hit_game.tower_synergy_links(0).has(1) and hit_game.tower_synergy_links(1).has(0), "All combat synergies including frost draw reciprocal links")
+            hit_game.slots[1]["tower"] = ""
+            hit_game.tower_cooldowns[0] = 0.0
+            hit_game.enemies.clear()
+            var isolated_enemy: Dictionary = {"pos": hit_game.slots[0]["pos"] + Vector2(25, 0), "hp": 100, "delay": 0.0}
+            if str(synergy_case["status"]) != "":
+                isolated_enemy[str(synergy_case["status"])] = 2.0
+            hit_game.enemies.append(isolated_enemy)
+            hit_game.attack_with_towers(0.01)
+            check(int(isolated_enemy["hp"]) == 100 - basic_hit, "Combat bonus vanishes when partner removed: " + str(synergy_case["tower"]) + "+" + str(synergy_case["partner"]))
+            hit_game.queue_free()
     if specialization_balance_scene != null:
         var modal_tooltip_game = specialization_balance_scene.instantiate()
         root.add_child(modal_tooltip_game)
