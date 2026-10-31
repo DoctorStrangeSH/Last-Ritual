@@ -2598,14 +2598,29 @@ func run_tests() -> void:
             if ResourceLoader.exists(weapon_path):
                 var weapon_texture: Texture2D = load(weapon_path)
                 check(weapon_texture != null and weapon_texture.get_width() > 0 and weapon_texture.get_height() > 0, "Tower weapon imports as texture: %s L%d" % [tower_id, level])
+                if weapon_texture != null:
+                    var weapon_cell: Rect2 = tower_visuals.weapon_frame_region(tower_id)
+                    var valid_weapon_region: Rect2 = tower_visuals.first_frame_region(weapon_texture, Vector2i(int(weapon_cell.size.x), int(weapon_cell.size.y)))
+                    check(valid_weapon_region.size != Vector2.ZERO, "Tower weapon contains a complete first frame: %s L%d" % [tower_id, level])
             if ResourceLoader.exists(projectile_path):
                 var projectile_texture: Texture2D = load(projectile_path)
                 check(projectile_texture != null and projectile_texture.get_width() > 0 and projectile_texture.get_height() > 0, "Tower projectile imports as texture: %s L%d" % [tower_id, level])
+                if projectile_texture != null:
+                    var projectile_cell: Vector2i = tower_visuals.vfx_frame_size(tower_id, "projectiles")
+                    check(tower_visuals.first_frame_region(projectile_texture, projectile_cell).size != Vector2.ZERO, "Tower projectile contains a complete first frame: %s L%d" % [tower_id, level])
             var impact_path: String = tower_visual_asset_check.vfx_path(tower_id, level, "weapon_impact")
             if tower_id == "necro":
                 check(impact_path == "", "Necro impact art is explicitly absent until production art exists")
             else:
                 check(impact_path != "" and ResourceLoader.exists(impact_path), "Tower impact asset exists: %s L%d" % [tower_id, level])
+    var frame_api = load("res://scripts/td/td_tower_visuals.gd")
+    var tiny_image := Image.create(8, 8, false, Image.FORMAT_RGBA8)
+    var tiny_texture := ImageTexture.create_from_image(tiny_image)
+    check(frame_api.first_frame_region(tiny_texture, Vector2i(16, 16)).size == Vector2.ZERO, "Reject sprite cell larger than texture")
+    check(frame_api.frame_region(tiny_texture, Vector2i(4, 4), 4).position == Vector2(0, 4), "Resolve second-row sprite sheet frame")
+    check(frame_api.frame_region(tiny_texture, Vector2i(4, 4), 4).size == Vector2(4, 4), "Sprite sheet frame uses exact cell dimensions")
+    check(frame_api.frame_region(tiny_texture, Vector2i(4, 4), 99).size == Vector2.ZERO, "Reject frame index outside sprite sheet")
+    check(frame_api.frame_region(tiny_texture, Vector2i.ZERO, 0).size == Vector2.ZERO, "Reject zero-sized sprite cell")
     var catalogue = load("res://scripts/td/td_tower_catalogue.gd")
     check(catalogue.ORDER.size() == 6, "Canonical tower catalogue contains six entries")
     for tower_id in catalogue.ORDER:
