@@ -10,6 +10,10 @@ on:
       - 'assets/**'
       - 'scripts/**'
       - 'tests/**'
+      - 'tools/**'
+      - 'docs/**'
+      - 'README.md'
+      - 'AGENTS.md'
       - '.github/workflows/windows-build.yml'
   push:
     branches: [main]
@@ -20,6 +24,10 @@ on:
       - 'assets/**'
       - 'scripts/**'
       - 'tests/**'
+      - 'tools/**'
+      - 'docs/**'
+      - 'README.md'
+      - 'AGENTS.md'
       - '.github/workflows/windows-build.yml'
 
 # New commits supersede obsolete runs of the same PR/branch.
