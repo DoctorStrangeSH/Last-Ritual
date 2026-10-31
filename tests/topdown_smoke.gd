@@ -2499,5 +2499,7 @@ func run_tests() -> void:
         check(archetypes.shot_trail_style("bone")["impact"] == "shard", "Bone retains projectile identity")
         check(archetypes.shot_trail_style("necro")["impact"] == "spirit", "Necro retains spirit identity")
         archetypes.queue_free()
+    var spire_atlas: Texture2D = load("res://assets/spire/towers_atlas.png")
+    check(spire_atlas != null and spire_atlas.get_width() == 256 and spire_atlas.get_height() == 256, "Spire tower atlas has four 64px frames for each of four tower schools")
     print("TOPDOWN SMOKE RESULT: ", "PASS" if failures == 0 else str(failures) + " FAILURES")
     quit(0 if failures == 0 else 1)
