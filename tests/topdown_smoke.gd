@@ -2485,5 +2485,19 @@ func run_tests() -> void:
             check(int(income["enemies"]) == budget_sum, "Economy: day %d kill forecast enemy count" % audit_day)
             check(int(income["kill_gold"]) == budget_sum * 5 and int(income["maximum_gold"]) == int(income["starting_gold"]) + int(income["kill_gold"]), "Economy: day %d income matches enemy rewards" % audit_day)
         economy_game.queue_free()
+    # Archetype guardrails: keep all four tower schools mechanically distinct.
+    if boon_scene != null:
+        var archetypes = boon_scene.instantiate()
+        root.add_child(archetypes)
+        for archetype in ["bone", "fire", "frost", "necro"]:
+            check(archetypes.COSTS.has(archetype), "Archetype %s has a construction price" % archetype)
+            check(archetypes.TOWER_RANGE.has(archetype), "Archetype %s has an attack radius" % archetype)
+            check(archetypes.TOWER_DAMAGE.has(archetype), "Archetype %s has attack damage" % archetype)
+            check(int(archetypes.COSTS.get(archetype, 0)) > 0 and float(archetypes.TOWER_RANGE.get(archetype, 0.0)) > 0.0, "Archetype %s can be deployed and reach enemies" % archetype)
+        check(archetypes.shot_trail_style("fire")["impact"] == "ember", "Fire remains visibly incendiary")
+        check(archetypes.shot_trail_style("frost")["impact"] == "crystal", "Frost retains control-school identity")
+        check(archetypes.shot_trail_style("bone")["impact"] == "shard", "Bone retains projectile identity")
+        check(archetypes.shot_trail_style("necro")["impact"] == "spirit", "Necro retains spirit identity")
+        archetypes.queue_free()
     print("TOPDOWN SMOKE RESULT: ", "PASS" if failures == 0 else str(failures) + " FAILURES")
     quit(0 if failures == 0 else 1)
