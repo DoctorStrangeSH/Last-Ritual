@@ -59,10 +59,14 @@ jobs:
           chmod +x Godot_v4.4.1-stable_linux.x86_64
       - name: Verify source art importer (no archive required)
         run: python3 -m unittest discover -s tests -p 'test_source_art_import.py' -v
+      - name: Validate editable Soul Altar SVG sources
+        run: python3 tools/verify_necro_source_svg.py
       - name: Validate PNG assets before Godot import
         run: python3 tools/verify_png_assets.py
       - name: Import assets and check scripts
         run: timeout 120s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --editor --quit
+      - name: Export and validate Soul Altar candidate PNG layers
+        run: timeout 120s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --script res://tools/export_necro_layers.gd
       - name: Run top-down smoke tests
         run: timeout 120s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --script res://tests/topdown_smoke.gd
 

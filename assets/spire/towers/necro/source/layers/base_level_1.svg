@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" shape-rendering="crispEdges">
+<!-- Author-created editable layer. Same origin and pivot across all 3 levels. BASE only; no flame or moving weapon. -->
+<polygon points="18,102 40,90 88,90 110,102 110,114 88,125 40,125 18,114" fill="#17141b"/>
+<polygon points="18,99 39,86 89,86 110,99 110,111 89,119 39,119 18,111" fill="#37313c"/>
+<polygon points="23,98 40,88 88,88 105,98 89,108 39,108" fill="#85767c"/>
+<polygon points="29,97 43,91 85,91 99,97 85,104 43,104" fill="#14151b"/>
+<rect x="26" y="105" width="76" height="5" fill="#997247"/>
+<rect x="37" y="112" width="54" height="4" fill="#e1b87b"/>
+<rect x="42" y="117" width="44" height="3" fill="#554d56"/>
+<rect x="26" y="100" width="5" height="7" fill="#997247"/>
+<rect x="27" y="100" width="3" height="2" fill="#e1b87b"/>
+<rect x="44" y="100" width="5" height="7" fill="#997247"/>
+<rect x="45" y="100" width="3" height="2" fill="#e1b87b"/>
+<rect x="80" y="100" width="5" height="7" fill="#997247"/>
+<rect x="81" y="100" width="3" height="2" fill="#e1b87b"/>
+<rect x="98" y="100" width="5" height="7" fill="#997247"/>
+<rect x="99" y="100" width="3" height="2" fill="#e1b87b"/>
+<rect x="59" y="102" width="10" height="7" fill="#e0ccab"/>
+<rect x="60" y="99" width="8" height="5" fill="#e0ccab"/>
+<rect x="61" y="103" width="2" height="3" fill="#14151b"/>
+<rect x="65" y="103" width="2" height="3" fill="#14151b"/>
+<rect x="63" y="107" width="2" height="2" fill="#14151b"/>
+<polygon points="40,90 46,84 82,84 88,90 82,97 46,97" fill="#17141b"/>
+<polygon points="43,90 48,85 80,85 85,90 80,94 48,94" fill="#997247"/>
+<polygon points="48,90 52,87 76,87 80,90 76,92 52,92" fill="#14151b"/>
+<rect x="63" y="88" width="2" height="2" fill="#0d4b3c"/>
+</svg>
