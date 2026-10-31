@@ -33,6 +33,7 @@ const SPECIALIZATION_LABELS = TD_TOWER_STATS.SPECIALIZATION_LABELS
 var selected_type := ""
 var selected_slot := -1
 var hovered_slot := -1
+var mouse_inside_window := true
 var coins := 150
 var difficulty := 0 # 0 normal, 1 hard, 2 nightmare
 var siege_day := 1 # 1 normal, 2 swift raiders, 3 armored siege
@@ -801,9 +802,18 @@ func tower_range_preview() -> Dictionary:
 func tower_shop_rect(index: int) -> Rect2:
     return Rect2(260.0 + index * 210.0, 550.0, 180.0, 64.0)
 
+func _notification(what: int) -> void:
+    if what == NOTIFICATION_WM_MOUSE_EXIT:
+        mouse_inside_window = false
+        hovered_slot = -1
+        queue_redraw()
+    elif what == NOTIFICATION_WM_MOUSE_ENTER:
+        mouse_inside_window = true
+        queue_redraw()
+
 func tower_tooltips_available() -> bool:
     # Modal choices must have exclusive focus: no shop hints behind them.
-    return defense_state == "playing" and not help_visible and not specialization_open and not can_choose_interwave_event()
+    return mouse_inside_window and defense_state == "playing" and not help_visible and not specialization_open and not can_choose_interwave_event()
 
 func tooltip_at(point: Vector2) -> Dictionary:
     if not tower_tooltips_available():
@@ -880,6 +890,7 @@ func _unhandled_input(event: InputEvent) -> void:
         queue_redraw()
         return
     if event is InputEventMouseMotion:
+        mouse_inside_window = true
         hovered_slot = slot_at(event.position)
         queue_redraw()
     if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_H:

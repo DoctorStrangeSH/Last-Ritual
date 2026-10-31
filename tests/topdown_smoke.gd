@@ -2194,6 +2194,11 @@ func run_tests() -> void:
         var tower_point: Vector2 = hover_game.slots[0]["pos"]
         check(not hover_game.hovered_tower_info(tower_point).is_empty(), "Hovering a built tower displays inspector data")
         check(hover_game.hovered_tower_info(Vector2(10, 10)).is_empty(), "Leaving tower removes hover inspector data")
+        hover_game.notification(Node.NOTIFICATION_WM_MOUSE_EXIT)
+        check(hover_game.hovered_tower_info(tower_point).is_empty() and hover_game.tooltip_at(hover_game.tower_shop_rect(0).get_center()).is_empty(), "Leaving game window hides all tower tooltip data")
+        hover_game.notification(Node.NOTIFICATION_WM_MOUSE_ENTER)
+        check(not hover_game.hovered_tower_info(tower_point).is_empty(), "Reentering game window restores tower hover")
+
         for probe in [Vector2(14, 120), Vector2(1100, 460), tower_point]:
             var panel: Rect2 = hover_game.tower_hover_panel_rect(probe)
             check(panel.position.x >= 12.0 and panel.end.x <= 1140.0 and panel.position.y >= 100.0 and panel.end.y <= 530.0, "Hover inspector stays between HUD and shop")
