@@ -460,14 +460,48 @@ func run_tests() -> void:
         check(is_equal_approx(float(range_game.tower_range_preview().get("range", 0.0)), 160.0), "Selected tower range available when hovering empty site")
         range_game.queue_free()
     var td_layouts = load("res://scripts/td/td_path_layouts.gd")
-    check(td_layouts.layout_count() >= 3, "TD path catalog offers distinct routes")
-    for seed_value in range(12):
+    check(td_layouts.layout_count() >= 8, "TD path catalog offers eight distinct fortress maps")
+    var two_lane_maps := 0
+    var three_lane_maps := 0
+    for seed_value in range(td_layouts.layout_count()):
         var paths: Array = td_layouts.layout_for_seed(seed_value)
         check(paths == td_layouts.layout_for_seed(seed_value), "TD path choice reproducible by seed")
-        check(paths.size() == 2, "TD layouts retain two enemy lanes")
-        for lane_id in range(2):
-            check(paths[lane_id].size() >= 8, "TD route contains multiple bends")
-            check(paths[lane_id][0] == td_layouts.LAYOUTS[0][lane_id][0] and paths[lane_id][-1] == td_layouts.LAYOUTS[0][lane_id][-1], "TD route retains entry and altar")
+        check(paths.size() >= 2 and paths.size() <= 3, "Each fortress map has two or three enemy lanes")
+        if paths.size() == 2:
+            two_lane_maps += 1
+        else:
+            three_lane_maps += 1
+        for lane_id in range(paths.size()):
+            var lane: Array = paths[lane_id]
+            check(lane.size() >= 8, "TD route contains multiple bends")
+            if lane_id < 2:
+                check(lane[0] == td_layouts.LAYOUTS[0][lane_id][0] and lane[-1] == td_layouts.LAYOUTS[0][lane_id][-1], "TD route retains its original entry and altar")
+            else:
+                check(lane[0] == Vector2(65, 405) and lane[-1] == Vector2(1070, 405), "Third route has its own stable entrance and exit")
+            for position in [Vector2(280, 190), Vector2(430, 190), Vector2(590, 190), Vector2(750, 190), Vector2(280, 440), Vector2(430, 440), Vector2(590, 440), Vector2(750, 440)]:
+                var closest: float = INF
+                for point_id in range(1, lane.size()):
+                    var a: Vector2 = lane[point_id - 1]
+                    var b: Vector2 = lane[point_id]
+                    var t: float = clampf((position - a).dot(b - a) / (b - a).length_squared(), 0.0, 1.0)
+                    closest = minf(closest, position.distance_to(a.lerp(b, t)))
+                check(closest >= 50.0, "Every map preserves construction pad clearance")
+        # Adjacent roads must not overlap in the playable field.
+        for lane_a in range(paths.size()):
+            for lane_b in range(lane_a + 1, paths.size()):
+                var minimum_gap: float = INF
+                for road_point in range(1, paths[lane_a].size()):
+                    var from_point: Vector2 = paths[lane_a][road_point - 1]
+                    var to_point: Vector2 = paths[lane_a][road_point]
+                    for sample in range(11):
+                        var probe: Vector2 = from_point.lerp(to_point, float(sample) / 10.0)
+                        for check_segment in range(1, paths[lane_b].size()):
+                            var c: Vector2 = paths[lane_b][check_segment - 1]
+                            var d: Vector2 = paths[lane_b][check_segment]
+                            var along: float = clampf((probe - c).dot(d - c) / (d - c).length_squared(), 0.0, 1.0)
+                            minimum_gap = minf(minimum_gap, probe.distance_to(c.lerp(d, along)))
+                check(minimum_gap >= 45.0, "Routes remain visually separate without lane overlap")
+    check(two_lane_maps >= 5 and three_lane_maps >= 2, "Map catalog contains both traditional and triple-lane sieges")
     check(td_layouts.layout_for_seed(0) != td_layouts.layout_for_seed(1), "Different seeds can choose different fortress routes")
     # Per-run map is stable across phases, while a fresh run can choose a new seed.
     if specialization_balance_scene != null:
