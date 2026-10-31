@@ -66,6 +66,13 @@ const PROJECTILE_CELL := {"bone": Vector2i(8, 8), "fire": Vector2i(32, 32), "nec
 const IMPACT_CELL := {"bone": Vector2i(64, 64), "fire": Vector2i(64, 64), "frost": Vector2i(64, 64)}
 
 static func vfx_path(kind: String, level: int, layer: String) -> String:
+    # Authored necromancer atlases are shared by all three upgrade levels.
+    # Do not change base/weapon mapping or saved tower kinds.
+    if kind == "necro" and level >= 1 and level <= 3:
+        if layer == "projectiles":
+            return "res://assets/spire/towers/necro/vfx/soul_projectile_8f.png"
+        if layer == "weapon_impact":
+            return "res://assets/spire/towers/necro/vfx/soul_impact_8f.png"
     if not FOLDERS.has(kind) or level < 1 or level > 3:
         return ""
     var root: String = "res://assets/spire/towers/%s/%s/level_%d/" % [FOLDERS[kind], layer, level]
@@ -76,6 +83,11 @@ static func vfx_path(kind: String, level: int, layer: String) -> String:
     return ""
 
 static func vfx_frame_size(kind: String, layer: String) -> Vector2i:
+    if kind == "necro":
+        if layer == "projectiles":
+            return Vector2i(32, 32)
+        if layer == "weapon_impact":
+            return Vector2i(64, 64)
     if layer == "projectiles":
         return PROJECTILE_CELL.get(kind, Vector2i.ZERO)
     if layer == "weapon_impact":
