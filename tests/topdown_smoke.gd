@@ -2416,8 +2416,7 @@ func run_tests() -> void:
                 escort_captain_lane = int(unit["lane"])
             if str(unit.get("role", "")) == "healer":
                 escort_healer_lane = int(unit["lane"])
-                break
-        check(escort_captain_lane == escort_healer_lane or escort_captain_lane == 1, "Late siege commander escorts the healer route")
+        check(escort_captain_lane >= 0 and escort_captain_lane == escort_healer_lane, "Late siege commander escorts the healer route")
         escort_game.queue_free()
     print("TOPDOWN SMOKE RESULT: ", "PASS" if failures == 0 else str(failures) + " FAILURES")
     quit(0 if failures == 0 else 1)
