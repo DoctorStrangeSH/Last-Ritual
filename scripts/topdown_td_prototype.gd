@@ -6,6 +6,7 @@ const TD_TOWER_STATS = preload("res://scripts/td/td_tower_stats.gd")
 const SPIRE_TOWER_ATLAS = preload("res://assets/spire/towers_atlas.png")
 const TOWER_VISUALS = preload("res://scripts/td/td_tower_visuals.gd")
 const TD_SPECIALIZATION_ICONS = preload("res://scripts/td/td_specialization_icons.gd")
+const TD_TOWER_TRANSITION_FX = preload("res://scripts/td/td_tower_transition_fx.gd")
 var tower_texture_cache: Dictionary = {}
 # Short visual-only build/sell transitions; gameplay is updated immediately.
 var tower_visual_transitions: Array[Dictionary] = []
@@ -1322,6 +1323,14 @@ func draw_tower_transitions() -> void:
         color.a = 0.8 * (1.0 - progress)
         draw_arc(pos, radius, 0.0, TAU, 32, color, 3.0)
         draw_circle(pos + Vector2(0, -23.0 * (1.0 - progress)), 3.5, color)
+        # Small directional motes make construction feel assembled and selling
+        # feel like the structure is breaking apart; purely decorative.
+        for particle in TD_TOWER_TRANSITION_FX.particles(pos, progress, appearing):
+            var particle_color := Color(color.r, color.g, color.b, color.a * float(particle["alpha"]))
+            var particle_pos: Vector2 = particle["position"]
+            var particle_size: float = float(particle["size"])
+            draw_line(particle_pos, particle_pos + Vector2(0.0, 3.0 if appearing else -3.0), particle_color, 1.2)
+            draw_circle(particle_pos, particle_size, particle_color)
 
 func cached_tower_texture(path: String) -> Texture2D:
     if path.is_empty():
