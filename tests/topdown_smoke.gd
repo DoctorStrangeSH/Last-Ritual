@@ -556,6 +556,10 @@ func run_tests() -> void:
         council.wave_number = 3
         check(council.can_choose_interwave_event(), "War council opens after third wave")
         check(not council.choose_interwave_event("invalid"), "Invalid war council choice is rejected")
+        for reward_seed in range(32):
+            council.set_fortress_map_seed(reward_seed)
+            if council.council_offers().has("raid"):
+                break
         check(council.choose_interwave_event("raid"), "Raid choice grants immediate gold")
         check(council.coins == 185 and council.next_wave_extra_hp == 3, "Raid reward incurs next-wave danger")
         check(not council.choose_interwave_event("safe"), "War council cannot be claimed twice")
@@ -566,6 +570,10 @@ func run_tests() -> void:
         root.add_child(rest_council)
         rest_council.wave_number = 3
         rest_council.altar_hp = 60
+        for reward_seed in range(32):
+            rest_council.set_fortress_map_seed(reward_seed)
+            if rest_council.council_offers().has("repair"):
+                break
         check(rest_council.choose_interwave_event("repair") and rest_council.altar_hp == 80, "War council can heal the altar")
         rest_council.queue_free()
     # Stage 182: later waves have readable, deterministic tactical roles.
@@ -2234,6 +2242,10 @@ func run_tests() -> void:
         root.add_child(boon_game)
         boon_game.wave_number = 3
         var gold_before: int = boon_game.coins
+        for reward_seed in range(32):
+            boon_game.set_fortress_map_seed(reward_seed)
+            if boon_game.council_offers().has("safe"):
+                break
         check(boon_game.choose_interwave_event("safe"), "Abyss reserve can be claimed via council")
         check(boon_game.coins == gold_before + 20 and boon_game.ritual_reserve_claimed, "Abyss reserve pays exactly 20 gold")
         check(not boon_game.choose_interwave_event("safe") and boon_game.coins == gold_before + 20, "Abyss reserve cannot be claimed twice")
@@ -2262,6 +2274,10 @@ func run_tests() -> void:
         var ember_game = boon_scene.instantiate()
         root.add_child(ember_game)
         ember_game.wave_number = 3
+        for reward_seed in range(32):
+            ember_game.set_fortress_map_seed(reward_seed)
+            if ember_game.council_offers().has("raid"):
+                break
         check(ember_game.choose_interwave_event("raid") and ember_game.ember_heart_claimed, "War council raid unlocks Ember Heart")
         var burning_foe: Dictionary = {"pos": Vector2(400, 300), "hp": 1, "delay": 0.0}
         var nearby_foe: Dictionary = {"pos": Vector2(430, 300), "hp": 2, "delay": 0.0}
@@ -2314,6 +2330,10 @@ func run_tests() -> void:
         var base_chilled: int = frost_game.tower_synergy_damage(0, chilled)
         frost_game.wave_number = 3
         frost_game.altar_hp = 65
+        for reward_seed in range(32):
+            frost_game.set_fortress_map_seed(reward_seed)
+            if frost_game.council_offers().has("repair"):
+                break
         check(frost_game.choose_interwave_event("repair"), "Council frost reward can be claimed")
         check(frost_game.altar_hp == 85 and frost_game.eternal_frost_claimed, "Eternal Frost keeps council healing")
         check(frost_game.tower_synergy_damage(0, chilled) == base_chilled + 1, "Eternal Frost adds one damage against chilled foes")
