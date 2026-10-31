@@ -1,3 +1,10 @@
+## 31.10.2026 — Foozle analysis and free asset sources
+- [x] PR #259 merged (`629f1f8`): verified Foozle BuilderPack sheet geometry and added labeled contact-sheet analysis tool. Exact-head PR CI passed.
+- [ ] Main CI after #259: run `41200095541` queued at last check.
+- [ ] Confirm animation sequences/FPS visually; geometric grids do not prove playback order.
+- [ ] Integrate original Foozle construction/collapse/Wisp PNGs after source archive extraction and visual review.
+- [ ] Review CC0 candidates in `docs/FREE_ASSET_CATALOG.md`; do not add mixed-style assets before preview in Godot.
+
 ## Актуализация после PR #254 — 31.10.2026
 - [x] #253 — атлас Foozle интегрирован, exact-head CI success, merged.
 - [x] #254 — визуальные переходы строительства/продажи (0,42 с), exact-head CI success, merged `aed18a2`.
