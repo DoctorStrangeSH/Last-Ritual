@@ -2265,7 +2265,9 @@ func run_tests() -> void:
         check(ember_game.choose_interwave_event("raid") and ember_game.ember_heart_claimed, "War council raid unlocks Ember Heart")
         var burning_foe: Dictionary = {"pos": Vector2(400, 300), "hp": 1, "delay": 0.0}
         var nearby_foe: Dictionary = {"pos": Vector2(430, 300), "hp": 2, "delay": 0.0}
-        ember_game.enemies = [burning_foe, nearby_foe]
+        ember_game.enemies.clear()
+        ember_game.enemies.append(burning_foe)
+        ember_game.enemies.append(nearby_foe)
         ember_game.apply_burn(burning_foe)
         var initial_gold: int = ember_game.coins
         ember_game.tick_burning(0.5)
