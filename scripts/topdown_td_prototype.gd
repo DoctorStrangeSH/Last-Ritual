@@ -1346,7 +1346,10 @@ func draw_tower_figure(pos: Vector2, kind: String, level: int) -> void:
     var weapon_texture: Texture2D = cached_tower_texture(TOWER_VISUALS.path_for(kind, level, "weapon"))
     if base_texture != null and weapon_texture != null:
         draw_texture_rect(base_texture, Rect2(pos + Vector2(-21, -49), Vector2(42, 68)), false)
-        draw_texture_rect_region(weapon_texture, Rect2(pos + Vector2(-22, -38), Vector2(44, 44)), TOWER_VISUALS.weapon_frame_region(kind))
+        var weapon_cell: Rect2 = TOWER_VISUALS.weapon_frame_region(kind)
+        var weapon_region: Rect2 = TOWER_VISUALS.first_frame_region(weapon_texture, Vector2i(int(weapon_cell.size.x), int(weapon_cell.size.y)))
+        if weapon_region.size != Vector2.ZERO:
+            draw_texture_rect_region(weapon_texture, Rect2(pos + Vector2(-22, -38), Vector2(44, 44)), weapon_region)
         return
     # The stone pedestal stays neutral; each weapon has its own silhouette.
     draw_rect(Rect2(pos + Vector2(-18, -19), Vector2(36, 33)), Color("#18242b"))
@@ -1543,7 +1546,9 @@ func _draw() -> void:
             var cell: Vector2i = TOWER_VISUALS.vfx_frame_size(shot_kind, "projectiles")
             var progress: float = 1.0 - opacity
             var point: Vector2 = (trail["from"] as Vector2).lerp(trail["to"] as Vector2, progress)
-            draw_texture_rect_region(projectile, Rect2(point - Vector2(7, 7), Vector2(14, 14)), Rect2(Vector2.ZERO, Vector2(cell)), Color.WHITE)
+            var projectile_region: Rect2 = TOWER_VISUALS.first_frame_region(projectile, cell)
+            if projectile_region.size != Vector2.ZERO:
+                draw_texture_rect_region(projectile, Rect2(point - Vector2(7, 7), Vector2(14, 14)), projectile_region, Color.WHITE)
         else:
             draw_line(trail["from"], trail["to"], Color(shot_color.r, shot_color.g, shot_color.b, opacity), float(visual["width"]))
         var impact_path: String = TOWER_VISUALS.vfx_path(shot_kind, level, "weapon_impact")
@@ -1551,8 +1556,9 @@ func _draw() -> void:
         if impact_sprite != null:
             var impact_cell: Vector2i = TOWER_VISUALS.vfx_frame_size(shot_kind, "weapon_impact")
             var frame: int = mini(int((1.0 - opacity) * 6.0), 5)
-            var region := Rect2(Vector2(float(frame * impact_cell.x), 0.0), Vector2(impact_cell))
-            draw_texture_rect_region(impact_sprite, Rect2((trail["to"] as Vector2) - Vector2(13, 13), Vector2(26, 26)), region, Color(1.0, 1.0, 1.0, 1.0 - opacity))
+            var region: Rect2 = TOWER_VISUALS.frame_region(impact_sprite, impact_cell, frame)
+            if region.size != Vector2.ZERO:
+                draw_texture_rect_region(impact_sprite, Rect2((trail["to"] as Vector2) - Vector2(13, 13), Vector2(26, 26)), region, Color(1.0, 1.0, 1.0, 1.0 - opacity))
         else:
             match str(visual["impact"]):
                 "shard":
