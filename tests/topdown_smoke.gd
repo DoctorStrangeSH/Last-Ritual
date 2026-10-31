@@ -2578,6 +2578,9 @@ func run_tests() -> void:
             check(icon_texture != null, "Specialization SVG imports for %s/%s" % [tower_id, branch_id])
             if icon_texture != null:
                 check(icon_texture.get_width() == 64 and icon_texture.get_height() == 64, "Specialization icon is 64x64")
+    check(specialization_icons.path_for("necro", "siege").contains("/necro/"), "Necromancer uses its own specialization artwork, not pulse artwork")
+    check(specialization_icons.path_for("frost", "siege").contains("/frost/"), "Frost uses its own specialization artwork, not spark artwork")
+    check(specialization_icons.path_for("bone", "siege").contains("/ballista/"), "Bone gameplay uses ballista specialization artwork")
     check(specialization_icons.path_for("invalid", "siege") == "", "Invalid tower has no specialization badge")
     check(specialization_icons.path_for("fire", "invalid") == "", "Invalid specialization has no badge")
     var catalogue = load("res://scripts/td/td_tower_catalogue.gd")
