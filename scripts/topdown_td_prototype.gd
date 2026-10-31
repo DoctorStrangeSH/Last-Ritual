@@ -1547,7 +1547,7 @@ func _draw() -> void:
             var cell: Vector2i = TOWER_VISUALS.vfx_frame_size(shot_kind, "projectiles")
             var progress: float = 1.0 - opacity
             var point: Vector2 = (trail["from"] as Vector2).lerp(trail["to"] as Vector2, progress)
-            var projectile_region: Rect2 = TOWER_VISUALS.first_frame_region(projectile, cell)
+            var projectile_region: Rect2 = TOWER_VISUALS.frame_region(projectile, cell, mini(int(progress * 8.0), 7)) if shot_kind == "necro" else TOWER_VISUALS.first_frame_region(projectile, cell)
             if projectile_region.size != Vector2.ZERO:
                 draw_texture_rect_region(projectile, Rect2(point - Vector2(7, 7), Vector2(14, 14)), projectile_region, Color.WHITE)
         else:
@@ -1556,13 +1556,13 @@ func _draw() -> void:
         var impact_sprite: Texture2D = cached_tower_texture(impact_path)
         if impact_sprite != null:
             var impact_cell: Vector2i = TOWER_VISUALS.vfx_frame_size(shot_kind, "weapon_impact")
-            var frame: int = mini(int((1.0 - opacity) * 6.0), 5)
+            var frame_count: int = 8 if shot_kind == "necro" else 6
+            var frame: int = mini(int((1.0 - opacity) * float(frame_count)), frame_count - 1)
             var region: Rect2 = TOWER_VISUALS.frame_region(impact_sprite, impact_cell, frame)
             if region.size != Vector2.ZERO:
                 draw_texture_rect_region(impact_sprite, Rect2((trail["to"] as Vector2) - Vector2(13, 13), Vector2(26, 26)), region, Color(1.0, 1.0, 1.0, 1.0 - opacity))
         elif shot_kind == "necro":
-            # Necromancer currently has no authored impact sheet. Render a
-            # restrained soul burst instead of silently omitting hit feedback.
+            # Keep procedural souls as a fallback if the authored impact sheet fails to load.
             var impact_progress: float = 1.0 - opacity
             var impact_origin: Vector2 = trail["to"]
             for soul in TD_NECRO_IMPACT_FX.particles(impact_origin, impact_progress):
