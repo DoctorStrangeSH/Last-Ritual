@@ -1,3 +1,5 @@
+> **31.10.2026 — PR #253:** пользователь загрузил Foozle Spire TowerPack 1–4/BuilderPack/Enemies/Tileset. Для первого шага добавлен assets/spire/towers_atlas.png (4 строки bone/fire/frost/necro, 4 кадра на строку, 64px/кадр, CC0) и preload+render draw_tower_figure. Tests assert 256x256. Ночь и баланс неизменны. CI blocked by monthly Actions quota, merge only after green checks. Builder/Enemies/Tileset not yet wired.
+
 > **31.10.2026, #250:** #249 merged 1ff5f31. Новый тестовый PR на сохранение идентичности школ fire/frost/bone/necro; CI обязателен, ночь не менять; баланс требует ручного Windows-плейтеста.
 
 > **31.10.2026, #249:** #248 merged d3b4f98 после CI success. Тестовый PR: стоимость постройки/улучшений каждого типа башни + прогноз максимального дохода всех 5 дней × 6 волн. Ночь не менять, merge только после exact-head CI.
