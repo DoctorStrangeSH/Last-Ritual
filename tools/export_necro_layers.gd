@@ -38,6 +38,17 @@ func run_export() -> int:
         if not save_checked_png(assembled, output_absolute.path_join("assembled_level_%d.png" % level)):
             return 1
         total += 3
+        if level == 3:
+            for branch in ["siege", "swarm"]:
+                var overlay: Image = read_svg("specialization_%s.svg" % branch)
+                if overlay == null or not has_transparency_and_painted_pixels(overlay):
+                    push_error("Invalid necro specialization overlay: %s" % branch)
+                    return 1
+                var specialized: Image = assembled.duplicate()
+                specialized.blend_rect(overlay, Rect2i(Vector2i.ZERO, SIZE), Vector2i.ZERO)
+                if not save_checked_png(specialized, output_absolute.path_join("specialization_%s_level_3.png" % branch)):
+                    return 1
+                total += 1
     print("NECRO SOURCE PREVIEW: exported %d candidate PNGs; runtime and saves unchanged" % total)
     return 0
 
