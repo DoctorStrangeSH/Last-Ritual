@@ -2215,5 +2215,17 @@ func run_tests() -> void:
             check(not shop_ui.SELL_BUTTON.intersects(shop_ui.tower_shop_rect(shop_index)), "Sell button stays outside shop cards")
         check(not shop_ui.UPGRADE_BUTTON.intersects(shop_ui.MOVE_BUTTON), "Upgrade action stays outside relocation control")
         shop_ui.queue_free()
+    # Roguelite catalog must be deterministic, unique and safe to inspect.
+    var boons = load("res://scripts/td/td_abyss_boons.gd")
+    var offers_a: Array[String] = boons.offers(913, 2)
+    check(offers_a.size() == 3, "Abyss catalog generates three offers")
+    check(offers_a == boons.offers(913, 2), "Abyss catalog is reproducible for the same run and day")
+    var unique_offers: Dictionary = {}
+    for id in offers_a:
+        unique_offers[id] = true
+        check(not boons.info(id).is_empty(), "Every generated offer has a description")
+    check(unique_offers.size() == 3, "Abyss offers never repeat within a choice")
+    check(boons.offers(913, 0).is_empty() and boons.offers(913, 6).is_empty(), "Abyss catalog rejects invalid days")
+    check(boons.offers(913, 2, 99).size() == boons.BOONS.size(), "Abyss offers cannot exceed catalog")
     print("TOPDOWN SMOKE RESULT: ", "PASS" if failures == 0 else str(failures) + " FAILURES")
     quit(0 if failures == 0 else 1)
