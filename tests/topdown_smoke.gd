@@ -2414,7 +2414,7 @@ func run_tests() -> void:
         for unit in escort_game.enemies:
             if str(unit.get("role", "")) == "captain":
                 escort_captain_lane = int(unit["lane"])
-            if str(unit.get("role", "")) == "healer":
+            if str(unit.get("role", "")) == "healer" and escort_healer_lane == -2:
                 escort_healer_lane = int(unit["lane"])
         check(escort_captain_lane >= 0 and escort_captain_lane == escort_healer_lane, "Late siege commander escorts the healer route")
         escort_game.queue_free()
