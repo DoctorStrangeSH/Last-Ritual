@@ -135,13 +135,17 @@ jobs:
           set -euo pipefail
           timeout 120s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --script res://tools/export_necro_layers.gd
           preview_dir="build/art-preview/necro"
-          test "$(find "$preview_dir" -maxdepth 1 -type f -name '*.png' | wc -l)" -eq 11
+          test "$(find "$preview_dir" -maxdepth 1 -type f -name '*.png' | wc -l)" -eq 12
           (
             cd "$preview_dir"
             sha256sum -- *.png > SHA256SUMS.txt
-            printf '%s\n'               'Last Ritual | Soul Altar | PNG candidates (NOT production-ready)'               "Git commit: $GITHUB_SHA"               '11 images: 3 base, 3 weapon, 3 assembled, 2 specialization previews.'               'Original editable SVG files are tracked under assets/spire/towers/necro/source/.'               'These previews are not used by runtime; require art approval.'               > README.txt
+            printf '%s\n'               'Last Ritual | Soul Altar | PNG candidates (NOT production-ready)'               "Git commit: $GITHUB_SHA"               '11 separate PNGs: 3 base, 3 weapon, 3 assembled, 2 specialization previews.' \
+              'contact_sheet.png: one 432x576 visual gallery, rows 1-3 correspond to levels 1-3.' \
+              'Columns: base, weapon, assembled. Row 4: Reaper, Legion (third empty).'                'Original editable SVG files are tracked under assets/spire/towers/necro/source/.'               'These previews are not used by runtime; require art approval.'               > README.txt
             zip -q -9 "$OLDPWD/build/windows/SoulAltar-art-preview.zip" ./*.png README.txt SHA256SUMS.txt
           )
           test -s build/windows/SoulAltar-art-preview.zip
           gh release upload windows-preview build/windows/SoulAltar-art-preview.zip --clobber
+          gh release upload windows-preview "$preview_dir/contact_sheet.png" --clobber
+          echo "Gallery: https://github.com/$GITHUB_REPOSITORY/releases/download/windows-preview/contact_sheet.png"
           echo "Preview: https://github.com/$GITHUB_REPOSITORY/releases/download/windows-preview/SoulAltar-art-preview.zip"

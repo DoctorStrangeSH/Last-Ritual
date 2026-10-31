@@ -49,7 +49,9 @@ func run_export() -> int:
                 if not save_checked_png(specialized, output_absolute.path_join("specialization_%s_level_3.png" % branch)):
                     return 1
                 total += 1
-    print("NECRO SOURCE PREVIEW: exported %d candidate PNGs; runtime and saves unchanged" % total)
+    if not export_contact_sheet(output_absolute):
+        return 1
+    print("NECRO SOURCE PREVIEW: exported %d candidate PNGs + contact sheet; runtime and saves unchanged" % total)
     return 0
 
 func read_svg(file_name: String) -> Image:
@@ -90,4 +92,45 @@ func save_checked_png(image: Image, path: String) -> bool:
         push_error("Invalid reloaded PNG: %s" % path)
         return false
     print("OK source PNG candidate: %s" % path)
+    return true
+
+## Contact sheet (not a source sprite sheet): rows 1–3 = level, columns
+## = base, weapon, assembled. Last row = Reaper, Legion. Source still SVG.
+func export_contact_sheet(output_absolute: String) -> bool:
+    const PITCH := 144
+    const PAD := 8
+    var gallery: Image = Image.create_empty(PITCH * 3, PITCH * 4, false, Image.FORMAT_RGBA8)
+    gallery.fill(Color("#171821"))
+    for row in range(4):
+        for col in range(3):
+            var background: Color = Color("#30313c") if (row + col) % 2 == 0 else Color("#242530")
+            gallery.fill_rect(Rect2i(col * PITCH + 2, row * PITCH + 2, 140, 140), background)
+            for gy in range(16):
+                for gx in range(16):
+                    if (gx + gy) % 2 == 0:
+                        gallery.fill_rect(Rect2i(col * PITCH + PAD + gx * 8, row * PITCH + PAD + gy * 8, 8, 8), Color("#383a44"))
+    var names: Array[String] = []
+    for level in range(1, 4):
+        names.append("base_level_%d.png" % level)
+        names.append("weapon_level_%d.png" % level)
+        names.append("assembled_level_%d.png" % level)
+    names.append("specialization_siege_level_3.png")
+    names.append("specialization_swarm_level_3.png")
+    for index in range(names.size()):
+        var tile: Image = Image.load_from_file(output_absolute.path_join(names[index]))
+        if tile == null or tile.get_size() != SIZE:
+            push_error("Contact sheet missing/invalid tile %s" % names[index])
+            return false
+        var col: int = index % 3
+        var row: int = index / 3
+        gallery.blend_rect(tile, Rect2i(Vector2i.ZERO, SIZE), Vector2i(col * PITCH + PAD, row * PITCH + PAD))
+    var sheet_path: String = output_absolute.path_join("contact_sheet.png")
+    if gallery.save_png(sheet_path) != OK:
+        push_error("Cannot save contact sheet")
+        return false
+    var again: Image = Image.load_from_file(sheet_path)
+    if again == null or again.get_size() != Vector2i(PITCH * 3, PITCH * 4):
+        push_error("Invalid saved contact sheet")
+        return false
+    print("OK necro art contact sheet: %s" % sheet_path)
     return true
