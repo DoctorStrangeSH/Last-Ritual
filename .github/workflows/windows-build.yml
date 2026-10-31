@@ -1,0 +1,124 @@
+name: Godot checks and Windows preview
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'project.godot'
+      - 'export_presets.cfg'
+      - 'scenes/**'
+      - 'assets/**'
+      - 'scripts/**'
+      - 'tests/**'
+      - 'tools/**'
+      - 'docs/**'
+      - 'README.md'
+      - 'AGENTS.md'
+      - '.github/workflows/windows-build.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'project.godot'
+      - 'export_presets.cfg'
+      - 'scenes/**'
+      - 'assets/**'
+      - 'scripts/**'
+      - 'tests/**'
+      - 'tools/**'
+      - 'docs/**'
+      - 'README.md'
+      - 'AGENTS.md'
+      - '.github/workflows/windows-build.yml'
+
+# New commits supersede obsolete runs of the same PR/branch.
+concurrency:
+  group: godot-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache Godot 4.4.1 editor
+        id: editor-cache
+        uses: actions/cache@v4
+        with:
+          path: Godot_v4.4.1-stable_linux.x86_64
+          key: godot-4.4.1-linux-x86_64-editor-v1
+      - name: Install Godot 4.4.1 editor
+        if: steps.editor-cache.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          wget -q https://github.com/godotengine/godot/releases/download/4.4.1-stable/Godot_v4.4.1-stable_linux.x86_64.zip
+          unzip -q Godot_v4.4.1-stable_linux.x86_64.zip
+          chmod +x Godot_v4.4.1-stable_linux.x86_64
+      - name: Validate PNG assets before Godot import
+        run: python3 tools/verify_png_assets.py
+      - name: Import assets and check scripts
+        run: timeout 120s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --editor --quit
+      - name: Run top-down smoke tests
+        run: timeout 120s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --script res://tests/topdown_smoke.gd
+
+  windows-preview:
+    # Export templates and EXE are never downloaded/built for PRs.
+    if: github.event_name != 'pull_request'
+    needs: checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache Godot 4.4.1 editor
+        id: editor-cache
+        uses: actions/cache@v4
+        with:
+          path: Godot_v4.4.1-stable_linux.x86_64
+          key: godot-4.4.1-linux-x86_64-editor-v1
+      - name: Install Godot 4.4.1 editor
+        if: steps.editor-cache.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          wget -q https://github.com/godotengine/godot/releases/download/4.4.1-stable/Godot_v4.4.1-stable_linux.x86_64.zip
+          unzip -q Godot_v4.4.1-stable_linux.x86_64.zip
+          chmod +x Godot_v4.4.1-stable_linux.x86_64
+      - name: Cache Windows export templates
+        id: export-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/godot/export_templates/4.4.1.stable
+          key: godot-4.4.1-windows-export-templates-v1
+      - name: Install Windows export templates
+        if: steps.export-cache.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          wget -q https://github.com/godotengine/godot/releases/download/4.4.1-stable/Godot_v4.4.1-stable_export_templates.tpz
+          unzip -q Godot_v4.4.1-stable_export_templates.tpz
+          mkdir -p ~/.local/share/godot/export_templates/4.4.1.stable
+          cp templates/* ~/.local/share/godot/export_templates/4.4.1.stable/
+      - name: Export Windows EXE
+        run: |
+          mkdir -p build/windows
+          timeout 180s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --export-release "Windows Desktop" build/windows/LastRitual.exe
+          test -s build/windows/LastRitual.exe
+      # Reuse the same rolling Release asset: no Actions artifact storage.
+      - name: Publish Windows EXE to GitHub Releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if gh release view windows-preview >/dev/null 2>&1; then
+            gh release upload windows-preview build/windows/LastRitual.exe --clobber
+          else
+            gh release create windows-preview build/windows/LastRitual.exe \
+              --target "$GITHUB_SHA" \
+              --title "Last Ritual — Windows preview" \
+              --notes "Тестовая Windows-сборка из main; заменяется при следующей успешной сборке." \
+              --prerelease
+          fi
+          echo "Download: https://github.com/$GITHUB_REPOSITORY/releases/download/windows-preview/LastRitual.exe"
