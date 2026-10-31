@@ -20,3 +20,17 @@
 6. Создавать изменения в отдельных PR; не считать художественную концепцию уже реализованной в игре.
 
 Отдельные SVG иконки (12 штук) **уже в GitHub** по путям `assets/spire/towers/*/specializations/{siege,swarm}/icon.svg`. Остальные большие исходники в момент этого коммита доступны через ZIP в Library.
+
+## Importer: проверка и восстановление без потери качества
+
+Скрипт `tools/import_source_art.py` — безопасное восстановление оригинальных PNG из архива. Он сверяет точные SHA-256 и размер каждого файла с репозиторным манифестом, проверяет ZIP CRC и PNG signature, запрещает небезопасные пути и не перезаписывает уже изменённые оригиналы.
+
+```bash
+python tools/import_source_art.py LastRitual_Art_Source_2026-10-31.zip --verify-only
+python tools/import_source_art.py LastRitual_Art_Source_2026-10-31.zip
+git add docs/art/source/concepts/
+git commit -m "Import unchanged original concept PNGs"
+```
+
+Если ZIP не совпадает с зафиксированными хешами, скрипт завершится ошибкой до записи файлов. В GitHub Actions также выполняются независимые тесты самого импортёра. Архив не нужно сохранять повторно внутри git, достаточно 4 PNG и манифеста.
+
