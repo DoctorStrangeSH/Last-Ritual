@@ -2533,5 +2533,20 @@ func run_tests() -> void:
     check(specialization_atlas != null and specialization_atlas.get_width() == 256 and specialization_atlas.get_height() == 32, "Specialization icons atlas loads with eight 32px columns")
     var spire_atlas: Texture2D = load("res://assets/spire/towers_atlas.png")
     check(spire_atlas != null and spire_atlas.get_width() == 256 and spire_atlas.get_height() == 256, "Spire tower atlas loads as four schools by four frames")
+    var tower_visuals = load("res://scripts/td/td_tower_visuals.gd")
+    check(tower_visuals != null, "Layered tower visual mapping loads")
+    if tower_visuals != null:
+        for kind in ["bone", "fire", "necro", "frost"]:
+            for level in range(1, 4):
+                var base_path: String = tower_visuals.path_for(kind, level, "base")
+                var weapon_path: String = tower_visuals.path_for(kind, level, "weapon")
+                var base_image: Texture2D = load(base_path)
+                var weapon_image: Texture2D = load(weapon_path)
+                check(base_image != null and weapon_image != null, "Layered %s tower level %d loads both textures" % [kind, level])
+                if weapon_image != null:
+                    var region: Rect2 = tower_visuals.weapon_frame_region(kind)
+                    check(region.size.x <= weapon_image.get_width() and region.size.y <= weapon_image.get_height(), "Weapon frame region fits source sprite sheet")
+        check(tower_visuals.path_for("invalid", 1, "base") == "", "Unknown tower does not resolve to Foozle artwork")
+        check(tower_visuals.path_for("bone", 4, "base") == "", "Invalid upgrade level does not resolve to Foozle artwork")
     print("TOPDOWN SMOKE RESULT: ", "PASS" if failures == 0 else str(failures) + " FAILURES")
     quit(0 if failures == 0 else 1)
