@@ -2405,10 +2405,10 @@ func run_tests() -> void:
         root.add_child(escort_game)
         escort_game.siege_day = 5
         # The captain joins the healer's lane in late-day escorted formations.
-        var escort_budget: Dictionary = escort_game.wave_enemy_budget(6)
+        var escort_budget: Dictionary = escort_game.wave_enemy_budget(5)
         check(int(escort_budget["captain"]) > 0 and int(escort_budget["support"]) > 0, "Final wave has both commander and support")
-        escort_game.wave_number = 5
-        check(escort_game.start_wave(), "Final escort formation starts")
+        escort_game.wave_number = 4
+        check(escort_game.start_wave(), "Late siege escort formation starts")
         var escort_captain_lane := -1
         var escort_healer_lane := -2
         for unit in escort_game.enemies:
