@@ -2434,5 +2434,15 @@ func run_tests() -> void:
         scout_game.wave_number = scout_game.SIEGE_WAVES
         check(scout_game.next_wave_scouting().is_empty(), "No scouting after final wave")
         scout_game.queue_free()
+    if boon_scene != null:
+        var tip_game = boon_scene.instantiate()
+        root.add_child(tip_game)
+        tip_game.siege_day = 4
+        check(tip_game.scouting_counter_tip({"boss": 1}).begins_with("БОСС"), "Boss scouting prioritizes the biggest threat")
+        check(tip_game.scouting_counter_tip({"captain": 1, "brute": 4}).begins_with("КОМАНДИР"), "Commander takes precedence over armor")
+        check(tip_game.scouting_counter_tip({"brute": 3}).begins_with("БРОНЯ"), "Late-day armor suggests fire towers")
+        check(tip_game.scouting_counter_tip({"runner": 3}).begins_with("РАЗВЕДЧИКИ"), "Runners suggest frost towers")
+        check(tip_game.scouting_counter_tip({}).is_empty(), "No advice after final wave")
+        tip_game.queue_free()
     print("TOPDOWN SMOKE RESULT: ", "PASS" if failures == 0 else str(failures) + " FAILURES")
     quit(0 if failures == 0 else 1)
