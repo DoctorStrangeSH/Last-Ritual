@@ -131,8 +131,12 @@ func upcoming_wave_summary() -> String:
         return "ВСЕ ВОЛНЫ ОТБИТЫ"
     if siege_day == 2:
         return "ДЕНЬ 2: НАЛЁТ БЕГУНОВ / ВОЛНА %d" % (wave_number + 1)
-    if siege_day >= 3:
+    if siege_day == 3:
         return "ДЕНЬ 3: ТЯЖЁЛАЯ ОСАДА / ВОЛНА %d" % (wave_number + 1)
+    if siege_day == 4:
+        return "ДЕНЬ 4: ОБХОД И ЛЕКАРИ / ВОЛНА %d" % (wave_number + 1)
+    if siege_day >= 5:
+        return "ДЕНЬ 5: ПОСЛЕДНИЙ ШТУРМ / ВОЛНА %d" % (wave_number + 1)
     match wave_number + 1:
         1:
             return "РАЗВЕДКА: МЕДЛЕННАЯ ПЕХОТА"
@@ -168,7 +172,13 @@ func siege_enemy_role(wave: int, index: int) -> String:
         return "runner"
     if siege_day == 2 and index % 2 == 0:
         return "runner"
-    if siege_day >= 3 and index % 2 == 0:
+    if siege_day == 4:
+        # Flankers alternate with an armored center, forcing split coverage.
+        return "runner" if index % 3 == 0 else ("brute" if index % 3 == 1 else "grunt")
+    if siege_day >= 5:
+        # Final day: heavily armored vanguard backed by fast breakthroughs.
+        return "brute" if index % 4 < 2 else ("runner" if index % 4 == 2 else "grunt")
+    if siege_day == 3 and index % 2 == 0:
         return "brute"
     # Late siege formations deliberately change the tactical target mix.
     # Preserve difficulty-specific day-one encounters and daily themes.
@@ -195,7 +205,11 @@ func siege_spawn_delay(wave: int, index: int, role: String) -> float:
     # more slowly. The first day keeps its existing beginner-friendly timing.
     if siege_day == 2 and role == "runner":
         return base_delay * 0.5
-    if siege_day >= 3 and role == "brute":
+    if siege_day == 4:
+        return base_delay * 0.65 if role == "runner" else (base_delay + 0.45 if role == "brute" else base_delay)
+    if siege_day >= 5:
+        return base_delay * 0.75 if role == "runner" else base_delay * 0.90
+    if siege_day == 3 and role == "brute":
         return base_delay + 0.8
     return base_delay
 
@@ -241,9 +255,9 @@ func wave_enemy_budget(next_wave: int) -> Dictionary:
     # Deterministic forecast shared with regression tests and future UI.
     if next_wave < 1 or next_wave > SIEGE_WAVES:
         return {}
-    var ordinary: int = next_wave + 2 + (1 if siege_day >= 2 else 0)
-    var support: int = 1 if next_wave >= 2 else 0
-    var captain: int = 1 if next_wave == 5 else 0
+    var ordinary: int = next_wave + 2 + (1 if siege_day >= 2 else 0) + (1 if siege_day >= 4 else 0) + (1 if siege_day >= 5 and next_wave >= 4 else 0)
+    var support: int = (2 if siege_day >= 4 and next_wave >= 3 else 1) if next_wave >= 2 else 0
+    var captain: int = 1 if next_wave == 5 or (siege_day >= 5 and next_wave == 4) else 0
     var boss: int = 1 if next_wave == SIEGE_WAVES else 0
     return {"ordinary": ordinary, "support": support, "captain": captain, "boss": boss, "total": ordinary + support + captain + boss}
 
@@ -261,19 +275,24 @@ func start_wave() -> bool:
     next_wave_extra_hp = 0
     for i in range(count):
         var role: String = siege_enemy_role(wave_number, i)
-        var hp := ((7 + wave_number) if role == "brute" else (2 + wave_number if role == "runner" else 3 + wave_number)) + difficulty * 2 + (3 if siege_day >= 3 else 0) + encounter_extra_hp
+        var day_hp: int = maxi(0, siege_day - 2) * 3
+        var hp := ((7 + wave_number) if role == "brute" else (2 + wave_number if role == "runner" else 3 + wave_number)) + difficulty * 2 + day_hp + encounter_extra_hp
         var speed := (135.0 if role == "runner" else (55.0 if role == "brute" else 85.0)) * (1.0 + 0.15 * difficulty)
         enemies.append({"lane": i % paths.size(), "pos": paths[i % paths.size()][0], "waypoint": 1, "hp": hp, "max_hp": hp, "speed": speed, "role": role, "delay": siege_spawn_delay(wave_number, i, role)})
         enemies_spawned += 1
-    if wave_number >= 2:
-        var support_hp: int = 8 + wave_number * 2 + difficulty * 2
-        enemies.append({"lane": 1, "pos": paths[1][0], "waypoint": 1, "hp": support_hp, "max_hp": support_hp, "speed": 62.0, "role": "healer", "delay": 1.5, "heal_timer": 1.0})
+    var budget: Dictionary = wave_enemy_budget(wave_number)
+    for support_index in range(int(budget["support"])):
+        var lane: int = (support_index + 1) % paths.size()
+        var support_hp: int = 8 + wave_number * 2 + difficulty * 2 + maxi(0, siege_day - 3) * 2
+        enemies.append({"lane": lane, "pos": paths[lane][0], "waypoint": 1, "hp": support_hp, "max_hp": support_hp, "speed": 62.0, "role": "healer", "delay": 1.5 + support_index * 0.8, "heal_timer": 1.0})
         enemies_spawned += 1
-    if wave_number == 5:
-        enemies.append({"lane": 0, "pos": paths[0][0], "waypoint": 1, "hp": 24 + difficulty * 6, "max_hp": 24 + difficulty * 6, "speed": 65.0, "role": "captain", "delay": 2.0})
+    if int(budget["captain"]) > 0:
+        var captain_hp: int = 24 + difficulty * 6 + maxi(0, siege_day - 3) * 6
+        enemies.append({"lane": 0, "pos": paths[0][0], "waypoint": 1, "hp": captain_hp, "max_hp": captain_hp, "speed": 65.0, "role": "captain", "delay": 2.0})
         enemies_spawned += 1
-    if wave_number == SIEGE_WAVES:
-        enemies.append({"lane": 0, "pos": paths[0][0], "waypoint": 1, "hp": 55 + difficulty * 15 + (20 if siege_day >= 3 else 0), "speed": 28.0 * (1.0 + 0.15 * difficulty), "role": "boss", "delay": 3.0, "boss_charge": 0.0, "boss_warning": false, "interrupt_hits": 0})
+    if int(budget["boss"]) > 0:
+        var boss_hp: int = 55 + difficulty * 15 + (20 if siege_day >= 3 else 0) + maxi(0, siege_day - 3) * 17
+        enemies.append({"lane": 0, "pos": paths[0][0], "waypoint": 1, "hp": boss_hp, "max_hp": boss_hp, "speed": 28.0 * (1.0 + 0.15 * difficulty), "role": "boss", "delay": 3.0, "boss_charge": 0.0, "boss_warning": false, "interrupt_hits": 0})
         enemies_spawned += 1
     queue_redraw()
     return true
@@ -1299,7 +1318,7 @@ func _draw() -> void:
                     draw_arc(enemy["pos"], 45.0, -PI / 2.0, -PI / 2.0 + TAU * warning_progress, 48, Color("#ffde80"), 6.0)
                     draw_string(ThemeDB.fallback_font, enemy["pos"] + Vector2(-55, -61), "УДАР ПО АЛТАРЮ", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#ffde80"))
                     draw_string(ThemeDB.fallback_font, enemy["pos"] + Vector2(-53, 61), "ГЕРОЙ: 2 УДАРА (%d/2)" % int(enemy.get("interrupt_hits", 0)), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#f6e6c4"))
-                draw_rect(Rect2(enemy["pos"] + Vector2(-28.0, -43.0), Vector2(56.0 * clampf(float(enemy["hp"]) / float(55 + difficulty * 15 + (20 if siege_day >= 3 else 0)), 0.0, 1.0), 5.0)), Color("#df7b94"))
+                draw_rect(Rect2(enemy["pos"] + Vector2(-28.0, -43.0), Vector2(56.0 * clampf(float(enemy["hp"]) / float(enemy.get("max_hp", 55 + difficulty * 15 + (20 if siege_day >= 3 else 0))), 0.0, 1.0), 5.0)), Color("#df7b94"))
             else:
                 draw_enemy_figure(enemy)
     if boss_feedback_time > 0.0:
