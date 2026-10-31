@@ -2570,5 +2570,15 @@ func run_tests() -> void:
     var splash_targets: Array = fire_splash.add_splash_targets([splash_main], [splash_main, splash_close, splash_far, splash_delayed], splash_main)
     check(splash_targets.size() == 2 and splash_targets.has(splash_close), "Fire splash hits nearby enemy without distant or delayed spawns")
     check(fire_splash.add_splash_targets([splash_main, splash_close], [splash_main, splash_close], splash_main).size() == 2, "Fire splash never damages same enemy twice")
+    var specialization_icons = load("res://scripts/td/td_specialization_icons.gd")
+    for tower_id in ["bone", "fire", "necro", "frost"]:
+        for branch_id in ["siege", "swarm"]:
+            var icon_path: String = specialization_icons.path_for(tower_id, branch_id)
+            var icon_texture: Texture2D = load(icon_path)
+            check(icon_texture != null, "Specialization SVG imports for %s/%s" % [tower_id, branch_id])
+            if icon_texture != null:
+                check(icon_texture.get_width() == 64 and icon_texture.get_height() == 64, "Specialization icon is 64x64")
+    check(specialization_icons.path_for("invalid", "siege") == "", "Invalid tower has no specialization badge")
+    check(specialization_icons.path_for("fire", "invalid") == "", "Invalid specialization has no badge")
     print("TOPDOWN SMOKE RESULT: ", "PASS" if failures == 0 else str(failures) + " FAILURES")
     quit(0 if failures == 0 else 1)

@@ -5,6 +5,7 @@ const TD_SYNERGY_RULES = preload("res://scripts/td/td_synergy_rules.gd")
 const TD_TOWER_STATS = preload("res://scripts/td/td_tower_stats.gd")
 const SPIRE_TOWER_ATLAS = preload("res://assets/spire/towers_atlas.png")
 const TOWER_VISUALS = preload("res://scripts/td/td_tower_visuals.gd")
+const TD_SPECIALIZATION_ICONS = preload("res://scripts/td/td_specialization_icons.gd")
 var tower_texture_cache: Dictionary = {}
 # Short visual-only build/sell transitions; gameplay is updated immediately.
 var tower_visual_transitions: Array[Dictionary] = []
@@ -1588,6 +1589,9 @@ func _draw() -> void:
             draw_tower_figure(pos, str(slots[i]["tower"]), int(slots[i]["level"]))
             if slots[i].get("specialization", "") != "":
                 draw_arc(pos, 28.0, 0.0, TAU, 24, Color("#ffdc91") if slots[i]["specialization"] == "siege" else Color("#86e0bd"), 3.0)
+                var badge: Texture2D = cached_tower_texture(TD_SPECIALIZATION_ICONS.path_for(str(slots[i]["tower"]), str(slots[i]["specialization"])))
+                if badge != null:
+                    draw_texture_rect(badge, Rect2(pos + Vector2(16, -43), Vector2(22, 22)), false)
         if not occupied:
             draw_line(pos + Vector2(-8, 0), pos + Vector2(8, 0), Color("#9fc9b9"), 2.0)
             draw_line(pos + Vector2(0, -8), pos + Vector2(0, 8), Color("#9fc9b9"), 2.0)
@@ -1681,7 +1685,10 @@ func _draw() -> void:
             var left: float = card.position.x
             draw_rect(card, Color("#263744") if index == 0 else Color("#24433f"))
             draw_rect(card, Color("#dfc48a") if index == 0 else Color("#91d9c5"), false, 1.5)
-            draw_fitted_label(Vector2(left + 10, 297), str(details["title"]), 16, 270.0, Color("#f9e5bb"))
+            var icon: Texture2D = cached_tower_texture(TD_SPECIALIZATION_ICONS.path_for(kind, path))
+            if icon != null:
+                draw_texture_rect(icon, Rect2(Vector2(left + 12, 264), Vector2(42, 42)), false)
+            draw_fitted_label(Vector2(left + 62, 297), str(details["title"]), 16, 216.0, Color("#f9e5bb"))
             draw_fitted_label(Vector2(left + 10, 325), str(details["line1"]), 14, 270.0, Color.WHITE)
             draw_fitted_label(Vector2(left + 10, 350), str(details["line2"]), 13, 270.0, Color("#c6d5de"))
             draw_fitted_label(Vector2(left + 10, 377), "УРОН: %d  •  КД: %.2f с" % [int(details["damage"]), float(details["cooldown"])], 14, 270.0, Color("#aedac9"))
