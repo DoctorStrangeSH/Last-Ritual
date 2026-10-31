@@ -2294,6 +2294,7 @@ func run_tests() -> void:
         var ember_snapshot: Dictionary = ember_game.export_fortress_state()
         var ember_next = boon_scene.instantiate()
         root.add_child(ember_next)
+        ember_next.set_fortress_map_seed(ember_game.fortress_map_seed)
         check(ember_next.import_fortress_state(ember_snapshot) and ember_next.ember_heart_claimed, "Ember Heart survives day transition")
         ember_snapshot.erase("ember_heart_claimed")
         check(ember_next.import_fortress_state(ember_snapshot) and not ember_next.ember_heart_claimed, "Old fortress snapshots load without Ember Heart")
