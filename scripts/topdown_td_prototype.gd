@@ -1251,7 +1251,10 @@ func tower_hover_panel_rect(point: Vector2) -> Rect2:
     var x: float = point.x + 30.0
     if x + PANEL_SIZE.x > 1140.0:
         x = point.x - PANEL_SIZE.x - 30.0
-    var y: float = clampf(point.y - 35.0, 100func draw_hovered_tower_info(point: Vector2) -> void:
+    var y: float = clampf(point.y - 35.0, 100.0, 530.0 - PANEL_SIZE.y)
+    return Rect2(Vector2(clampf(x, 12.0, 1140.0 - PANEL_SIZE.x), y), PANEL_SIZE)
+
+func draw_hovered_tower_info(point: Vector2) -> void:
     var id: int = hovered_tower_slot(point)
     if id < 0:
         return
