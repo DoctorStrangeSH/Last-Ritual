@@ -672,7 +672,10 @@ func restart_defense() -> void:
     queue_redraw()
 
 func _process(delta: float) -> void:
+    # Keep Foozle tower frames advancing even while the defense is paused or won.
     if help_visible or defense_state != "playing":
+        if not slots.is_empty():
+            queue_redraw()
         return
     if wave_number == SIEGE_WAVES and enemies.is_empty():
         defense_state = "won"
