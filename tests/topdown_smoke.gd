@@ -561,6 +561,7 @@ func run_tests() -> void:
                 budget_game.enemies.clear()
                 check(budget_game.start_wave(), "Budgeted wave starts on day %d wave %d" % [day_index, wave_index])
                 check(budget_game.enemies.size() == int(budget["total"]), "Actual spawns match budget on day %d wave %d" % [day_index, wave_index])
+        budget_game.wave_number = 0
         budget_game.siege_day = 4
         check("ДЕНЬ 4" in budget_game.upcoming_wave_summary(), "Fourth day has its own tactical forecast")
         check(budget_game.siege_enemy_role(2, 0) == "runner" and budget_game.siege_enemy_role(2, 1) == "brute", "Fourth day mixes flankers and armored troops")
@@ -1744,7 +1745,7 @@ func run_tests() -> void:
         marathon.finish_phase(true)
         check(marathon.phase == "victory" and marathon.completed_phases == 10, "Fifth night finishes ten-phase campaign")
         check(marathon.meta.runs_started == 1 and marathon.meta.runs_won == 1 and marathon.meta.runs_lost == 0, "One completed run counts as exactly one victory")
-        check(marathon.meta.phases_cleared == 6, "All six phases count exactly once")
+        check(marathon.meta.phases_cleared == 10, "All ten campaign phases count exactly once")
         var final_fragments: int = marathon.meta.fragments
         marathon.finish_phase(true)
         check(marathon.meta.fragments == final_fragments and marathon.meta.runs_won == 1, "Victory cannot award fragments twice")
