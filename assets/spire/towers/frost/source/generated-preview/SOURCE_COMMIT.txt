@@ -1,0 +1,3 @@
+Experimental Frost Obelisk previews; NOT approved production art.
+Source commit: 88932a1cf8d816e405a82718abdff57210959ee2
+Godot: 4.4.1
