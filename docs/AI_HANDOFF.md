@@ -1,3 +1,5 @@
+> **31.10.2026 — PR #263 (visual-only):** Godot existing gameplay IDs remain `bone/fire/necro/frost` for save compatibility. Layered renderer maps them to original Foozle folders `ballista/fire/pulse/spark`; selects base and weapon per upgrade level 1–3; shows static pose (first sprite sheet cell) instead of endless atlas cycling. Original sources are preserved in assets/spire/towers. Projectile/impact are not wired yet. New necro/frost additions remain pending; old IDs are not renamed in runtime. Exact-head CI and Windows playtest needed before claiming success.
+
 ## 31.10.2026 — audit of user-uploaded tower PNGs
 
 Four original uploaded Foozle tower sets in PR #262 inspected by their actual sprite sheets:

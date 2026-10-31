@@ -1,3 +1,11 @@
+## 31.10.2026 — слоёные спрайты башен (PR #263)
+- [x] Четыре существующих игровых ID используют загруженные исходные Foozle PNG: `bone→ballista`, `fire→fire`, `necro→pulse`, `frost→spark` (только визуальное соответствие).
+- [x] Основание и оружие выбираются по уровню 1–3; убран непрерывный цикл из четырёх кадров старого атласа.
+- [x] Добавлены тесты доступности каждого base/weapon и границ первого кадра weapon.
+- [ ] Проверить exact-head CI, затем ручную проверку в Windows.
+- [ ] Новые самостоятельные necro/frost: рисунки нужно подготовить и интегрировать с отдельными игровыми ID и совместимостью сохранений.
+- [ ] Внедрить снаряды и impacts, визуальные специализации, огненную AoE механику отдельными безопасными PR.
+
 ## 31.10.2026 — PR #260 и следующий визуальный этап\n- [x] PR #260 merged (`113d759`): добавлен каталог бесплатных ассетов и лицензионные правила.\n- [x] Exact-head CI PR #260 success; main CI после merge #260 success (`41200309274`).\n- [x] PR #259 merged (`629f1f8`): сетки листов Foozle и генератор contact sheets.\n- [ ] Извлечь оригинальные BuilderPack PNG в репозиторий с лицензией/Readme и проверить в Godot.\n- [ ] Подтвердить реальные последовательности и FPS строительства/разрушения; геометрические ячейки не означают одну анимацию.\n- [ ] Протестировать Screaming Brain Top Down Dungeon Pack и Kenney dungeon packs в отдельной Godot preview-сцене, не меняя основной стиль без сравнения.\n- [ ] Добавить подходящие CC0 враги/VFX только после проверки размера, перспективы и лицензии.\n\n## 31.10.2026 — Foozle analysis and free asset sources
 - [x] PR #259 merged (`629f1f8`): verified Foozle BuilderPack sheet geometry and added labeled contact-sheet analysis tool. Exact-head PR CI passed.
 - [ ] Main CI after #259: run `41200095541` queued at last check.

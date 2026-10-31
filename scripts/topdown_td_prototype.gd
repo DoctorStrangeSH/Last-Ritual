@@ -4,6 +4,8 @@ const SFX_SCRIPT = preload("res://scripts/procedural_sfx.gd")
 const TD_SYNERGY_RULES = preload("res://scripts/td/td_synergy_rules.gd")
 const TD_TOWER_STATS = preload("res://scripts/td/td_tower_stats.gd")
 const SPIRE_TOWER_ATLAS = preload("res://assets/spire/towers_atlas.png")
+const TOWER_VISUALS = preload("res://scripts/td/td_tower_visuals.gd")
+var tower_texture_cache: Dictionary = {}
 # Short visual-only build/sell transitions; gameplay is updated immediately.
 var tower_visual_transitions: Array[Dictionary] = []
 const TOWER_TRANSITION_DURATION := 0.42
@@ -1317,12 +1319,21 @@ func draw_tower_transitions() -> void:
         draw_arc(pos, radius, 0.0, TAU, 32, color, 3.0)
         draw_circle(pos + Vector2(0, -23.0 * (1.0 - progress)), 3.5, color)
 
+func cached_tower_texture(path: String) -> Texture2D:
+    if path.is_empty():
+        return null
+    if not tower_texture_cache.has(path):
+        tower_texture_cache[path] = load(path) as Texture2D
+    return tower_texture_cache[path]
+
 func draw_tower_figure(pos: Vector2, kind: String, level: int) -> void:
-    var atlas_row: int = {"bone": 0, "fire": 1, "necro": 2, "frost": 3}.get(kind, -1)
-    if atlas_row >= 0:
-        var frame_index: int = int(Time.get_ticks_msec() / 160) % 4
-        var region := Rect2(float(frame_index * 64), float(atlas_row * 64), 64.0, 64.0)
-        draw_texture_rect_region(SPIRE_TOWER_ATLAS, Rect2(pos + Vector2(-24, -34), Vector2(48, 48)), region, Color.WHITE)
+    # A tower is base + weapon. Show the first, stable weapon pose rather than
+    # endlessly cycling sprite-sheet cells as if they were building frames.
+    var base_texture: Texture2D = cached_tower_texture(TOWER_VISUALS.path_for(kind, level, "base"))
+    var weapon_texture: Texture2D = cached_tower_texture(TOWER_VISUALS.path_for(kind, level, "weapon"))
+    if base_texture != null and weapon_texture != null:
+        draw_texture_rect(base_texture, Rect2(pos + Vector2(-21, -49), Vector2(42, 68)), false)
+        draw_texture_rect_region(weapon_texture, Rect2(pos + Vector2(-22, -38), Vector2(44, 44)), TOWER_VISUALS.weapon_frame_region(kind))
         return
     # The stone pedestal stays neutral; each weapon has its own silhouette.
     draw_rect(Rect2(pos + Vector2(-18, -19), Vector2(36, 33)), Color("#18242b"))
