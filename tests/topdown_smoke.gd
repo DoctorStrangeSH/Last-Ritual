@@ -2294,5 +2294,17 @@ func run_tests() -> void:
         burst_cap.restart_defense()
         check(burst_cap.ember_bursts.is_empty(), "Ember VFX reset with defense")
         burst_cap.queue_free()
+    if boon_scene != null:
+        var council_rng_game = boon_scene.instantiate()
+        root.add_child(council_rng_game)
+        council_rng_game.set_fortress_map_seed(1234)
+        council_rng_game.siege_day = 4
+        var council_a: Array[String] = council_rng_game.council_offers()
+        check(council_a == council_rng_game.council_offers(), "Council card order is stable for a run seed and day")
+        var council_unique: Dictionary = {}
+        for offer in council_a:
+            council_unique[offer] = true
+        check(council_unique.size() == 3 and council_unique.has("raid") and council_unique.has("repair") and council_unique.has("safe"), "Council exposes only three implemented rewards, no duplicates")
+        council_rng_game.queue_free()
     print("TOPDOWN SMOKE RESULT: ", "PASS" if failures == 0 else str(failures) + " FAILURES")
     quit(0 if failures == 0 else 1)

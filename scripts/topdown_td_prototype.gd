@@ -225,6 +225,19 @@ func siege_spawn_delay(wave: int, index: int, role: String) -> float:
 func can_choose_interwave_event() -> bool:
     return defense_state == "playing" and wave_number == 3 and enemies.is_empty() and interwave_choice == "" and not specialization_open and not help_visible
 
+func council_offers() -> Array[String]:
+    # Three existing playable choices. Shuffle their positions per run/day,
+    # but never expose catalog-only boons before combat logic exists.
+    var choices: Array[String] = ["raid", "repair", "safe"]
+    var rng := RandomNumberGenerator.new()
+    rng.seed = (fortress_map_seed & 0x7fffffff) * 101 + siege_day * 7919 + 47
+    for i in range(choices.size() - 1, 0, -1):
+        var j: int = rng.randi_range(0, i)
+        var old: String = choices[i]
+        choices[i] = choices[j]
+        choices[j] = old
+    return choices
+
 func choose_interwave_event(choice: String) -> bool:
     if not can_choose_interwave_event() or not ["raid", "repair", "safe"].has(choice):
         return false
@@ -934,7 +947,7 @@ func _unhandled_input(event: InputEvent) -> void:
         if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
             for i in range(EVENT_BUTTONS.size()):
                 if EVENT_BUTTONS[i].has_point(event.position):
-                    choose_interwave_event(["raid", "repair", "safe"][i])
+                    choose_interwave_event(council_offers()[i])
                     return
         # Prevent clicks on the shop and towers while the council is open.
         return
@@ -1492,10 +1505,16 @@ func _draw() -> void:
         draw_rect(Rect2(184, 205, 785, 186), Color("#1d3038", 0.97))
         draw_rect(Rect2(184, 205, 785, 186), Color("#d7ba80"), false, 2.0)
         draw_string(ThemeDB.fallback_font, Vector2(235, 257), "ВОЕННЫЙ СОВЕТ: ВЫБЕРИ ПОДГОТОВКУ", HORIZONTAL_ALIGNMENT_LEFT, -1, 21, Color("#f5e6bc"))
-        var labels := ["ОБОЗ: +35 / +3 HP И ПЕПЕЛЬНОЕ СЕРДЦЕ", "АЛТАРЬ: +20 HP", "ЗАПАС БЕЗДНЫ: +20 ЗОЛ."]
+        var council_titles := {"raid": "ПЕПЕЛЬНОЕ СЕРДЦЕ", "repair": "ВОССТАНОВЛЕНИЕ", "safe": "РИТУАЛЬНЫЙ ЗАПАС"}
+        var council_details := {"raid": "+35 зол. / +3 HP врагам", "repair": "+20 HP алтарю", "safe": "+20 золота"}
+        var offer_ids: Array[String] = council_offers()
         for i in range(EVENT_BUTTONS.size()):
-            draw_rect(EVENT_BUTTONS[i], Color("#53695d"))
-            draw_string(ThemeDB.fallback_font, EVENT_BUTTONS[i].position + Vector2(8, 37), labels[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color.WHITE)
+            var offer: String = offer_ids[i]
+            var card: Rect2 = EVENT_BUTTONS[i]
+            draw_rect(card, Color("#53695d"))
+            draw_rect(card, Color("#c9b581"), false, 1.0)
+            draw_fitted_label(card.position + Vector2(9, 25), str(council_titles[offer]), 13, card.size.x - 18, Color("#ffe2a8"))
+            draw_fitted_label(card.position + Vector2(9, 49), str(council_details[offer]), 12, card.size.x - 18, Color.WHITE)
     if specialization_open and selected_slot >= 0 and selected_slot < slots.size():
         draw_rect(Rect2(0, 65, 1152, 469), Color(0.015, 0.025, 0.04, 0.72))
         # A compact side-by-side comparison, instead of two unexplained path names.
