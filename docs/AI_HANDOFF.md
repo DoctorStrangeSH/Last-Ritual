@@ -1,4 +1,4 @@
-> **31.10.2026 — PR #253:** пользователь загрузил Foozle Spire TowerPack 1–4/BuilderPack/Enemies/Tileset. Для первого шага добавлен assets/spire/towers_atlas.png (4 строки bone/fire/frost/necro, 4 кадра на строку, 64px/кадр, CC0) и preload+render draw_tower_figure. Tests assert 256x256. Ночь и баланс неизменны. CI blocked by monthly Actions quota, merge only after green checks. Builder/Enemies/Tileset not yet wired.
+> **Текущая ревизия 31.10.2026:** #251, #252, #255 merged; main CI 41193468399 success. #253 blocked by corrupt tower PNG (CI 41194045372 failure); #254 зависит от #253; #217 требует оценки. Подробности в `docs/REPOSITORY_HYGIENE.md`.
 
 > **31.10.2026, #251:** #250 merged 7040893. Тестовый PR на урон попадания (4 школы × 3 уровня × 3 специализации), стоимость и аффинитеты. Не путать с реальным DPS; ночь не менять, merge после exact-head CI.
 

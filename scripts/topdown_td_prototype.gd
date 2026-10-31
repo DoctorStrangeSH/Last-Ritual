@@ -672,7 +672,6 @@ func restart_defense() -> void:
     queue_redraw()
 
 func _process(delta: float) -> void:
-    # Keep Foozle tower frames advancing even while the defense is paused or won.
     if help_visible or defense_state != "playing":
         if not slots.is_empty():
             queue_redraw()
@@ -1285,9 +1284,7 @@ func tower_visual_color(kind: String) -> Color:
     return Color("#ffda8e")
 
 func draw_tower_figure(pos: Vector2, kind: String, level: int) -> void:
-    # CC0 Foozle Spire: four frame cycles across, tower schools down.
-    # Atlas uses compact 64x64 cells; no gameplay logic depends on frames.
-    var atlas_row: int = {"bone": 0, "fire": 1, "frost": 2, "necro": 3}.get(kind, -1)
+    var atlas_row: int = {"bone": 0, "fire": 1, "necro": 2, "frost": 3}.get(kind, -1)
     if atlas_row >= 0:
         var frame_index: int = int(Time.get_ticks_msec() / 160) % 4
         var region := Rect2(float(frame_index * 64), float(atlas_row * 64), 64.0, 64.0)
