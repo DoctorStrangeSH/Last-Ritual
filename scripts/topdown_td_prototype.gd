@@ -7,6 +7,7 @@ const SPIRE_TOWER_ATLAS = preload("res://assets/spire/towers_atlas.png")
 const TOWER_VISUALS = preload("res://scripts/td/td_tower_visuals.gd")
 const TD_SPECIALIZATION_ICONS = preload("res://scripts/td/td_specialization_icons.gd")
 const TD_TOWER_TRANSITION_FX = preload("res://scripts/td/td_tower_transition_fx.gd")
+const TD_NECRO_IMPACT_FX = preload("res://scripts/td/td_necro_impact_fx.gd")
 var tower_texture_cache: Dictionary = {}
 # Short visual-only build/sell transitions; gameplay is updated immediately.
 var tower_visual_transitions: Array[Dictionary] = []
@@ -1553,6 +1554,19 @@ func _draw() -> void:
             var frame: int = mini(int((1.0 - opacity) * 6.0), 5)
             var region := Rect2(Vector2(float(frame * impact_cell.x), 0.0), Vector2(impact_cell))
             draw_texture_rect_region(impact_sprite, Rect2((trail["to"] as Vector2) - Vector2(13, 13), Vector2(26, 26)), region, Color(1.0, 1.0, 1.0, 1.0 - opacity))
+        elif shot_kind == "necro":
+            # Necromancer currently has no authored impact sheet. Render a
+            # restrained soul burst instead of silently omitting hit feedback.
+            var impact_progress: float = 1.0 - opacity
+            var impact_origin: Vector2 = trail["to"]
+            for soul in TD_NECRO_IMPACT_FX.particles(impact_origin, impact_progress):
+                var soul_pos: Vector2 = soul["position"]
+                var soul_alpha: float = float(soul["alpha"])
+                var soul_size: float = float(soul["size"])
+                var soul_direction: Vector2 = soul["direction"]
+                draw_line(soul_pos, soul_pos + soul_direction * 4.0, Color(0.38, 0.96, 0.72, soul_alpha), 1.4)
+                draw_circle(soul_pos, soul_size, Color(0.36, 0.92, 0.68, soul_alpha * 0.7))
+                draw_circle(soul_pos, soul_size * 0.42, Color(0.84, 1.0, 0.9, soul_alpha))
         else:
             match str(visual["impact"]):
                 "shard":
