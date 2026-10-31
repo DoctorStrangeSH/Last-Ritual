@@ -11,6 +11,7 @@ var tower_visual_transitions: Array[Dictionary] = []
 const TOWER_TRANSITION_DURATION := 0.42
 const TD_TOWER_TOOLTIPS = preload("res://scripts/td/td_tower_tooltips.gd")
 const TD_TOWER_DAMAGE = preload("res://scripts/td/td_tower_damage.gd")
+const TD_FIRE_SPLASH = preload("res://scripts/td/td_fire_splash.gd")
 const TD_TARGETING = preload("res://scripts/td/td_targeting.gd")
 const TD_BURN_EFFECT = preload("res://scripts/td/td_burn_effect.gd")
 const TD_ENEMY_ARMOR = preload("res://scripts/td/td_enemy_armor.gd")
@@ -567,6 +568,8 @@ func attack_with_towers(delta: float) -> void:
         if target.is_empty():
             continue
         var hit_targets: Array = TD_MULTIHIT.targets(tower, target, enemies, float(TOWER_RANGE[kind]))
+        if kind == "fire":
+            hit_targets = TD_FIRE_SPLASH.add_splash_targets(hit_targets, enemies, target)
         var damage: int = TD_TOWER_DAMAGE.direct_damage(kind, int(tower["level"]), str(tower.get("specialization", "")), fire_synergy_bonus, bone_synergy_bonus)
         for hit_target in hit_targets:
             shot_trails.append({"from": tower["pos"], "to": hit_target["pos"], "time": 0.18, "kind": kind, "level": int(tower["level"])})
