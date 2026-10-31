@@ -1286,7 +1286,7 @@ func draw_tower_figure(pos: Vector2, kind: String, level: int) -> void:
     # Atlas uses compact 64x64 cells; no gameplay logic depends on frames.
     var atlas_row: int = {"bone": 0, "fire": 1, "frost": 2, "necro": 3}.get(kind, -1)
     if atlas_row >= 0:
-        var frame_index: int = (Time.get_ticks_msec() / 160) % 4
+        var frame_index: int = int(Time.get_ticks_msec() / 160) % 4
         var region := Rect2(float(frame_index * 64), float(atlas_row * 64), 64.0, 64.0)
         draw_texture_rect_region(SPIRE_TOWER_ATLAS, Rect2(pos + Vector2(-24, -34), Vector2(48, 48)), region, Color.WHITE)
         return
