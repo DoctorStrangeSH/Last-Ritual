@@ -2548,6 +2548,20 @@ func run_tests() -> void:
                     check(region.size.x <= weapon_image.get_width() and region.size.y <= weapon_image.get_height(), "Weapon frame region fits source sprite sheet")
         check(tower_visuals.path_for("invalid", 1, "base") == "", "Unknown tower does not resolve to Foozle artwork")
         check(tower_visuals.path_for("bone", 4, "base") == "", "Invalid upgrade level does not resolve to Foozle artwork")
+    check(tower_visuals.uses_experimental_necro("necro"), "Necro experimental art preview is enabled for gameplay testing")
+    check(not tower_visuals.uses_experimental_necro("fire"), "Experimental preview does not modify fire art")
+    for preview_level in range(1, 4):
+        for preview_layer in ["base", "weapon"]:
+            var preview_path: String = tower_visuals.path_for("necro", preview_level, preview_layer)
+            check(preview_path.contains("/necro/experimental/"), "Necro layered art uses dedicated source: %s L%d" % [preview_layer, preview_level])
+            var preview_texture: Texture2D = load(preview_path)
+            check(preview_texture != null and preview_texture.get_size() == Vector2(128, 128), "Necro aligned %s layer imports 128x128 L%d" % [preview_layer, preview_level])
+    for necro_spec in ["siege", "swarm"]:
+        var spec_path: String = tower_visuals.specialization_preview_path("necro", necro_spec)
+        var spec_texture: Texture2D = load(spec_path)
+        check(spec_texture != null and spec_texture.get_size() == Vector2(128, 128), "Necro specialization PNG imports as aligned overlay: %s" % necro_spec)
+    check(tower_visuals.specialization_preview_path("fire", "siege") == "", "Other tower schools have no necro overlay")
+    check(tower_visuals.specialization_preview_path("necro", "invalid") == "", "Invalid specialization has no preview")
     var projectile_maps = load("res://scripts/td/td_tower_visuals.gd")
     for kind in ["bone", "fire", "necro", "frost"]:
         for level in range(1, 4):
