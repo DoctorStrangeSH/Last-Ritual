@@ -10,6 +10,8 @@ var audio_settings_path := "user://last_ritual_audio.cfg"
 var phase := "hub" # hub, day, transition, night, reward, victory, defeat
 var transition_time := 0.0
 const TRANSITION_DURATION := 1.25
+const CAMPAIGN_DAYS := 5
+const CAMPAIGN_PHASES := CAMPAIGN_DAYS * 2
 var phase_count := 0
 var difficulty := 0 # 0 normal, 1 hard, 2 nightmare
 const DIFFICULTY_NAMES := ["НОРМА", "СЛОЖНО", "КОШМАР"]
@@ -98,7 +100,7 @@ func start_phase(kind: String) -> bool:
     active_game.difficulty = difficulty
     add_child(active_game)
     if kind == "day":
-        active_game.siege_day = mini(3, int(phase_count / 2) + 1)
+        active_game.siege_day = mini(CAMPAIGN_DAYS, int(phase_count / 2) + 1)
         active_game.set_fortress_map_seed(fortress_map_seed)
         if not fortress_state.is_empty():
             active_game.import_fortress_state(fortress_state)
@@ -154,7 +156,7 @@ func finish_phase(won: bool) -> void:
         meta.record_phase_clear()
         meta.award(1 + difficulty)
         phase_count += 1
-        if phase_count >= 6:
+        if phase_count >= CAMPAIGN_PHASES:
             phase = "victory"
             meta.record_result(true)
         elif expected_phase() == "night":
@@ -297,7 +299,7 @@ func _draw() -> void:
             draw_string(ThemeDB.fallback_font, Vector2(810, 118), "ГРОМКОСТЬ %d%%" % roundi(audio_volume * 100.0), HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#e7d3a8"))
             draw_rect(Rect2(72, 160, 1008, 299), Color("#1a2232"))
             draw_string(ThemeDB.fallback_font, Vector2(104, 198), "НОВЫЙ ЗАБЕГ", HORIZONTAL_ALIGNMENT_LEFT, -1, 28, Color("#e7d3a8"))
-            draw_string(ThemeDB.fallback_font, Vector2(104, 223), "3 дня обороны и 3 ночи в подземелье", HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color("#b5c9d3"))
+            draw_string(ThemeDB.fallback_font, Vector2(104, 223), "%d дней обороны и %d ночей в подземелье" % [CAMPAIGN_DAYS, CAMPAIGN_DAYS], HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color("#b5c9d3"))
             draw_string(ThemeDB.fallback_font, Vector2(104, 273), "СЛОЖНОСТЬ", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#d3c6ad"))
             for i in range(DIFFICULTY_BUTTONS.size()):
                 draw_rect(DIFFICULTY_BUTTONS[i], Color("#906a3d") if difficulty == i else Color("#343b47"))
