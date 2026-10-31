@@ -2579,6 +2579,19 @@ func run_tests() -> void:
     if frost_burst != null:
         check(tower_visuals.frame_region(frost_burst, Vector2i(64, 64), 7).size == Vector2(64, 64), "Last Frost impact frame available")
         check(tower_visuals.frame_region(frost_burst, Vector2i(64, 64), 8).size == Vector2.ZERO, "Frost invalid impact frame rejected")
+    # Guard preview-to-runtime copy errors: actual textures must contain painted
+    # pixels on transparent canvases, not only the correct dimensions.
+    for art_kind in ["necro", "frost"]:
+        for art_level in range(1, 4):
+            for art_layer in ["base", "weapon"]:
+                var art_file: String = tower_visuals.path_for(art_kind, art_level, art_layer)
+                var art_texture: Texture2D = load(art_file)
+                if art_texture != null:
+                    var art_image: Image = art_texture.get_image()
+                    check(art_image != null and art_image.get_size() == Vector2i(128, 128), "Authored %s %s level %d image can be read" % [art_kind, art_layer, art_level])
+                    if art_image != null:
+                        check(art_image.get_used_rect().has_area(), "Authored %s %s level %d contains visible art" % [art_kind, art_layer, art_level])
+                        check(art_image.get_pixel(0, 0).a < 0.05, "Authored %s %s level %d preserves a transparent background" % [art_kind, art_layer, art_level])
     var projectile_maps = load("res://scripts/td/td_tower_visuals.gd")
     for kind in ["bone", "fire", "necro", "frost"]:
         for level in range(1, 4):
