@@ -2466,5 +2466,24 @@ func run_tests() -> void:
                         role_counts[role_name] += 1
                 check(role_counts["runner"] + role_counts["brute"] + role_counts["grunt"] == ordinary_count, "Day %d wave %d role counts match budget" % [audit_day, audit_wave])
         audit_game.queue_free()
+    # Economy regression: investment and maximum kill income must remain predictable.
+    if boon_scene != null:
+        var economy_game = boon_scene.instantiate()
+        root.add_child(economy_game)
+        for tower_kind in economy_game.COSTS.keys():
+            var tower_price: int = int(economy_game.COSTS[tower_kind])
+            check(economy_game.tower_build_budget(str(tower_kind), 1) == tower_price, "Economy: level 1 price for %s" % tower_kind)
+            check(economy_game.tower_build_budget(str(tower_kind), 2) == tower_price + 20, "Economy: level 2 investment for %s" % tower_kind)
+            check(economy_game.tower_build_budget(str(tower_kind), 3) == tower_price + 60, "Economy: level 3 investment for %s" % tower_kind)
+            check(economy_game.tower_build_budget(str(tower_kind), 4) == -1, "Economy: reject nonexistent level for %s" % tower_kind)
+        for audit_day in range(1, 6):
+            economy_game.siege_day = audit_day
+            var income: Dictionary = economy_game.siege_economy_forecast()
+            var budget_sum := 0
+            for audit_wave in range(1, economy_game.SIEGE_WAVES + 1):
+                budget_sum += int(economy_game.wave_enemy_budget(audit_wave)["total"])
+            check(int(income["enemies"]) == budget_sum, "Economy: day %d kill forecast enemy count" % audit_day)
+            check(int(income["kill_gold"]) == budget_sum * 5 and int(income["maximum_gold"]) == int(income["starting_gold"]) + int(income["kill_gold"]), "Economy: day %d income matches enemy rewards" % audit_day)
+        economy_game.queue_free()
     print("TOPDOWN SMOKE RESULT: ", "PASS" if failures == 0 else str(failures) + " FAILURES")
     quit(0 if failures == 0 else 1)
