@@ -1,3 +1,5 @@
+> **31.10.2026, #251:** #250 merged 7040893. Тестовый PR на урон попадания (4 школы × 3 уровня × 3 специализации), стоимость и аффинитеты. Не путать с реальным DPS; ночь не менять, merge после exact-head CI.
+
 > **31.10.2026 — PR #252:** CI cost reduction: PR = headless Godot editor import + smoke; main/manual = checks then Windows export & rolling release. Editor/templates cached, Actions artifacts removed, cancel stale workflows. GitHub budget $0 blocks execution; do not merge without green exact-head CI after unblocking. PR #251 still open. No gameplay changes.
 
 > **31.10.2026, #250:** #249 merged 1ff5f31. Новый тестовый PR на сохранение идентичности школ fire/frost/bone/necro; CI обязателен, ночь не менять; баланс требует ручного Windows-плейтеста.
