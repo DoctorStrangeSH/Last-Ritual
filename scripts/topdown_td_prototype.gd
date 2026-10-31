@@ -598,7 +598,7 @@ func tick_burning(delta: float) -> void:
                 ember_bursts.append({"pos": Vector2(enemy["pos"]), "time": EMBER_BURST_DURATION})
                 if ember_bursts.size() > MAX_EMBER_BURSTS:
                     ember_bursts.remove_at(0)
-                var splash_victims: Array[Dictionary] = TD_EMBER_HEART.splash_targets(Vector2(enemy["pos"]), enemies)
+                var splash_victims: Array[Dictionary] = TD_EMBER_HEART.splash_targets(Vector2(enemy["pos"]), enemies, eternal_frost_claimed)
                 for victim in splash_victims:
                     enemies.erase(victim)
                     enemies_defeated += 1

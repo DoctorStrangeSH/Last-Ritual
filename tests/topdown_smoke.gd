@@ -2376,5 +2376,16 @@ func run_tests() -> void:
         check(not blood_game.blood_pact_claimed, "Restart clears Blood Pact")
         blood_game.queue_free()
         blood_next.queue_free()
+    # A pair of boons opens a conditional thermal combo, but never buffs plain targets.
+    var combo_mod = load("res://scripts/td/td_ember_heart.gd")
+    var cold_targets: Array[Dictionary] = [
+        {"pos": Vector2(100, 100), "hp": 3, "frost_time": 2.0, "delay": 0.0},
+        {"pos": Vector2(120, 100), "hp": 3, "frost_time": 0.0, "delay": 0.0},
+        {"pos": Vector2(300, 100), "hp": 3, "frost_time": 2.0, "delay": 0.0}
+    ]
+    check(combo_mod.splash_targets(Vector2(100, 100), cold_targets, true).size() == 1, "Dual Ember and Frost boons can finish chilled enemies")
+    check(cold_targets[0]["hp"] == 0 and cold_targets[1]["hp"] == 1 and cold_targets[2]["hp"] == 3, "Thermal combo gives only chilled nearby enemies one extra splash damage")
+    var single_targets: Array[Dictionary] = [{"pos": Vector2(100, 100), "hp": 3, "frost_time": 3.0, "delay": 0.0}]
+    check(combo_mod.splash_targets(Vector2(100, 100), single_targets).is_empty() and single_targets[0]["hp"] == 1, "Ember Heart without Frost boon keeps original damage")
     print("TOPDOWN SMOKE RESULT: ", "PASS" if failures == 0 else str(failures) + " FAILURES")
     quit(0 if failures == 0 else 1)
