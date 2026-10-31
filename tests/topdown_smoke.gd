@@ -2548,5 +2548,19 @@ func run_tests() -> void:
                     check(region.size.x <= weapon_image.get_width() and region.size.y <= weapon_image.get_height(), "Weapon frame region fits source sprite sheet")
         check(tower_visuals.path_for("invalid", 1, "base") == "", "Unknown tower does not resolve to Foozle artwork")
         check(tower_visuals.path_for("bone", 4, "base") == "", "Invalid upgrade level does not resolve to Foozle artwork")
+    var projectile_maps = load("res://scripts/td/td_tower_visuals.gd")
+    for kind in ["bone", "fire", "necro", "frost"]:
+        for level in range(1, 4):
+            var shot_path: String = projectile_maps.vfx_path(kind, level, "projectiles")
+            var shot_texture: Texture2D = load(shot_path)
+            check(shot_texture != null, "Projectile PNG loads: %s lv%d" % [kind, level])
+            if shot_texture != null:
+                var cell: Vector2i = projectile_maps.vfx_frame_size(kind, "projectiles")
+                check(shot_texture.get_width() >= cell.x and shot_texture.get_height() >= cell.y, "Projectile first frame fits sheet: %s lv%d" % [kind, level])
+            var impact_path: String = projectile_maps.vfx_path(kind, level, "weapon_impact")
+            if not impact_path.is_empty():
+                var impact_texture: Texture2D = load(impact_path)
+                check(impact_texture != null and impact_texture.get_width() >= 6 * projectile_maps.vfx_frame_size(kind, "weapon_impact").x, "Impact sheet has at least six frames: %s lv%d" % [kind, level])
+    check(projectile_maps.vfx_path("necro", 1, "weapon_impact") == "", "Unprovided pulse hit effect uses procedural fallback")
     print("TOPDOWN SMOKE RESULT: ", "PASS" if failures == 0 else str(failures) + " FAILURES")
     quit(0 if failures == 0 else 1)
