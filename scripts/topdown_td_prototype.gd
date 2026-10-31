@@ -1246,40 +1246,36 @@ func hovered_tower_info(point: Vector2) -> Dictionary:
     return tower_info_for_slot(hovered_tower_slot(point))
 
 func tower_hover_panel_rect(point: Vector2) -> Rect2:
-    # The card must remain in the viewport and outside the bottom shop row.
-    var x: float = point.x + 42.0
-    if x + 310.0 > 1138.0:
-        x = point.x - 320.0
-    return Rect2(Vector2(clampf(x, 12.0, 830.0), clampf(point.y - 65.0, 125.0, 282.0)), Vector2(310, 240))
-
-func draw_hovered_tower_info(point: Vector2) -> void:
+    # Keep the small inspector off the cursor, top HUD and bottom shop.
+    const PANEL_SIZE := Vector2(264.0, 166.0)
+    var x: float = point.x + 30.0
+    if x + PANEL_SIZE.x > 1140.0:
+        x = point.x - PANEL_SIZE.x - 30.0
+    var y: float = clampf(point.y - 35.0, 100func draw_hovered_tower_info(point: Vector2) -> void:
     var id: int = hovered_tower_slot(point)
     if id < 0:
         return
     var info: Dictionary = tower_info_for_slot(id)
     var rect: Rect2 = tower_hover_panel_rect(point)
-    var origin: Vector2 = rect.position + Vector2(13, 0)
+    var origin: Vector2 = rect.position + Vector2(11, 0)
     draw_rect(rect, Color("#12232c", 0.98))
     draw_rect(rect, Color("#cdb481"), false, 1.5)
     draw_rect(Rect2(rect.position, Vector2(rect.size.x, 3)), Color("#8acbc1"))
     var title: String = str(TD_TOWER_STATS.DISPLAY_NAMES.get(str(info["kind"]), "БАШНЯ"))
-    draw_fitted_label(origin + Vector2(0, 27), "%s  •  УР. %d" % [title, int(info["level"])], 16, 280, Color("#fff0c6"))
-    draw_fitted_label(origin + Vector2(0, 51), "УРОН %d   •   СВЯЗИ %d" % [int(info["damage"]), int(info["links"])], 14, 280, Color.WHITE)
-    draw_fitted_label(origin + Vector2(0, 74), "РАДИУС %d   •   %.2f с/атака" % [int(info["range"]), float(info["attack_delay"])], 13, 280, Color("#a6d6df"))
-    var path_label: String = "НЕ ВЫБРАН"
+    draw_fitted_label(origin + Vector2(0, 22), "%s  ·  УР. %d" % [title, int(info["level"])], 14, 240, Color("#fff0c6"))
+    draw_fitted_label(origin + Vector2(0, 44), "Урон %d  ·  Радиус %d" % [int(info["damage"]), int(info["range"])], 12, 240, Color.WHITE)
+    draw_fitted_label(origin + Vector2(0, 64), "Атака %.2f с  ·  Связи %d" % [float(info["attack_delay"]), int(info["links"])], 12, 240, Color("#a6d6df"))
+    var path_label: String = "не выбран"
     if str(info["specialization"]) != "":
         var label_idx: int = 0 if str(info["specialization"]) == "siege" else 1
         path_label = str(SPECIALIZATION_LABELS[str(info["kind"])][label_idx]).split(":")[0]
-    draw_fitted_label(origin + Vector2(0, 97), "ПУТЬ: " + path_label, 13, 280, Color("#b6e1cd"))
-    var price: String = "МАКСИМУМ" if int(info["upgrade_cost"]) == 0 else "%d ЗОЛ." % int(info["upgrade_cost"])
-    draw_fitted_label(origin + Vector2(0, 120), "УЛУЧШЕНИЕ: " + price, 13, 280, Color("#e7cf98"))
-    draw_fitted_label(origin + Vector2(0, 143), str(info["effect"]), 12, 280, Color("#dce6e3"))
-    var bonus: String = "БОНУС: +%d / +%d ПО ГОРЯЩИМ" % [int(info["synergy_flat"]), int(info["synergy_burning"])]
-    draw_fitted_label(origin + Vector2(0, 165), bonus, 12, 280, Color("#e5c987"))
+    draw_fitted_label(origin + Vector2(0, 85), "Путь: " + path_label, 12, 240, Color("#b6e1cd"))
+    var price: String = "максимум" if int(info["upgrade_cost"]) == 0 else "%d зол." % int(info["upgrade_cost"])
+    draw_fitted_label(origin + Vector2(0, 106), "Улучшение: " + price, 12, 240, Color("#e7cf98"))
     var lines: Array[String] = synergy_lines_for_slot(id)
-    for index in range(mini(lines.size(), 3)):
-        var active: bool = lines[index].begins_with("АКТИВНО")
-        draw_fitted_label(origin + Vector2(0, 186 + 21 * index), lines[index], 12, 280, Color("#a5dfc1") if active else Color("#c4d0d7"))
+    var combo: String = lines[0] if not lines.is_empty() else str(info["effect"])
+    draw_fitted_label(origin + Vector2(0, 127), combo, 11, 240, Color("#a5dfc1"))
+    draw_fitted_label(origin + Vector2(0, 149), "Нажми для выбора и улучшения", 11, 240, Color("#9db6bd"))
 
 func performance_snapshot() -> Dictionary:
     return {
