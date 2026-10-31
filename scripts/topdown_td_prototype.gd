@@ -65,6 +65,7 @@ var interwave_choice := ""
 var ritual_reserve_claimed := false
 var ember_heart_claimed := false
 var eternal_frost_claimed := false
+var blood_pact_claimed := false
 var next_wave_extra_hp := 0
 var enemies_spawned := 0
 var enemies_escaped := 0
@@ -229,7 +230,7 @@ func can_choose_interwave_event() -> bool:
 func council_offers() -> Array[String]:
     # Three existing playable choices. Shuffle their positions per run/day,
     # but never expose catalog-only boons before combat logic exists.
-    var choices: Array[String] = ["raid", "repair", "safe"]
+    var choices: Array[String] = ["raid", "repair", "safe", "blood"]
     var rng := RandomNumberGenerator.new()
     rng.seed = (fortress_map_seed & 0x7fffffff) * 101 + siege_day * 7919 + 47
     for i in range(choices.size() - 1, 0, -1):
@@ -237,10 +238,11 @@ func council_offers() -> Array[String]:
         var old: String = choices[i]
         choices[i] = choices[j]
         choices[j] = old
+    choices.resize(3)
     return choices
 
 func choose_interwave_event(choice: String) -> bool:
-    if not can_choose_interwave_event() or not ["raid", "repair", "safe"].has(choice):
+    if not can_choose_interwave_event() or not council_offers().has(choice):
         return false
     interwave_choice = choice
     match choice:
@@ -255,6 +257,9 @@ func choose_interwave_event(choice: String) -> bool:
             # First implemented Abyss boon: one-time economical choice.
             coins += 20
             ritual_reserve_claimed = true
+        "blood":
+            altar_hp = maxi(1, altar_hp - 15)
+            blood_pact_claimed = true
     queue_redraw()
     return true
 
@@ -493,7 +498,8 @@ func tower_synergy_damage(slot_id: int, enemy: Dictionary) -> int:
         if has_adjacent_tower(slot_id, "frost") and float(enemy.get("frost_time", 0.0)) > 0.0:
             thermal_shock_bonus = 1
     var eternal_frost_bonus: int = 1 if eternal_frost_claimed and float(enemy.get("frost_time", 0.0)) > 0.0 else 0
-    return int(bonus["flat"]) + (int(bonus["burning"]) if float(enemy.get("burn_time", 0.0)) > 0.0 else 0) + frost_pierce_bonus + thermal_shock_bonus + eternal_frost_bonus
+    var blood_pact_bonus: int = 1 if blood_pact_claimed else 0
+    return int(bonus["flat"]) + (int(bonus["burning"]) if float(enemy.get("burn_time", 0.0)) > 0.0 else 0) + frost_pierce_bonus + thermal_shock_bonus + eternal_frost_bonus + blood_pact_bonus
 
 func choose_tower_target(slot_id: int) -> Dictionary:
     if slot_id < 0 or slot_id >= slots.size():
@@ -610,6 +616,7 @@ func restart_defense() -> void:
     ritual_reserve_claimed = false
     ember_heart_claimed = false
     eternal_frost_claimed = false
+    blood_pact_claimed = false
     next_wave_extra_hp = 0
     enemies_escaped = 0
     enemies_defeated = 0
@@ -670,7 +677,7 @@ func export_fortress_state() -> Dictionary:
     var buildings: Array[Dictionary] = []
     for slot in slots:
         buildings.append({"tower": str(slot["tower"]), "level": int(slot["level"]), "specialization": str(slot.get("specialization", "")), "target_priority": str(slot.get("target_priority", "nearest"))})
-    return {"buildings": buildings, "coins": coins, "altar_hp": altar_hp, "map_seed": fortress_map_seed, "ritual_reserve_claimed": ritual_reserve_claimed, "ember_heart_claimed": ember_heart_claimed, "eternal_frost_claimed": eternal_frost_claimed}
+    return {"buildings": buildings, "coins": coins, "altar_hp": altar_hp, "map_seed": fortress_map_seed, "ritual_reserve_claimed": ritual_reserve_claimed, "ember_heart_claimed": ember_heart_claimed, "eternal_frost_claimed": eternal_frost_claimed, "blood_pact_claimed": blood_pact_claimed}
 
 func import_fortress_state(state: Dictionary) -> bool:
     var buildings: Array = state.get("buildings", [])
@@ -699,6 +706,7 @@ func import_fortress_state(state: Dictionary) -> bool:
     ritual_reserve_claimed = state.get("ritual_reserve_claimed", false) == true
     ember_heart_claimed = state.get("ember_heart_claimed", false) == true
     eternal_frost_claimed = state.get("eternal_frost_claimed", false) == true
+    blood_pact_claimed = state.get("blood_pact_claimed", false) == true
     coins = maxi(0, int(state.get("coins", coins)))
     altar_hp = clampi(int(state.get("altar_hp", altar_hp)), 1, 100)
     tower_cooldowns.clear()
@@ -1510,8 +1518,8 @@ func _draw() -> void:
         draw_rect(Rect2(184, 205, 785, 186), Color("#1d3038", 0.97))
         draw_rect(Rect2(184, 205, 785, 186), Color("#d7ba80"), false, 2.0)
         draw_string(ThemeDB.fallback_font, Vector2(235, 257), "ВОЕННЫЙ СОВЕТ: ВЫБЕРИ ПОДГОТОВКУ", HORIZONTAL_ALIGNMENT_LEFT, -1, 21, Color("#f5e6bc"))
-        var council_titles := {"raid": "ПЕПЕЛЬНОЕ СЕРДЦЕ", "repair": "ВЕЧНАЯ МЕРЗЛОТА", "safe": "РИТУАЛЬНЫЙ ЗАПАС"}
-        var council_details := {"raid": "+35 зол. / +3 HP врагам", "repair": "+20 HP / +1 по холоду", "safe": "+20 золота"}
+        var council_titles := {"raid": "ПЕПЕЛЬНОЕ СЕРДЦЕ", "repair": "ВЕЧНАЯ МЕРЗЛОТА", "safe": "РИТУАЛЬНЫЙ ЗАПАС", "blood": "КРОВАВЫЙ ДОГОВОР"}
+        var council_details := {"raid": "+35 зол. / +3 HP врагам", "repair": "+20 HP / +1 по холоду", "safe": "+20 золота", "blood": "-15 HP / +1 к урону"}
         var offer_ids: Array[String] = council_offers()
         for i in range(EVENT_BUTTONS.size()):
             var offer: String = offer_ids[i]

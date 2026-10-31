@@ -556,6 +556,10 @@ func run_tests() -> void:
         council.wave_number = 3
         check(council.can_choose_interwave_event(), "War council opens after third wave")
         check(not council.choose_interwave_event("invalid"), "Invalid war council choice is rejected")
+        for reward_seed in range(32):
+            council.set_fortress_map_seed(reward_seed)
+            if council.council_offers().has("raid"):
+                break
         check(council.choose_interwave_event("raid"), "Raid choice grants immediate gold")
         check(council.coins == 185 and council.next_wave_extra_hp == 3, "Raid reward incurs next-wave danger")
         check(not council.choose_interwave_event("safe"), "War council cannot be claimed twice")
@@ -566,6 +570,10 @@ func run_tests() -> void:
         root.add_child(rest_council)
         rest_council.wave_number = 3
         rest_council.altar_hp = 60
+        for reward_seed in range(32):
+            rest_council.set_fortress_map_seed(reward_seed)
+            if rest_council.council_offers().has("repair"):
+                break
         check(rest_council.choose_interwave_event("repair") and rest_council.altar_hp == 80, "War council can heal the altar")
         rest_council.queue_free()
     # Stage 182: later waves have readable, deterministic tactical roles.
@@ -2234,6 +2242,10 @@ func run_tests() -> void:
         root.add_child(boon_game)
         boon_game.wave_number = 3
         var gold_before: int = boon_game.coins
+        for reward_seed in range(32):
+            boon_game.set_fortress_map_seed(reward_seed)
+            if boon_game.council_offers().has("safe"):
+                break
         check(boon_game.choose_interwave_event("safe"), "Abyss reserve can be claimed via council")
         check(boon_game.coins == gold_before + 20 and boon_game.ritual_reserve_claimed, "Abyss reserve pays exactly 20 gold")
         check(not boon_game.choose_interwave_event("safe") and boon_game.coins == gold_before + 20, "Abyss reserve cannot be claimed twice")
@@ -2262,6 +2274,10 @@ func run_tests() -> void:
         var ember_game = boon_scene.instantiate()
         root.add_child(ember_game)
         ember_game.wave_number = 3
+        for reward_seed in range(32):
+            ember_game.set_fortress_map_seed(reward_seed)
+            if ember_game.council_offers().has("raid"):
+                break
         check(ember_game.choose_interwave_event("raid") and ember_game.ember_heart_claimed, "War council raid unlocks Ember Heart")
         var burning_foe: Dictionary = {"pos": Vector2(400, 300), "hp": 1, "delay": 0.0}
         var nearby_foe: Dictionary = {"pos": Vector2(430, 300), "hp": 2, "delay": 0.0}
@@ -2278,6 +2294,7 @@ func run_tests() -> void:
         var ember_snapshot: Dictionary = ember_game.export_fortress_state()
         var ember_next = boon_scene.instantiate()
         root.add_child(ember_next)
+        ember_next.set_fortress_map_seed(ember_game.fortress_map_seed)
         check(ember_next.import_fortress_state(ember_snapshot) and ember_next.ember_heart_claimed, "Ember Heart survives day transition")
         ember_snapshot.erase("ember_heart_claimed")
         check(ember_next.import_fortress_state(ember_snapshot) and not ember_next.ember_heart_claimed, "Old fortress snapshots load without Ember Heart")
@@ -2304,7 +2321,7 @@ func run_tests() -> void:
         var council_unique: Dictionary = {}
         for offer in council_a:
             council_unique[offer] = true
-        check(council_unique.size() == 3 and council_unique.has("raid") and council_unique.has("repair") and council_unique.has("safe"), "Council exposes only three implemented rewards, no duplicates")
+        check(council_unique.size() == 3 and ["raid", "repair", "safe", "blood"].has(council_a[0]), "Council offers three unique implemented rewards")
         council_rng_game.queue_free()
     if boon_scene != null:
         var frost_game = boon_scene.instantiate()
@@ -2314,6 +2331,10 @@ func run_tests() -> void:
         var base_chilled: int = frost_game.tower_synergy_damage(0, chilled)
         frost_game.wave_number = 3
         frost_game.altar_hp = 65
+        for reward_seed in range(32):
+            frost_game.set_fortress_map_seed(reward_seed)
+            if frost_game.council_offers().has("repair"):
+                break
         check(frost_game.choose_interwave_event("repair"), "Council frost reward can be claimed")
         check(frost_game.altar_hp == 85 and frost_game.eternal_frost_claimed, "Eternal Frost keeps council healing")
         check(frost_game.tower_synergy_damage(0, chilled) == base_chilled + 1, "Eternal Frost adds one damage against chilled foes")
@@ -2328,5 +2349,32 @@ func run_tests() -> void:
         check(not frost_game.eternal_frost_claimed, "Restart clears Eternal Frost")
         frost_game.queue_free()
         frost_next.queue_free()
+    if boon_scene != null:
+        var blood_game = boon_scene.instantiate()
+        root.add_child(blood_game)
+        var base_damage: int = blood_game.tower_synergy_damage(0, {})
+        blood_game.wave_number = 3
+        blood_game.altar_hp = 10
+        # Locate a deterministic run whose 3-of-4 offers contain Blood Pact.
+        for map_seed in range(32):
+            blood_game.set_fortress_map_seed(map_seed)
+            if blood_game.council_offers().has("blood"):
+                break
+        check(blood_game.council_offers().has("blood"), "Blood Pact appears in seeded council offers")
+        check(blood_game.choose_interwave_event("blood"), "Blood Pact may be selected from offered rewards")
+        check(blood_game.altar_hp == 1 and blood_game.blood_pact_claimed, "Blood Pact consumes HP without killing altar")
+        check(blood_game.tower_synergy_damage(0, {}) == base_damage + 1, "Blood Pact increases tower damage")
+        check(not blood_game.choose_interwave_event("blood"), "Blood Pact cannot be chosen twice")
+        var blood_state: Dictionary = blood_game.export_fortress_state()
+        var blood_next = boon_scene.instantiate()
+        root.add_child(blood_next)
+        blood_next.set_fortress_map_seed(blood_game.fortress_map_seed)
+        check(blood_next.import_fortress_state(blood_state) and blood_next.blood_pact_claimed, "Blood Pact persists across days")
+        blood_state.erase("blood_pact_claimed")
+        check(blood_next.import_fortress_state(blood_state) and not blood_next.blood_pact_claimed, "Old fortress snapshot loads without Blood Pact")
+        blood_game.restart_defense()
+        check(not blood_game.blood_pact_claimed, "Restart clears Blood Pact")
+        blood_game.queue_free()
+        blood_next.queue_free()
     print("TOPDOWN SMOKE RESULT: ", "PASS" if failures == 0 else str(failures) + " FAILURES")
     quit(0 if failures == 0 else 1)
