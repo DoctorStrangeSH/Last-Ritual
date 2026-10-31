@@ -965,10 +965,13 @@ func draw_fortress_ground() -> void:
         draw_rect(Rect2(1078, y, 51, 42), Color("#4c5962"))
         draw_rect(Rect2(1084, y + 6, 38, 27), Color("#24323d"))
         draw_rect(Rect2(1100, y + 11, 8, 18), Color("#d9a85d"))
-    # Входы двух дорог и знамёна возле ворот.
-    for entry_y in [285.0, 345.0]:
-        draw_rect(Rect2(24, entry_y - 32.0, 40, 64), Color("#121b22"))
-        draw_rect(Rect2(40, entry_y - 23.0, 6, 46), Color("#b67861"))
+    # The entrance count must match the active seeded map (two or three lanes).
+    # Narrower gates prevent the three-lane layout from merging into one block.
+    for lane in paths:
+        var entry_y: float = float(lane[0].y)
+        var half_height: float = 24.0 if paths.size() == 3 else 29.0
+        draw_rect(Rect2(24, entry_y - half_height, 40, half_height * 2.0), Color("#121b22"))
+        draw_rect(Rect2(40, entry_y - half_height + 6.0, 6, (half_height - 6.0) * 2.0), Color("#b67861"))
     draw_rect(Rect2(0, 0, 1152, 64), Color("#131a27"))
     draw_line(Vector2(0, 64), Vector2(1152, 64), Color("#a08157"), 2.0)
     draw_rect(Rect2(0, 534, 1152, 114), Color("#141b27"))
