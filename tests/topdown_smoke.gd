@@ -550,7 +550,7 @@ func run_tests() -> void:
         var budget_game = specialization_balance_scene.instantiate()
         root.add_child(budget_game)
         check(budget_game.wave_enemy_budget(0).is_empty() and budget_game.wave_enemy_budget(7).is_empty(), "Siege budget rejects waves outside 1–6")
-        for day_index in range(1, 4):
+        for day_index in range(1, 6):
             budget_game.siege_day = day_index
             var previous_total := 0
             for wave_index in range(1, 7):
@@ -561,6 +561,22 @@ func run_tests() -> void:
                 budget_game.enemies.clear()
                 check(budget_game.start_wave(), "Budgeted wave starts on day %d wave %d" % [day_index, wave_index])
                 check(budget_game.enemies.size() == int(budget["total"]), "Actual spawns match budget on day %d wave %d" % [day_index, wave_index])
+        budget_game.siege_day = 4
+        check("ДЕНЬ 4" in budget_game.upcoming_wave_summary(), "Fourth day has its own tactical forecast")
+        check(budget_game.siege_enemy_role(2, 0) == "runner" and budget_game.siege_enemy_role(2, 1) == "brute", "Fourth day mixes flankers and armored troops")
+        check(int(budget_game.wave_enemy_budget(3)["support"]) == 2, "Fourth day fields a second field medic from wave three")
+        budget_game.siege_day = 5
+        check("ДЕНЬ 5" in budget_game.upcoming_wave_summary(), "Final day has distinct forecast")
+        check(budget_game.siege_enemy_role(2, 0) == "brute" and budget_game.siege_enemy_role(2, 2) == "runner", "Fifth day uses armored vanguard and fast breaches")
+        check(int(budget_game.wave_enemy_budget(4)["captain"]) == 1, "Fifth day brings commander one wave earlier")
+        budget_game.wave_number = 5
+        budget_game.enemies.clear()
+        check(budget_game.start_wave(), "Fifth-day boss wave starts")
+        var day_five_boss_hp := 0
+        for foe in budget_game.enemies:
+            if str(foe.get("role", "")) == "boss":
+                day_five_boss_hp = int(foe["hp"])
+        check(day_five_boss_hp >= 100, "Fifth-day boss has final siege health")
         budget_game.queue_free()
     if specialization_balance_scene != null:
         var pacing = specialization_balance_scene.instantiate()
@@ -1652,7 +1668,7 @@ func run_tests() -> void:
         check(warning_probe.current_room_progress().begins_with("ОТКРЫТО 1 / "), "Exploration HUD counts discovered rooms instead of showing a false 3-room limit")
         check(warning_probe.current_room_caption() != "", "Exploration room type has a readable caption")
         warning_probe.queue_free()
-    # A deterministic complete six-phase run catches regressions in currency,
+    # A deterministic complete ten-phase run catches regressions in currency,
     # fortress persistence, nighttime income, victory and replay eligibility.
     if run_scene != null:
         var marathon = run_scene.instantiate()
@@ -1701,16 +1717,32 @@ func run_tests() -> void:
         marathon.finish_phase(true)
         check(marathon.pending_night_coins == 10, "Second night generates new soul income only")
         check(marathon.choose_run_reward("bone") and marathon.complete_transition(), "Second relic passes through dawn")
-        check(marathon.phase == "day" and marathon.active_game.siege_day == 3, "Third day uses final siege")
+        check(marathon.phase == "day" and marathon.active_game.siege_day == 3, "Third day uses armored siege")
         check(marathon.fortress_map_seed == marathon_seed and marathon.active_game.paths == marathon_paths, "Fortress map remains identical on third day")
-        check(marathon.active_game.SIEGE_WAVES == 6, "Final day retains six-wave siege")
+        check(marathon.active_game.SIEGE_WAVES == 6, "Third day retains six-wave siege")
 
-        check(marathon.active_game.slots[0]["tower"] == "bone" and marathon.active_game.bone_synergy_bonus == 1, "Tower and earned relic carry into final siege")
+        check(marathon.active_game.slots[0]["tower"] == "bone" and marathon.active_game.bone_synergy_bonus == 1, "Tower and earned relic carry into third siege")
         marathon.finish_phase(true)
-        check(marathon.phase == "transition" and marathon.complete_transition(), "Final day passes into last night")
-        check(marathon.active_game.attack_damage >= 3, "Last night inherits meta and run-only damage bonuses")
+        check(marathon.phase == "transition" and marathon.complete_transition(), "Third day passes automatically into third night")
+        check(marathon.active_game.attack_damage >= 3, "Third night inherits meta and run-only damage bonuses")
         marathon.finish_phase(true)
-        check(marathon.phase == "victory" and marathon.completed_phases == 6, "Final night ends the entire six-phase run")
+        check(marathon.phase == "reward" and marathon.completed_phases == 6, "Third night no longer ends the campaign early")
+        check(marathon.choose_run_reward("ember") and marathon.complete_transition(), "Third relic leads to fourth day")
+        check(marathon.phase == "day" and marathon.active_game.siege_day == 4, "Fourth day has distinct TD scenario")
+        check(marathon.active_game.paths == marathon_paths and marathon.active_game.slots[0]["tower"] == "bone", "Fourth day preserves map and tower")
+        check(int(marathon.active_game.wave_enemy_budget(3)["support"]) == 2, "Fourth day gains tactical double-healer wave")
+        marathon.finish_phase(true)
+        check(marathon.phase == "transition" and marathon.complete_transition(), "Fourth day automatically leads into fourth night")
+        marathon.finish_phase(true)
+        check(marathon.phase == "reward" and marathon.completed_phases == 8, "Fourth night grants the final inter-day reward")
+        check(marathon.choose_run_reward("necro") and marathon.complete_transition(), "Fourth reward leads to fifth day")
+        check(marathon.phase == "day" and marathon.active_game.siege_day == 5, "Fifth day is playable")
+        check(marathon.active_game.paths == marathon_paths and marathon.active_game.slots[0]["tower"] == "bone", "Fifth day preserves map and towers")
+        check(int(marathon.active_game.wave_enemy_budget(4)["captain"]) == 1, "Final day has an early commander")
+        marathon.finish_phase(true)
+        check(marathon.phase == "transition" and marathon.complete_transition(), "Fifth day automatically leads to fifth night")
+        marathon.finish_phase(true)
+        check(marathon.phase == "victory" and marathon.completed_phases == 10, "Fifth night finishes ten-phase campaign")
         check(marathon.meta.runs_started == 1 and marathon.meta.runs_won == 1 and marathon.meta.runs_lost == 0, "One completed run counts as exactly one victory")
         check(marathon.meta.phases_cleared == 6, "All six phases count exactly once")
         var final_fragments: int = marathon.meta.fragments
