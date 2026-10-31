@@ -7,6 +7,7 @@ const TD_TOWER_TOOLTIPS = preload("res://scripts/td/td_tower_tooltips.gd")
 const TD_TOWER_DAMAGE = preload("res://scripts/td/td_tower_damage.gd")
 const TD_TARGETING = preload("res://scripts/td/td_targeting.gd")
 const TD_BURN_EFFECT = preload("res://scripts/td/td_burn_effect.gd")
+const TD_EMBER_HEART = preload("res://scripts/td/td_ember_heart.gd")
 const TD_MULTIHIT = preload("res://scripts/td/td_multihit.gd")
 const TD_NECRO_SPIRITS = preload("res://scripts/td/td_necro_spirits.gd")
 const TD_FROST_EFFECT = preload("res://scripts/td/td_frost_effect.gd")
@@ -62,6 +63,7 @@ var help_visible := false
 const RESTART_BUTTON := Rect2(455, 350, 242, 58)
 var interwave_choice := ""
 var ritual_reserve_claimed := false
+var ember_heart_claimed := false
 var next_wave_extra_hp := 0
 var enemies_spawned := 0
 var enemies_escaped := 0
@@ -228,6 +230,7 @@ func choose_interwave_event(choice: String) -> bool:
         "raid":
             coins += 35
             next_wave_extra_hp = 3
+            ember_heart_claimed = true
         "repair":
             altar_hp = mini(100, altar_hp + 20)
         "safe":
@@ -566,6 +569,12 @@ func tick_burning(delta: float) -> void:
             enemies.erase(enemy)
             enemies_defeated += 1
             coins += 5
+            if ember_heart_claimed:
+                var splash_victims: Array[Dictionary] = TD_EMBER_HEART.splash_targets(Vector2(enemy["pos"]), enemies)
+                for victim in splash_victims:
+                    enemies.erase(victim)
+                    enemies_defeated += 1
+                    coins += 5
 
 func restart_defense() -> void:
     moving_tower = false
@@ -577,6 +586,7 @@ func restart_defense() -> void:
     enemies_spawned = 0
     interwave_choice = ""
     ritual_reserve_claimed = false
+    ember_heart_claimed = false
     next_wave_extra_hp = 0
     enemies_escaped = 0
     enemies_defeated = 0
@@ -635,7 +645,7 @@ func export_fortress_state() -> Dictionary:
     var buildings: Array[Dictionary] = []
     for slot in slots:
         buildings.append({"tower": str(slot["tower"]), "level": int(slot["level"]), "specialization": str(slot.get("specialization", "")), "target_priority": str(slot.get("target_priority", "nearest"))})
-    return {"buildings": buildings, "coins": coins, "altar_hp": altar_hp, "map_seed": fortress_map_seed, "ritual_reserve_claimed": ritual_reserve_claimed}
+    return {"buildings": buildings, "coins": coins, "altar_hp": altar_hp, "map_seed": fortress_map_seed, "ritual_reserve_claimed": ritual_reserve_claimed, "ember_heart_claimed": ember_heart_claimed}
 
 func import_fortress_state(state: Dictionary) -> bool:
     var buildings: Array = state.get("buildings", [])
@@ -662,6 +672,7 @@ func import_fortress_state(state: Dictionary) -> bool:
         slots[i]["specialization"] = str(buildings[i].get("specialization", ""))
         slots[i]["target_priority"] = str(buildings[i].get("target_priority", "nearest"))
     ritual_reserve_claimed = state.get("ritual_reserve_claimed", false) == true
+    ember_heart_claimed = state.get("ember_heart_claimed", false) == true
     coins = maxi(0, int(state.get("coins", coins)))
     altar_hp = clampi(int(state.get("altar_hp", altar_hp)), 1, 100)
     tower_cooldowns.clear()
@@ -1463,7 +1474,7 @@ func _draw() -> void:
         draw_rect(Rect2(184, 205, 785, 186), Color("#1d3038", 0.97))
         draw_rect(Rect2(184, 205, 785, 186), Color("#d7ba80"), false, 2.0)
         draw_string(ThemeDB.fallback_font, Vector2(235, 257), "ВОЕННЫЙ СОВЕТ: ВЫБЕРИ ПОДГОТОВКУ", HORIZONTAL_ALIGNMENT_LEFT, -1, 21, Color("#f5e6bc"))
-        var labels := ["ОБОЗ: +35 / +3 HP ВРАГАМ", "АЛТАРЬ: +20 HP", "ЗАПАС БЕЗДНЫ: +20 ЗОЛ."]
+        var labels := ["ОБОЗ: +35 / +3 HP И ПЕПЕЛЬНОЕ СЕРДЦЕ", "АЛТАРЬ: +20 HP", "ЗАПАС БЕЗДНЫ: +20 ЗОЛ."]
         for i in range(EVENT_BUTTONS.size()):
             draw_rect(EVENT_BUTTONS[i], Color("#53695d"))
             draw_string(ThemeDB.fallback_font, EVENT_BUTTONS[i].position + Vector2(8, 37), labels[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color.WHITE)

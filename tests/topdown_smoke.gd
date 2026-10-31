@@ -2247,5 +2247,38 @@ func run_tests() -> void:
         check(not boon_game.ritual_reserve_claimed, "New defense resets council reward state")
         boon_game.queue_free()
         boon_restored.queue_free()
+    # The first combat boon makes burn kills splash, without recursive explosion chains.
+    var ember_mod = load("res://scripts/td/td_ember_heart.gd")
+    var ember_foes: Array[Dictionary] = [
+        {"pos": Vector2(100, 100), "hp": 2, "delay": 0.0},
+        {"pos": Vector2(170, 100), "hp": 3, "delay": 0.0},
+        {"pos": Vector2(120, 100), "hp": 1, "delay": 1.0},
+        {"pos": Vector2(350, 100), "hp": 1, "delay": 0.0}
+    ]
+    var ember_kills: Array[Dictionary] = ember_mod.splash_targets(Vector2(100, 100), ember_foes)
+    check(ember_kills.size() == 1 and ember_foes[0]["hp"] == 0, "Ember splash kills only in-range vulnerable targets")
+    check(ember_foes[1]["hp"] == 1 and ember_foes[2]["hp"] == 1 and ember_foes[3]["hp"] == 1, "Ember splash ignores delayed and distant enemies")
+    if boon_scene != null:
+        var ember_game = boon_scene.instantiate()
+        root.add_child(ember_game)
+        ember_game.wave_number = 3
+        check(ember_game.choose_interwave_event("raid") and ember_game.ember_heart_claimed, "War council raid unlocks Ember Heart")
+        var burning_foe: Dictionary = {"pos": Vector2(400, 300), "hp": 1, "delay": 0.0}
+        var nearby_foe: Dictionary = {"pos": Vector2(430, 300), "hp": 2, "delay": 0.0}
+        ember_game.enemies.clear()
+        ember_game.enemies.append(burning_foe)
+        ember_game.enemies.append(nearby_foe)
+        ember_game.apply_burn(burning_foe)
+        var initial_gold: int = ember_game.coins
+        ember_game.tick_burning(0.5)
+        check(ember_game.enemies.is_empty() and ember_game.coins == initial_gold + 10, "Ember Heart splash awards two kills exactly once")
+        var ember_snapshot: Dictionary = ember_game.export_fortress_state()
+        var ember_next = boon_scene.instantiate()
+        root.add_child(ember_next)
+        check(ember_next.import_fortress_state(ember_snapshot) and ember_next.ember_heart_claimed, "Ember Heart survives day transition")
+        ember_snapshot.erase("ember_heart_claimed")
+        check(ember_next.import_fortress_state(ember_snapshot) and not ember_next.ember_heart_claimed, "Old fortress snapshots load without Ember Heart")
+        ember_game.queue_free()
+        ember_next.queue_free()
     print("TOPDOWN SMOKE RESULT: ", "PASS" if failures == 0 else str(failures) + " FAILURES")
     quit(0 if failures == 0 else 1)
