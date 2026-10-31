@@ -1,7 +1,7 @@
 extends RefCounted
-## Canonical six-tower design catalogue.
-## Values for the four legacy gameplay IDs remain owned by TD_TOWER_STATS.
-## New spark/pulse values are proposals until their combat implementation is merged.
+## Six design identities mapped to the current four gameplay IDs.
+## necro/frost combat exists, but its current base/weapon art still uses pulse/spark folders.
+## spark/pulse are distinct design identities awaiting separate runtime integration.
 const TOWERS := {
     "ballista": {
         "name": "КОСТЯНАЯ БАЛЛИСТА", "role": "Точный пробивной урон",
@@ -33,17 +33,17 @@ const TOWERS := {
     },
     "necro": {
         "name": "АЛТАРЬ ДУШ", "role": "Некромантия и призыв духов",
-        "asset_id": "necro", "legacy_id": "",
-        "cost": 65, "range": 125.0, "damage": 3,
+        "asset_id": "pulse", "legacy_id": "necro",
+        "cost": 60, "range": 125.0, "damage": 3,
         "specializations": ["ЖНЕЦ", "ЛЕГИОН"],
-        "status": "concept_only"
+        "status": "legacy_gameplay_art_migration_pending"
     },
     "frost": {
         "name": "ЛЕДЯНОЙ ОБЕЛИСК", "role": "Замедление и контроль",
-        "asset_id": "frost", "legacy_id": "",
+        "asset_id": "spark", "legacy_id": "frost",
         "cost": 50, "range": 145.0, "damage": 1,
         "specializations": ["МОРОЗ", "МЕТЕЛЬ"],
-        "status": "concept_only"
+        "status": "legacy_gameplay_art_migration_pending"
     }
 }
 const ORDER := ["ballista", "fire", "spark", "pulse", "necro", "frost"]
@@ -52,4 +52,4 @@ static func get_tower(id: String) -> Dictionary:
     return TOWERS.get(id, {}).duplicate(true)
 
 static func is_combat_ready(id: String) -> bool:
-    return str(TOWERS.get(id, {}).get("status", "")) == "legacy_gameplay"
+    return str(TOWERS.get(id, {}).get("status", "")) in ["legacy_gameplay", "legacy_gameplay_art_migration_pending"]
