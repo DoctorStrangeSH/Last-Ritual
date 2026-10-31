@@ -425,7 +425,9 @@ func tower_synergy_links(slot_id: int) -> Array[int]:
         if other_id == slot_id:
             continue
         var other_kind: String = str(slots[other_id]["tower"])
-        var active_pair: bool = (kind == "bone" and other_kind == "fire") or (kind == "fire" and other_kind == "bone") or (kind == "necro" and other_kind == "bone") or (kind == "bone" and other_kind == "necro") or (kind == "necro" and other_kind == "fire") or (kind == "fire" and other_kind == "necro")
+        var base_pair: bool = kind != other_kind and ["bone", "fire", "necro"].has(kind) and ["bone", "fire", "necro"].has(other_kind)
+        var frost_pair: bool = (kind == "frost" and ["bone", "fire", "necro"].has(other_kind)) or (other_kind == "frost" and ["bone", "fire", "necro"].has(kind))
+        var active_pair: bool = base_pair or frost_pair
         if active_pair and slots[slot_id]["pos"].distance_to(slots[other_id]["pos"]) <= SYNERGY_DISTANCE:
             links.append(other_id)
     return links
@@ -1219,15 +1221,8 @@ func tower_info_for_slot(slot_id: int) -> Dictionary:
     var kind: String = str(tower.get("tower", ""))
     if kind == "":
         return {}
-    var damage: int = int(TOWER_DAMAGE[kind]) * int(tower["level"])
-    if str(tower.get("specialization", "")) == "siege":
-        damage += 2
-    elif str(tower.get("specialization", "")) == "swarm":
-        damage = maxi(1, damage - 1)
-    if kind == "fire":
-        damage += fire_synergy_bonus
-    elif kind == "bone":
-        damage += bone_synergy_bonus
+    # One source of truth for combat hits, shop upgrade preview and tower inspector.
+    var damage: int = TD_TOWER_DAMAGE.direct_damage(kind, int(tower["level"]), str(tower.get("specialization", "")), fire_synergy_bonus, bone_synergy_bonus)
     var upgrade_cost: int = 20 * int(tower["level"]) if int(tower["level"]) < 3 else 0
     var synergy: Dictionary = tower_synergy_preview(slot_id)
     var explanation: Dictionary = TD_TOWER_TOOLTIPS.shop_info(kind)
