@@ -65,6 +65,8 @@ jobs:
         run: python3 tools/verify_png_assets.py
       - name: Import assets and check scripts
         run: timeout 120s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --editor --quit
+      - name: Export and validate Soul Altar candidate PNG layers
+        run: timeout 120s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --script res://tools/export_necro_layers.gd
       - name: Run top-down smoke tests
         run: timeout 120s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --script res://tests/topdown_smoke.gd
 
