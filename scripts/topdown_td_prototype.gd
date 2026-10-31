@@ -1589,6 +1589,9 @@ func _draw() -> void:
             draw_tower_figure(pos, str(slots[i]["tower"]), int(slots[i]["level"]))
             if slots[i].get("specialization", "") != "":
                 draw_arc(pos, 28.0, 0.0, TAU, 24, Color("#ffdc91") if slots[i]["specialization"] == "siege" else Color("#86e0bd"), 3.0)
+                var badge: Texture2D = cached_tower_texture(TD_SPECIALIZATION_ICONS.path_for(str(slots[i]["tower"]), str(slots[i]["specialization"])))
+                if badge != null:
+                    draw_texture_rect(badge, Rect2(pos + Vector2(16, -43), Vector2(22, 22)), false)
         if not occupied:
             draw_line(pos + Vector2(-8, 0), pos + Vector2(8, 0), Color("#9fc9b9"), 2.0)
             draw_line(pos + Vector2(0, -8), pos + Vector2(0, 8), Color("#9fc9b9"), 2.0)
