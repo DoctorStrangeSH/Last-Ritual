@@ -2227,5 +2227,25 @@ func run_tests() -> void:
     check(unique_offers.size() == 3, "Abyss offers never repeat within a choice")
     check(boons.offers(913, 0).is_empty() and boons.offers(913, 6).is_empty(), "Abyss catalog rejects invalid days")
     check(boons.offers(913, 2, 99).size() == boons.BOONS.size(), "Abyss offers cannot exceed catalog")
+    # First playable Abyss reward integrates into existing council without another modal.
+    var boon_scene = load("res://scenes/topdown_td_prototype.tscn") as PackedScene
+    if boon_scene != null:
+        var boon_game = boon_scene.instantiate()
+        root.add_child(boon_game)
+        boon_game.wave_number = 3
+        var gold_before: int = boon_game.coins
+        check(boon_game.choose_interwave_event("safe"), "Abyss reserve can be claimed via council")
+        check(boon_game.coins == gold_before + 20 and boon_game.ritual_reserve_claimed, "Abyss reserve pays exactly 20 gold")
+        check(not boon_game.choose_interwave_event("safe") and boon_game.coins == gold_before + 20, "Abyss reserve cannot be claimed twice")
+        var saved_boon: Dictionary = boon_game.export_fortress_state()
+        var boon_restored = boon_scene.instantiate()
+        root.add_child(boon_restored)
+        check(boon_restored.import_fortress_state(saved_boon) and boon_restored.ritual_reserve_claimed, "Abyss reserve state survives day transfer")
+        saved_boon.erase("ritual_reserve_claimed")
+        check(boon_restored.import_fortress_state(saved_boon) and not boon_restored.ritual_reserve_claimed, "Older fortress snapshots remain compatible")
+        boon_game.restart_defense()
+        check(not boon_game.ritual_reserve_claimed, "New defense resets council reward state")
+        boon_game.queue_free()
+        boon_restored.queue_free()
     print("TOPDOWN SMOKE RESULT: ", "PASS" if failures == 0 else str(failures) + " FAILURES")
     quit(0 if failures == 0 else 1)

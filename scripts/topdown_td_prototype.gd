@@ -61,6 +61,7 @@ var defense_state := "playing" # playing, won, lost
 var help_visible := false
 const RESTART_BUTTON := Rect2(455, 350, 242, 58)
 var interwave_choice := ""
+var ritual_reserve_claimed := false
 var next_wave_extra_hp := 0
 var enemies_spawned := 0
 var enemies_escaped := 0
@@ -230,7 +231,9 @@ func choose_interwave_event(choice: String) -> bool:
         "repair":
             altar_hp = mini(100, altar_hp + 20)
         "safe":
-            coins += 15
+            # First implemented Abyss boon: one-time economical choice.
+            coins += 20
+            ritual_reserve_claimed = true
     queue_redraw()
     return true
 
@@ -573,6 +576,7 @@ func restart_defense() -> void:
     wave_number = 0
     enemies_spawned = 0
     interwave_choice = ""
+    ritual_reserve_claimed = false
     next_wave_extra_hp = 0
     enemies_escaped = 0
     enemies_defeated = 0
@@ -631,7 +635,7 @@ func export_fortress_state() -> Dictionary:
     var buildings: Array[Dictionary] = []
     for slot in slots:
         buildings.append({"tower": str(slot["tower"]), "level": int(slot["level"]), "specialization": str(slot.get("specialization", "")), "target_priority": str(slot.get("target_priority", "nearest"))})
-    return {"buildings": buildings, "coins": coins, "altar_hp": altar_hp, "map_seed": fortress_map_seed}
+    return {"buildings": buildings, "coins": coins, "altar_hp": altar_hp, "map_seed": fortress_map_seed, "ritual_reserve_claimed": ritual_reserve_claimed}
 
 func import_fortress_state(state: Dictionary) -> bool:
     var buildings: Array = state.get("buildings", [])
@@ -657,6 +661,7 @@ func import_fortress_state(state: Dictionary) -> bool:
         slots[i]["level"] = int(buildings[i]["level"])
         slots[i]["specialization"] = str(buildings[i].get("specialization", ""))
         slots[i]["target_priority"] = str(buildings[i].get("target_priority", "nearest"))
+    ritual_reserve_claimed = state.get("ritual_reserve_claimed", false) == true
     coins = maxi(0, int(state.get("coins", coins)))
     altar_hp = clampi(int(state.get("altar_hp", altar_hp)), 1, 100)
     tower_cooldowns.clear()
@@ -1458,7 +1463,7 @@ func _draw() -> void:
         draw_rect(Rect2(184, 205, 785, 186), Color("#1d3038", 0.97))
         draw_rect(Rect2(184, 205, 785, 186), Color("#d7ba80"), false, 2.0)
         draw_string(ThemeDB.fallback_font, Vector2(235, 257), "ВОЕННЫЙ СОВЕТ: ВЫБЕРИ ПОДГОТОВКУ", HORIZONTAL_ALIGNMENT_LEFT, -1, 21, Color("#f5e6bc"))
-        var labels := ["ОБОЗ: +35 / +3 HP ВРАГАМ", "АЛТАРЬ: +20 HP", "ЗАПАС: +15 ЗОЛОТА"]
+        var labels := ["ОБОЗ: +35 / +3 HP ВРАГАМ", "АЛТАРЬ: +20 HP", "ЗАПАС БЕЗДНЫ: +20 ЗОЛ."]
         for i in range(EVENT_BUTTONS.size()):
             draw_rect(EVENT_BUTTONS[i], Color("#53695d"))
             draw_string(ThemeDB.fallback_font, EVENT_BUTTONS[i].position + Vector2(8, 37), labels[i], HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color.WHITE)
