@@ -30,3 +30,35 @@ static func weapon_frame_region(kind: String) -> Rect2:
     if not WEAPON_CELL_WIDTH.has(kind):
         return Rect2()
     return Rect2(0, 0, float(WEAPON_CELL_WIDTH[kind]), float(WEAPON_CELL_HEIGHT[kind]))
+
+const PROJECTILE_NAMES := {
+    "bone": "Tower 01 - Level %02d - Projectile.png",
+    "fire": "Tower 07 - Level X - Projectile.png",
+    "necro": "Tower 08 - Level %02d - Projectile.png",
+    "frost": "Tower 04 - Level %02d - Projectile.png"
+}
+const IMPACT_NAMES := {
+    "bone": "Tower 01 - Weapon - Impact.png",
+    "fire": "Tower 07 - Level X - Projectile - Impact.png",
+    "frost": "Tower 04 - Level %02d - Projectile - Impact.png"
+}
+# Source PNGs are sprite sheets: choose the first *cell*, not the whole sheet.
+const PROJECTILE_CELL := {"bone": Vector2i(8, 8), "fire": Vector2i(32, 32), "necro": Vector2i(256, 256), "frost": Vector2i(8, 8)}
+const IMPACT_CELL := {"bone": Vector2i(64, 64), "fire": Vector2i(64, 64), "frost": Vector2i(64, 64)}
+
+static func vfx_path(kind: String, level: int, layer: String) -> String:
+    if not FOLDERS.has(kind) or level < 1 or level > 3:
+        return ""
+    var root: String = "res://assets/spire/towers/%s/%s/level_%d/" % [FOLDERS[kind], layer, level]
+    if layer == "projectiles":
+        return root + (PROJECTILE_NAMES[kind] % level if kind != "fire" else PROJECTILE_NAMES[kind])
+    if layer == "weapon_impact" and IMPACT_NAMES.has(kind):
+        return root + (IMPACT_NAMES[kind] % level if kind == "frost" else IMPACT_NAMES[kind])
+    return ""
+
+static func vfx_frame_size(kind: String, layer: String) -> Vector2i:
+    if layer == "projectiles":
+        return PROJECTILE_CELL.get(kind, Vector2i.ZERO)
+    if layer == "weapon_impact":
+        return IMPACT_CELL.get(kind, Vector2i.ZERO)
+    return Vector2i.ZERO
