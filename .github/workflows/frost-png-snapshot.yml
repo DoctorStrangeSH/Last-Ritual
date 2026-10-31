@@ -1,0 +1,55 @@
+name: Preserve Frost Obelisk PNG previews in Git
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/frost-png-snapshot.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  frost-snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download Godot 4.4.1
+        run: |
+          set -euo pipefail
+          wget -q https://github.com/godotengine/godot/releases/download/4.4.1-stable/Godot_v4.4.1-stable_linux.x86_64.zip
+          unzip -q Godot_v4.4.1-stable_linux.x86_64.zip
+          chmod +x Godot_v4.4.1-stable_linux.x86_64
+      - name: Export Frost Obelisk PNGs
+        run: |
+          set -euo pipefail
+          timeout 120s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --editor --quit
+          timeout 120s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --script res://tools/export_frost_layers.gd
+          timeout 120s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --script res://tools/export_frost_vfx.gd
+          test "$(find build/art-preview/frost -maxdepth 1 -name '*.png' -type f | wc -l)" -eq 9
+          test "$(find build/art-preview/frost-vfx -maxdepth 1 -name '*.png' -type f | wc -l)" -eq 2
+      - name: Preserve 11 PNGs in an isolated Git review branch
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          short_sha="${SOURCE_SHA:0:12}"
+          review_branch="art/frost-png-preview-${short_sha}"
+          git switch -c "$review_branch"
+          dest="assets/spire/towers/frost/source/generated-preview"
+          mkdir -p "$dest/vfx"
+          cp build/art-preview/frost/*.png "$dest/"
+          cp build/art-preview/frost-vfx/*.png "$dest/vfx/"
+          (
+            cd "$dest"
+            sha256sum -- *.png vfx/*.png > SHA256SUMS.txt
+            printf 'Experimental Frost Obelisk previews; NOT approved production art.\nSource commit: %s\nGodot: 4.4.1\n' "$SOURCE_SHA" > SOURCE_COMMIT.txt
+          )
+          git add "$dest"
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "art(frost): snapshot 11 candidate PNGs from ${short_sha}"
+          git push origin "HEAD:refs/heads/$review_branch"
+          echo "### Frost Obelisk PNG review" >> "$GITHUB_STEP_SUMMARY"
+          echo "Branch: \`$review_branch\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "11 PNGs are stored in Git, awaiting visual art QA. No gameplay paths changed." >> "$GITHUB_STEP_SUMMARY"
