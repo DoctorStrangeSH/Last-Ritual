@@ -1415,6 +1415,11 @@ func _draw() -> void:
     if boss_feedback_time > 0.0:
         draw_rect(Rect2(385, 71, 382, 42), Color("#314f47") if boss_feedback_text == "АТАКА ПРЕРВАНА!" else Color("#683c46"))
         draw_string(ThemeDB.fallback_font, Vector2(407, 98), boss_feedback_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 21, Color("#fff0cf"))
+    # Display command influence only while the captain is present and active.
+    for captain in enemies:
+        if str(captain.get("role", "")) != "captain" or float(captain.get("delay", 0.0)) > 0.0:
+            continue
+        draw_arc(Vector2(captain["pos"]), 130.0, 0.0, TAU, 48, Color("#e9ce86", 0.30), 1.5)
     for spirit in summoned_spirits:
         draw_circle(spirit["pos"], 10.0, Color("#6de6b2"))
         draw_circle(spirit["pos"], 5.0, Color("#d8fff0"))
@@ -1516,6 +1521,7 @@ func _draw() -> void:
         draw_string(ThemeDB.fallback_font, Vector2(326, 407), "ПКМ / Esc — отменить выбор башни", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
         draw_string(ThemeDB.fallback_font, Vector2(326, 447), "НАЧАТЬ ВОЛНУ — запустить врагов", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
         draw_string(ThemeDB.fallback_font, Vector2(326, 467), "ЩИТ над тяжёлым врагом: броня с дня 3, огонь её пробивает", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#ffdba7"))
+        draw_string(ThemeDB.fallback_font, Vector2(326, 485), "КОМАНДИР: союзники рядом бегут на 20% быстрее", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("#e9ce86"))
         draw_string(ThemeDB.fallback_font, Vector2(326, 490), "Игра на паузе — H или «Продолжить»", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#d5c592"))
         draw_rect(HELP_CLOSE_BUTTON, Color("#527d70"))
         draw_string(ThemeDB.fallback_font, HELP_CLOSE_BUTTON.position + Vector2(11.0, 29.0), "ПРОДОЛЖИТЬ", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
