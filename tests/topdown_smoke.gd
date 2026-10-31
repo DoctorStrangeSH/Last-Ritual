@@ -2606,6 +2606,14 @@ func run_tests() -> void:
                 check(impact_path == "", "Necro impact art is explicitly absent until production art exists")
             else:
                 check(impact_path != "" and ResourceLoader.exists(impact_path), "Tower impact asset exists: %s L%d" % [tower_id, level])
+    var frame_api = load("res://scripts/td/td_tower_visuals.gd")
+    var tiny_image := Image.create(8, 8, false, Image.FORMAT_RGBA8)
+    var tiny_texture := ImageTexture.create_from_image(tiny_image)
+    check(frame_api.first_frame_region(tiny_texture, Vector2i(16, 16)).size == Vector2.ZERO, "Reject sprite cell larger than texture")
+    check(frame_api.frame_region(tiny_texture, Vector2i(4, 4), 2).position == Vector2(0, 4), "Resolve second-row sprite sheet frame")
+    check(frame_api.frame_region(tiny_texture, Vector2i(4, 4), 2).size == Vector2(4, 4), "Sprite sheet frame uses exact cell dimensions")
+    check(frame_api.frame_region(tiny_texture, Vector2i(4, 4), 99).size == Vector2.ZERO, "Reject frame index outside sprite sheet")
+    check(frame_api.frame_region(tiny_texture, Vector2i.ZERO, 0).size == Vector2.ZERO, "Reject zero-sized sprite cell")
     var catalogue = load("res://scripts/td/td_tower_catalogue.gd")
     check(catalogue.ORDER.size() == 6, "Canonical tower catalogue contains six entries")
     for tower_id in catalogue.ORDER:

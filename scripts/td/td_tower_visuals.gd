@@ -31,6 +31,25 @@ static func weapon_frame_region(kind: String) -> Rect2:
         return Rect2()
     return Rect2(0, 0, float(WEAPON_CELL_WIDTH[kind]), float(WEAPON_CELL_HEIGHT[kind]))
 
+## Return a valid atlas cell only when the texture actually contains it.
+static func first_frame_region(texture: Texture2D, cell_size: Vector2i) -> Rect2:
+    if texture == null or cell_size.x <= 0 or cell_size.y <= 0:
+        return Rect2()
+    if texture.get_width() < cell_size.x or texture.get_height() < cell_size.y:
+        return Rect2()
+    return Rect2(Vector2.ZERO, Vector2(cell_size))
+
+static func frame_region(texture: Texture2D, cell_size: Vector2i, frame_index: int) -> Rect2:
+    if texture == null or cell_size.x <= 0 or cell_size.y <= 0 or frame_index < 0:
+        return Rect2()
+    var columns: int = texture.get_width() / cell_size.x
+    var rows: int = texture.get_height() / cell_size.y
+    if columns <= 0 or rows <= 0 or frame_index >= columns * rows:
+        return Rect2()
+    var column: int = frame_index % columns
+    var row: int = frame_index / columns
+    return Rect2(Vector2(column * cell_size.x, row * cell_size.y), Vector2(cell_size))
+
 const PROJECTILE_NAMES := {
     "bone": "Tower 01 - Level %02d - Projectile.png",
     "fire": "Tower 07 - Level X - Projectile.png",
