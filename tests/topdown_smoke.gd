@@ -2400,5 +2400,23 @@ func run_tests() -> void:
         armor_ui_game.siege_day = 3
         check(armor_ui_game.enemy_visual_profile("brute")["mark"] == "armor", "Armored brute keeps recognizable armor silhouette")
         armor_ui_game.queue_free()
+    if boon_scene != null:
+        var escort_game = boon_scene.instantiate()
+        root.add_child(escort_game)
+        escort_game.siege_day = 5
+        # The captain joins the healer's lane in late-day escorted formations.
+        var escort_budget: Dictionary = escort_game.wave_enemy_budget(5)
+        check(int(escort_budget["captain"]) > 0 and int(escort_budget["support"]) > 0, "Final wave has both commander and support")
+        escort_game.wave_number = 4
+        check(escort_game.start_wave(), "Late siege escort formation starts")
+        var escort_captain_lane := -1
+        var escort_healer_lane := -2
+        for unit in escort_game.enemies:
+            if str(unit.get("role", "")) == "captain":
+                escort_captain_lane = int(unit["lane"])
+            if str(unit.get("role", "")) == "healer" and escort_healer_lane == -2:
+                escort_healer_lane = int(unit["lane"])
+        check(escort_captain_lane >= 0 and escort_captain_lane == escort_healer_lane, "Late siege commander escorts the healer route")
+        escort_game.queue_free()
     print("TOPDOWN SMOKE RESULT: ", "PASS" if failures == 0 else str(failures) + " FAILURES")
     quit(0 if failures == 0 else 1)

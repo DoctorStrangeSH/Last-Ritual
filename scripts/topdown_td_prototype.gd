@@ -345,7 +345,8 @@ func start_wave() -> bool:
         enemies_spawned += 1
     if int(budget["captain"]) > 0:
         var captain_hp: int = 24 + difficulty * 6 + maxi(0, siege_day - 3) * 6
-        enemies.append({"lane": 0, "pos": paths[0][0], "waypoint": 1, "hp": captain_hp, "max_hp": captain_hp, "speed": 65.0, "role": "captain", "delay": 2.0})
+        var captain_lane: int = 1 % paths.size() if siege_day >= 4 and int(budget["support"]) > 0 else 0
+        enemies.append({"lane": captain_lane, "pos": paths[captain_lane][0], "waypoint": 1, "hp": captain_hp, "max_hp": captain_hp, "speed": 65.0, "role": "captain", "delay": 2.0})
         enemies_spawned += 1
     if int(budget["boss"]) > 0:
         var boss_hp: int = 55 + difficulty * 15 + (20 if siege_day >= 3 else 0) + maxi(0, siege_day - 3) * 17
