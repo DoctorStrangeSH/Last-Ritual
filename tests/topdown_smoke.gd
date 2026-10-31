@@ -883,6 +883,22 @@ func run_tests() -> void:
         hover_game.slots[0]["level"] = 1
         hover_game.selected_slot = 0
         check(str(hover_game.tooltip_at(Vector2(915, 571))["mode"]) == "upgrade", "Hover on upgrade button takes priority over overlapping shop card")
+        # Hover inspector is transient; selecting a tower must not pin a large HUD card.
+        var tower_center: Vector2 = hover_game.slots[0]["pos"]
+        var hover_info: Dictionary = hover_game.hovered_tower_info(tower_center)
+        check(str(hover_info.get("kind", "")) == "bone", "Pointing at an occupied site opens its tower inspector")
+        check(hover_game.hovered_tower_info(tower_center + Vector2(80, 0)).is_empty(), "Moving pointer away immediately hides tower inspector")
+        check(hover_game.hovered_tower_info(hover_game.slots[1]["pos"]).is_empty(), "Empty building sites never show tower inspector")
+        check(not hover_game.selected_tower_info().is_empty(), "Selected tower remains available for upgrade actions after hover leaves")
+        var hover_rect: Rect2 = hover_game.tower_hover_panel_rect(Vector2(1110, 450))
+        check(hover_rect.position.x >= 0.0 and hover_rect.end.x <= 1152.0 and hover_rect.position.y >= 0.0 and hover_rect.end.y < 545.0, "Hover inspector stays inside screen and above bottom shop")
+        var shop_rect: Rect2 = hover_game.tower_tooltip_panel_rect(Vector2(1100, 600))
+        check(shop_rect.position.x >= 0.0 and shop_rect.end.x <= 1152.0 and shop_rect.position.y >= 0.0 and shop_rect.end.y < 545.0, "Shop tooltip stays inside screen above bottom shop")
+        hover_game.help_visible = true
+        check(hover_game.hovered_tower_info(tower_center).is_empty(), "Help modal prevents tower hover inspector")
+        hover_game.help_visible = false
+        hover_game.specialization_open = true
+        check(hover_game.hovered_tower_info(tower_center).is_empty(), "Specialization modal prevents tower hover inspector")
         hover_game.queue_free()
     for specialization_kind in ["bone", "fire", "necro", "frost"]:
         for path_name in ["siege", "swarm"]:
