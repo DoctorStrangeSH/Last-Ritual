@@ -2620,6 +2620,15 @@ func run_tests() -> void:
     check(catalogue.get_tower("necro").get("asset_id", "") == "pulse", "Necro legacy runtime currently uses pulse artwork folder")
     check(catalogue.get_tower("frost").get("asset_id", "") == "spark", "Frost legacy runtime currently uses spark artwork folder")
     check(not catalogue.is_combat_ready("spark") and not catalogue.is_combat_ready("pulse"), "Distinct spark and pulse gameplay implementations remain pending")
+    var runtime_tower_stats = load("res://scripts/td/td_tower_stats.gd")
+    for design_id in ["ballista", "fire", "necro", "frost"]:
+        var mapped: Dictionary = catalogue.get_tower(design_id)
+        var runtime_id: String = str(mapped.get("legacy_id", ""))
+        check(runtime_id != "" and runtime_tower_stats.SHOP_ORDER.has(runtime_id), "Combat-ready design maps to a shop runtime ID: %s" % design_id)
+        if runtime_id != "" and runtime_tower_stats.SHOP_ORDER.has(runtime_id):
+            check(int(mapped.get("cost", -1)) == int(runtime_tower_stats.COSTS[runtime_id]), "Catalogue cost matches runtime: %s" % design_id)
+            check(is_equal_approx(float(mapped.get("range", -1.0)), float(runtime_tower_stats.RANGES[runtime_id])), "Catalogue range matches runtime: %s" % design_id)
+            check(int(mapped.get("damage", -1)) == int(runtime_tower_stats.DAMAGES[runtime_id]), "Catalogue damage matches runtime: %s" % design_id)
     check(catalogue.get_tower("unknown").is_empty(), "Unknown tower returns empty catalogue entry")
     print("TOPDOWN SMOKE RESULT: ", "PASS" if failures == 0 else str(failures) + " FAILURES")
     quit(0 if failures == 0 else 1)
