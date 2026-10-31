@@ -18,6 +18,8 @@ func run_export() -> int:
         push_error("Cannot create necro art-preview directory: %d" % dir_error)
         return 1
     var total: int = 0
+    var previous_base: Image = null
+    var previous_weapon: Image = null
     for level in range(1, 4):
         var base_image: Image = read_svg("base_level_%d.svg" % level)
         var weapon_image: Image = read_svg("weapon_level_%d.svg" % level)
@@ -26,6 +28,14 @@ func run_export() -> int:
         if not has_transparency_and_painted_pixels(base_image) or not has_transparency_and_painted_pixels(weapon_image):
             push_error("Necro level %d must have transparent background and visible pixels" % level)
             return 1
+        if previous_base != null and count_changed_pixels(previous_base, base_image) < 25:
+            push_error("Necro base L%d visually duplicates the previous level" % level)
+            return 1
+        if previous_weapon != null and count_changed_pixels(previous_weapon, weapon_image) < 25:
+            push_error("Necro weapon L%d visually duplicates the previous level" % level)
+            return 1
+        previous_base = base_image.duplicate()
+        previous_weapon = weapon_image.duplicate()
         if not save_checked_png(base_image, output_absolute.path_join("base_level_%d.png" % level)):
             return 1
         if not save_checked_png(weapon_image, output_absolute.path_join("weapon_level_%d.png" % level)):
@@ -46,6 +56,9 @@ func run_export() -> int:
                     return 1
                 var specialized: Image = assembled.duplicate()
                 specialized.blend_rect(overlay, Rect2i(Vector2i.ZERO, SIZE), Vector2i.ZERO)
+                if count_changed_pixels(assembled, specialized) < 25:
+                    push_error("Necro %s specialization is not distinguishable from base L3" % branch)
+                    return 1
                 if not save_checked_png(specialized, output_absolute.path_join("specialization_%s_level_3.png" % branch)):
                     return 1
                 total += 1
@@ -67,6 +80,18 @@ func read_svg(file_name: String) -> Image:
         return null
     image.convert(Image.FORMAT_RGBA8)
     return image
+
+## Detect accidental duplicated level exports or visually ineffective overlays.
+## Compare packed pixel bytes after the same RGBA8 SVG rasterization path.
+func count_changed_pixels(first: Image, second: Image) -> int:
+    if first.get_size() != second.get_size():
+        return 0
+    var changed: int = 0
+    for y in range(SIZE.y):
+        for x in range(SIZE.x):
+            if first.get_pixel(x, y) != second.get_pixel(x, y):
+                changed += 1
+    return changed
 
 func has_transparency_and_painted_pixels(image: Image) -> bool:
     if image.get_size() != SIZE:
