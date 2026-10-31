@@ -1340,11 +1340,23 @@ func cached_tower_texture(path: String) -> Texture2D:
         tower_texture_cache[path] = load(path) as Texture2D
     return tower_texture_cache[path]
 
-func draw_tower_figure(pos: Vector2, kind: String, level: int) -> void:
+func draw_tower_figure(pos: Vector2, kind: String, level: int, specialization: String = "") -> void:
     # A tower is base + weapon. Show the first, stable weapon pose rather than
     # endlessly cycling sprite-sheet cells as if they were building frames.
     var base_texture: Texture2D = cached_tower_texture(TOWER_VISUALS.path_for(kind, level, "base"))
     var weapon_texture: Texture2D = cached_tower_texture(TOWER_VISUALS.path_for(kind, level, "weapon"))
+    if TOWER_VISUALS.uses_experimental_necro(kind) and base_texture != null and weapon_texture != null:
+        # Two images share a 128px transparent canvas and must keep one pivot.
+        # For specialization L3 the atlas contains an assembled tower.
+        var target := Rect2(pos + Vector2(-33, -53), Vector2(66, 66))
+        var specialized_path: String = TOWER_VISUALS.specialization_preview_path(kind, specialization) if level == 3 else ""
+        var specialized_texture: Texture2D = cached_tower_texture(specialized_path)
+        if specialized_texture != null:
+            draw_texture_rect(specialized_texture, target, false)
+        else:
+            draw_texture_rect(base_texture, target, false)
+            draw_texture_rect(weapon_texture, target, false)
+        return
     if base_texture != null and weapon_texture != null:
         draw_texture_rect(base_texture, Rect2(pos + Vector2(-21, -49), Vector2(42, 68)), false)
         var weapon_cell: Rect2 = TOWER_VISUALS.weapon_frame_region(kind)
@@ -1615,7 +1627,7 @@ func _draw() -> void:
         draw_circle(pos, 27.0, Color("#1e353b") if not occupied else Color("#e0bb76"))
         draw_arc(pos, 23.0, -PI / 2.0, PI * 1.5, 24, Color("#89b6ab") if not occupied else Color("#724b45"), 2.0)
         if occupied:
-            draw_tower_figure(pos, str(slots[i]["tower"]), int(slots[i]["level"]))
+            draw_tower_figure(pos, str(slots[i]["tower"]), int(slots[i]["level"]), str(slots[i].get("specialization", "")))
             if slots[i].get("specialization", "") != "":
                 draw_arc(pos, 28.0, 0.0, TAU, 24, Color("#ffdc91") if slots[i]["specialization"] == "siege" else Color("#86e0bd"), 3.0)
                 var badge: Texture2D = cached_tower_texture(TD_SPECIALIZATION_ICONS.path_for(str(slots[i]["tower"]), str(slots[i]["specialization"])))
