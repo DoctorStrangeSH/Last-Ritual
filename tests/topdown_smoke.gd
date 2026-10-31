@@ -2418,5 +2418,21 @@ func run_tests() -> void:
                 escort_healer_lane = int(unit["lane"])
         check(escort_captain_lane >= 0 and escort_captain_lane == escort_healer_lane, "Late siege commander escorts the healer route")
         escort_game.queue_free()
+    if boon_scene != null:
+        var scout_game = boon_scene.instantiate()
+        root.add_child(scout_game)
+        scout_game.siege_day = 5
+        scout_game.wave_number = 4
+        var forecast: Dictionary = scout_game.next_wave_scouting()
+        var budget_check: Dictionary = scout_game.wave_enemy_budget(5)
+        check(int(forecast["wave"]) == 5 and int(forecast["healer"]) == int(budget_check["support"]) and int(forecast["captain"]) == int(budget_check["captain"]), "Scouting matches actual special-unit budget")
+        var counted_brutes := 0
+        for enemy_index in range(int(budget_check["ordinary"])):
+            if scout_game.siege_enemy_role(5, enemy_index) == "brute":
+                counted_brutes += 1
+        check(int(forecast["brute"]) == counted_brutes, "Scouting heavy count uses actual enemy role selector")
+        scout_game.wave_number = scout_game.SIEGE_WAVES
+        check(scout_game.next_wave_scouting().is_empty(), "No scouting after final wave")
+        scout_game.queue_free()
     print("TOPDOWN SMOKE RESULT: ", "PASS" if failures == 0 else str(failures) + " FAILURES")
     quit(0 if failures == 0 else 1)
