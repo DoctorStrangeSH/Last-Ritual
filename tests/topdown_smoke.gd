@@ -959,7 +959,7 @@ func run_tests() -> void:
         hover_game.slots[0]["tower"] = "bone"
         hover_game.slots[0]["level"] = 1
         hover_game.selected_slot = 0
-        check(str(hover_game.tooltip_at(Vector2(915, 571))["mode"]) == "upgrade", "Hover on upgrade button takes priority over overlapping shop card")
+        check(str(hover_game.tooltip_at(hover_game.UPGRADE_BUTTON.get_center())["mode"]) == "upgrade", "Upgrade tooltip follows relocated upgrade button")
         # Hover inspector is transient; selecting a tower must not pin a large HUD card.
         var tower_center: Vector2 = hover_game.slots[0]["pos"]
         var hover_info: Dictionary = hover_game.hovered_tower_info(tower_center)
