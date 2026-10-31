@@ -1,3 +1,5 @@
+> **31.10.2026, #249:** #248 merged d3b4f98 после CI success. Тестовый PR: стоимость постройки/улучшений каждого типа башни + прогноз максимального дохода всех 5 дней × 6 волн. Ночь не менять, merge только после exact-head CI.
+
 > **31.10.2026, #248:** #247 merged e062691 после CI success. Test-only PR на все 5 дней × 6 волн: бюджет/роли/численность, дорожная карта обновлена. Ночь не менять, merge после exact-head CI.
 
 > **31.10.2026, #247:** #246 merged 81c1780. Next PR adds contextual one-line tip to forecast (boss/captain/armor/runner/healer priority), smoke tests; no night changes. Merge only on exact-head green CI.

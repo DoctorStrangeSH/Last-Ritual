@@ -1,3 +1,5 @@
+> **31.10.2026:** #248 exact-head CI success, merged d3b4f98. #249 test-only экономика башен 1–3 и дохода с пяти дней, без изменения баланса; Windows QA остаётся открытым.
+
 > **31.10.2026:** #247 exact-head CI success, merged e062691. #248 — smoke-аудит 30 сочетаний день/волна, без изменения боевого баланса. Windows QA ещё требуется.
 
 > **31.10.2026:** #246 merged 81c1780 after exact-head CI success. #247 adds prioritized short countertips to scouting panel; no combat changes. CI and Windows QA pending.
