@@ -16,7 +16,21 @@ const WEAPON_PREFIX := {
 const WEAPON_CELL_WIDTH := {"bone": 96, "fire": 64, "necro": 48, "frost": 128}
 const WEAPON_CELL_HEIGHT := {"bone": 96, "fire": 64, "necro": 48, "frost": 128}
 
+## Switchable preview gate: disable to instantly restore the original pulse art.
+const NECRO_EXPERIMENTAL_ART := true
+const NECRO_EXPERIMENTAL_ROOT := "res://assets/spire/towers/necro/experimental/"
+
+static func uses_experimental_necro(kind: String) -> bool:
+    return NECRO_EXPERIMENTAL_ART and kind == "necro"
+
+static func specialization_preview_path(kind: String, specialization: String) -> String:
+    if not uses_experimental_necro(kind) or not ["siege", "swarm"].has(specialization):
+        return ""
+    return NECRO_EXPERIMENTAL_ROOT + "specialization_%s_level_3.png" % specialization
+
 static func path_for(kind: String, level: int, layer: String) -> String:
+    if uses_experimental_necro(kind) and level >= 1 and level <= 3 and ["base", "weapon"].has(layer):
+        return NECRO_EXPERIMENTAL_ROOT + "%s_level_%d.png" % [layer, level]
     if not FOLDERS.has(kind) or level < 1 or level > 3:
         return ""
     var root: String = "res://assets/spire/towers/%s/%s/level_%d/" % [FOLDERS[kind], layer, level]
@@ -27,6 +41,8 @@ static func path_for(kind: String, level: int, layer: String) -> String:
     return ""
 
 static func weapon_frame_region(kind: String) -> Rect2:
+    if uses_experimental_necro(kind):
+        return Rect2(0, 0, 128, 128)
     if not WEAPON_CELL_WIDTH.has(kind):
         return Rect2()
     return Rect2(0, 0, float(WEAPON_CELL_WIDTH[kind]), float(WEAPON_CELL_HEIGHT[kind]))
