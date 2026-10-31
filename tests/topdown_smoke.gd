@@ -2562,5 +2562,13 @@ func run_tests() -> void:
                 var impact_texture: Texture2D = load(impact_path)
                 check(impact_texture != null and impact_texture.get_width() >= 6 * projectile_maps.vfx_frame_size(kind, "weapon_impact").x, "Impact sheet has at least six frames: %s lv%d" % [kind, level])
     check(projectile_maps.vfx_path("necro", 1, "weapon_impact") == "", "Unprovided pulse hit effect uses procedural fallback")
+    var fire_splash = load("res://scripts/td/td_fire_splash.gd")
+    var splash_main: Dictionary = {"pos": Vector2(100, 100), "delay": 0.0}
+    var splash_close: Dictionary = {"pos": Vector2(120, 100), "delay": 0.0}
+    var splash_far: Dictionary = {"pos": Vector2(150, 100), "delay": 0.0}
+    var splash_delayed: Dictionary = {"pos": Vector2(101, 100), "delay": 1.0}
+    var splash_targets: Array = fire_splash.add_splash_targets([splash_main], [splash_main, splash_close, splash_far, splash_delayed], splash_main)
+    check(splash_targets.size() == 2 and splash_targets.has(splash_close), "Fire splash hits nearby enemy without distant or delayed spawns")
+    check(fire_splash.add_splash_targets([splash_main, splash_close], [splash_main, splash_close], splash_main).size() == 2, "Fire splash never damages same enemy twice")
     print("TOPDOWN SMOKE RESULT: ", "PASS" if failures == 0 else str(failures) + " FAILURES")
     quit(0 if failures == 0 else 1)
