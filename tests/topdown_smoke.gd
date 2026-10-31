@@ -2271,6 +2271,9 @@ func run_tests() -> void:
         ember_game.apply_burn(burning_foe)
         var initial_gold: int = ember_game.coins
         ember_game.tick_burning(0.5)
+        check(ember_game.ember_bursts.size() == 1, "Burn kill creates a single Ember Heart ring")
+        ember_game.update_ember_bursts(0.5)
+        check(ember_game.ember_bursts.is_empty(), "Ember Heart visual expires after short duration")
         check(ember_game.enemies.is_empty() and ember_game.coins == initial_gold + 10, "Ember Heart splash awards two kills exactly once")
         var ember_snapshot: Dictionary = ember_game.export_fortress_state()
         var ember_next = boon_scene.instantiate()
@@ -2280,5 +2283,16 @@ func run_tests() -> void:
         check(ember_next.import_fortress_state(ember_snapshot) and not ember_next.ember_heart_claimed, "Old fortress snapshots load without Ember Heart")
         ember_game.queue_free()
         ember_next.queue_free()
+    if boon_scene != null:
+        var burst_cap = boon_scene.instantiate()
+        root.add_child(burst_cap)
+        burst_cap.ember_heart_claimed = true
+        for index in range(20):
+            burst_cap.enemies.append({"pos": Vector2(100 + index * 3, 200), "hp": 1, "delay": 0.0, "burn_time": 0.5, "burn_tick": 0.5, "burn_damage": 1})
+            burst_cap.tick_burning(0.5)
+        check(burst_cap.ember_bursts.size() <= burst_cap.MAX_EMBER_BURSTS, "Ember VFX buffer is capped during dense combat")
+        burst_cap.restart_defense()
+        check(burst_cap.ember_bursts.is_empty(), "Ember VFX reset with defense")
+        burst_cap.queue_free()
     print("TOPDOWN SMOKE RESULT: ", "PASS" if failures == 0 else str(failures) + " FAILURES")
     quit(0 if failures == 0 else 1)

@@ -70,6 +70,9 @@ var enemies_escaped := 0
 var enemies_defeated := 0
 var tower_cooldowns: Dictionary = {}
 var shot_trails: Array[Dictionary] = []
+var ember_bursts: Array[Dictionary] = []
+const MAX_EMBER_BURSTS := 12
+const EMBER_BURST_DURATION := 0.32
 var performance_overlay_visible := false
 const TOWER_RANGE = TD_TOWER_STATS.RANGES
 const TOWER_DAMAGE = TD_TOWER_STATS.DAMAGES
@@ -570,6 +573,9 @@ func tick_burning(delta: float) -> void:
             enemies_defeated += 1
             coins += 5
             if ember_heart_claimed:
+                ember_bursts.append({"pos": Vector2(enemy["pos"]), "time": EMBER_BURST_DURATION})
+                if ember_bursts.size() > MAX_EMBER_BURSTS:
+                    ember_bursts.remove_at(0)
                 var splash_victims: Array[Dictionary] = TD_EMBER_HEART.splash_targets(Vector2(enemy["pos"]), enemies)
                 for victim in splash_victims:
                     enemies.erase(victim)
@@ -601,6 +607,7 @@ func restart_defense() -> void:
     selected_slot = -1
     enemies.clear()
     shot_trails.clear()
+    ember_bursts.clear()
     tower_cooldowns.clear()
     for slot in slots:
         slot["tower"] = ""
@@ -631,6 +638,7 @@ func _process(delta: float) -> void:
     attack_with_towers(delta)
     tick_necro_spirits(delta)
     update_shot_trails(delta)
+    update_ember_bursts(delta)
     queue_redraw()
 
 
@@ -1174,6 +1182,12 @@ func update_shot_trails(delta: float) -> void:
     if shot_trails.size() > MAX_STORED_SHOT_TRAILS:
         shot_trails = shot_trails.slice(shot_trails.size() - MAX_STORED_SHOT_TRAILS)
 
+func update_ember_bursts(delta: float) -> void:
+    for index in range(ember_bursts.size() - 1, -1, -1):
+        ember_bursts[index]["time"] = float(ember_bursts[index]["time"]) - maxf(0.0, delta)
+        if float(ember_bursts[index]["time"]) <= 0.0:
+            ember_bursts.remove_at(index)
+
 const MAX_VISIBLE_SHOT_TRAILS := 28
 
 func visible_shot_trail_start(total: int) -> int:
@@ -1387,6 +1401,10 @@ func _draw() -> void:
             "crystal":
                 var impact: Vector2 = trail["to"]
                 draw_colored_polygon(PackedVector2Array([impact + Vector2(0, -8), impact + Vector2(5, 0), impact + Vector2(0, 8), impact + Vector2(-5, 0)]), Color("#c4f3ff", opacity))
+    for burst in ember_bursts:
+        var phase: float = clampf(1.0 - float(burst["time"]) / EMBER_BURST_DURATION, 0.0, 1.0)
+        var radius: float = TD_EMBER_HEART.RADIUS * phase
+        draw_arc(Vector2(burst["pos"]), radius, 0.0, TAU, 36, Color(1.0, 0.47, 0.16, 0.85 * (1.0 - phase)), 3.5)
     draw_defender_figure(hero_pos)
     draw_performance_overlay()
     if selected_slot >= 0 and selected_slot < slots.size() and slots[selected_slot]["tower"] != "":
