@@ -2561,7 +2561,16 @@ func run_tests() -> void:
             if not impact_path.is_empty():
                 var impact_texture: Texture2D = load(impact_path)
                 check(impact_texture != null and impact_texture.get_width() >= 6 * projectile_maps.vfx_frame_size(kind, "weapon_impact").x, "Impact sheet has at least six frames: %s lv%d" % [kind, level])
-    check(projectile_maps.vfx_path("necro", 1, "weapon_impact") == "", "Unprovided pulse hit effect uses procedural fallback")
+    check(projectile_maps.vfx_path("necro", 1, "weapon_impact").contains("/necro/vfx/soul_impact_8f.png"), "Necro uses authored impact texture")
+    check(projectile_maps.vfx_frame_size("necro", "projectiles") == Vector2i(32, 32), "Necro projectile atlas cell is 32x32")
+    check(projectile_maps.vfx_frame_size("necro", "weapon_impact") == Vector2i(64, 64), "Necro impact atlas cell is 64x64")
+    var necro_projectile: Texture2D = load(projectile_maps.vfx_path("necro", 1, "projectiles"))
+    var necro_impact: Texture2D = load(projectile_maps.vfx_path("necro", 1, "weapon_impact"))
+    check(necro_projectile != null and necro_projectile.get_width() == 256 and necro_projectile.get_height() == 32, "Necro projectile eight-frame atlas imports")
+    check(necro_impact != null and necro_impact.get_width() == 512 and necro_impact.get_height() == 64, "Necro impact eight-frame atlas imports")
+    if necro_impact != null:
+        check(projectile_maps.frame_region(necro_impact, Vector2i(64, 64), 7).size == Vector2(64, 64), "Necro final impact frame exists")
+        check(projectile_maps.frame_region(necro_impact, Vector2i(64, 64), 8).size == Vector2.ZERO, "Necro out-of-range impact frame is rejected")
     var fire_splash = load("res://scripts/td/td_fire_splash.gd")
     var splash_main: Dictionary = {"pos": Vector2(100, 100), "delay": 0.0}
     var splash_close: Dictionary = {"pos": Vector2(120, 100), "delay": 0.0}
@@ -2602,10 +2611,7 @@ func run_tests() -> void:
                 var projectile_texture: Texture2D = load(projectile_path)
                 check(projectile_texture != null and projectile_texture.get_width() > 0 and projectile_texture.get_height() > 0, "Tower projectile imports as texture: %s L%d" % [tower_id, level])
             var impact_path: String = tower_visual_asset_check.vfx_path(tower_id, level, "weapon_impact")
-            if tower_id == "necro":
-                check(impact_path == "", "Necro impact art is explicitly absent until production art exists")
-            else:
-                check(impact_path != "" and ResourceLoader.exists(impact_path), "Tower impact asset exists: %s L%d" % [tower_id, level])
+            check(impact_path != "" and ResourceLoader.exists(impact_path), "Tower impact asset exists: %s L%d" % [tower_id, level])
     var frame_api = load("res://scripts/td/td_tower_visuals.gd")
     var tiny_image := Image.create(8, 8, false, Image.FORMAT_RGBA8)
     var tiny_texture := ImageTexture.create_from_image(tiny_image)
