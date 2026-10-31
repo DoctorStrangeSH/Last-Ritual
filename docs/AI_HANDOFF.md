@@ -1,3 +1,5 @@
+> **31.10.2026, #247:** #246 merged 81c1780. Next PR adds contextual one-line tip to forecast (boss/captain/armor/runner/healer priority), smoke tests; no night changes. Merge only on exact-head green CI.
+
 > **31.10.2026, #246:** #245 merged e327611 после CI success. Следующий PR показывает разведку следующей волны (brute/runner/support/captain/boss), вычисляемую из существующих функций. Ночь без изменений; merge после exact-head CI.
 
 > **31.10.2026, #245:** #244 merged fa9997f. Новый небольшой этап: капитан 4–5 дня на маршруте первого лекаря (если есть), чтобы аура и лечение создавали тактическую цель. Проверить exact-head CI и баланс, ночь не трогать.
