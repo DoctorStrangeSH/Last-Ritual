@@ -4,6 +4,9 @@ const SFX_SCRIPT = preload("res://scripts/procedural_sfx.gd")
 const TD_SYNERGY_RULES = preload("res://scripts/td/td_synergy_rules.gd")
 const TD_TOWER_STATS = preload("res://scripts/td/td_tower_stats.gd")
 const SPIRE_TOWER_ATLAS = preload("res://assets/spire/towers_atlas.png")
+# Short visual-only build/sell transitions; gameplay is updated immediately.
+var tower_visual_transitions: Array[Dictionary] = []
+const TOWER_TRANSITION_DURATION := 0.42
 const TD_TOWER_TOOLTIPS = preload("res://scripts/td/td_tower_tooltips.gd")
 const TD_TOWER_DAMAGE = preload("res://scripts/td/td_tower_damage.gd")
 const TD_TARGETING = preload("res://scripts/td/td_targeting.gd")
@@ -672,6 +675,12 @@ func restart_defense() -> void:
     queue_redraw()
 
 func _process(delta: float) -> void:
+    for i in range(tower_visual_transitions.size() - 1, -1, -1):
+        tower_visual_transitions[i]["elapsed"] = float(tower_visual_transitions[i]["elapsed"]) + delta
+        if float(tower_visual_transitions[i]["elapsed"]) >= TOWER_TRANSITION_DURATION:
+            tower_visual_transitions.remove_at(i)
+    if not tower_visual_transitions.is_empty():
+        queue_redraw()
     if help_visible or defense_state != "playing":
         if not slots.is_empty():
             queue_redraw()
@@ -775,6 +784,7 @@ func build_tower(slot_id: int) -> bool:
     if slots[slot_id]["tower"] != "" or coins < COSTS[selected_type]:
         return false
     coins -= COSTS[selected_type]
+    animate_tower_transition(slots[slot_id]["pos"], selected_type, true)
     slots[slot_id]["tower"] = selected_type
     slots[slot_id]["level"] = 1
     slots[slot_id]["specialization"] = ""
@@ -854,6 +864,7 @@ func sell_selected() -> bool:
     if selected_slot < 0 or slots[selected_slot]["tower"] == "":
         return false
     coins += 10 * int(slots[selected_slot]["level"])
+    animate_tower_transition(slots[selected_slot]["pos"], str(slots[selected_slot]["tower"]), false)
     slots[selected_slot]["tower"] = ""
     slots[selected_slot]["level"] = 0
     slots[selected_slot]["specialization"] = ""
@@ -1283,6 +1294,21 @@ func tower_visual_color(kind: String) -> Color:
             return Color("#a4e9ff")
     return Color("#ffda8e")
 
+func animate_tower_transition(pos: Vector2, kind: String, appearing: bool) -> void:
+    tower_visual_transitions.append({"pos": pos, "kind": kind, "elapsed": 0.0, "appearing": appearing})
+    queue_redraw()
+
+func draw_tower_transitions() -> void:
+    for transition in tower_visual_transitions:
+        var progress: float = clampf(float(transition["elapsed"]) / TOWER_TRANSITION_DURATION, 0.0, 1.0)
+        var pos: Vector2 = transition["pos"]
+        var appearing: bool = transition["appearing"]
+        var radius: float = lerpf(8.0, 34.0, progress) if appearing else lerpf(34.0, 8.0, progress)
+        var color := Color("#8de4cb") if appearing else Color("#e4a487")
+        color.a = 0.8 * (1.0 - progress)
+        draw_arc(pos, radius, 0.0, TAU, 32, color, 3.0)
+        draw_circle(pos + Vector2(0, -23.0 * (1.0 - progress)), 3.5, color)
+
 func draw_tower_figure(pos: Vector2, kind: String, level: int) -> void:
     var atlas_row: int = {"bone": 0, "fire": 1, "necro": 2, "frost": 3}.get(kind, -1)
     if atlas_row >= 0:
@@ -1520,6 +1546,7 @@ func _draw() -> void:
             draw_arc(pos, 39, 0, TAU, 32, Color("#d8d0a1"), 3)
         if selected_type != "" and not occupied and hovered_slot == i:
             draw_arc(pos, 39, 0, TAU, 32, Color("#78b8b4"), 2)
+    draw_tower_transitions()
     var tower_ids: Array = TD_TOWER_STATS.SHOP_ORDER
     for i in range(tower_ids.size()):
         var card := tower_shop_rect(i)
