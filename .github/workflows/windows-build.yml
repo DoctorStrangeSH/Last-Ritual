@@ -8,9 +8,6 @@ on:
       - 'export_presets.cfg'
       - 'scenes/**'
       - 'assets/**'
-      - 'docs/**'
-      - 'README.md'
-      - 'AGENTS.md'
       - 'scripts/**'
       - 'tests/**'
       - '.github/workflows/windows-build.yml'
@@ -21,9 +18,6 @@ on:
       - 'export_presets.cfg'
       - 'scenes/**'
       - 'assets/**'
-      - 'docs/**'
-      - 'README.md'
-      - 'AGENTS.md'
       - 'scripts/**'
       - 'tests/**'
       - '.github/workflows/windows-build.yml'
@@ -55,6 +49,8 @@ jobs:
           wget -q https://github.com/godotengine/godot/releases/download/4.4.1-stable/Godot_v4.4.1-stable_linux.x86_64.zip
           unzip -q Godot_v4.4.1-stable_linux.x86_64.zip
           chmod +x Godot_v4.4.1-stable_linux.x86_64
+      - name: Validate PNG assets before Godot import
+        run: python3 tools/verify_png_assets.py
       - name: Import assets and check scripts
         run: timeout 120s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --editor --quit
       - name: Run top-down smoke tests

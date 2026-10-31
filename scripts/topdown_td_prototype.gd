@@ -3,6 +3,7 @@ extends Node2D
 const SFX_SCRIPT = preload("res://scripts/procedural_sfx.gd")
 const TD_SYNERGY_RULES = preload("res://scripts/td/td_synergy_rules.gd")
 const TD_TOWER_STATS = preload("res://scripts/td/td_tower_stats.gd")
+const SPIRE_TOWER_ATLAS = preload("res://assets/spire/towers_atlas.png")
 const TD_TOWER_TOOLTIPS = preload("res://scripts/td/td_tower_tooltips.gd")
 const TD_TOWER_DAMAGE = preload("res://scripts/td/td_tower_damage.gd")
 const TD_TARGETING = preload("res://scripts/td/td_targeting.gd")
@@ -672,6 +673,8 @@ func restart_defense() -> void:
 
 func _process(delta: float) -> void:
     if help_visible or defense_state != "playing":
+        if not slots.is_empty():
+            queue_redraw()
         return
     if wave_number == SIEGE_WAVES and enemies.is_empty():
         defense_state = "won"
@@ -1281,6 +1284,12 @@ func tower_visual_color(kind: String) -> Color:
     return Color("#ffda8e")
 
 func draw_tower_figure(pos: Vector2, kind: String, level: int) -> void:
+    var atlas_row: int = {"bone": 0, "fire": 1, "necro": 2, "frost": 3}.get(kind, -1)
+    if atlas_row >= 0:
+        var frame_index: int = int(Time.get_ticks_msec() / 160) % 4
+        var region := Rect2(float(frame_index * 64), float(atlas_row * 64), 64.0, 64.0)
+        draw_texture_rect_region(SPIRE_TOWER_ATLAS, Rect2(pos + Vector2(-24, -34), Vector2(48, 48)), region, Color.WHITE)
+        return
     # The stone pedestal stays neutral; each weapon has its own silhouette.
     draw_rect(Rect2(pos + Vector2(-18, -19), Vector2(36, 33)), Color("#18242b"))
     draw_rect(Rect2(pos + Vector2(-15, -21), Vector2(30, 29)), Color("#667482"))

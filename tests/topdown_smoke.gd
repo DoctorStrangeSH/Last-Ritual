@@ -2520,5 +2520,7 @@ func run_tests() -> void:
     check(audit_damage.direct_damage("invalid", 1, "", 0, 0) == 0, "Unknown tower does no direct damage")
     var specialization_atlas: Texture2D = load("res://assets/spire/variants/specialization_icons_atlas.png")
     check(specialization_atlas != null and specialization_atlas.get_width() == 256 and specialization_atlas.get_height() == 32, "Specialization icons atlas loads with eight 32px columns")
+    var spire_atlas: Texture2D = load("res://assets/spire/towers_atlas.png")
+    check(spire_atlas != null and spire_atlas.get_width() == 256 and spire_atlas.get_height() == 256, "Spire tower atlas loads as four schools by four frames")
     print("TOPDOWN SMOKE RESULT: ", "PASS" if failures == 0 else str(failures) + " FAILURES")
     quit(0 if failures == 0 else 1)
