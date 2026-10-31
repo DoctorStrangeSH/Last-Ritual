@@ -13,7 +13,7 @@ NS = "{http://www.w3.org/2000/svg}"
 EXPECTED = {
     f"{layer}_level_{level}.svg"
     for layer in ("base", "weapon") for level in (1, 2, 3)
-}
+} | {"specialization_siege.svg", "specialization_swarm.svg"}
 ALLOWED = {"svg", "rect", "polygon", "circle", "path"}
 BANNED = {"text", "image", "foreignObject", "script", "use", "animate"}
 COLOR_ATTRS = ("fill", "stroke")
