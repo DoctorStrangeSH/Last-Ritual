@@ -569,7 +569,7 @@ func attack_with_towers(delta: float) -> void:
         var hit_targets: Array = TD_MULTIHIT.targets(tower, target, enemies, float(TOWER_RANGE[kind]))
         var damage: int = TD_TOWER_DAMAGE.direct_damage(kind, int(tower["level"]), str(tower.get("specialization", "")), fire_synergy_bonus, bone_synergy_bonus)
         for hit_target in hit_targets:
-            shot_trails.append({"from": tower["pos"], "to": hit_target["pos"], "time": 0.18, "kind": kind})
+            shot_trails.append({"from": tower["pos"], "to": hit_target["pos"], "time": 0.18, "kind": kind, "level": int(tower["level"])})
             var raw_hit: int = damage + tower_synergy_damage(slot_id, hit_target)
             hit_target["hp"] -= TD_ENEMY_ARMOR.tower_hit_damage(str(hit_target.get("role", "")), kind, siege_day, raw_hit)
             if kind == "frost" and hit_target["hp"] > 0:
@@ -1523,17 +1523,34 @@ func _draw() -> void:
         var shot_color: Color = tower_visual_color(shot_kind)
         var opacity: float = clampf(float(trail.get("time", 0.18)) / 0.18, 0.0, 1.0)
         var visual: Dictionary = shot_trail_style(shot_kind)
-        draw_line(trail["from"], trail["to"], Color(shot_color.r, shot_color.g, shot_color.b, opacity), float(visual["width"]))
-        match str(visual["impact"]):
-            "shard":
-                draw_colored_polygon(PackedVector2Array([trail["to"] + Vector2(-6, 2), trail["to"] + Vector2(0, -7), trail["to"] + Vector2(6, 2)]), Color("#f9e9cd", opacity))
-            "ember":
-                draw_circle(trail["to"], 5.0 * opacity + 2.0, Color("#ffd9a0", opacity * 0.7))
-            "spirit":
-                draw_circle(trail["to"], 4.0 * opacity + 1.0, Color("#86f6ce", opacity * 0.8))
-            "crystal":
-                var impact: Vector2 = trail["to"]
-                draw_colored_polygon(PackedVector2Array([impact + Vector2(0, -8), impact + Vector2(5, 0), impact + Vector2(0, 8), impact + Vector2(-5, 0)]), Color("#c4f3ff", opacity))
+        var level: int = clampi(int(trail.get("level", 1)), 1, 3)
+        var sprite_path: String = TOWER_VISUALS.vfx_path(shot_kind, level, "projectiles")
+        var projectile: Texture2D = cached_tower_texture(sprite_path)
+        if projectile != null:
+            var cell: Vector2i = TOWER_VISUALS.vfx_frame_size(shot_kind, "projectiles")
+            var progress: float = 1.0 - opacity
+            var point: Vector2 = (trail["from"] as Vector2).lerp(trail["to"] as Vector2, progress)
+            draw_texture_rect_region(projectile, Rect2(point - Vector2(7, 7), Vector2(14, 14)), Rect2(Vector2.ZERO, Vector2(cell)), Color.WHITE)
+        else:
+            draw_line(trail["from"], trail["to"], Color(shot_color.r, shot_color.g, shot_color.b, opacity), float(visual["width"]))
+        var impact_path: String = TOWER_VISUALS.vfx_path(shot_kind, level, "weapon_impact")
+        var impact_sprite: Texture2D = cached_tower_texture(impact_path)
+        if impact_sprite != null:
+            var impact_cell: Vector2i = TOWER_VISUALS.vfx_frame_size(shot_kind, "weapon_impact")
+            var frame: int = mini(int((1.0 - opacity) * 6.0), 5)
+            var region := Rect2(Vector2(float(frame * impact_cell.x), 0.0), Vector2(impact_cell))
+            draw_texture_rect_region(impact_sprite, Rect2((trail["to"] as Vector2) - Vector2(13, 13), Vector2(26, 26)), region, Color(1.0, 1.0, 1.0, 1.0 - opacity))
+        else:
+            match str(visual["impact"]):
+                "shard":
+                    draw_colored_polygon(PackedVector2Array([trail["to"] + Vector2(-6, 2), trail["to"] + Vector2(0, -7), trail["to"] + Vector2(6, 2)]), Color("#f9e9cd", opacity))
+                "ember":
+                    draw_circle(trail["to"], 5.0 * opacity + 2.0, Color("#ffd9a0", opacity * 0.7))
+                "spirit":
+                    draw_circle(trail["to"], 4.0 * opacity + 1.0, Color("#86f6ce", opacity * 0.8))
+                "crystal":
+                    var impact: Vector2 = trail["to"]
+                    draw_colored_polygon(PackedVector2Array([impact + Vector2(0, -8), impact + Vector2(5, 0), impact + Vector2(0, 8), impact + Vector2(-5, 0)]), Color("#c4f3ff", opacity))
     for burst in ember_bursts:
         var phase: float = clampf(1.0 - float(burst["time"]) / EMBER_BURST_DURATION, 0.0, 1.0)
         var radius: float = TD_EMBER_HEART.RADIUS * phase
