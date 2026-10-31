@@ -503,6 +503,32 @@ func run_tests() -> void:
                 check(minimum_gap >= 45.0, "Routes remain visually separate without lane overlap")
     check(two_lane_maps >= 5 and three_lane_maps >= 2, "Map catalog contains both traditional and triple-lane sieges")
     check(td_layouts.layout_for_seed(0) != td_layouts.layout_for_seed(1), "Different seeds can choose different fortress routes")
+    # Balanced randomized wave lanes: seeded replays are reproducible, yet
+    # successive waves can take different paths without leaving a lane empty.
+    if specialization_balance_scene != null:
+        var lane_variation = specialization_balance_scene.instantiate()
+        root.add_child(lane_variation)
+        for map_seed in [0, 6]:
+            lane_variation.set_fortress_map_seed(map_seed)
+            var lane_count: int = lane_variation.paths.size()
+            var observed_patterns: Dictionary = {}
+            for attack_wave in range(1, 7):
+                var assignments: Array[int] = lane_variation.wave_lane_assignments(lane_count * 4, attack_wave)
+                check(assignments == lane_variation.wave_lane_assignments(lane_count * 4, attack_wave), "Same seed and wave reproduce lane assignment")
+                observed_patterns[str(assignments)] = true
+                for group_start in range(0, assignments.size(), lane_count):
+                    var group: Array[int] = assignments.slice(group_start, group_start + lane_count)
+                    for lane_idx in range(lane_count):
+                        check(group.has(lane_idx), "Each complete enemy group attacks all lanes")
+            check(observed_patterns.size() >= 2, "Waves vary the lane attack order instead of fixed alternation")
+        lane_variation.set_fortress_map_seed(6)
+        lane_variation.siege_day = 4
+        lane_variation.wave_number = 1
+        var expected_lanes: Array[int] = lane_variation.wave_lane_assignments(int(lane_variation.wave_enemy_budget(2)["ordinary"]), 2)
+        check(lane_variation.start_wave(), "Seeded multiroute wave launches")
+        for enemy_index in range(expected_lanes.size()):
+            check(int(lane_variation.enemies[enemy_index]["lane"]) == expected_lanes[enemy_index], "Real enemy spawn follows randomized lane itinerary")
+        lane_variation.queue_free()
     # Per-run map is stable across phases, while a fresh run can choose a new seed.
     if specialization_balance_scene != null:
         var first_map = specialization_balance_scene.instantiate()
