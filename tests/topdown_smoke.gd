@@ -2306,5 +2306,27 @@ func run_tests() -> void:
             council_unique[offer] = true
         check(council_unique.size() == 3 and council_unique.has("raid") and council_unique.has("repair") and council_unique.has("safe"), "Council exposes only three implemented rewards, no duplicates")
         council_rng_game.queue_free()
+    if boon_scene != null:
+        var frost_game = boon_scene.instantiate()
+        root.add_child(frost_game)
+        var chilled: Dictionary = {"frost_time": 2.0}
+        var plain: Dictionary = {"frost_time": 0.0}
+        var base_chilled: int = frost_game.tower_synergy_damage(0, chilled)
+        frost_game.wave_number = 3
+        frost_game.altar_hp = 65
+        check(frost_game.choose_interwave_event("repair"), "Council frost reward can be claimed")
+        check(frost_game.altar_hp == 85 and frost_game.eternal_frost_claimed, "Eternal Frost keeps council healing")
+        check(frost_game.tower_synergy_damage(0, chilled) == base_chilled + 1, "Eternal Frost adds one damage against chilled foes")
+        check(frost_game.tower_synergy_damage(0, plain) == base_chilled, "Eternal Frost does not modify unchilled targets")
+        var frost_state: Dictionary = frost_game.export_fortress_state()
+        var frost_next = boon_scene.instantiate()
+        root.add_child(frost_next)
+        check(frost_next.import_fortress_state(frost_state) and frost_next.eternal_frost_claimed, "Eternal Frost persists to next defense")
+        frost_state.erase("eternal_frost_claimed")
+        check(frost_next.import_fortress_state(frost_state) and not frost_next.eternal_frost_claimed, "Old fortress snapshots do not activate Eternal Frost")
+        frost_game.restart_defense()
+        check(not frost_game.eternal_frost_claimed, "Restart clears Eternal Frost")
+        frost_game.queue_free()
+        frost_next.queue_free()
     print("TOPDOWN SMOKE RESULT: ", "PASS" if failures == 0 else str(failures) + " FAILURES")
     quit(0 if failures == 0 else 1)
