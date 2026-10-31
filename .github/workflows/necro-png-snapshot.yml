@@ -1,0 +1,54 @@
+name: Preserve Soul Altar PNG previews in Git
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/necro-png-snapshot.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Download Godot 4.4.1 editor
+        run: |
+          set -euo pipefail
+          wget -q https://github.com/godotengine/godot/releases/download/4.4.1-stable/Godot_v4.4.1-stable_linux.x86_64.zip
+          unzip -q Godot_v4.4.1-stable_linux.x86_64.zip
+          chmod +x Godot_v4.4.1-stable_linux.x86_64
+      - name: Import SVGs and render previews
+        run: |
+          set -euo pipefail
+          timeout 120s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --editor --quit
+          timeout 120s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --script res://tools/export_necro_layers.gd
+          test "$(find build/art-preview/necro -maxdepth 1 -name '*.png' -type f | wc -l)" -eq 12
+      - name: Snapshot generated PNGs on a review branch
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          short_sha="${SOURCE_SHA:0:12}"
+          snapshot_branch="art/necro-png-preview-${short_sha}"
+          git switch -c "$snapshot_branch"
+          dest="assets/spire/towers/necro/source/generated-preview"
+          mkdir -p "$dest"
+          cp build/art-preview/necro/*.png "$dest/"
+          (
+            cd "$dest"
+            sha256sum -- *.png > SHA256SUMS.txt
+            printf 'Generated preview snapshot, NOT approved production assets.\nSource commit: %s\nGenerator: tools/export_necro_layers.gd\n' "$SOURCE_SHA" > SOURCE_COMMIT.txt
+          )
+          git add "$dest"
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" commit -m "art(necro): snapshot 12 generated PNG previews from ${short_sha}"
+          git push origin "HEAD:refs/heads/$snapshot_branch"
+          echo "### PNG source snapshot" >> "$GITHUB_STEP_SUMMARY"
+          echo "Review branch: \`$snapshot_branch\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "12 PNGs saved to Git; do not merge before artistic QA." >> "$GITHUB_STEP_SUMMARY"
