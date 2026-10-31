@@ -306,6 +306,21 @@ func next_wave_scouting() -> Dictionary:
             roles[role] += 1
     return {"wave": next_wave, "runner": roles["runner"], "brute": roles["brute"], "healer": budget["support"], "captain": budget["captain"], "boss": budget["boss"]}
 
+func scouting_counter_tip(scout: Dictionary) -> String:
+    if scout.is_empty():
+        return ""
+    if int(scout.get("boss", 0)) > 0:
+        return "БОСС: усиливай башни и береги алтарь"
+    if int(scout.get("captain", 0)) > 0:
+        return "КОМАНДИР: устрани его, чтобы замедлить отряд"
+    if int(scout.get("brute", 0)) > 0 and siege_day >= 3:
+        return "БРОНЯ: огненные башни игнорируют защиту"
+    if int(scout.get("runner", 0)) > 0:
+        return "РАЗВЕДЧИКИ: ледяные башни замедляют прорыв"
+    if int(scout.get("healer", 0)) > 0:
+        return "ЛЕКАРИ: сосредоточь огонь на поддержке"
+    return "ПОДГОТОВКА: проверяй улучшения и маршруты"
+
 func wave_lane_assignments(enemy_count: int, next_wave: int) -> Array[int]:
     # Each group of lane_count enemies covers every lane once, but their
     # order is shuffled per wave and run seed. No run-time global RNG leaks.
@@ -1515,8 +1530,9 @@ func _draw() -> void:
         var scout: Dictionary = next_wave_scouting()
         var scout_text := "РАЗВЕДКА %d: ЩИТ %d  БЕГУНЫ %d  ЛЕКАРИ %d  КОМАНДИРЫ %d  БОСС %d" % [
             int(scout["wave"]), int(scout["brute"]), int(scout["runner"]), int(scout["healer"]), int(scout["captain"]), int(scout["boss"])]
-        draw_rect(Rect2(65, 503, 610, 34), Color("#1c3139", 0.96))
-        draw_fitted_label(Vector2(75, 525), scout_text, 13, 590, Color("#f7d9a0"))
+        draw_rect(Rect2(65, 485, 610, 52), Color("#1c3139", 0.96))
+        draw_fitted_label(Vector2(75, 505), scout_text, 13, 590, Color("#f7d9a0"))
+        draw_fitted_label(Vector2(75, 526), scouting_counter_tip(scout), 12, 590, Color("#b7e5d8"))
 
     # Draw the HUD after roads and world sprites, so the map never hides labels.
     draw_rect(Rect2(50, 5, 920, 53), Color("#14242c", 0.94))
