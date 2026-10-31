@@ -12,4 +12,4 @@ const SPECIALIZATION_LABELS := {
 
 # Ordered catalogue shared by tower shop input and rendering.
 const SHOP_ORDER := ["bone", "fire", "necro", "frost"]
-const DISPLAY_NAMES := {"bone": "КОСТЯНАЯ", "fire": "ОГНЕННАЯ ТУРЕЛЬ", "necro": "НЕКРОМАНТ", "frost": "ЛЕДЯНАЯ"}
+const DISPLAY_NAMES := {"bone": "КОСТЯНАЯ", "fire": "ОГНЕННАЯ", "necro": "НЕКРОМАНТ", "frost": "ЛЕДЯНАЯ"}
