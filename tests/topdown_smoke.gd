@@ -2185,5 +2185,19 @@ func run_tests() -> void:
     check(game.click_ui(Vector2(500, 330)), "Restart button accepts mouse click")
     check(game.run_state == "playing" and game.relics.is_empty(), "Mouse restart clears relics")
     game.queue_free()
+    # Hover inspector is transient and cannot cover the HUD or the shop.
+    var hover_scene = load("res://scenes/topdown_td_prototype.tscn") as PackedScene
+    if hover_scene != null:
+        var hover_game = hover_scene.instantiate()
+        root.add_child(hover_game)
+        check(hover_game.choose_tower("bone") and hover_game.build_tower(0), "Hover QA builds a tower")
+        var tower_point: Vector2 = hover_game.slots[0]["pos"]
+        check(not hover_game.hovered_tower_info(tower_point).is_empty(), "Hovering a built tower displays inspector data")
+        check(hover_game.hovered_tower_info(Vector2(10, 10)).is_empty(), "Leaving tower removes hover inspector data")
+        for probe in [Vector2(14, 120), Vector2(1100, 460), tower_point]:
+            var panel: Rect2 = hover_game.tower_hover_panel_rect(probe)
+            check(panel.position.x >= 12.0 and panel.end.x <= 1140.0 and panel.position.y >= 100.0 and panel.end.y <= 530.0, "Hover inspector stays between HUD and shop")
+            check(panel.size.x <= 270.0 and panel.size.y <= 170.0, "Hover inspector remains compact")
+        hover_game.queue_free()
     print("TOPDOWN SMOKE RESULT: ", "PASS" if failures == 0 else str(failures) + " FAILURES")
     quit(0 if failures == 0 else 1)
