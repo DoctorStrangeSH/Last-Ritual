@@ -1304,13 +1304,6 @@ func _draw() -> void:
         draw_string(ThemeDB.fallback_font, Vector2(485, 301), "ПОБЕДА" if defense_state == "won" else "АЛТАРЬ ПАЛ", HORIZONTAL_ALIGNMENT_LEFT, -1, 28, Color.WHITE)
         draw_rect(RESTART_BUTTON, Color("#8ca9bc"))
         draw_string(ThemeDB.fallback_font, Vector2(480, 386), "НАЧАТЬ ЗАНОВО", HORIZONTAL_ALIGNMENT_LEFT, -1, 20, Color.WHITE)
-    draw_string(ThemeDB.fallback_font, Vector2(66, 42), "АЛТАРЬ %d / 100    ВОЛНА %d / %d    ЗОЛОТО %d" % [altar_hp, wave_number, SIEGE_WAVES, coins], HORIZONTAL_ALIGNMENT_LEFT, 620, 18, Color.WHITE)
-    draw_string(ThemeDB.fallback_font, Vector2(705, 42), siege_progress_label(), HORIZONTAL_ALIGNMENT_LEFT, 265, 14, Color("#e8d6a8"))
-    if selected_slot >= 0 and selected_slot < slots.size() and slots[selected_slot]["tower"] != "":
-        draw_rect(TARGET_BUTTON, Color("#385a63"))
-        draw_rect(TARGET_BUTTON, Color("#e5c985"), false, 2.0)
-        var priority: String = str(slots[selected_slot].get("target_priority", "nearest"))
-        draw_string(ThemeDB.fallback_font, TARGET_BUTTON.position + Vector2(9, 29), "ЦЕЛЬ: " + str(TARGET_LABELS[priority]), HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color("#fff1c9"))
     var repair_ready: bool = defense_state == "playing" and enemies.is_empty() and wave_number < SIEGE_WAVES and altar_hp > 0 and altar_hp < 100 and coins >= REPAIR_COST
     var can_move: bool = selected_slot >= 0 and selected_slot < slots.size() and slots[selected_slot]["tower"] != "" and defense_state == "playing" and enemies.is_empty() and wave_number < SIEGE_WAVES
     if can_move:
@@ -1414,6 +1407,15 @@ func _draw() -> void:
         draw_rect(Rect2(1010, 545, 110, 55), Color("#914c59") if can_modify_towers() else Color("#454b54"))
         draw_string(ThemeDB.fallback_font, Vector2(1020, 579), "ПРОДАТЬ", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color.WHITE)
 
+    # Draw the HUD after roads and world sprites, so the map never hides labels.
+    draw_rect(Rect2(50, 5, 920, 53), Color("#14242c", 0.94))
+    draw_string(ThemeDB.fallback_font, Vector2(66, 42), "АЛТАРЬ %d / 100    ВОЛНА %d / %d    ЗОЛОТО %d" % [altar_hp, wave_number, SIEGE_WAVES, coins], HORIZONTAL_ALIGNMENT_LEFT, 620, 18, Color.WHITE)
+    draw_string(ThemeDB.fallback_font, Vector2(705, 42), siege_progress_label(), HORIZONTAL_ALIGNMENT_LEFT, 265, 14, Color("#e8d6a8"))
+    if selected_slot >= 0 and selected_slot < slots.size() and slots[selected_slot]["tower"] != "":
+        draw_rect(TARGET_BUTTON, Color("#385a63"))
+        draw_rect(TARGET_BUTTON, Color("#e5c985"), false, 2.0)
+        var priority: String = str(slots[selected_slot].get("target_priority", "nearest"))
+        draw_string(ThemeDB.fallback_font, TARGET_BUTTON.position + Vector2(9, 29), "ЦЕЛЬ: " + str(TARGET_LABELS[priority]), HORIZONTAL_ALIGNMENT_LEFT, -1, 17, Color("#fff1c9"))
     draw_rect(HELP_BUTTON, Color("#526d9b") if help_visible else Color("#343b47"))
     draw_rect(HELP_BUTTON, Color("#d5c592"), false, 1.5)
     draw_string(ThemeDB.fallback_font, HELP_BUTTON.position + Vector2(23.0, 30.0), "ПОМОЩЬ / H", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#fff2c5"))
