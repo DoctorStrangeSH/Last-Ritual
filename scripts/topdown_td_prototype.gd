@@ -294,6 +294,18 @@ func wave_enemy_budget(next_wave: int) -> Dictionary:
     var boss: int = 1 if next_wave == SIEGE_WAVES else 0
     return {"ordinary": ordinary, "support": support, "captain": captain, "boss": boss, "total": ordinary + support + captain + boss}
 
+func next_wave_scouting() -> Dictionary:
+    if wave_number >= SIEGE_WAVES or defense_state != "playing":
+        return {}
+    var next_wave: int = wave_number + 1
+    var budget: Dictionary = wave_enemy_budget(next_wave)
+    var roles := {"runner": 0, "brute": 0}
+    for i in range(int(budget["ordinary"])):
+        var role: String = siege_enemy_role(next_wave, i)
+        if roles.has(role):
+            roles[role] += 1
+    return {"wave": next_wave, "runner": roles["runner"], "brute": roles["brute"], "healer": budget["support"], "captain": budget["captain"], "boss": budget["boss"]}
+
 func wave_lane_assignments(enemy_count: int, next_wave: int) -> Array[int]:
     # Each group of lane_count enemies covers every lane once, but their
     # order is shuffled per wave and run seed. No run-time global RNG leaks.
@@ -1496,6 +1508,15 @@ func _draw() -> void:
         draw_string(ThemeDB.fallback_font, UPGRADE_BUTTON.position + Vector2(4, 34), "УЛУЧШИТЬ", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color.WHITE)
         draw_rect(SELL_BUTTON, Color("#914c59") if can_modify_towers() else Color("#454b54"))
         draw_string(ThemeDB.fallback_font, SELL_BUTTON.position + Vector2(8, 34), "ПРОДАТЬ", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color.WHITE)
+
+    # Forecast uses the same budget and role selectors as the actual spawn.
+    # Keep it above the bottom controls without obstructing the battle field.
+    if enemies.is_empty() and wave_number < SIEGE_WAVES and defense_state == "playing" and not help_visible:
+        var scout: Dictionary = next_wave_scouting()
+        var scout_text := "РАЗВЕДКА %d: ЩИТ %d  БЕГУНЫ %d  ЛЕКАРИ %d  КОМАНДИРЫ %d  БОСС %d" % [
+            int(scout["wave"]), int(scout["brute"]), int(scout["runner"]), int(scout["healer"]), int(scout["captain"]), int(scout["boss"])]
+        draw_rect(Rect2(65, 503, 610, 34), Color("#1c3139", 0.96))
+        draw_fitted_label(Vector2(75, 525), scout_text, 13, 590, Color("#f7d9a0"))
 
     # Draw the HUD after roads and world sprites, so the map never hides labels.
     draw_rect(Rect2(50, 5, 920, 53), Color("#14242c", 0.94))
