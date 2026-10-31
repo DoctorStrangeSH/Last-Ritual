@@ -2387,5 +2387,11 @@ func run_tests() -> void:
     check(cold_targets[0]["hp"] == 0 and cold_targets[1]["hp"] == 1 and cold_targets[2]["hp"] == 3, "Thermal combo gives only chilled nearby enemies one extra splash damage")
     var single_targets: Array[Dictionary] = [{"pos": Vector2(100, 100), "hp": 3, "frost_time": 3.0, "delay": 0.0}]
     check(combo_mod.splash_targets(Vector2(100, 100), single_targets).is_empty() and single_targets[0]["hp"] == 1, "Ember Heart without Frost boon keeps original damage")
+    var armor = load("res://scripts/td/td_enemy_armor.gd")
+    check(armor.tower_hit_damage("brute", "bone", 3, 4) == 3, "Late-day armored brute resists physical hits")
+    check(armor.tower_hit_damage("brute", "fire", 3, 4) == 4, "Fire towers pierce heavy armor")
+    check(armor.tower_hit_damage("brute", "bone", 2, 4) == 4, "Early siege brutes retain familiar difficulty")
+    check(armor.tower_hit_damage("runner", "bone", 5, 4) == 4, "Runners do not acquire heavy armor")
+    check(armor.tower_hit_damage("brute", "necro", 5, 1) == 1, "Heavy armor never nullifies a tower hit")
     print("TOPDOWN SMOKE RESULT: ", "PASS" if failures == 0 else str(failures) + " FAILURES")
     quit(0 if failures == 0 else 1)
