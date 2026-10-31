@@ -950,6 +950,17 @@ func run_tests() -> void:
         var snapshot: Dictionary = debug_game.performance_snapshot()
         check(int(snapshot["trails_stored"]) == 35 and int(snapshot["trails_visible"]) == 28, "Performance overlay reports rendered and stored traces separately")
         check(int(snapshot["enemies"]) == debug_game.enemies.size() and int(snapshot["spirits"]) == debug_game.summoned_spirits.size(), "Performance overlay counts active enemies and spirits")
+        debug_game.sample_performance(0.05)
+        check(is_equal_approx(debug_game.debug_peak_frame_ms, 0.0), "Hidden performance panel does not collect frame samples")
+        debug_game.performance_overlay_visible = true
+        debug_game.enemies.append({"role": "grunt", "pos": Vector2.ZERO, "hp": 10, "delay": 0.0})
+        debug_game.sample_performance(0.04)
+        debug_game.enemies.clear()
+        debug_game.sample_performance(0.02)
+        var peak_stats: Dictionary = debug_game.performance_snapshot()
+        check(is_equal_approx(float(peak_stats["frame_ms"]), 20.0), "Frame time reflects latest frame delta")
+        check(is_equal_approx(float(peak_stats["peak_frame_ms"]), 40.0), "Frame time peak retains slowest sampled frame")
+        check(int(peak_stats["peak_enemies"]) == 1, "Enemy peak persists after enemies leave screen")
         debug_game.queue_free()
     var tooltip_data = load("res://scripts/td/td_tower_tooltips.gd")
     for kind in ["bone", "fire", "necro", "frost"]:
