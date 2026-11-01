@@ -119,3 +119,18 @@ Preserve the original Soul Altar concept and source files byte-for-byte. Do not 
 - [ ] Palette/material ramps match the style bible.
 - [ ] Source, manifest, provenance and license committed.
 - [ ] CI passes; Windows visual QA recorded separately.
+
+## 10. Owner-approved legacy sprite removal
+
+The owner has explicitly authorized **complete removal of the old sprite families** from the project after Pixel Art replacements are ready. Do not keep obsolete non-pixel art as a permanent runtime fallback.
+
+Migration must be safe and family-based:
+1. Create the complete Pixel Art replacement kit and editable source.
+2. Commit exports, source, manifest and provenance.
+3. Switch every runtime path, scene/resource reference, atlas, UI icon and test to the new assets.
+4. Run a repository-wide path/reference scan, Godot import, headless smoke tests and Windows export.
+5. Delete the superseded old PNG/SVG/atlas/fallback assets in a dedicated cleanup PR and document every removed path.
+6. Keep only legal license/attribution records, new editable sources and the owner-approved Soul Altar concept/reference files needed for provenance.
+
+Do not delete currently loaded assets before replacement: the game still uses legacy art in several tower families. The owner approved removal of the old art, not a broken intermediate build. There is no requirement to keep old sprites in the shipped game after a family has migrated.
+
