@@ -33,4 +33,20 @@ func verify() -> void:
 	check(resolver._alpha_frame_valid(good, tex_size, 1), "Accept clean RGBA frame")
 	check(not resolver._alpha_frame_valid(bad, tex_size, 1), "Reject painted opaque background")
 	check(not resolver._alpha_frame_valid(good, Vector2i(8, 16), 1), "Reject wrong frame size")
+	# A sheet may be transparent, dimensionally valid, but repeat one static
+	# weapon image eight times. Never silently accept that as directional art.
+	var cell := Vector2i(16, 16)
+	var unique := Image.create_empty(16 * 8, 16, false, Image.FORMAT_RGBA8)
+	unique.fill(Color.TRANSPARENT)
+	for index in range(8):
+		unique.set_pixel(4 + index * 16 + index, 6, Color.WHITE)
+		unique.set_pixel(5 + index * 16, 7, Color.WHITE)
+	check(resolver._weapon_poses_distinct(unique, cell), "Eight different frame poses pass the weapon direction gate")
+	var duplicated := Image.create_empty(16 * 8, 16, false, Image.FORMAT_RGBA8)
+	duplicated.fill(Color.TRANSPARENT)
+	for index in range(8):
+		duplicated.set_pixel(index * 16 + 4, 6, Color.WHITE)
+		duplicated.set_pixel(index * 16 + 5, 7, Color.WHITE)
+	check(not resolver._weapon_poses_distinct(duplicated, cell), "Eight duplicate frames are rejected as fake aiming")
+	check(not resolver._weapon_poses_distinct(unique, Vector2i(32, 16)), "Invalid weapon cell dimensions are rejected")
 	quit(1 if failures > 0 else 0)
