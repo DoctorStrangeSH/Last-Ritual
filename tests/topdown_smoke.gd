@@ -2613,6 +2613,13 @@ func run_tests() -> void:
     check(necro_profiles.projectile_position(visual_origin, visual_target, 0.5, "siege").y > necro_profiles.projectile_position(visual_origin, visual_target, 0.5, "swarm").y, "Reaper arc has a taller silhouette than Legion")
     check(necro_profiles.projectile_position(visual_origin, visual_target, 0.5, "") == Vector2(60, 30), "Base altar stays on a straight course")
     check(necro_profiles.for_specialization("siege")["impact_color"] != necro_profiles.for_specialization("swarm")["impact_color"], "Specialization hit colors differ")
+    check(is_zero_approx(necro_profiles.projectile_rotation(visual_origin, visual_target, 0.5, "siege")), "Reaper projectile points horizontally at the arc peak")
+    check(necro_profiles.projectile_rotation(visual_origin, visual_target, 0.0, "siege") > 0.0, "Reaper projectile turns into its ascending arc")
+    check(necro_profiles.projectile_rotation(visual_origin, visual_target, 1.0, "siege") < 0.0, "Reaper projectile turns toward its landing direction")
+    check(necro_profiles.projectile_rotation(visual_origin, visual_target, 0.0, "swarm") > 0.0, "Legion turns into its shorter arc")
+    check(absf(necro_profiles.projectile_rotation(visual_origin, visual_target, 0.0, "swarm")) < absf(necro_profiles.projectile_rotation(visual_origin, visual_target, 0.0, "siege")), "Legion initial facing is less steep than Reaper")
+    check(is_zero_approx(necro_profiles.projectile_rotation(visual_origin, visual_target, 0.0, "")), "Unspecialized projectile keeps straight orientation")
+    check(is_zero_approx(necro_profiles.projectile_rotation(visual_origin, visual_origin, 0.5, "siege")), "Zero-distance projectile has a safe fallback angle")
     # Per-hit cost audit; do not mistake direct-hit numbers for real DPS.
     var audit_damage = load("res://scripts/td/td_tower_damage.gd")
     var audit_stats = load("res://scripts/td/td_tower_stats.gd")
