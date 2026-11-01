@@ -1,6 +1,6 @@
 # ТЕКУЩИЙ СНИМОК — 01.11.2026 (после PR #312)
 
-Код main: `955252af84ab0eba86775a859fbb029122996e29` (PR #312); последняя документация main до этого обновления — PR #310, commit `583b2986bc01f508558bfac5ca8b3dae078ac572`. Godot 4.4.1. Exact-head PR CI #41284865922 прошёл, включая новый modular contract smoke-test и существующий top-down smoke-test. Post-merge main CI #41284911635 поставлен в очередь; Windows Preview ещё не подтверждён.
+Код main: `955252af84ab0eba86775a859fbb029122996e29` (PR #312); последняя документация main до этого обновления — PR #310, commit `583b2986bc01f508558bfac5ca8b3dae078ac572`. Godot 4.4.1. Exact-head PR CI #41284865922 прошёл, включая новый modular contract smoke-test и существующий top-down smoke-test. Post-merge main CI #41284911635 успешно прошёл jobs `checks` и `windows-preview`; Windows EXE экспортирован и опубликован. Ручная проверка владельцем остаётся отдельным этапом.
 
 **PR #312 — архитектура Алтаря душ:** добавлены `assets/spire/towers/necro/manifest.json`, `scripts/td/td_modular_tower_assets.gd`, `tests/td_modular_tower_assets_smoke.gd`. Контракт задаёт базу L1–L3, отдельные ветви base/Reaper/Legion, восемь направлений, общий pivot (64,90), самостоятельные projectile/impact наборы и параметры анимаций. Маппинг specialization: `siege→reaper`, `swarm→legion`. **Это пока только архитектурный контракт:** `runtime_enabled=false`, PNG по новым путям ещё не созданы, живой renderer не переключён.
 
