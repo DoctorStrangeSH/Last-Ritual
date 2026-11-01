@@ -288,9 +288,10 @@ func run_tests() -> void:
     if specialization_balance_scene != null:
         var sparks = specialization_balance_scene.instantiate()
         root.add_child(sparks)
+        sparks.coins = 200
         check(sparks.choose_tower("fire") and sparks.build_tower(0), "Sparks benchmark purchases fire tower")
         check(upgrade_to_specialization(sparks, "swarm"), "Sparks benchmark invests in level two")
-        check(sparks.coins == 85, "Fire level-two build costs 45 plus 20 gold")
+        check(sparks.coins == 35, "Fire plus three base/evolution upgrades costs 165 gold")
         var sparks_foes: Array[Dictionary] = []
         for offset in [Vector2(20, 10), Vector2(50, 10), Vector2(80, 10), Vector2(110, 10)]:
             var foe: Dictionary = {"pos": sparks.slots[0]["pos"] + offset, "hp": 100, "delay": 0.0}
@@ -300,19 +301,20 @@ func run_tests() -> void:
         check(sparks_foes[0].has("burn_time") and sparks_foes[1].has("burn_time") and sparks_foes[2].has("burn_time"), "Sparks ignites three enemies with a single volley")
         check(not sparks_foes[3].has("burn_time"), "Sparks target cap stops at three enemies")
         sparks.tick_burning(3.0)
-        check(sparks_foes[0]["hp"] == 93 and sparks_foes[1]["hp"] == 93 and sparks_foes[2]["hp"] == 93 and sparks_foes[3]["hp"] == 100, "Sparks deals ordinary burn damage across its three targets")
-        check(sparks.coins == 85, "Burning without a kill grants no additional gold")
+        check(sparks_foes[0]["hp"] == 92 and sparks_foes[1]["hp"] == 92 and sparks_foes[2]["hp"] == 92 and sparks_foes[3]["hp"] == 100, "Level-three Sparks deals direct damage plus ordinary burn across three targets")
+        check(sparks.coins == 35, "Burning without a kill grants no additional gold")
         sparks.queue_free()
 
         var inferno = specialization_balance_scene.instantiate()
         root.add_child(inferno)
+        inferno.coins = 200
         check(inferno.choose_tower("fire") and inferno.build_tower(0), "Inferno benchmark purchases fire tower")
         check(upgrade_to_specialization(inferno, "siege"), "Inferno benchmark uses equal gold investment")
         var sturdy_foe: Dictionary = {"pos": inferno.slots[0]["pos"] + Vector2(20, 10), "hp": 100, "delay": 0.0}
         inferno.enemies.append(sturdy_foe)
         inferno.attack_with_towers(1.0)
         inferno.tick_burning(3.0)
-        check(inferno.coins == 85 and sturdy_foe["hp"] == 78, "Inferno spends the same gold but burns down a single armored target faster")
+        check(inferno.coins == 35 and sturdy_foe["hp"] == 77, "Level-three Inferno spends the same gold and burns down a single armored target faster")
         inferno.queue_free()
     # Bone specialization benchmark: equal 50-gold investment, isolated tower,
     # one durable target. Ballista has stronger individual shots, while Swarm
@@ -320,29 +322,31 @@ func run_tests() -> void:
     if specialization_balance_scene != null:
         var ballista = specialization_balance_scene.instantiate()
         root.add_child(ballista)
+        ballista.coins = 250
         check(ballista.choose_tower("bone") and ballista.build_tower(0), "Ballista benchmark builds bone tower")
         check(upgrade_to_specialization(ballista, "siege"), "Ballista benchmark upgrades for 20 gold")
         check(ballista.coins == 100, "Ballista costs 50 gold total")
         var ballista_foe: Dictionary = {"pos": ballista.slots[0]["pos"] + Vector2(30, 0), "hp": 100, "delay": 0.0}
         ballista.enemies.append(ballista_foe)
         ballista.attack_with_towers(0.01)
-        check(ballista_foe["hp"] == 94, "Ballista hits one durable target for six damage")
+        check(ballista_foe["hp"] == 92, "Level-three Ballista hits one durable target for eight damage")
         ballista.attack_with_towers(0.45)
         check(ballista_foe["hp"] == 94, "Ballista has not reloaded after 0.45 seconds")
         ballista.queue_free()
 
         var bone_swarm = specialization_balance_scene.instantiate()
         root.add_child(bone_swarm)
+        bone_swarm.coins = 250
         check(bone_swarm.choose_tower("bone") and bone_swarm.build_tower(0), "Bone swarm benchmark builds bone tower")
         check(upgrade_to_specialization(bone_swarm, "swarm"), "Bone swarm benchmark upgrades for 20 gold")
         check(bone_swarm.coins == 100, "Bone swarm also costs 50 gold total")
         var swarm_foe: Dictionary = {"pos": bone_swarm.slots[0]["pos"] + Vector2(30, 0), "hp": 100, "delay": 0.0}
         bone_swarm.enemies.append(swarm_foe)
         bone_swarm.attack_with_towers(0.01)
-        check(swarm_foe["hp"] == 97, "Bone swarm hits a durable target for three damage")
+        check(swarm_foe["hp"] == 95, "Level-three Bone swarm hits a durable target for five damage")
         bone_swarm.attack_with_towers(0.45)
-        check(swarm_foe["hp"] == 94, "Bone swarm fires its second shot while Ballista reloads")
-        check(bone_swarm.coins == 100 and ballista.coins == 100, "Neither bone benchmark awards gold without a kill")
+        check(swarm_foe["hp"] == 90, "Bone swarm fires its second shot while Ballista reloads")
+        check(bone_swarm.coins == 100 and ballista.coins == 100, "Both bone specializations keep equal investment without a kill")
         bone_swarm.queue_free()
     # Bone piercing benchmark: aligned targets can be hit, side targets cannot.
     # Small-HP runner proxy demonstrates Ballista's burst vs Swarm's cadence.
@@ -350,6 +354,7 @@ func run_tests() -> void:
         for bone_path in ["siege", "swarm"]:
             var piercing = specialization_balance_scene.instantiate()
             root.add_child(piercing)
+            piercing.coins = 250
             check(piercing.choose_tower("bone") and piercing.build_tower(0), "Piercing benchmark builds bone tower " + bone_path)
             check(upgrade_to_specialization(piercing, bone_path), "Piercing benchmark chooses " + bone_path)
             var base: Vector2 = piercing.slots[0]["pos"]
@@ -359,7 +364,7 @@ func run_tests() -> void:
             var side: Dictionary = {"pos": base + Vector2(60, 45), "hp": 100, "delay": 0.0, "role": "runner"}
             piercing.enemies.append_array([front, behind_a, behind_b, side])
             piercing.attack_with_towers(0.01)
-            var expected_hit: int = 94 if bone_path == "siege" else 97
+            var expected_hit: int = 92 if bone_path == "siege" else 95
             check(front["hp"] == expected_hit and behind_a["hp"] == expected_hit and behind_b["hp"] == expected_hit, "Bone pierces three aligned targets: " + bone_path)
             check(side["hp"] == 100, "Bone does not pierce off-axis fourth target: " + bone_path)
             check(piercing.coins == 100, "Piercing without kills grants no gold: " + bone_path)
@@ -368,12 +373,13 @@ func run_tests() -> void:
         for bone_path in ["siege", "swarm"]:
             var runner_game = specialization_balance_scene.instantiate()
             root.add_child(runner_game)
+            runner_game.coins = 250
             check(runner_game.choose_tower("bone") and runner_game.build_tower(0), "Runner benchmark builds tower: " + bone_path)
             check(upgrade_to_specialization(runner_game, bone_path), "Runner benchmark selects path: " + bone_path)
-            var runner: Dictionary = {"pos": runner_game.slots[0]["pos"] + Vector2(30, 0), "hp": 5, "delay": 0.0, "role": "runner"}
+            var runner: Dictionary = {"pos": runner_game.slots[0]["pos"] + Vector2(30, 0), "hp": 6, "delay": 0.0, "role": "runner"}
             runner_game.enemies.append(runner)
             runner_game.attack_with_towers(0.01)
-            check(runner_game.enemies.is_empty() == (bone_path == "siege"), "Ballista instantly stops 5-HP runner, Swarm needs another shot: " + bone_path)
+            check(runner_game.enemies.is_empty() == (bone_path == "siege"), "Ballista instantly stops 6-HP runner, Swarm needs another shot: " + bone_path)
             if bone_path == "swarm":
                 runner_game.attack_with_towers(0.45)
                 check(runner_game.enemies.is_empty(), "Swarm defeats 5-HP runner on second shot")
@@ -385,9 +391,10 @@ func run_tests() -> void:
         for necro_path in ["siege", "swarm"]:
             var necro_balance = specialization_balance_scene.instantiate()
             root.add_child(necro_balance)
+            necro_balance.coins = 250
             check(necro_balance.choose_tower("necro") and necro_balance.build_tower(0), "Necro benchmark builds tower: " + necro_path)
             check(upgrade_to_specialization(necro_balance, necro_path), "Necro benchmark chooses path: " + necro_path)
-            check(necro_balance.coins == 70, "Both necromancer paths cost 80 gold: " + necro_path)
+            check(necro_balance.coins == 70, "Necromancer base tower plus four-step evolution costs 180 gold: " + necro_path)
             # Put three low-health enemies in range, one per forced shot.
             # Reset cooldown between shots to isolate kill-trigger thresholds.
             for kill_index in range(3):
@@ -983,7 +990,8 @@ func run_tests() -> void:
         check(str(shop_details["effect"]) != "" and str(shop_details["combo"]) != "", "Tower shop tooltip explains behavior and synergy: " + kind)
         var next_upgrade: Dictionary = tooltip_data.upgrade_info(kind, 1, "", 0, 0)
         check(int(next_upgrade["cost"]) == 20 and int(next_upgrade["next_damage"]) > int(next_upgrade["current_damage"]), "First upgrade preview has exact cost and damage: " + kind)
-        check(bool(tooltip_data.upgrade_info(kind, 3, "siege", 0, 0)["maxed"]), "Level three tooltip reports maximum level: " + kind)
+        check(not bool(tooltip_data.upgrade_info(kind, 3, "", 0, 0)["maxed"]) and int(tooltip_data.upgrade_info(kind, 3, "", 0, 0)["cost"]) == 60, "Level three offers the fourth specialization step: " + kind)
+        check(bool(tooltip_data.upgrade_info(kind, 3, "siege", 0, 0)["maxed"]), "Specialized level three is fully evolved: " + kind)
     if specialization_balance_scene != null:
         var hover_game = specialization_balance_scene.instantiate()
         root.add_child(hover_game)
@@ -1047,9 +1055,9 @@ func run_tests() -> void:
     for upgrade_kind in ["bone", "fire", "necro", "frost"]:
         var first: Dictionary = upgrade_tips.upgrade_info(upgrade_kind, 1, "", 0, 0)
         check(int(first["range"]) > 0 and is_equal_approx(float(first["attack_interval"]), 0.8), "Upgrade preview shows genuine range and interval: " + upgrade_kind)
-        check("2 ПУТИ" in str(first["extra"]), "Level two upgrade explains specialization choice: " + upgrade_kind)
-        var third: Dictionary = upgrade_tips.upgrade_info(upgrade_kind, 2, "swarm", 0, 0)
-        check(is_equal_approx(float(third["attack_interval"]), 0.45) and "НЕ МЕНЯЮТСЯ" in str(third["extra"]), "Third-level preview preserves swarm attack cadence: " + upgrade_kind)
+        check("ДВА УРОВНЯ" in str(first["extra"]), "Level one preview explains two base upgrades remain: " + upgrade_kind)
+        var third: Dictionary = upgrade_tips.upgrade_info(upgrade_kind, 2, "", 0, 0)
+        check(int(third["cost"]) == 40 and not bool(third["maxed"]) and "УРОВЕНЬ 3" in str(third["extra"]), "Level two preview offers level three, not a specialization: " + upgrade_kind)
     var synergy_tooltips = load("res://scripts/td/td_tower_tooltips.gd")
     var bone_active: Array[String] = synergy_tooltips.synergy_lines("bone", true, false, true)
     check(bone_active.size() == 2 and bone_active[0].begins_with("АКТИВНО") and bone_active[1].begins_with("АКТИВНО"), "Bone tooltip marks active fire and frost combinations")
@@ -1269,14 +1277,13 @@ func run_tests() -> void:
         check(layout.build_tower(0), "Build tower for relocation")
         layout.coins = 100
         layout.select_slot(0)
-        check(upgrade_to_specialization(layout, "siege"), "Tower upgrades before relocation")
-        check(layout.choose_specialization("siege"), "Tower chooses specialization before relocation")
+        check(upgrade_to_specialization(layout, "siege"), "Tower upgrades through level three and specialization before relocation")
         layout.cycle_target_priority()
         var coins_before: int = layout.coins
         check(layout.begin_tower_relocation(), "Relocation can begin between waves")
         check(layout.relocate_tower(0, 4), "Relocation moves tower to empty position")
         check(layout.slots[0]["tower"] == "" and layout.slots[4]["tower"] == "fire", "Source is empty, destination keeps tower")
-        check(layout.slots[4]["level"] == 2 and layout.slots[4]["specialization"] == "siege", "Relocated tower keeps upgrades")
+        check(layout.slots[4]["level"] == 3 and layout.slots[4]["specialization"] == "siege", "Relocated tower keeps level three and specialization")
         check(layout.slots[4]["target_priority"] == "support" and layout.coins == coins_before, "Relocation keeps target priority and coins")
         check(not layout.relocate_tower(4, 4), "Relocation cannot move into occupied position")
         var transfer: Dictionary = layout.export_fortress_state()
@@ -1323,8 +1330,8 @@ func run_tests() -> void:
         var details: Dictionary = inspector.selected_tower_info()
         check(details["kind"] == "bone" and int(details["level"]) == 1, "Card shows tower type and level")
         check(int(details["upgrade_cost"]) == 20, "Card shows upgrade price")
-        inspector.coins = 80
-        upgrade_to_specialization(inspector, "siege")
+        inspector.coins = 150
+        check(upgrade_to_specialization(inspector, "siege"), "Detail card tower can complete fourth-step specialization")
         inspector.choose_specialization("siege")
         details = inspector.selected_tower_info()
         check(details["specialization"] == "siege" and int(details["damage"]) > 0, "Card updates with specialization and damage")
@@ -1385,7 +1392,7 @@ func run_tests() -> void:
         check(economy_probe.can_modify_towers(), "Tower purchases allowed before the first wave")
         economy_probe.choose_tower("bone")
         check(economy_probe.build_tower(0), "Economy probe buys initial tower")
-        economy_probe.coins = 200
+        economy_probe.coins = 260
         economy_probe.select_slot(0)
         check(economy_probe.start_wave(), "Economy probe starts combat")
         var locked_coins: int = economy_probe.coins
@@ -1462,7 +1469,7 @@ func run_tests() -> void:
         check(td.build_tower(0) and td.coins == 120, "Build bone tower at fixed slot")
         check(not td.build_tower(0), "Occupied slot rejects duplicate building")
         check(td.choose_tower("necro") and td.build_tower(1), "Different tower uses its own build slot")
-        check(td.select_slot(0) and upgrade_to_specialization(td, "siege"), "Click selected tower to upgrade")
+        check(td.select_slot(0) and upgrade_to_specialization(td, "siege"), "Click selected tower to upgrade through level three and specialization")
         check(td.choose_specialization("siege"), "Choose specialization before selling the upgraded tower")
         check(td.sell_selected() and td.slots[0]["tower"] == "", "Sold tower frees slot")
         check(td.choose_tower("fire") and td.build_tower(0), "Freed slot can be built again")
