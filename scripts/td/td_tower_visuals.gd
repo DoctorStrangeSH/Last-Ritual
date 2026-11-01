@@ -52,6 +52,24 @@ static func production_necro_idle_path(level: int) -> String:
         return ""
     return NECRO_PRODUCTION_ROOT + "level_%d_idle_8f.png" % level
 
+## The Reaper concept crop contains an unrelated sliver at the far left edge.
+## Crop only the production display region; the original source PNG remains untouched.
+static func production_necro_source_rect(specialization: String) -> Rect2:
+    if specialization == "siege":
+        return Rect2(40.0, 0.0, 152.0, 192.0)
+    return Rect2(0.0, 0.0, 192.0, 192.0)
+
+## Soul projectile sheet is authored facing right (+X).
+static func projectile_rotation(from: Vector2, to: Vector2) -> float:
+    var direction: Vector2 = to - from
+    return direction.angle() if direction.length_squared() > 0.0001 else 0.0
+
+static func animation_frame(elapsed: float, fps: float, frame_count: int, looping: bool = false) -> int:
+    if frame_count <= 1 or fps <= 0.0:
+        return 0
+    var frame: int = maxi(0, int(floor(maxf(elapsed, 0.0) * fps)))
+    return frame % frame_count if looping else mini(frame, frame_count - 1)
+
 static func uses_experimental_frost(kind: String) -> bool:
     return FROST_EXPERIMENTAL_ART and kind == "frost"
 
