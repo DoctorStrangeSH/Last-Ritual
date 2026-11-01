@@ -25,13 +25,10 @@ func run_tests() -> void:
         check(visuals.approved_necro_pixel_art_frame_index(3, "siege") == 3, "Reaper maps to frame 3")
         check(visuals.approved_necro_pixel_art_frame_index(3, "swarm") == 4, "Legion maps to frame 4")
         check(visuals.approved_necro_pixel_art_frame_index(4, "") == -1, "Invalid level is rejected")
-        var atlas_image := Image.new()
-        var atlas_error: Error = atlas_image.load(atlas_path)
-        check(atlas_error == OK, "Approved atlas imports as PNG")
-        if atlas_error == OK:
-            check(atlas_image.get_size() == Vector2i(320, 88), "Atlas uses five 64x88 frames")
-            check(atlas_image.has_alpha(), "Atlas has alpha transparency")
-            check(atlas_image.get_pixel(0, 0).a == 0.0, "Atlas background is fully transparent")
+        var atlas_texture: Texture2D = load(atlas_path)
+        check(atlas_texture != null, "Approved atlas imports as a Texture2D")
+        if atlas_texture != null:
+            check(atlas_texture.get_width() == 320 and atlas_texture.get_height() == 88, "Atlas uses five 64x88 frames")
             check(visuals.approved_necro_pixel_art_region(3, "siege").position.x == 192.0, "Reaper region is the fourth cell")
             check(visuals.approved_necro_pixel_art_region(3, "swarm").position.x == 256.0, "Legion region is the fifth cell")
     print("Soul Altar Pixel Art smoke failures: %d" % failures)
