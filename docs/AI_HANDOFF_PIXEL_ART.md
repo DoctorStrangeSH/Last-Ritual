@@ -1,5 +1,8 @@
 # Last Ritual — Handoff: Pixel Art Migration & Soul Altar Rework
 
+**01.11.2026 — проверка видимых поз оружия (PR ожидает CI):** улучшен gate восьми направлений Алтаря душ: RGB скрытых полностью прозрачных пикселей больше не делает одинаковые видимые кадры ложными «разными» позами. Smoke-тест охраняет этот случай и подтверждает, что реально различимые кадры остаются допустимыми. Модульный runtime по-прежнему выключен (`runtime_enabled=false`); новые PNG, механика, сохранения и утверждённые изображения не изменены. После успешного CI проверить PR, затем продолжить создание отдельных оснований L1–L3 и авторских восьминаправленных оружейных атласов для base/Жнеца/Легиона. Ручное Windows QA не выполнено.
+
+
 **01.11.2026 — PR #322 merged:** the owner's approved Soul Altar archive is now committed under `assets/spire/towers/necro/approved_renders/`: four original RGBA sources plus four 192×192 transparent sprites and SHA-256 manifest. The binaries are no longer only in chat/release.
 
 **Next implementation slice (PR in progress):** render approved level 1/2/3 sprites and approved Reaper sprite directly in the TD scene. These are whole-tower sprites, not modular base/weapon layers. The ZIP has no approved Legion render, so Legion retains its existing production art until its matching approved image exists. Modular `runtime_enabled=false` remains unchanged; do not claim eight-way modular animation is complete.
