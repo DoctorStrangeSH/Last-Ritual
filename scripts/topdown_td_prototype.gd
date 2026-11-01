@@ -1400,6 +1400,28 @@ func cached_tower_texture(path: String) -> Texture2D:
         tower_texture_cache[path] = load(path) as Texture2D
     return tower_texture_cache[path]
 
+## Approved whole-tower renders are reduced once with nearest-neighbour sampling.
+## This avoids a soft linear-filtered downscale on the pixel-art map.
+func cached_approved_necro_texture(path: String) -> Texture2D:
+    if path.is_empty():
+        return null
+    var cache_key := path + "::nearest_120"
+    if tower_texture_cache.has(cache_key):
+        return tower_texture_cache[cache_key]
+    var source: Texture2D = cached_tower_texture(path)
+    if source == null:
+        return null
+    var image: Image = source.get_image()
+    if image == null or image.is_empty():
+        return source
+    var target_size: Vector2i = TOWER_VISUALS.approved_necro_display_size(Vector2i(image.get_size()), 120)
+    if target_size == Vector2i.ZERO:
+        return source
+    image.resize(target_size.x, target_size.y, Image.INTERPOLATE_NEAREST)
+    var crisp_texture: Texture2D = ImageTexture.create_from_image(image)
+    tower_texture_cache[cache_key] = crisp_texture
+    return crisp_texture
+
 func draw_tower_figure(pos: Vector2, kind: String, level: int, specialization: String = "") -> void:
     # Completely gated by the real asset set. Base never rotates; the weapon
     # picks one of eight authored directions from the last live combat target.
@@ -1432,11 +1454,13 @@ func draw_tower_figure(pos: Vector2, kind: String, level: int, specialization: S
     if kind == "necro":
         var approved_path: String = TOWER_VISUALS.approved_necro_sprite_path(level, specialization)
         if not approved_path.is_empty() and TOWER_VISUALS.approved_necro_sprite_ready(approved_path):
-            var approved_texture: Texture2D = cached_tower_texture(approved_path)
-            if approved_texture != null:
-                var approved_rect := Rect2(Vector2(pos.x - 60.0, pos.y - 120.0), Vector2(120.0, 120.0))
-                draw_texture_rect(approved_texture, approved_rect, false)
-                return
+            var source_texture: Texture2D = cached_tower_texture(approved_path)
+            var approved_texture: Texture2D = cached_approved_necro_texture(approved_path)
+            if source_texture != null and approved_texture != null:
+                var approved_rect: Rect2 = TOWER_VISUALS.approved_necro_display_rect(pos, Vector2i(source_texture.get_size()), 120)
+                if approved_rect.size != Vector2.ZERO:
+                    draw_texture_rect(approved_texture, approved_rect, false)
+                    return
     # Preserve the existing production pack for Legion and as a safe fallback.
     if kind == "necro" and TOWER_VISUALS.production_necro_ready():
         var production_path: String = TOWER_VISUALS.production_necro_tower_path(level, specialization)
