@@ -5,10 +5,14 @@ const TD_SYNERGY_RULES = preload("res://scripts/td/td_synergy_rules.gd")
 const TD_TOWER_STATS = preload("res://scripts/td/td_tower_stats.gd")
 const SPIRE_TOWER_ATLAS = preload("res://assets/spire/towers_atlas.png")
 const TOWER_VISUALS = preload("res://scripts/td/td_tower_visuals.gd")
+const MODULAR_ASSETS = preload("res://scripts/td/td_modular_tower_assets.gd")
 const TD_SPECIALIZATION_ICONS = preload("res://scripts/td/td_specialization_icons.gd")
 const TD_TOWER_TRANSITION_FX = preload("res://scripts/td/td_tower_transition_fx.gd")
 const TD_NECRO_IMPACT_FX = preload("res://scripts/td/td_necro_impact_fx.gd")
 var tower_texture_cache: Dictionary = {}
+var modular_necro_manifest: Dictionary = {}
+var modular_necro_enabled := false
+var tower_aim_targets: Dictionary = {}
 # Short visual-only build/sell transitions; gameplay is updated immediately.
 var tower_visual_transitions: Array[Dictionary] = []
 const TOWER_TRANSITION_DURATION := 0.42
@@ -571,6 +575,8 @@ func attack_with_towers(delta: float) -> void:
         var target: Dictionary = choose_tower_target(slot_id)
         if target.is_empty():
             continue
+        if kind == "necro":
+            tower_aim_targets[slot_id] = Vector2(target["pos"])
         var hit_targets: Array = TD_MULTIHIT.targets(tower, target, enemies, float(TOWER_RANGE[kind]))
         if kind == "fire":
             hit_targets = TD_FIRE_SPLASH.add_splash_targets(hit_targets, enemies, target)
@@ -693,6 +699,7 @@ func restart_defense() -> void:
     shot_trails.clear()
     ember_bursts.clear()
     tower_cooldowns.clear()
+    tower_aim_targets.clear()
     for slot in slots:
         slot["tower"] = ""
         slot["level"] = 0
@@ -736,6 +743,8 @@ func _process(delta: float) -> void:
 
 
 func _ready() -> void:
+    modular_necro_manifest = MODULAR_ASSETS.load_manifest("necro")
+    modular_necro_enabled = MODULAR_ASSETS.runtime_ready(modular_necro_manifest)
     sfx = SFX_SCRIPT.new()
     add_child(sfx)
     for i in range(SLOT_POSITIONS.size()):
@@ -1392,6 +1401,30 @@ func cached_tower_texture(path: String) -> Texture2D:
     return tower_texture_cache[path]
 
 func draw_tower_figure(pos: Vector2, kind: String, level: int, specialization: String = "") -> void:
+    # Completely gated by the real asset set. Base never rotates; the weapon
+    # picks one of eight authored directions from the last live combat target.
+    if kind == "necro" and modular_necro_enabled:
+        var aim: Vector2 = pos + Vector2.UP
+        for slot in slots:
+            if str(slot.get("tower", "")) == "necro" and Vector2(slot["pos"]) == pos:
+                aim = Vector2(tower_aim_targets.get(int(slot["id"]), aim))
+                break
+        var layers: Dictionary = MODULAR_ASSETS.resolve_tower_layers(modular_necro_manifest, level, specialization, pos, aim)
+        if not layers.is_empty():
+            var base_tex: Texture2D = cached_tower_texture(str(layers["base_path"]))
+            var weapon_tex: Texture2D = cached_tower_texture(str(layers["weapon_path"]))
+            var cell: Vector2i = layers["weapon_frame_size"]
+            var region: Rect2 = TOWER_VISUALS.frame_region(weapon_tex, cell, int(layers["weapon_frame"]))
+            if base_tex != null and weapon_tex != null and region.size != Vector2.ZERO:
+                var canvas: Dictionary = modular_necro_manifest.get("canvas", {})
+                var height: float = float(canvas.get("height", 128))
+                var width: float = float(canvas.get("width", 128))
+                var ground: Array = canvas.get("ground_anchor", [64, 118])
+                var scale_factor: float = 120.0 / maxf(1.0, height)
+                var rect := Rect2(pos - Vector2(float(ground[0]), float(ground[1])) * scale_factor, Vector2(width, height) * scale_factor)
+                draw_texture_rect(base_tex, rect, false)
+                draw_texture_rect_region(weapon_tex, rect, region)
+                return
     # Prefer the original concept-derived PNG, not its simplified SVG substitute.
     # Preserve prior art if any member of the production pack is missing.
     if kind == "necro" and TOWER_VISUALS.production_necro_ready():
