@@ -1,9 +1,7 @@
 extends RefCounted
-## Static visual compatibility: gameplay still has four legacy IDs.
-## Six original icon pairs already exist in assets/spire/towers.
-const ASSET_IDS := {"bone": "ballista", "fire": "fire", "necro": "necro", "frost": "frost"}
+## Specialization icon lookup.
+## Legacy SVG icons were removed. Return an empty path until approved transparent
+## Pixel Art PNG icons are committed; the UI keeps its Russian text labels meanwhile.
 
-static func path_for(kind: String, specialization: String) -> String:
-    if not ASSET_IDS.has(kind) or not specialization in ["siege", "swarm"]:
-        return ""
-    return "res://assets/spire/towers/%s/specializations/%s/icon.svg" % [ASSET_IDS[kind], specialization]
+static func path_for(_kind: String, _specialization: String) -> String:
+    return ""
