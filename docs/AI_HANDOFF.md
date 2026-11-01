@@ -2,7 +2,9 @@
 
 **Read first:** [AI_HANDOFF_PIXEL_ART.md](AI_HANDOFF_PIXEL_ART.md), [ROADMAP.md](ROADMAP.md), [Pixel Art Style Guide](art/PIXEL_ART_STYLE_GUIDE.md), [Pixel Art Migration Inventory](art/PIXEL_ART_MIGRATION_INVENTORY.md).
 
-**Verified main:** `300415d74ba7abc1e768673d59cc435c89d394c9` (PR #309). Godot 4.4.1. Main CI run #41281253322 passed both `checks` and `windows-preview`. This confirms import/tests/export, not manual visual acceptance by the owner.
+**Verified code main:** `300415d74ba7abc1e768673d59cc435c89d394c9` (PR #309). **Latest docs main:** `583b2986bc01f508558bfac5ca8b3dae078ac572` (PR #310). Godot 4.4.1. Code CI #41281253322 and docs post-merge CI #41281948195 passed `checks` and `windows-preview`. This confirms import/tests/export, not manual visual acceptance by the owner.
+**Documentation refresh:** PR #310 merged at `583b2986bc01f508558bfac5ca8b3dae078ac572`; handoff, roadmap, project state, style guide and migration inventory were refreshed. PR #310 CI run #41281867979 passed `checks` and `windows-preview`.
+
 
 **Owner's latest direction:** move the entire game to detailed, hand-authored dark-fantasy Pixel Art. The owner explicitly authorizes complete deletion of old sprite families once each family has a tested Pixel Art replacement and runtime references are switched. Do not keep obsolete sprites as permanent fallbacks. Preserve legal attribution/license records, new editable sources/manifests and the approved Soul Altar concept as reference.
 
