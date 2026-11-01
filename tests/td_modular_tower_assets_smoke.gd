@@ -36,6 +36,14 @@ func run_tests() -> void:
 		var validation: Dictionary = contract.validate_manifest(manifest)
 		check(bool(validation.get("valid", false)), "Soul Altar manifest satisfies schema v1")
 		check(not contract.runtime_ready(manifest), "Pixel Art runtime stays disabled until the complete approved kit exists")
+		var td_scene = load("res://scenes/topdown_td_prototype.tscn")
+		if td_scene != null:
+			var td = td_scene.instantiate()
+			root.add_child(td)
+			check(not td.modular_necro_enabled, "Incomplete modular kit does not override current art")
+			check(td.modular_necro_manifest.get("id", "") == "necro", "TD scene loads the modular manifest")
+			td.queue_free()
+
 
 		var base_layers: Dictionary = contract.resolve_tower_layers(manifest, 1, "", Vector2.ZERO, Vector2.RIGHT)
 		check(base_layers.get("base_path", "") == "res://assets/spire/towers/necro/base/level_1.png", "Base layer resolves by upgrade level")

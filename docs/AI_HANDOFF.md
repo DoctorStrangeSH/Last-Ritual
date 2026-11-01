@@ -1,5 +1,8 @@
 # CURRENT HANDOFF — 2026-11-01 (main after PR #314)
 
+**PR #317 — защищённая интеграция модульного рендера (2026-11-01):** TD-сцена теперь загружает `assets/spire/towers/necro/manifest.json` в `_ready()` и проверяет `runtime_ready()`. Пока полный набор реальных прозрачных production PNG не готов и `runtime_enabled=false`, текущая башня остаётся прежней. Для будущей модульной графики основание неподвижно, верхнее оружие выбирает 1 из 8 кадров по последней цели, общие якоря и 120px габарит учитываются. Smoke test проверяет защиту в реальной TD-сцене; PR CI #41305093372 `checks` success. Это **не означает**, что готовые пиксельные PNG извлечены и сохранены в Git, и не является визуальным одобрением Windows EXE. Старые SVG уже были удалены в #314; новых концептов не создаём.
+
+
 **Read first:** [AI_HANDOFF_PIXEL_ART.md](AI_HANDOFF_PIXEL_ART.md), [ROADMAP.md](ROADMAP.md), [Pixel Art Style Guide](art/PIXEL_ART_STYLE_GUIDE.md), [Pixel Art Migration Inventory](art/PIXEL_ART_MIGRATION_INVENTORY.md).
 
 **Verified code main:** `e3dd4c6898ab20eaf627e2993bbeaa48ccecb262` (PR #314). Godot 4.4.1. PR #314 exact-head CI #41287057434 passed; post-merge main CI #41287125006 passed `checks` and `windows-preview`. Windows EXE exported and published to the rolling `windows-preview` release. The Git tree now contains zero tracked SVG files. CI success is not owner visual approval.
