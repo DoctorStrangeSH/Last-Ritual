@@ -1,6 +1,6 @@
 # Pixel Art Migration Inventory & Legacy Sprite Removal Plan
 
-**Updated:** 2026-11-01, main snapshot after PR #309 `300415d74ba7abc1e768673d59cc435c89d394c9`.
+**Updated:** 2026-11-01, main snapshot after PR #312 `955252af84ab0eba86775a859fbb029122996e29`.
 
 This is the working inventory for replacing the old art and then removing it completely. It is not a claim that the Pixel Art migration is already complete.
 
@@ -12,6 +12,14 @@ Keep:
 - license, attribution and mapping/provenance records required for any redistributed third-party-derived content;
 - new editable Pixel Art sources, deterministic export scripts, manifests and palette/pivot data;
 - approved Soul Altar v0.5 concept sheet as a non-runtime art-direction reference (keep only while useful); old raster cutouts and all old runtime sprite exports are eligible for complete deletion after the Pixel Art replacements are accepted.
+
+## Soul Altar modular manifest contract (PR #312)
+
+- `assets/spire/towers/necro/manifest.json` defines the planned production layout and technical metadata.
+- `scripts/td/td_modular_tower_assets.gd` loads/validates manifests, maps eight aim directions and resolves base, weapon and VFX paths.
+- `tests/td_modular_tower_assets_smoke.gd` runs in the Godot CI workflow.
+- Manifest status is `contract_only`; `runtime_enabled=false`. The PNG paths are future targets, not files already present. The current live renderer still uses the existing assembled/candidate art.
+- Keep this manifest generic enough to reuse for the other towers. Create editable pixel source, production PNGs and provenance before enabling it.
 
 ## Current active gameplay identities
 
