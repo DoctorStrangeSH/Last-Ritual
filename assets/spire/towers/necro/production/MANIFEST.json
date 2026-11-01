@@ -1,0 +1,102 @@
+{
+  "source": "SoulAltar_Original_Art_Sprites.zip (v0.5 source PNGs)",
+  "notes": "Preserve source/ unchanged. Build script used for derivative exports. Projectile/impact are textured composites from source flame, not artist-approved frames.",
+  "files": {
+    "icon_128.png": {
+      "sha256": "2b4291af669e6852fed58adf9ae8c7b742a1ced1d31f1bea4d07371f8678d552",
+      "width": 128,
+      "height": 128,
+      "mode": "RGBA"
+    },
+    "level_1_192.png": {
+      "sha256": "6e235ea58fc29499e704edbaf74996e14eee635e66c647b33a1f63f9368f0f6f",
+      "width": 192,
+      "height": 192,
+      "mode": "RGBA"
+    },
+    "level_1_hd.png": {
+      "sha256": "8e7c015f3c9b4fa021ac3161ebd2e634e4b1c49f74ae082c46ad3a16ab2fae34",
+      "width": 260,
+      "height": 405,
+      "mode": "RGBA"
+    },
+    "level_1_idle_8f.png": {
+      "sha256": "510774e78f3700b95db9ab8aff6da5121de6849deccfeff1b8e90832ad6855e9",
+      "width": 1536,
+      "height": 192,
+      "mode": "RGBA"
+    },
+    "level_2_192.png": {
+      "sha256": "3ad2ede61fcba2d095121a4c67a8bf5586ea041ac0d7c28959a7b55773687b34",
+      "width": 192,
+      "height": 192,
+      "mode": "RGBA"
+    },
+    "level_2_hd.png": {
+      "sha256": "417126275082fe36a91f14a7667469f736651b1e02579efaeea6b64778ab4e4f",
+      "width": 302,
+      "height": 498,
+      "mode": "RGBA"
+    },
+    "level_2_idle_8f.png": {
+      "sha256": "e459cb2a27f3a3fcd1ab6b2ac794aa1515f397e082aa9fc090ac0b1369ea80bd",
+      "width": 1536,
+      "height": 192,
+      "mode": "RGBA"
+    },
+    "level_3_192.png": {
+      "sha256": "650ff0e6e70fc716c9280624297f56b3eeef7905db4fe3a2156104421b3bb4aa",
+      "width": 192,
+      "height": 192,
+      "mode": "RGBA"
+    },
+    "level_3_hd.png": {
+      "sha256": "2f3e320d4362f5bb248d03f6705ed16d60ee947653fcf199370ba3a06b40d251",
+      "width": 344,
+      "height": 563,
+      "mode": "RGBA"
+    },
+    "level_3_idle_8f.png": {
+      "sha256": "06b23480abe3991f2bdd66c40417b540f6264dd27b287df86891f46474926fa3",
+      "width": 1536,
+      "height": 192,
+      "mode": "RGBA"
+    },
+    "soul_impact_8f.png": {
+      "sha256": "f396a7fdc46fad4f36e0b072c0c7a0ef7096e8a0162da88c386f620ea7e0dca3",
+      "width": 1024,
+      "height": 128,
+      "mode": "RGBA"
+    },
+    "soul_projectile_8f.png": {
+      "sha256": "271ad8206516a19388526924021f5ce2f3bcdce6219504ef4e3b57dd55a72743",
+      "width": 512,
+      "height": 64,
+      "mode": "RGBA"
+    },
+    "specialization_legion_192.png": {
+      "sha256": "fc75e3ce2e60f6281f309560d42400d6e99484fc9baac4d0cce9fdf90c1ff7ba",
+      "width": 192,
+      "height": 192,
+      "mode": "RGBA"
+    },
+    "specialization_legion_hd.png": {
+      "sha256": "0af88492a590695168157cf69cee58e36ed080a1212cbc85f1dddf16cd422290",
+      "width": 359,
+      "height": 585,
+      "mode": "RGBA"
+    },
+    "specialization_reaper_192.png": {
+      "sha256": "f57ac4c3550aa4d337acbcb8a6113851b88197bd49fbd78247ad366306c4e1a4",
+      "width": 192,
+      "height": 192,
+      "mode": "RGBA"
+    },
+    "specialization_reaper_hd.png": {
+      "sha256": "08fc7c656cd45a10b649bc8b0a2f014df942572adfefdf4e96b499c8fffb982f",
+      "width": 342,
+      "height": 498,
+      "mode": "RGBA"
+    }
+  }
+}
