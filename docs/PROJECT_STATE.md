@@ -1,5 +1,8 @@
 # ТЕКУЩИЙ СНИМОК — 01.11.2026 (после PR #314)
 
+**01.11.2026 — Soul Altar attack profile refactor (PR #325):** extracted base/Reaper/Legion cooldowns, kill-streak thresholds, empowered-spirit flag, projectile sizes/tints and impact sizes into `scripts/td/td_necro_attack_profile.gd`. Existing values are preserved exactly; this is an architecture-only refactor, not a balance change or new sprite set. Regression checks cover all three profiles and safe fallback.
+
+
 **01.11.2026 — Soul Altar display follow-up (PR #323):** approved RGBA sprites are now the in-game visual candidate for Necro levels 1–3 and Reaper. Runtime conversion is nearest-neighbour to 120px high, cached per texture; source aspect ratio and bottom pad anchor are preserved. The approved art remains standalone complete-tower images; no eight-way weapon rotation is claimed. Legion remains on its previous asset pending owner-approved art.
 
 
