@@ -576,7 +576,20 @@ func attack_with_towers(delta: float) -> void:
             hit_targets = TD_FIRE_SPLASH.add_splash_targets(hit_targets, enemies, target)
         var damage: int = TD_TOWER_DAMAGE.direct_damage(kind, int(tower["level"]), str(tower.get("specialization", "")), fire_synergy_bonus, bone_synergy_bonus)
         for hit_target in hit_targets:
-            shot_trails.append({"from": tower["pos"], "to": hit_target["pos"], "time": 0.18, "kind": kind, "level": int(tower["level"])})
+            var shot_record: Dictionary = {
+                "from": tower["pos"],
+                "to": hit_target["pos"],
+                "time": 0.18,
+                "kind": kind,
+                "level": int(tower["level"])
+            }
+            if kind == "necro":
+                shot_record["specialization"] = str(tower.get("specialization", ""))
+                shot_record["phase"] = "projectile"
+                shot_record["duration"] = 0.32
+                shot_record["elapsed"] = 0.0
+                shot_record["time"] = 0.32
+            shot_trails.append(shot_record)
             var raw_hit: int = damage + tower_synergy_damage(slot_id, hit_target)
             hit_target["hp"] -= TD_ENEMY_ARMOR.tower_hit_damage(str(hit_target.get("role", "")), kind, siege_day, raw_hit)
             if kind == "frost" and hit_target["hp"] > 0:
@@ -1286,11 +1299,28 @@ func draw_enemy_figure(enemy: Dictionary) -> void:
 const MAX_STORED_SHOT_TRAILS := 64
 
 func update_shot_trails(delta: float) -> void:
-    # Remove expired visuals in place: no copied array or dictionary equality searches.
+    # Necromancer shots have a real travel phase followed by a separate impact.
+    # Other schools retain their existing lightweight trace timing.
+    var safe_delta: float = maxf(delta, 0.0)
     for index in range(shot_trails.size() - 1, -1, -1):
         var trail: Dictionary = shot_trails[index]
-        trail["time"] = float(trail.get("time", 0.0)) - maxf(delta, 0.0)
+        var shot_kind: String = str(trail.get("kind", ""))
+        var phase: String = str(trail.get("phase", ""))
+        if shot_kind == "necro":
+            trail["elapsed"] = float(trail.get("elapsed", 0.0)) + safe_delta
+        trail["time"] = float(trail.get("time", 0.0)) - safe_delta
         if float(trail["time"]) <= 0.0:
+            if shot_kind == "necro" and phase == "projectile":
+                shot_trails.append({
+                    "phase": "impact",
+                    "kind": "necro",
+                    "level": int(trail.get("level", 1)),
+                    "specialization": str(trail.get("specialization", "")),
+                    "to": Vector2(trail.get("to", Vector2.ZERO)),
+                    "time": 0.32,
+                    "duration": 0.32,
+                    "elapsed": 0.0
+                })
             shot_trails.remove_at(index)
     if shot_trails.size() > MAX_STORED_SHOT_TRAILS:
         shot_trails = shot_trails.slice(shot_trails.size() - MAX_STORED_SHOT_TRAILS)
@@ -1368,8 +1398,14 @@ func draw_tower_figure(pos: Vector2, kind: String, level: int, specialization: S
         var production_path: String = TOWER_VISUALS.production_necro_tower_path(level, specialization)
         var tower_sheet: Texture2D = cached_tower_texture(production_path)
         if tower_sheet != null:
-            # 192px transparent square, feet anchored at the tower slot.
-            var tower_rect := Rect2(pos + Vector2(-43, -76), Vector2(86, 86))
+            # Preserve the source aspect ratio and anchor the visible stone base
+            # to the centre of the placement pad. The previous 86x86 square
+            # compressed the 192x192 tower and left its feet below the pad.
+            var source_rect: Rect2 = TOWER_VISUALS.production_necro_source_rect(specialization)
+            var target_size := Vector2(120.0, 120.0)
+            if source_rect.size.x < 192.0:
+                target_size.x = target_size.y * source_rect.size.x / source_rect.size.y
+            var tower_rect := Rect2(Vector2(pos.x - target_size.x * 0.5, pos.y - target_size.y), target_size)
             if level < 3 or specialization == "":
                 var idle_sheet: Texture2D = cached_tower_texture(TOWER_VISUALS.production_necro_idle_path(level))
                 if idle_sheet != null:
@@ -1378,7 +1414,9 @@ func draw_tower_figure(pos: Vector2, kind: String, level: int, specialization: S
                     if idle_region.size != Vector2.ZERO:
                         draw_texture_rect_region(idle_sheet, tower_rect, idle_region)
                         return
-            draw_texture_rect(tower_sheet, tower_rect, false)
+            # The Reaper source crop excludes a stray disconnected scythe sliver
+            # at the left edge while leaving the approved original untouched.
+            draw_texture_rect_region(tower_sheet, tower_rect, source_rect)
             return
     # A tower is base + weapon. Show the first, stable weapon pose rather than
     # endlessly cycling sprite-sheet cells as if they were building frames.
