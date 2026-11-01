@@ -2735,6 +2735,14 @@ func run_tests() -> void:
             var original_fx: Texture2D = load(original_fx_path)
             var cell: Vector2i = tower_visuals.vfx_frame_size("necro", vfx_kind)
             check(original_fx != null and original_fx.get_size() == Vector2(cell.x * 8, cell.y), "Original necro VFX atlas imports eight frames: " + vfx_kind)
+    check(tower_visuals.necro_full_tower_sprite_path(1).ends_with("/approved_renders/sprites/level_1.png"), "Soul Altar L1 uses approved sprite")
+    check(tower_visuals.necro_full_tower_sprite_path(2).ends_with("/approved_renders/sprites/level_2.png"), "Soul Altar L2 uses approved sprite")
+    check(tower_visuals.necro_full_tower_sprite_path(3).ends_with("/approved_renders/sprites/level_3.png"), "Soul Altar L3 uses approved sprite")
+    check(tower_visuals.necro_full_tower_sprite_path(3, "siege").ends_with("/approved_renders/sprites/reaper.png"), "Reaper uses approved sprite")
+    check(tower_visuals.necro_full_tower_sprite_path(3, "swarm").ends_with("/production/specialization_legion_192.png"), "Legion uses production fallback until approved art exists")
+    check(tower_visuals.necro_full_tower_sprite_path(4).is_empty(), "Invalid Soul Altar level is rejected")
+    check(tower_visuals.necro_full_tower_sprite_path(2, "siege").is_empty(), "Specialization is rejected before level 3")
+    check(tower_visuals.necro_full_tower_sprite_path(3, "unknown").is_empty(), "Unknown specialization is rejected")
     var projectile_maps = load("res://scripts/td/td_tower_visuals.gd")
     for kind in ["bone", "fire", "necro", "frost"]:
         for level in range(1, 4):
