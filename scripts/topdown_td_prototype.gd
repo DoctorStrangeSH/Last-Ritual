@@ -1626,17 +1626,71 @@ func _draw() -> void:
     for trail_index in range(visible_shot_trail_start(shot_trails.size()), shot_trails.size()):
         var trail: Dictionary = shot_trails[trail_index]
         var shot_kind: String = str(trail.get("kind", "hero"))
-        var shot_color: Color = tower_visual_color(shot_kind)
-        var opacity: float = clampf(float(trail.get("time", 0.18)) / 0.18, 0.0, 1.0)
         var visual: Dictionary = shot_trail_style(shot_kind)
         var level: int = clampi(int(trail.get("level", 1)), 1, 3)
+        if shot_kind == "necro":
+            var specialization: String = str(trail.get("specialization", ""))
+            var phase: String = str(trail.get("phase", "projectile"))
+            var elapsed: float = maxf(0.0, float(trail.get("elapsed", 0.0)))
+            var duration: float = maxf(0.001, float(trail.get("duration", 0.32)))
+            var frame: int = TOWER_VISUALS.animation_frame(elapsed, 24.0, 8, false)
+            if phase == "impact":
+                var impact_path: String = TOWER_VISUALS.vfx_path("necro", level, "weapon_impact")
+                var impact_texture: Texture2D = cached_tower_texture(impact_path)
+                var impact_cell: Vector2i = TOWER_VISUALS.vfx_frame_size("necro", "weapon_impact")
+                var impact_region: Rect2 = TOWER_VISUALS.frame_region(impact_texture, impact_cell, frame)
+                var impact_size: Vector2 = Vector2(44.0, 44.0)
+                if specialization == "siege":
+                    impact_size = Vector2(54.0, 54.0)
+                elif specialization == "swarm":
+                    impact_size = Vector2(36.0, 36.0)
+                var impact_point: Vector2 = Vector2(trail.get("to", Vector2.ZERO))
+                var impact_alpha: float = clampf(1.0 - elapsed / duration, 0.0, 1.0)
+                if impact_texture != null and impact_region.size != Vector2.ZERO:
+                    draw_texture_rect_region(impact_texture, Rect2(impact_point - impact_size * 0.5, impact_size), impact_region, Color(1.0, 1.0, 1.0, impact_alpha))
+                else:
+                    for soul in TD_NECRO_IMPACT_FX.particles(impact_point, clampf(elapsed / duration, 0.0, 1.0)):
+                        var soul_pos: Vector2 = soul["position"]
+                        var soul_alpha: float = float(soul["alpha"])
+                        var soul_size: float = float(soul["size"])
+                        draw_circle(soul_pos, soul_size, Color(0.36, 0.92, 0.68, soul_alpha * 0.7))
+                        draw_circle(soul_pos, soul_size * 0.42, Color(0.84, 1.0, 0.9, soul_alpha))
+                continue
+
+            var projectile_path: String = TOWER_VISUALS.vfx_path("necro", level, "projectiles")
+            var projectile_texture: Texture2D = cached_tower_texture(projectile_path)
+            var projectile_cell: Vector2i = TOWER_VISUALS.vfx_frame_size("necro", "projectiles")
+            var projectile_region: Rect2 = TOWER_VISUALS.frame_region(projectile_texture, projectile_cell, frame)
+            var projectile_from: Vector2 = Vector2(trail.get("from", Vector2.ZERO))
+            var projectile_to: Vector2 = Vector2(trail.get("to", Vector2.ZERO))
+            var projectile_point: Vector2 = projectile_from.lerp(projectile_to, clampf(elapsed / duration, 0.0, 1.0))
+            var projectile_size: Vector2 = Vector2(32.0, 32.0)
+            var projectile_tint: Color = Color.WHITE
+            if specialization == "siege":
+                projectile_size = Vector2(40.0, 40.0)
+                projectile_tint = Color("#efffe7")
+            elif specialization == "swarm":
+                projectile_size = Vector2(26.0, 26.0)
+                projectile_tint = Color("#9affbd")
+            # Source sheet faces right (+X); rotate that forward axis toward travel.
+            draw_set_transform(projectile_point, TOWER_VISUALS.projectile_rotation(projectile_from, projectile_to), Vector2.ONE)
+            if projectile_texture != null and projectile_region.size != Vector2.ZERO:
+                draw_texture_rect_region(projectile_texture, Rect2(-projectile_size * 0.5, projectile_size), projectile_region, projectile_tint)
+            else:
+                # Never substitute a straight beam for a missing necromancer sprite.
+                draw_colored_polygon(PackedVector2Array([Vector2(10, 0), Vector2(0, -5), Vector2(-6, 0), Vector2(0, 5)]), projectile_tint)
+            draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+            continue
+
+        var opacity: float = clampf(float(trail.get("time", 0.18)) / 0.18, 0.0, 1.0)
+        var shot_color: Color = tower_visual_color(shot_kind)
         var sprite_path: String = TOWER_VISUALS.vfx_path(shot_kind, level, "projectiles")
         var projectile: Texture2D = cached_tower_texture(sprite_path)
         if projectile != null:
             var cell: Vector2i = TOWER_VISUALS.vfx_frame_size(shot_kind, "projectiles")
             var progress: float = 1.0 - opacity
             var point: Vector2 = (trail["from"] as Vector2).lerp(trail["to"] as Vector2, progress)
-            var projectile_region: Rect2 = TOWER_VISUALS.frame_region(projectile, cell, mini(int(progress * 8.0), 7)) if shot_kind == "necro" or (shot_kind == "frost" and TOWER_VISUALS.uses_experimental_frost("frost")) else TOWER_VISUALS.first_frame_region(projectile, cell)
+            var projectile_region: Rect2 = TOWER_VISUALS.frame_region(projectile, cell, mini(int(progress * 8.0), 7)) if shot_kind == "frost" and TOWER_VISUALS.uses_experimental_frost("frost") else TOWER_VISUALS.first_frame_region(projectile, cell)
             if projectile_region.size != Vector2.ZERO:
                 draw_texture_rect_region(projectile, Rect2(point - Vector2(7, 7), Vector2(14, 14)), projectile_region, Color.WHITE)
         else:
@@ -1645,23 +1699,11 @@ func _draw() -> void:
         var impact_sprite: Texture2D = cached_tower_texture(impact_path)
         if impact_sprite != null:
             var impact_cell: Vector2i = TOWER_VISUALS.vfx_frame_size(shot_kind, "weapon_impact")
-            var frame_count: int = 8 if shot_kind == "necro" or (shot_kind == "frost" and TOWER_VISUALS.uses_experimental_frost("frost")) else 6
+            var frame_count: int = 8 if shot_kind == "frost" and TOWER_VISUALS.uses_experimental_frost("frost") else 6
             var frame: int = mini(int((1.0 - opacity) * float(frame_count)), frame_count - 1)
             var region: Rect2 = TOWER_VISUALS.frame_region(impact_sprite, impact_cell, frame)
             if region.size != Vector2.ZERO:
                 draw_texture_rect_region(impact_sprite, Rect2((trail["to"] as Vector2) - Vector2(13, 13), Vector2(26, 26)), region, Color(1.0, 1.0, 1.0, 1.0 - opacity))
-        elif shot_kind == "necro":
-            # Keep procedural souls as a fallback if the authored impact sheet fails to load.
-            var impact_progress: float = 1.0 - opacity
-            var impact_origin: Vector2 = trail["to"]
-            for soul in TD_NECRO_IMPACT_FX.particles(impact_origin, impact_progress):
-                var soul_pos: Vector2 = soul["position"]
-                var soul_alpha: float = float(soul["alpha"])
-                var soul_size: float = float(soul["size"])
-                var soul_direction: Vector2 = soul["direction"]
-                draw_line(soul_pos, soul_pos + soul_direction * 4.0, Color(0.38, 0.96, 0.72, soul_alpha), 1.4)
-                draw_circle(soul_pos, soul_size, Color(0.36, 0.92, 0.68, soul_alpha * 0.7))
-                draw_circle(soul_pos, soul_size * 0.42, Color(0.84, 1.0, 0.9, soul_alpha))
         else:
             match str(visual["impact"]):
                 "shard":
