@@ -1,3 +1,22 @@
+# CURRENT HANDOFF — 2026-11-01 (supersedes older snapshots below)
+
+**Read first:** [AI_HANDOFF_PIXEL_ART.md](AI_HANDOFF_PIXEL_ART.md) and [Pixel Art Style Guide](art/PIXEL_ART_STYLE_GUIDE.md). This is the current durable brief for the next AI. Update both documents and this summary after every meaningful PR, art import, gameplay change or QA milestone.
+
+**Verified main:** PR #304 merged original Soul Altar production art into `assets/spire/towers/necro/production/`, plus five original cutouts and the v0.5 concept in `source/original/` and `source/concepts/`. Do not claim that the full game has already migrated to pixel art; this is still a visual-migration project.
+
+**Owner's latest decisions:**
+- Move the entire game to detailed, coherent, hand-authored dark-fantasy Pixel Art.
+- Soul Altar progression must be L1 → L2 → L3 → fourth upgrade selecting Жнец or Легион.
+- Reaper and Legion need distinct mechanics, projectiles and impacts. Animated projectiles must rotate to their travel direction; only the upper weapon/head aims, not the tower base.
+- Fix tower scale, centering, stray sprite fragment and the accidental line-shot.
+- Owner authorizes removal of old sprites, but only after a reference/dependency audit; preserve the new Soul Altar originals, licensed sources and editable provenance. Do not delete active runtime fallback assets before replacement.
+
+**Current verified defects in code:** `scripts/topdown_td_prototype.gd::upgrade_selected()` opens specialization at level 2 and blocks further upgrade at level 3; `attack_with_towers()` does not currently carry distinct specialization projectile identity; the shot renderer has a `draw_line(from,to)` fallback; `draw_tower_figure()` uses fixed 86×86 / 66×66 rectangles rather than calibrated source pivots. See the detailed handoff for exact paths, functions, tests and implementation sequence.
+
+**Next task:** implement and test the Soul Altar four-step upgrade state machine, then fix the tower pivot/scale and projectile/VFX pipeline. Pixel Art migration starts with a complete Soul Altar pilot kit; migrate other towers/world/UI one family at a time. Old unused SVG files can be removed in a separate cleanup PR after a full reference scan.
+
+---
+
 > **PR #280 sprite-sheet bounds:** Added `first_frame_region` and `frame_region` to `td_tower_visuals.gd`. Runtime weapon, projectile and impact rendering validates atlas regions before drawing. Smoke tests cover undersized textures, zero cell dimensions, second-row indexing and invalid frame indices. No gameplay balance, art files or save IDs changed. Manual Windows visual QA remains pending.
 
 > **PR #277 necro impact fallback:** Added `scripts/td/td_necro_impact_fx.gd`, a deterministic six-mote soul burst drawn only for `shot_kind == "necro"` when `td_tower_visuals.vfx_path(..., "weapon_impact")` returns no authored texture. This is explicitly a procedural temporary fallback, not a production PNG. Other tower impact sprites are unchanged. Smoke tests cover count, determinism, alpha and size. Replace with authored necro impact spritesheet when available.
