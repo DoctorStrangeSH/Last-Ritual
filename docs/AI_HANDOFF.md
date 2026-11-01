@@ -1,32 +1,29 @@
-# CURRENT HANDOFF — 2026-11-01 (main after PR #309)
+# CURRENT HANDOFF — 2026-11-01 (main after PR #312)
 
 **Read first:** [AI_HANDOFF_PIXEL_ART.md](AI_HANDOFF_PIXEL_ART.md), [ROADMAP.md](ROADMAP.md), [Pixel Art Style Guide](art/PIXEL_ART_STYLE_GUIDE.md), [Pixel Art Migration Inventory](art/PIXEL_ART_MIGRATION_INVENTORY.md).
 
-**Verified code main:** `300415d74ba7abc1e768673d59cc435c89d394c9` (PR #309). **Latest docs main:** `583b2986bc01f508558bfac5ca8b3dae078ac572` (PR #310). Godot 4.4.1. Code CI #41281253322 and docs post-merge CI #41281948195 passed `checks` and `windows-preview`. This confirms import/tests/export, not manual visual acceptance by the owner.
-**Documentation refresh:** PR #310 merged at `583b2986bc01f508558bfac5ca8b3dae078ac572`; handoff, roadmap, project state, style guide and migration inventory were refreshed. PR #310 CI run #41281867979 passed `checks` and `windows-preview`.
+**Verified code main:** `955252af84ab0eba86775a859fbb029122996e29` (PR #312). **Latest docs main before this refresh:** `583b2986bc01f508558bfac5ca8b3dae078ac572` (PR #310). Godot 4.4.1. PR #312 exact-head CI run #41284865922 passed all checks, including the new modular asset contract smoke test and existing top-down smoke test. Post-merge main CI run #41284911635 is queued; it includes the Windows Preview build. CI success is not owner visual approval.
 
+**Architecture — PR #312 merged:** Added `scripts/td/td_modular_tower_assets.gd`, `assets/spire/towers/necro/manifest.json`, and `tests/td_modular_tower_assets_smoke.gd`. The manifest defines a shared 128×128 canvas/pivot, base levels 1–3, separate base/Reaper/Legion weapon sheets, canonical eight-way order (N, NE, E, SE, S, SW, W, NW), independent projectile and impact families, FPS, and projectile +X forward axis. Runtime specialization mapping is `siege→reaper`, `swarm→legion`. **This is an asset contract only:** `runtime_enabled=false`; no art or runtime renderer has been switched.
 
-**Owner's latest direction:** move the entire game to detailed, hand-authored dark-fantasy Pixel Art. The owner explicitly authorizes complete deletion of old sprite families once each family has a tested Pixel Art replacement and runtime references are switched. Do not keep obsolete sprites as permanent fallbacks. Preserve legal attribution/license records, new editable sources/manifests and the approved Soul Altar concept as reference.
+**Soul Altar gameplay/visual facts:** PR #307 implements L1→L2 (20)→L3 (40)→fourth purchase (60) for permanent Reaper/Legion choice. PR #309 enlarges/centres the current assembled art, crops the stray Reaper fragment in the display region, adds an animated 24 FPS directional soul projectile and separate 8-frame impact; Reaper fires one heavy shot and Legion up to three independent shots. The upper weapon still does not aim independently. Current production art is assembled/non-pixel PNGs; existing SVG layers and preview PNGs are candidates, not the final approved Pixel Art kit.
 
-**Soul Altar progression — PR #307 merged:** L1→L2 (20)→L3 (40)→fourth purchase (60) opens permanent choice Жнец / Легион. Base level stays 3. Save migration and regression tests are in main.
-
-**Soul Altar visual/combat — PR #309 merged:** 120px aspect-preserving centered display rect; Reaper display crop hides detached left-edge sliver without modifying original; necro projectile is an animated 24 FPS 8-frame bolt, follows from→to and rotates authored +X to travel; separate 8-frame impact phase; Reaper fires one heavy single-target bolt; Legion launches up to three independent bolts at up to three enemies; necro line/beam fallback removed. The upper weapon/head still does not aim independently because the existing assembled source is not modular. The projectile/impact art is still a shared realistic candidate sheet, not the final unique Pixel Art kit.
-
-**Current next task:** create the approved Pixel Art pilot for Soul Altar: L1/L2/L3, Reaper/Legion, static base + 8-way or rotatable upper weapon, unique base/Reaper/Legion projectiles and impacts, idle/attack/build effects and icons. Keep a source file, export script, manifest (dimensions/FPS/pivot/forward axis/palette/license) and contact sheet. Validate at gameplay 1× and get owner approval. Then migrate other towers, enemies, hero, world/dungeon, VFX and UI family-by-family; delete replaced old art after CI/Windows export.
+**Current next task:** create hand-authored dark-fantasy Pixel Art assets and editable source for L1/L2/L3, separate base/Reaper/Legion upper weapons with eight poses, three distinct projectile/impact families, idle/attack/build/sell effects and icons. Export transparent PNGs, fill the manifest, verify shared pivots and 1× readability, then wire the resolver into the runtime. Only enable the manifest after every required asset exists and has passed Godot import and owner visual review. Then migrate other towers and the rest of the game family-by-family; delete replaced old art only after references, tests, Windows export and owner QA pass.
 
 **Exact code entry points:**
 - TD controller: `scripts/topdown_td_prototype.gd`.
 - Upgrade state: `upgrade_selected()`, `choose_specialization()`; stats/costs: `scripts/td/td_tower_stats.gd::upgrade_cost()`.
-- Combat record creation: `attack_with_towers(delta)`; necro records carry `kind`, `level`, `specialization`, `phase`, `duration`, `elapsed`.
-- Projectile/impact lifetime: `update_shot_trails(delta)`.
-- Drawing: `_draw()` shot-trail block and `draw_tower_figure(pos, kind, level, specialization)`.
-- Asset path/cell/rotation helpers: `scripts/td/td_tower_visuals.gd` (`vfx_path`, `vfx_frame_size`, `frame_region`, `projectile_rotation`, `animation_frame`).
-- Tests: `tests/topdown_smoke.gd`; command `godot --headless --path . --script res://tests/topdown_smoke.gd`.
-- Style and deletion rules: `docs/art/PIXEL_ART_STYLE_GUIDE.md`, `docs/art/PIXEL_ART_MIGRATION_INVENTORY.md`.
+- Combat record creation: `attack_with_towers(delta)`; projectile/impact lifetime: `update_shot_trails(delta)`.
+- Current tower drawing: `draw_tower_figure(pos, kind, level, specialization)` in `scripts/topdown_td_prototype.gd`.
+- Existing asset mapping: `scripts/td/td_tower_visuals.gd`.
+- New manifest contract: `scripts/td/td_modular_tower_assets.gd`; manifest: `assets/spire/towers/necro/manifest.json`.
+- Tests: `tests/td_modular_tower_assets_smoke.gd` and `tests/topdown_smoke.gd`; both run in PR CI.
+- Style/deletion rules: `docs/art/PIXEL_ART_STYLE_GUIDE.md`, `docs/art/PIXEL_ART_MIGRATION_INVENTORY.md`.
 
 **Documentation maintenance rule:** after every meaningful merged PR, art import/deletion, gameplay change or owner QA, update this summary, `AI_HANDOFF_PIXEL_ART.md`, `PROJECT_STATE.md` and the top of `ROADMAP.md`. Record exact paths, commit/PR, tests and remaining manual QA. Never mark owner QA complete based on CI alone.
 
 ---
+
 
 
 > **PR #280 sprite-sheet bounds:** Added `first_frame_region` and `frame_region` to `td_tower_visuals.gd`. Runtime weapon, projectile and impact rendering validates atlas regions before drawing. Smoke tests cover undersized textures, zero cell dimensions, second-row indexing and invalid frame indices. No gameplay balance, art files or save IDs changed. Manual Windows visual QA remains pending.
