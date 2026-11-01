@@ -164,16 +164,69 @@ static func resolve_vfx(manifest: Dictionary, category: String, specialization: 
 static func runtime_ready(manifest: Dictionary) -> bool:
 	if not bool(validate_manifest(manifest).get("valid", false)) or not bool(manifest.get("runtime_enabled", false)):
 		return false
+	# Do not ship a static concept/sprite sheet with a painted backdrop in place
+	# of individually authored production sprites. Validate all atlas geometry
+	# and alpha corners before enabling the renderer.
 	var root := "res://assets/spire/towers/%s/" % str(manifest.get("id", ""))
+	var canvas: Dictionary = manifest.get("canvas", {})
+	var expected_base := Vector2i(int(canvas.get("width", 0)), int(canvas.get("height", 0)))
 	var base: Dictionary = manifest.get("base", {})
 	var levels: Dictionary = base.get("levels", {})
 	for level in ["1", "2", "3"]:
-		if not ResourceLoader.exists(root + str(levels[level])):
+		if not _transparent_png_ready(root + str(levels[level]), expected_base, 1):
 			return false
 	for group_name in ["weapon", "projectiles", "impacts"]:
 		var group: Dictionary = manifest.get(group_name, {})
 		for branch in ["base", "reaper", "legion"]:
 			var entry: Dictionary = group.get(branch, {})
-			if not ResourceLoader.exists(root + str(entry.get("path", ""))):
+			var dimensions: Array = entry.get("frame_size", [])
+			if dimensions.size() != 2:
 				return false
+			var cell := Vector2i(int(dimensions[0]), int(dimensions[1]))
+			if not _transparent_png_ready(root + str(entry.get("path", "")), cell, int(entry.get("frame_count", 0))):
+				return false
+	return true
+
+static func _transparent_png_ready(path: String, cell_size: Vector2i, frames: int) -> bool:
+	if cell_size.x <= 0 or cell_size.y <= 0 or frames <= 0:
+		return false
+	if not path.ends_with(".png") or not ResourceLoader.exists(path):
+		return false
+	var texture: Texture2D = load(path) as Texture2D
+	if texture == null:
+		return false
+	# Contract v1 uses a single horizontal strip, never the entire concept
+	# board or a sheet with captions and arbitrary gutters.
+	if texture.get_size() != Vector2(cell_size.x * frames, cell_size.y):
+		return false
+	var img := texture.get_image()
+	return _alpha_frame_valid(img, cell_size, frames)
+
+static func _alpha_frame_valid(img: Image, cell_size: Vector2i, frames: int) -> bool:
+	if img == null or img.is_empty() or frames < 1 or cell_size.x < 1 or cell_size.y < 1:
+		return false
+	if img.get_size() != Vector2i(cell_size.x * frames, cell_size.y):
+		return false
+	if not img.detect_alpha() or img.get_used_rect().size == Vector2i.ZERO:
+		return false
+	# Every frame must have clean transparent corners, painted central art
+	# and no completely opaque background. Corner tests alone cannot catch
+	# all halos, so final owner QA remains mandatory.
+	for index in range(frames):
+		var origin := Vector2i(index * cell_size.x, 0)
+		var corners := [
+			origin, origin + Vector2i(cell_size.x - 1, 0),
+			origin + Vector2i(0, cell_size.y - 1),
+			origin + cell_size - Vector2i.ONE
+		]
+		for corner in corners:
+			if img.get_pixelv(corner).a > 0.015:
+				return false
+		var opaque_count := 0
+		for y in range(cell_size.y):
+			for x in range(cell_size.x):
+				if img.get_pixelv(origin + Vector2i(x, y)).a > 0.5:
+					opaque_count += 1
+		if opaque_count < 8 or opaque_count >= cell_size.x * cell_size.y * 9 / 10:
+			return false
 	return true
