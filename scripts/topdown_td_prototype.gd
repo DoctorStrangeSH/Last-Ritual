@@ -1754,7 +1754,7 @@ func _draw() -> void:
             var projectile_size: Vector2 = attack_profile["projectile_size"]
             var projectile_tint: Color = attack_profile["projectile_tint"]
             # Source sheet faces right (+X); rotate that forward axis toward travel.
-            draw_set_transform(projectile_point, TOWER_VISUALS.projectile_rotation(projectile_from, projectile_to), Vector2.ONE)
+            draw_set_transform(projectile_point, TD_NECRO_ATTACK_PROFILE.projectile_rotation(projectile_from, projectile_to, elapsed / duration, specialization), Vector2.ONE)
             if projectile_texture != null and projectile_region.size != Vector2.ZERO:
                 draw_texture_rect_region(projectile_texture, Rect2(-projectile_size * 0.5, projectile_size), projectile_region, projectile_tint)
             else:
