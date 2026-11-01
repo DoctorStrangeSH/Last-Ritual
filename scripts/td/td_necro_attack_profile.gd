@@ -47,3 +47,14 @@ static func projectile_position(origin: Vector2, target: Vector2, progress: floa
         return point
     var arc_height: float = float(for_specialization(specialization)["arc_height"])
     return point + Vector2(-delta.y, delta.x).normalized() * (4.0 * t * (1.0 - t) * arc_height)
+
+## Align +X-authored projectile sprites with the instantaneous travel tangent.
+## Derivative of the curved visual path; no gameplay hit timing is changed.
+static func projectile_rotation(origin: Vector2, target: Vector2, progress: float, specialization: String) -> float:
+    var delta := target - origin
+    if delta.length_squared() < 0.0001:
+        return 0.0
+    var t := clampf(progress, 0.0, 1.0)
+    var arc_height: float = float(for_specialization(specialization)["arc_height"])
+    var tangent := delta + Vector2(-delta.y, delta.x).normalized() * (4.0 * (1.0 - 2.0 * t) * arc_height)
+    return tangent.angle()
