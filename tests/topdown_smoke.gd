@@ -2629,11 +2629,11 @@ func run_tests() -> void:
     check(projectile_maps.vfx_frame_size("necro", "weapon_impact") == Vector2i(64, 64), "Necro impact atlas cell is 64x64")
     var necro_projectile: Texture2D = load(projectile_maps.vfx_path("necro", 1, "projectiles"))
     var necro_impact: Texture2D = load(projectile_maps.vfx_path("necro", 1, "weapon_impact"))
-    check(necro_projectile != null and necro_projectile.get_width() == 256 and necro_projectile.get_height() == 32, "Necro projectile eight-frame atlas imports")
-    check(necro_impact != null and necro_impact.get_width() == 512 and necro_impact.get_height() == 64, "Necro impact eight-frame atlas imports")
+    check(necro_projectile != null and necro_projectile.get_width() == 8 * projectile_maps.vfx_frame_size("necro", "projectiles").x and necro_projectile.get_height() == projectile_maps.vfx_frame_size("necro", "projectiles").y, "Necro projectile eight-frame atlas imports")
+    check(necro_impact != null and necro_impact.get_width() == 8 * projectile_maps.vfx_frame_size("necro", "weapon_impact").x and necro_impact.get_height() == projectile_maps.vfx_frame_size("necro", "weapon_impact").y, "Necro impact eight-frame atlas imports")
     if necro_impact != null:
-        check(projectile_maps.frame_region(necro_impact, Vector2i(64, 64), 7).size == Vector2(64, 64), "Necro final impact frame exists")
-        check(projectile_maps.frame_region(necro_impact, Vector2i(64, 64), 8).size == Vector2.ZERO, "Necro out-of-range impact frame is rejected")
+        check(projectile_maps.frame_region(necro_impact, projectile_maps.vfx_frame_size("necro", "weapon_impact"), 7).size == Vector2(projectile_maps.vfx_frame_size("necro", "weapon_impact")), "Necro final impact frame exists")
+        check(projectile_maps.frame_region(necro_impact, projectile_maps.vfx_frame_size("necro", "weapon_impact"), 8).size == Vector2.ZERO, "Necro out-of-range impact frame is rejected")
     var fire_splash = load("res://scripts/td/td_fire_splash.gd")
     var splash_main: Dictionary = {"pos": Vector2(100, 100), "delay": 0.0}
     var splash_close: Dictionary = {"pos": Vector2(120, 100), "delay": 0.0}
