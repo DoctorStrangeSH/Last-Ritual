@@ -1,5 +1,8 @@
 # Pixel Art Migration Inventory & Legacy Sprite Removal Plan
 
+**01.11.2026 — единый выбор цельного арта Алтаря душ (PR ожидает CI):** `necro_full_tower_sprite_path()` централизует порядок ресурсов: утверждённые `approved_renders/sprites` для L1/L2/L3 и Жнеца; производственный `specialization_legion_192.png` для Легиона, поскольку отдельного утверждённого PNG Легиона в комплекте `approved_renders` нет. Рендер использует этот resolver, smoke-test фиксирует все пять вариантов и отклонение некорректных уровней/специализаций. Это только цельные башни; независимое наведение оружия и модульный runtime по-прежнему не реализованы (`runtime_enabled=false`). Экспериментальные 128×128 base/weapon PNG остаются кандидатами, не финальной заменой. Ручной Windows QA владельцем не заявлен.
+
+
 **Updated:** 2026-11-01, PR #314 merged at `e3dd4c6898ab20eaf627e2993bbeaa48ccecb262`.
 
 This is the working inventory for replacing the old art and then removing it completely. It is not a claim that the Pixel Art migration is already complete.
