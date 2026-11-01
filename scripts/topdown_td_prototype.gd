@@ -1425,8 +1425,19 @@ func draw_tower_figure(pos: Vector2, kind: String, level: int, specialization: S
                 draw_texture_rect(base_tex, rect, false)
                 draw_texture_rect_region(weapon_tex, rect, region)
                 return
-    # Prefer the original concept-derived PNG, not its simplified SVG substitute.
-    # Preserve prior art if any member of the production pack is missing.
+    # The owner's approved standalone PNGs are whole-tower sprites, not
+    # separable base/weapon layers. Display them directly for levels 1-3 and
+    # Reaper. Legion intentionally keeps its existing production art because
+    # the approved archive does not contain a Legion render yet.
+    if kind == "necro":
+        var approved_path: String = TOWER_VISUALS.approved_necro_sprite_path(level, specialization)
+        if not approved_path.is_empty() and TOWER_VISUALS.approved_necro_sprite_ready(approved_path):
+            var approved_texture: Texture2D = cached_tower_texture(approved_path)
+            if approved_texture != null:
+                var approved_rect := Rect2(Vector2(pos.x - 60.0, pos.y - 120.0), Vector2(120.0, 120.0))
+                draw_texture_rect(approved_texture, approved_rect, false)
+                return
+    # Preserve the existing production pack for Legion and as a safe fallback.
     if kind == "necro" and TOWER_VISUALS.production_necro_ready():
         var production_path: String = TOWER_VISUALS.production_necro_tower_path(level, specialization)
         var tower_sheet: Texture2D = cached_tower_texture(production_path)
