@@ -1,7 +1,7 @@
 # Last Ritual — Handoff: Pixel Art Migration & Soul Altar Rework
 
-**Updated:** 2026-11-01  
-**Verified main snapshot:** PR #304, commit `03222aa1219715fd1f710b66e63e75e255e11382`  
+**Updated:** 2026-11-01 (after PR #309)  
+**Verified main snapshot:** PR #309, commit `300415d74ba7abc1e768673d59cc435c89d394c9`  
 **Primary roadmap:** [ROADMAP.md](ROADMAP.md)  
 **Art standard:** [PIXEL_ART_STYLE_GUIDE.md](art/PIXEL_ART_STYLE_GUIDE.md)  
 **Project:** `DoctorStrangeSH/Last-Ritual`, Godot 4.4.1, top-down roguelite + Tower Defense.
@@ -21,7 +21,7 @@
 
 ## 2. Current verified runtime facts (do not guess)
 
-**In-progress implementation on branch `fix/tower-progression-fourth-step-2026-11-01` (awaiting CI/merge):** tower upgrades now use a separate level-3 specialization purchase (cost 60); the first two upgrades remain 20/40. The modal is locked to the pending slot. Old level-2-specialized save snapshots are normalized to level 3 on import. Regression tests were updated for all four runtime schools. Do not call this shipped until its PR exact-head CI and main post-merge workflow succeed.
+**Merged and verified:** PR #307 implements L1→L2 (20), L2→L3 (40), then a separate fourth purchase (60) to choose specialization while keeping base level 3. The pending-slot modal, invalid/repeated-choice guards, tooltips and legacy-save normalization are implemented. Exact-head and post-merge CI passed. The same four-step progression currently applies to all four active gameplay IDs (`bone`, `fire`, `necro`, `frost`); do not silently narrow it to necro.
 
 ### Project and test entry points
 - Godot version: 4.4.1 Standard (see `.github/workflows/windows-build.yml`).
@@ -42,10 +42,14 @@ In `scripts/topdown_td_prototype.gd` and `scripts/td/td_tower_stats.gd`:
 - `td_tower_tooltips.gd` now explains the two remaining base steps and the separate fourth evolution step.
 - Regression tests cover affordability, modal slot lock, invalid/repeated choice, all four current runtime IDs, and legacy-save migration. PR #307 is merged; automated CI passed. Owner should verify the new cost/progression in Windows EXE.
 
-### Existing visual/combat defects still open
-- `SPECIALIZATION_BUTTONS`, `SPECIALIZATION_LABELS`, `specialization_open`, selected slot UI, and `tower_info_for_slot()` / hover panels remain in the controller.
-- Projectile direction/rotation, upper-weapon aiming, projectile/impact branch identity, stray fragment and scale/pivot issues remain open.
-- Other towers currently share this upgrade path. Scope the L1→L2→L3→specialization-fourth-step behaviour to `necro` first unless owner explicitly approves changing all tower progression.
+### Current visual/combat status after PR #309
+- PR #309 is merged at `300415d74ba7abc1e768673d59cc435c89d394c9`; main CI run #41281253322 passed both `checks` and `windows-preview`.
+- Tower progression is fixed by PR #307 for all four active runtime IDs.
+- PR #309 enlarged and centred the assembled Soul Altar draw rect to 120px high, preserves aspect ratio, and crops the disconnected left-edge Reaper scythe sliver in the display region only. Original PNG remains unchanged. Owner's next EXE test must confirm actual visible alpha bounds and pad alignment; no manual visual approval is recorded yet.
+- Necro projectile phase now animates by elapsed time at 24 FPS, follows `from→to`, rotates its authored +X axis toward travel, then spawns a separate 8-frame one-shot impact. The necro beam/line fallback is removed; missing necro texture uses a small directional soul bolt. Summoned spirits also use soul bolts.
+- Reaper fires one large heavy single-target projectile; Legion fires up to three independent smaller projectiles at up to three targets. Both still share the current candidate soul projectile/impact texture family; unique hand-authored Pixel Art sheets are not done.
+- Upper tower weapon/head does NOT yet aim independently. Current assembled production PNG is one image; do not rotate the complete tower. Create modular pixel-art base + upper weapon layer or eight directional upper poses.
+- The screenshot's scale/crop issues have code fixes but still need owner confirmation in the latest EXE. Global Pixel Art migration has not started.
 
 ### Exact combat/visual entry points
 - `attack_with_towers(delta)` selects targets via `choose_tower_target(slot_id)`, uses `TD_MULTIHIT.targets(...)`, applies damage through `scripts/td/td_tower_damage.gd`, and appends visual records to `shot_trails`.
@@ -53,7 +57,7 @@ In `scripts/topdown_td_prototype.gd` and `scripts/td/td_tower_stats.gd`:
 - `update_shot_trails(delta)`, `visible_shot_trail_start(total)`, and `shot_trail_style(kind)` manage current visuals.
 - In `_draw()`, the shot-trail loop interpolates from `from` to `to`, draws a projectile texture region when available, but falls back to `draw_line(from, to, ...)` when no projectile texture is loaded. This fallback explains the unwanted line-shot; remove it for necro and provide a deliberate, visible sprite fallback instead.
 - The same loop draws impact textures / procedural fallback. Add explicit projectile and impact IDs so base, Reaper and Legion don't share one generic effect.
-- `draw_tower_figure(pos, kind, level, specialization)` currently renders the complete Soul Altar production PNG on an 86×86 rect at `pos + (-43,-76)`; older layered fallbacks use 66×66 at `pos + (-33,-53)`. These are likely too small/misaligned relative to the placement ring shown by the owner. Calibrate using actual transparent bounds and feet/pivot, not arbitrary constants.
+- `draw_tower_figure(pos, kind, level, specialization)` currently renders the assembled Soul Altar production PNG on a 120px-tall rect, aspect-preserving and bottom-centred at the placement slot; Reaper display crop is `Rect2(40, 0, 152, 192)` to hide a disconnected left-edge sliver. Older experimental layered fallbacks still use a 66×66 rect. Treat 120px as an unverified calibration, not final approval: measure visible alpha bounds and align the stone footprint to the pad.
 - The current production images are complete assembled tower sprites, not separate rotatable weapon layers. Do **not** rotate the entire tower image. New pixel-art production source should separate static base and aiming upper/weapon layer, or provide 8-direction upper-layer poses.
 - `scripts/td/td_tower_visuals.gd` owns asset paths and sprite-sheet cell validation (`first_frame_region`, `frame_region`, `vfx_path`, `vfx_frame_size`). It currently maps legacy `necro→pulse` and `frost→spark` fallback folders, while Soul Altar production PNG overrides some paths.
 - `scripts/td/td_specialization_icons.gd` maps active IDs to specialization icon SVGs. Replace with pixel-art icons only when replacements are committed and loaded.
@@ -101,17 +105,21 @@ Read `docs/art/PIXEL_ART_STYLE_GUIDE.md` before drawing/importing assets.
 
 ## 5. Asset inventory and deletion policy
 
-### Keep (not obsolete)
-- `assets/spire/towers/necro/production/` — approved concept-derived production candidate PNGs and manifest.
-- `assets/spire/towers/necro/source/original/` and `source/concepts/` — original cutouts and v0.5 concept; preserve byte-for-byte.
-- `assets/spire/LICENSE_AND_MAPPING.txt` and original Foozle attribution/license records.
-- Active current fallback/runtime assets until each has a tested pixel-art replacement: `assets/spire/towers/{ballista,fire,pulse,spark,necro,frost}/` selected files, specialization icon SVGs, atlases and active Frost/legacy fallback assets.
-- Import/export tools and source files until their replacement workflow is committed and validated.
+### Owner's updated deletion decision (2026-11-01)
+The owner explicitly authorizes **complete removal of the old non-pixel sprite families** from the shipped project and repository once their replacements are ready. Do not preserve old sprites as permanent runtime fallbacks. Migrate one asset family at a time, switch all runtime references, pass import/smoke/export checks, then delete the superseded sprite files in the same or a follow-up cleanup PR.
 
-### Initial cleanup candidates (verify again before deleting)
-- Legacy standalone SVGs under `assets/backgrounds/`, `assets/buildings/`, `assets/characters/`, `assets/enemies/`, `assets/towers/` appear to have no direct references in the current `.gd` scripts or `.tscn` scenes inspected for this handoff. They may be removed in a dedicated cleanup PR only after a full-project reference scan and successful Godot import/smoke/Windows build.
-- Do not delete `assets/spire/towers/necro/experimental/`, `frost/experimental/`, fallback PNGs, source SVG layers, or active icons merely because they are old. First remove code/test/tool references and replace all active visuals.
-- No blanket deletion of all `assets/spire` folders: the current four gameplay IDs still resolve paths through `td_tower_visuals.gd`.
+### Preserve (not disposable)
+- The approved Soul Altar v0.5 concept and original cutouts in `assets/spire/towers/necro/source/concepts/` and `source/original/` as visual provenance/reference, byte-for-byte.
+- License, attribution and mapping records (including `assets/spire/LICENSE_AND_MAPPING.txt` and Foozle license records) while any derived assets remain in the repository or release history.
+- New pixel-art editable sources (Aseprite/LibreSprite or equivalent), export scripts, manifests, palette, pivots and source provenance.
+
+### Legacy sprites to remove after replacements
+- Active art under `assets/spire/towers/{ballista,fire,pulse,spark,frost,necro}/`, including experimental PNGs, legacy tower/weapon/projectile/impact PNGs, specialization SVG icons and obsolete source SVG art, is slated for deletion when the corresponding Pixel Art kit is integrated.
+- `assets/spire/towers_atlas.png` and `assets/spire/variants/specialization_icons_atlas.png` are also candidates for deletion after a reference scan proves they are no longer loaded.
+- The 17 unreferenced root SVGs already removed by PR #306 stay deleted.
+
+### Safety gate
+Do not delete an active runtime asset before its Pixel Art replacement is committed and the runtime path has been switched; otherwise the current EXE/game will lose visuals. The owner authorizes full removal **as part of migration**, not a broken interim build. Every deletion PR must include a generated inventory, exact removed paths, a reference scan covering scripts/scenes/resources/settings/tests/tools, Godot import + smoke tests, and a successful Windows export. Preserve Git history; do not retain obsolete sprites as a fallback after a family is migrated.
 
 ### Safe deletion workflow
 1. Generate a complete asset inventory from Git tree.
@@ -145,6 +153,11 @@ After every merged PR or meaningful milestone:
 - Keep the top summary current and concise; append historical detail only when useful.
 - In the final response, report PR, merge commit, exact CI result, manual QA status, removed paths and next step.
 
-## 8. Current next task
+## 8. Current next task (after PR #309)
 
-Implement the user's screenshot fixes: correct Soul Altar scale/pivot and remove the detached scythe fragment; then split base/Reaper/Legion projectile and impact records, animate/rotate the projectile by travel vector, add a rotating/8-way upper weapon layer, and remove the necro line fallback. The 17 unreferenced root SVGs were removed in PR #306; see `docs/art/LEGACY_ASSET_CLEANUP.md`. Active `assets/spire` fallbacks and source files remain until their Pixel Art replacements are tested. Do not delete active sprite folders.
+1. Owner tests the latest Windows build and confirms the PR #307 progression plus PR #309 tower size/centering, Reaper crop, Reaper single shot, Legion multi-shot, animated/rotating soul bolts, impacts and absence of necro beam.
+2. Create the first true Pixel Art production kit for Soul Altar: L1/L2/L3, distinct Reaper and Legion top/weapon forms, static base + aim layer (or 8-way upper poses), base/Reaper/Legion projectile sheets and impact sheets, idle/build/attack frames, UI icons.
+3. Use that kit as the art-direction pilot. Obtain owner approval at gameplay 1× before locking the style for other families.
+4. Build the reproducible source pipeline: editable source, palette, export script, manifest with cell size/FPS/pivot/forward axis/license and contact sheet.
+5. Migrate the other active tower families, then enemies/hero/world/dungeon/UI. Delete each superseded old sprite family from Git after references are switched and CI/Windows export passes. Do not keep old art as permanent fallback.
+6. Preserve only approved reference originals, legal/licensing provenance and new editable source files; never delete licenses needed for redistributed assets.
