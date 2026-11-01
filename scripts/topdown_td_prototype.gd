@@ -1726,6 +1726,12 @@ func _draw() -> void:
                 var impact_size: Vector2 = attack_profile["impact_size"]
                 var impact_point: Vector2 = Vector2(trail.get("to", Vector2.ZERO))
                 var impact_alpha: float = clampf(1.0 - elapsed / duration, 0.0, 1.0)
+                # Temporary distinct specialization hits alongside existing PNG VFX.
+                if specialization == "siege":
+                    draw_arc(impact_point, 10.0 + 24.0 * (elapsed / duration), 0.0, TAU, 24, Color(attack_profile["impact_color"], impact_alpha * 0.8), 3.0)
+                elif specialization == "swarm":
+                    for offset in [Vector2(-11.0, 0.0), Vector2(11.0, 0.0), Vector2(0.0, -11.0)]:
+                        draw_circle(impact_point + offset * (1.0 + elapsed / duration), 3.5 * impact_alpha, Color(attack_profile["impact_color"], impact_alpha))
                 if impact_texture != null and impact_region.size != Vector2.ZERO:
                     draw_texture_rect_region(impact_texture, Rect2(impact_point - impact_size * 0.5, impact_size), impact_region, Color(1.0, 1.0, 1.0, impact_alpha))
                 else:
@@ -1743,7 +1749,7 @@ func _draw() -> void:
             var projectile_region: Rect2 = TOWER_VISUALS.frame_region(projectile_texture, projectile_cell, frame)
             var projectile_from: Vector2 = Vector2(trail.get("from", Vector2.ZERO))
             var projectile_to: Vector2 = Vector2(trail.get("to", Vector2.ZERO))
-            var projectile_point: Vector2 = projectile_from.lerp(projectile_to, clampf(elapsed / duration, 0.0, 1.0))
+            var projectile_point: Vector2 = TD_NECRO_ATTACK_PROFILE.projectile_position(projectile_from, projectile_to, elapsed / duration, specialization)
             var attack_profile: Dictionary = TD_NECRO_ATTACK_PROFILE.for_specialization(specialization)
             var projectile_size: Vector2 = attack_profile["projectile_size"]
             var projectile_tint: Color = attack_profile["projectile_tint"]

@@ -2606,6 +2606,13 @@ func run_tests() -> void:
     check(legion_profile["projectile_size"] == Vector2(26, 26) and legion_profile["impact_size"] == Vector2(36, 36), "Legion keeps its compact projectile and impact scale")
     check(legion_profile["projectile_tint"] != reaper_profile["projectile_tint"], "Legion and Reaper keep distinct projectile tints")
     check(necro_profiles.for_specialization("unknown") == base_profile, "Unknown specialization safely falls back to base attack profile")
+    var visual_origin := Vector2(10, 30)
+    var visual_target := Vector2(110, 30)
+    check(necro_profiles.projectile_position(visual_origin, visual_target, 0.0, "siege") == visual_origin, "Reaper visual arc starts precisely at tower")
+    check(necro_profiles.projectile_position(visual_origin, visual_target, 1.0, "siege") == visual_target, "Reaper visual arc ends precisely on target")
+    check(necro_profiles.projectile_position(visual_origin, visual_target, 0.5, "siege").y > necro_profiles.projectile_position(visual_origin, visual_target, 0.5, "swarm").y, "Reaper arc has a taller silhouette than Legion")
+    check(necro_profiles.projectile_position(visual_origin, visual_target, 0.5, "") == Vector2(60, 30), "Base altar stays on a straight course")
+    check(necro_profiles.for_specialization("siege")["impact_color"] != necro_profiles.for_specialization("swarm")["impact_color"], "Specialization hit colors differ")
     # Per-hit cost audit; do not mistake direct-hit numbers for real DPS.
     var audit_damage = load("res://scripts/td/td_tower_damage.gd")
     var audit_stats = load("res://scripts/td/td_tower_stats.gd")
