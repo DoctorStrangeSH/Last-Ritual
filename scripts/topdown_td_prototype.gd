@@ -42,6 +42,7 @@ const TARGET_PRIORITIES := ["nearest", "support", "front"]
 const TARGET_LABELS := {"nearest": "БЛИЖАЙШИЙ", "support": "ПОДДЕРЖКА", "front": "У ВОРОТ"}
 var slots: Array[Dictionary] = []
 var specialization_open := false
+var specialization_pending_slot := -1
 const SPECIALIZATION_BUTTONS := [Rect2(303, 400, 239, 39), Rect2(612, 400, 239, 39)]
 const SPECIALIZATION_LABELS = TD_TOWER_STATS.SPECIALIZATION_LABELS
 var selected_type := ""
@@ -652,6 +653,7 @@ func tick_burning(delta: float) -> void:
 func restart_defense() -> void:
     moving_tower = false
     specialization_open = false
+    specialization_pending_slot = -1
     help_visible = false
     defense_state = "playing"
     altar_hp = 100
@@ -744,7 +746,7 @@ func import_fortress_state(state: Dictionary) -> bool:
         var spec: String = str(building.get("specialization", ""))
         if not TARGET_PRIORITIES.has(str(building.get("target_priority", "nearest"))):
             return false
-        if spec != "" and (level < 2 or not ["siege", "swarm"].has(spec)):
+        if spec != "" and (level < 2 or level > 3 or not ["siege", "swarm"].has(spec)):
             return false
         if kind != "" and not COSTS.has(kind):
             return false
@@ -754,8 +756,13 @@ func import_fortress_state(state: Dictionary) -> bool:
         return false
     for i in range(slots.size()):
         slots[i]["tower"] = str(buildings[i]["tower"])
-        slots[i]["level"] = int(buildings[i]["level"])
-        slots[i]["specialization"] = str(buildings[i].get("specialization", ""))
+        var restored_level: int = int(buildings[i]["level"])
+        var restored_specialization: String = str(buildings[i].get("specialization", ""))
+        # Backward compatibility: old snapshots allowed a path at level 2.
+        if restored_specialization != "" and restored_level == 2:
+            restored_level = 3
+        slots[i]["level"] = restored_level
+        slots[i]["specialization"] = restored_specialization
         slots[i]["target_priority"] = str(buildings[i].get("target_priority", "nearest"))
     ritual_reserve_claimed = state.get("ritual_reserve_claimed", false) == true
     ember_heart_claimed = state.get("ember_heart_claimed", false) == true
@@ -839,6 +846,8 @@ func relocate_tower(source_id: int, destination_id: int) -> bool:
     return true
 
 func select_slot(slot_id: int) -> bool:
+    if specialization_open:
+        return false
     if slot_id < 0 or slot_id >= slots.size() or slots[slot_id]["tower"] == "":
         return false
     selected_slot = slot_id
@@ -850,23 +859,35 @@ func select_slot(slot_id: int) -> bool:
 func upgrade_selected() -> bool:
     if not can_modify_towers():
         return false
-    if selected_slot < 0 or slots[selected_slot]["tower"] == "":
+    if selected_slot < 0 or selected_slot >= slots.size() or slots[selected_slot]["tower"] == "":
         return false
-    var cost: int = 20 * int(slots[selected_slot]["level"])
-    if coins < cost or slots[selected_slot]["level"] >= 3:
+    var tower: Dictionary = slots[selected_slot]
+    var level: int = int(tower["level"])
+    var specialization: String = str(tower.get("specialization", ""))
+    var cost: int = TD_TOWER_STATS.upgrade_cost(level, specialization)
+    if cost <= 0 or coins < cost:
         return false
     coins -= cost
-    slots[selected_slot]["level"] += 1
-    if slots[selected_slot]["level"] == 2 and slots[selected_slot]["specialization"] == "":
+    if level < 3:
+        tower["level"] = level + 1
+    else:
+        # The fourth purchase is a separate evolution step. Base level stays 3.
         specialization_open = true
+        specialization_pending_slot = selected_slot
     queue_redraw()
     return true
 
 func choose_specialization(path: String) -> bool:
-    if not specialization_open or selected_slot < 0 or not ["siege", "swarm"].has(path):
+    if not specialization_open or selected_slot != specialization_pending_slot:
         return false
-    slots[selected_slot]["specialization"] = path
+    if selected_slot < 0 or selected_slot >= slots.size() or not ["siege", "swarm"].has(path):
+        return false
+    var tower: Dictionary = slots[selected_slot]
+    if str(tower.get("tower", "")) == "" or int(tower.get("level", 0)) != 3 or str(tower.get("specialization", "")) != "":
+        return false
+    tower["specialization"] = path
     specialization_open = false
+    specialization_pending_slot = -1
     queue_redraw()
     return true
 
@@ -1429,7 +1450,7 @@ func tower_info_for_slot(slot_id: int) -> Dictionary:
         return {}
     # One source of truth for combat hits, shop upgrade preview and tower inspector.
     var damage: int = TD_TOWER_DAMAGE.direct_damage(kind, int(tower["level"]), str(tower.get("specialization", "")), fire_synergy_bonus, bone_synergy_bonus)
-    var upgrade_cost: int = 20 * int(tower["level"]) if int(tower["level"]) < 3 else 0
+    var upgrade_cost: int = TD_TOWER_STATS.upgrade_cost(int(tower["level"]), str(tower.get("specialization", "")))
     var synergy: Dictionary = tower_synergy_preview(slot_id)
     var explanation: Dictionary = TD_TOWER_TOOLTIPS.shop_info(kind)
     var attack_delay: float = 0.45 if str(tower.get("specialization", "")) == "swarm" else 0.8
@@ -1669,8 +1690,11 @@ func _draw() -> void:
         draw_string(ThemeDB.fallback_font, card.position + Vector2(9, 23), str(TD_TOWER_STATS.DISPLAY_NAMES[tower_ids[i]]), HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
         draw_string(ThemeDB.fallback_font, card.position + Vector2(9, 49), "%d ЗОЛОТА" % COSTS[tower_ids[i]], HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#e5c985"))
     if not selected_tower_info().is_empty():
+        var selected_upgrade: Dictionary = selected_tower_info()
+        var is_specialization_step: bool = int(selected_upgrade.get("level", 1)) == 3 and str(selected_upgrade.get("specialization", "")) == ""
         draw_rect(UPGRADE_BUTTON, Color("#518b78") if can_modify_towers() else Color("#454b54"))
-        draw_string(ThemeDB.fallback_font, UPGRADE_BUTTON.position + Vector2(4, 34), "УЛУЧШИТЬ", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color.WHITE)
+        draw_string(ThemeDB.fallback_font, UPGRADE_BUTTON.position + Vector2(7, 23), "СПЕЦ." if is_specialization_step else "УЛУЧШИТЬ", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color.WHITE)
+        draw_string(ThemeDB.fallback_font, UPGRADE_BUTTON.position + Vector2(7, 43), "%d ЗОЛОТА" % int(selected_upgrade.get("upgrade_cost", 0)), HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color("#f0d59c"))
         draw_rect(SELL_BUTTON, Color("#914c59") if can_modify_towers() else Color("#454b54"))
         draw_string(ThemeDB.fallback_font, SELL_BUTTON.position + Vector2(8, 34), "ПРОДАТЬ", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color.WHITE)
 
@@ -1735,7 +1759,7 @@ func _draw() -> void:
         # A compact side-by-side comparison, instead of two unexplained path names.
         draw_rect(Rect2(260, 216, 632, 259), Color("#172632", 0.98))
         draw_rect(Rect2(260, 216, 632, 259), Color("#d5c592"), false, 2.0)
-        draw_string(ThemeDB.fallback_font, Vector2(375, 248), "ВЫБЕРИ ПУТЬ РАЗВИТИЯ", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color("#f4dfb7"))
+        draw_string(ThemeDB.fallback_font, Vector2(375, 248), "ЧЕТВЁРТОЕ УЛУЧШЕНИЕ • ВЫБЕРИ ПУТЬ", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color("#f4dfb7"))
         var kind: String = str(slots[selected_slot]["tower"])
         for index in range(2):
             var path: String = "siege" if index == 0 else "swarm"

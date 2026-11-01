@@ -21,6 +21,8 @@
 
 ## 2. Current verified runtime facts (do not guess)
 
+**In-progress implementation on branch `fix/tower-progression-fourth-step-2026-11-01` (awaiting CI/merge):** tower upgrades now use a separate level-3 specialization purchase (cost 60); the first two upgrades remain 20/40. The modal is locked to the pending slot. Old level-2-specialized save snapshots are normalized to level 3 on import. Regression tests were updated for all four runtime schools. Do not call this shipped until its PR exact-head CI and main post-merge workflow succeed.
+
 ### Project and test entry points
 - Godot version: 4.4.1 Standard (see `.github/workflows/windows-build.yml`).
 - Main scene: `scenes/run_loop.tscn`.
@@ -32,12 +34,17 @@
 ### Active gameplay IDs
 The current shop/runtime still uses four IDs in `scripts/td/td_tower_stats.gd`: `bone`, `fire`, `necro`, `frost`. `SHOP_ORDER` is these four IDs. `spark` and `pulse` are design/asset identities, not separate playable combat types yet. Preserve existing IDs and save compatibility unless a dedicated migration is designed and tested.
 
-### Exact current Soul Altar upgrade defect
-In `scripts/topdown_td_prototype.gd`:
-- `upgrade_selected() -> bool` currently rejects levels >= 3, increments the level, then sets `specialization_open = true` when the new level is **2**. This is the wrong timing.
-- `choose_specialization(path: String) -> bool` currently accepts `siege` or `swarm` and stores the selection in `slots[selected_slot]["specialization"]`.
-- `SPECIALIZATION_BUTTONS`, `SPECIALIZATION_LABELS`, `specialization_open`, selected slot UI, and `tower_info_for_slot()` / `draw_tower_hover...()` are in the same controller.
-- Current upgrade cost is `20 * level`; the current level cap prevents a fourth upgrade. Decide and document the specialization price (proposed: the next step's existing formula, 60 at level 3) before implementation; don't silently change all tower prices.
+### Upgrade state-machine change (branch in progress)
+In `scripts/topdown_td_prototype.gd` and `scripts/td/td_tower_stats.gd`:
+- The implementation now defines L1→L2 for 20, L2→L3 for 40, and a fourth purchase at L3 for 60 that opens specialization without changing base level.
+- `specialization_pending_slot` locks the modal to the tower being evolved; `choose_specialization()` only accepts `siege`/`swarm` on that level-3 unspecialized tower.
+- Existing level-2-specialized fortress snapshots are accepted and normalized to level 3 for backward compatibility.
+- `td_tower_tooltips.gd` now explains the two remaining base steps and the separate fourth evolution step.
+- Regression tests cover affordability, modal slot lock, invalid/repeated choice, all four current runtime IDs, and legacy-save migration. Exact-head CI and merge are still required before marking this shipped.
+
+### Existing visual/combat defects still open
+- `SPECIALIZATION_BUTTONS`, `SPECIALIZATION_LABELS`, `specialization_open`, selected slot UI, and `tower_info_for_slot()` / hover panels remain in the controller.
+- Projectile direction/rotation, upper-weapon aiming, projectile/impact branch identity, stray fragment and scale/pivot issues remain open.
 - Other towers currently share this upgrade path. Scope the L1→L2→L3→specialization-fourth-step behaviour to `necro` first unless owner explicitly approves changing all tower progression.
 
 ### Exact combat/visual entry points
@@ -140,4 +147,4 @@ After every merged PR or meaningful milestone:
 
 ## 8. Current next task
 
-Start with P0 gameplay fix in `scripts/topdown_td_prototype.gd` and tests in `tests/topdown_smoke.gd`. Do not start deleting active sprite folders or generating a full game's replacement art before the upgrade state machine and asset contract are clear.
+First verify and merge the fourth-step upgrade PR. Then implement the user's screenshot fixes and projectile/impact animation/direction. The 17 unreferenced root SVGs under backgrounds/buildings/characters/enemies/towers were removed in PR #306; see `docs/art/LEGACY_ASSET_CLEANUP.md`. Active `assets/spire` fallbacks and source files remain until their Pixel Art replacements are tested. Do not delete active sprite folders.
