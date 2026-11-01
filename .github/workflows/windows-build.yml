@@ -59,6 +59,8 @@ jobs:
           chmod +x Godot_v4.4.1-stable_linux.x86_64
       - name: Verify source art importer (no archive required)
         run: python3 -m unittest discover -s tests -p 'test_source_art_import.py' -v
+      - name: Test approved Soul Altar archive import integrity
+        run: python3 -m unittest discover -s tests -p 'test_install_approved_soul_altar_zip.py' -v
       - name: Validate PNG assets before Godot import
         run: python3 tools/verify_png_assets.py
       - name: Import assets and check scripts
