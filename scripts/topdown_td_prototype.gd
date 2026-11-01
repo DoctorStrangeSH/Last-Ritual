@@ -636,7 +636,7 @@ func tick_necro_spirits(delta: float) -> void:
             if float(target.get("frost_time", 0.0)) > 0.0 and spirit.get("frost_link", false):
                 TD_FROST_EFFECT.apply(target, 1.0, 0.25)
             target["hp"] -= int(spirit["damage"])
-            shot_trails.append({"from": spirit["pos"], "to": target["pos"], "time": 0.15})
+            shot_trails.append({"from": spirit["pos"], "to": target["pos"], "time": 0.15, "kind": "necro_spirit"})
             spirit["cooldown"] = 0.75
             if target["hp"] <= 0:
                 enemies.erase(target)
@@ -1628,6 +1628,16 @@ func _draw() -> void:
         var shot_kind: String = str(trail.get("kind", "hero"))
         var visual: Dictionary = shot_trail_style(shot_kind)
         var level: int = clampi(int(trail.get("level", 1)), 1, 3)
+        if shot_kind == "necro_spirit":
+            var spirit_opacity: float = clampf(float(trail.get("time", 0.15)) / 0.15, 0.0, 1.0)
+            var spirit_progress: float = 1.0 - spirit_opacity
+            var spirit_from: Vector2 = Vector2(trail.get("from", Vector2.ZERO))
+            var spirit_to: Vector2 = Vector2(trail.get("to", Vector2.ZERO))
+            var spirit_point: Vector2 = spirit_from.lerp(spirit_to, spirit_progress)
+            draw_set_transform(spirit_point, TOWER_VISUALS.projectile_rotation(spirit_from, spirit_to), Vector2.ONE)
+            draw_colored_polygon(PackedVector2Array([Vector2(7, 0), Vector2(2, -5), Vector2(-5, -3), Vector2(-5, 3), Vector2(2, 5)]), Color(0.42, 1.0, 0.72, spirit_opacity))
+            draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+            continue
         if shot_kind == "necro":
             var specialization: String = str(trail.get("specialization", ""))
             var phase: String = str(trail.get("phase", "projectile"))
