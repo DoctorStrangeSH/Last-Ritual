@@ -1,5 +1,8 @@
 # ТЕКУЩИЙ СНИМОК — 01.11.2026 (после PR #314)
 
+**01.11.2026 — visual Soul Altar attacks (PR #326):** Жнец и Легион теперь имеют разные визуальные дуги снаряда и различимые эффекты попадания: Жнец — высокая дуга и кольцевой удар, Легион — короткая дуга и три частицы. Базовая башня стреляет по прямой. Боевой урон, скорострельность, прицеливание и исходные PNG не изменены. Это временные процедурные эффекты поверх текущих VFX-атласов, а не замена утверждённых исходников или готовый 8-way модульный арт.
+
+
 **01.11.2026 — Soul Altar attack profile refactor (PR #325):** extracted base/Reaper/Legion cooldowns, kill-streak thresholds, empowered-spirit flag, projectile sizes/tints and impact sizes into `scripts/td/td_necro_attack_profile.gd`. Existing values are preserved exactly; this is an architecture-only refactor, not a balance change or new sprite set. Regression checks cover all three profiles and safe fallback.
 
 
