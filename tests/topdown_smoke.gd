@@ -2620,6 +2620,14 @@ func run_tests() -> void:
     check(absf(necro_profiles.projectile_rotation(visual_origin, visual_target, 0.0, "swarm")) < absf(necro_profiles.projectile_rotation(visual_origin, visual_target, 0.0, "siege")), "Legion initial facing is less steep than Reaper")
     check(is_zero_approx(necro_profiles.projectile_rotation(visual_origin, visual_target, 0.0, "")), "Unspecialized projectile keeps straight orientation")
     check(is_zero_approx(necro_profiles.projectile_rotation(visual_origin, visual_origin, 0.5, "siege")), "Zero-distance projectile has a safe fallback angle")
+    var reaper_motes: Array[Dictionary] = necro_profiles.trail_samples(visual_origin, visual_target, 0.7, "siege")
+    var legion_motes: Array[Dictionary] = necro_profiles.trail_samples(visual_origin, visual_target, 0.7, "swarm")
+    check(reaper_motes.size() == 4 and legion_motes.size() == 2, "Reaper emits a heavier four-mote trail; Legion uses two lighter motes")
+    check(necro_profiles.trail_samples(visual_origin, visual_target, 0.7, "").is_empty(), "Base altar keeps clean projectile art without procedural trail")
+    check(necro_profiles.trail_samples(visual_origin, visual_target, 0.0, "siege").is_empty(), "No disconnected motes before a projectile begins flying")
+    check(necro_profiles.trail_samples(visual_origin, visual_target, 0.7, "siege") == reaper_motes, "Flight motes are deterministic for a given shot")
+    for visual_mote in reaper_motes:
+        check(float(visual_mote["radius"]) > 0.0 and float(visual_mote["opacity"]) > 0.0 and float(visual_mote["opacity"]) <= 1.0, "Flight trail radii and transparency stay valid")
     # Per-hit cost audit; do not mistake direct-hit numbers for real DPS.
     var audit_damage = load("res://scripts/td/td_tower_damage.gd")
     var audit_stats = load("res://scripts/td/td_tower_stats.gd")

@@ -1753,6 +1753,10 @@ func _draw() -> void:
             var attack_profile: Dictionary = TD_NECRO_ATTACK_PROFILE.for_specialization(specialization)
             var projectile_size: Vector2 = attack_profile["projectile_size"]
             var projectile_tint: Color = attack_profile["projectile_tint"]
+            # Fading spectral motes follow each projectile's actual curved path.
+            # Draw in global coordinates before applying the projectile sprite transform.
+            for mote in TD_NECRO_ATTACK_PROFILE.trail_samples(projectile_from, projectile_to, elapsed / duration, specialization):
+                draw_circle(Vector2(mote["position"]), float(mote["radius"]), Color(attack_profile["impact_color"], float(mote["opacity"])))
             # Source sheet faces right (+X); rotate that forward axis toward travel.
             draw_set_transform(projectile_point, TD_NECRO_ATTACK_PROFILE.projectile_rotation(projectile_from, projectile_to, elapsed / duration, specialization), Vector2.ONE)
             if projectile_texture != null and projectile_region.size != Vector2.ZERO:
