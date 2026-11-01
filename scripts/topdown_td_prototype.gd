@@ -1718,9 +1718,10 @@ func _draw() -> void:
             var duration: float = maxf(0.001, float(trail.get("duration", 0.32)))
             var frame: int = TOWER_VISUALS.animation_frame(elapsed, 24.0, 8, false)
             if phase == "impact":
-                var impact_path: String = TOWER_VISUALS.vfx_path("necro", level, "weapon_impact")
+                var specialized_impact: Dictionary = TOWER_VISUALS.necro_specialization_vfx(specialization, "weapon_impact")
+                var impact_path: String = str(specialized_impact.get("path", TOWER_VISUALS.vfx_path("necro", level, "weapon_impact")))
                 var impact_texture: Texture2D = cached_tower_texture(impact_path)
-                var impact_cell: Vector2i = TOWER_VISUALS.vfx_frame_size("necro", "weapon_impact")
+                var impact_cell: Vector2i = specialized_impact.get("cell", TOWER_VISUALS.vfx_frame_size("necro", "weapon_impact"))
                 var impact_region: Rect2 = TOWER_VISUALS.frame_region(impact_texture, impact_cell, frame)
                 var attack_profile: Dictionary = TD_NECRO_ATTACK_PROFILE.for_specialization(specialization)
                 var impact_size: Vector2 = attack_profile["impact_size"]
@@ -1743,9 +1744,10 @@ func _draw() -> void:
                         draw_circle(soul_pos, soul_size * 0.42, Color(0.84, 1.0, 0.9, soul_alpha))
                 continue
 
-            var projectile_path: String = TOWER_VISUALS.vfx_path("necro", level, "projectiles")
+            var specialized_projectile: Dictionary = TOWER_VISUALS.necro_specialization_vfx(specialization, "projectiles")
+            var projectile_path: String = str(specialized_projectile.get("path", TOWER_VISUALS.vfx_path("necro", level, "projectiles")))
             var projectile_texture: Texture2D = cached_tower_texture(projectile_path)
-            var projectile_cell: Vector2i = TOWER_VISUALS.vfx_frame_size("necro", "projectiles")
+            var projectile_cell: Vector2i = specialized_projectile.get("cell", TOWER_VISUALS.vfx_frame_size("necro", "projectiles"))
             var projectile_region: Rect2 = TOWER_VISUALS.frame_region(projectile_texture, projectile_cell, frame)
             var projectile_from: Vector2 = Vector2(trail.get("from", Vector2.ZERO))
             var projectile_to: Vector2 = Vector2(trail.get("to", Vector2.ZERO))

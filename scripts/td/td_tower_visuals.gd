@@ -30,6 +30,23 @@ const NECRO_PRODUCTION_ROOT := "res://assets/spire/towers/necro/production/"
 ## Owner-approved standalone Soul Altar renders (whole-tower sprites, not modular layers).
 const APPROVED_NECRO_ROOT := "res://assets/spire/towers/necro/approved_renders/sprites/"
 
+## New independently authored eight-frame indexed Pixel Art VFX, separate from
+## the owner-approved full-tower source art. Missing files keep old VFX.
+const NECRO_VFX_ROOT := "res://assets/spire/towers/necro/approved_renders/vfx/"
+static func necro_specialization_vfx(specialization: String, layer: String) -> Dictionary:
+    var family := "reaper" if specialization == "siege" else ("legion" if specialization == "swarm" else "")
+    if family.is_empty() or not ["projectiles", "weapon_impact"].has(layer):
+        return {}
+    var kind := "projectile" if layer == "projectiles" else "impact"
+    var cell := Vector2i(48, 48) if family == "reaper" and kind == "projectile" else (Vector2i(64, 64) if family == "reaper" else (Vector2i(32, 32) if kind == "projectile" else Vector2i(48, 48)))
+    var path := NECRO_VFX_ROOT + family + "_" + kind + "_8f.png"
+    if not ResourceLoader.exists(path):
+        return {}
+    var texture := load(path) as Texture2D
+    if texture == null or texture.get_size() != Vector2(cell.x * 8, cell.y):
+        return {}
+    return {"path": path, "cell": cell}
+
 ## Preserve the full source aspect ratio and keep the sprite's feet on the pad anchor.
 ## The approved art is 192px RGBA; the live map renders it at 120px high.
 static func approved_necro_display_size(source_size: Vector2i, target_height: int = 120) -> Vector2i:
