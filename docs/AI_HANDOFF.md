@@ -1,5 +1,8 @@
 # CURRENT HANDOFF — 2026-11-01 (main after PR #314)
 
+**01.11.2026 — Soul Altar display follow-up (PR #323):** approved level 1/2/3 and Reaper standalone transparent PNGs are rendered directly in `draw_tower_figure`; the source sprites are whole-tower images, not separate layers. They are resized once to 120px high with nearest-neighbour sampling and cached to keep pixel edges crisp; drawing geometry preserves aspect ratio and anchors the bottom at the tower pad. Legion has no approved render and must keep its existing art. Do not enable modular runtime: separate base, 8-way weapon frames, Legion, projectiles and impacts are still outstanding.
+
+
 **01.11.2026 — PR #322 merged:** the owner's approved Soul Altar archive is now committed under `assets/spire/towers/necro/approved_renders/`: four original RGBA sources plus four 192×192 transparent sprites and SHA-256 manifest. The binaries are no longer only in chat/release.
 
 **Next implementation slice (PR in progress):** render approved level 1/2/3 sprites and approved Reaper sprite directly in the TD scene. These are whole-tower sprites, not modular base/weapon layers. The ZIP has no approved Legion render, so Legion retains its existing production art until its matching approved image exists. Modular `runtime_enabled=false` remains unchanged; do not claim eight-way modular animation is complete.
