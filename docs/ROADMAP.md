@@ -1,6 +1,6 @@
 # АКТУАЛЬНЫЙ ПЛАН — 01.11.2026 (после PR #309)
 
-Снимок main: `300415d74ba7abc1e768673d59cc435c89d394c9`. PR #307 и #309 объединены. Подробная передача: [AI_HANDOFF_PIXEL_ART.md](AI_HANDOFF_PIXEL_ART.md). Художественный стандарт: [Pixel Art Style Guide](art/PIXEL_ART_STYLE_GUIDE.md). Инвентарь и политика удаления: [PIXEL_ART_MIGRATION_INVENTORY.md](art/PIXEL_ART_MIGRATION_INVENTORY.md).
+Снимок игрового кода: `300415d74ba7abc1e768673d59cc435c89d394c9` (PR #309); документация обновлена PR #310, commit `583b2986bc01f508558bfac5ca8b3dae078ac572`. PR #307 и #309 объединены. Подробная передача: [AI_HANDOFF_PIXEL_ART.md](AI_HANDOFF_PIXEL_ART.md). Художественный стандарт: [Pixel Art Style Guide](art/PIXEL_ART_STYLE_GUIDE.md). Инвентарь и политика удаления: [PIXEL_ART_MIGRATION_INVENTORY.md](art/PIXEL_ART_MIGRATION_INVENTORY.md).
 
 ## Решения владельца
 - Перевести **всю игру** на цельный hand-authored dark-fantasy Pixel Art: башни, враги, герой, окружение, TD-маршруты, комнаты, VFX, UI, иконки и меню.
