@@ -24,22 +24,37 @@ static func shop_info(kind: String) -> Dictionary:
     }
 
 static func upgrade_info(kind: String, level: int, specialization: String, fire_bonus: int, bone_bonus: int) -> Dictionary:
-    if not DETAILS.has(kind) or level < 1:
+    if not DETAILS.has(kind) or level < 1 or level > 3:
         return {}
-    var maxed: bool = level >= 3
+    var maxed: bool = level == 3 and specialization != ""
     var current_damage: int = DAMAGE.direct_damage(kind, level, specialization, fire_bonus, bone_bonus)
-    var next_damage: int = DAMAGE.direct_damage(kind, level + 1, specialization, fire_bonus, bone_bonus) if not maxed else current_damage
+    var next_damage: int = DAMAGE.direct_damage(kind, mini(level + 1, 3), specialization, fire_bonus, bone_bonus) if level < 3 else current_damage
+    var cost: int = STATS.upgrade_cost(level, specialization)
+    var extra: String = ""
+    var next_step: String = ""
+    if level == 1:
+        extra = "ЕЩЁ ДВА УРОВНЯ ДО ВЫБОРА СПЕЦИАЛИЗАЦИИ"
+        next_step = "Следующее улучшение: базовый уровень 2."
+    elif level == 2:
+        extra = "ПОСЛЕ ЭТОГО ОТКРОЕТСЯ УРОВЕНЬ 3"
+        next_step = "Следующее улучшение: максимальный базовый уровень."
+    elif specialization == "":
+        extra = "ЧЕТВЁРТЫЙ ШАГ: ВЫБЕРИ ЖНЕЦА ИЛИ ЛЕГИОН"
+        next_step = "Выбери одну специализацию. Базовый уровень останется 3."
+    else:
+        extra = "СПЕЦИАЛИЗАЦИЯ УСТАНОВЛЕНА"
+        next_step = "Башня полностью развита."
     return {
         "title": str(STATS.DISPLAY_NAMES[kind]),
         "maxed": maxed,
-        "cost": 0 if maxed else level * 20,
+        "cost": cost,
         "current_damage": current_damage,
         "next_damage": next_damage,
         "range": int(STATS.RANGES[kind]),
         "attack_interval": 0.45 if specialization == "swarm" else 0.8,
-        "extra": "ОТКРОЮТСЯ 2 ПУТИ РАЗВИТИЯ" if level == 1 else ("ЭФФЕКТ И РАДИУС НЕ МЕНЯЮТСЯ" if not maxed else "БАШНЯ ПОЛНОСТЬЮ УЛУЧШЕНА"),
+        "extra": extra,
         "next_level": mini(level + 1, 3),
-        "specialization": "На 2 ур. выбери путь башни." if level == 1 else ("Специализация сохранится." if not maxed else "Максимальный уровень."),
+        "specialization": next_step,
         "effect": str(DETAILS[kind]["effect"])
     }
 
