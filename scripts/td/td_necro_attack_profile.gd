@@ -65,6 +65,10 @@ static func trail_samples(origin: Vector2, target: Vector2, progress: float, spe
     var samples: Array[Dictionary] = []
     if specialization != "siege" and specialization != "swarm":
         return samples
+    # Suppress lingering particles at landing; impacts own the final visual.
+    var landing_fade := clampf((1.0 - progress) / 0.22, 0.0, 1.0)
+    if landing_fade <= 0.0:
+        return samples
     var count := 4 if specialization == "siege" else 2
     var step := 0.055 if specialization == "siege" else 0.09
     var max_radius := 4.5 if specialization == "siege" else 3.0
@@ -72,7 +76,7 @@ static func trail_samples(origin: Vector2, target: Vector2, progress: float, spe
         var age_progress: float = clampf(progress - float(index + 1) * step, 0.0, 1.0)
         if progress <= float(index + 1) * step:
             continue
-        var opacity := (1.0 - float(index) / float(count)) * 0.65
+        var opacity := (1.0 - float(index) / float(count)) * 0.65 * landing_fade
         samples.append({
             "position": projectile_position(origin, target, age_progress, specialization),
             "radius": max_radius * (1.0 - float(index) / float(count)) + 0.5,
