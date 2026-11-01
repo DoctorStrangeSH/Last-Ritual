@@ -420,6 +420,54 @@ func run_tests() -> void:
             necro_balance.spawn_necro_spirit(necro_balance.slots[0]["pos"], necro_path == "siege")
             check(necro_balance.summoned_spirits.size() == 2, "Necromancy spirit cap remains two: " + necro_path)
             necro_balance.queue_free()
+    # Reaper is a deliberate single-target strike; Legion launches a three-soul volley.
+    if specialization_balance_scene != null:
+        var reaper_volley = specialization_balance_scene.instantiate()
+        root.add_child(reaper_volley)
+        reaper_volley.coins = 250
+        check(reaper_volley.choose_tower("necro") and reaper_volley.build_tower(0), "Reaper volley builds Altar of Souls")
+        check(upgrade_to_specialization(reaper_volley, "siege"), "Reaper volley evolves through the fourth step")
+        var reaper_foes: Array[Dictionary] = []
+        for offset in [Vector2(20, 0), Vector2(50, 0), Vector2(80, 0)]:
+            var reaper_foe: Dictionary = {"pos": reaper_volley.slots[0]["pos"] + offset, "hp": 100, "delay": 0.0}
+            reaper_volley.enemies.append(reaper_foe)
+            reaper_foes.append(reaper_foe)
+        reaper_volley.attack_with_towers(0.01)
+        var reaper_projectiles := 0
+        for trail in reaper_volley.shot_trails:
+            if str(trail.get("kind", "")) == "necro" and str(trail.get("specialization", "")) == "siege":
+                reaper_projectiles += 1
+        check(reaper_projectiles == 1 and reaper_foes[0]["hp"] < 100 and reaper_foes[1]["hp"] == 100 and reaper_foes[2]["hp"] == 100, "Reaper sends one heavy projectile to one target")
+        reaper_volley.queue_free()
+
+        var legion_volley = specialization_balance_scene.instantiate()
+        root.add_child(legion_volley)
+        legion_volley.coins = 250
+        check(legion_volley.choose_tower("necro") and legion_volley.build_tower(0), "Legion volley builds Altar of Souls")
+        check(upgrade_to_specialization(legion_volley, "swarm"), "Legion volley evolves through the fourth step")
+        var legion_foes: Array[Dictionary] = []
+        for offset in [Vector2(20, 0), Vector2(50, 0), Vector2(80, 0), Vector2(110, 0)]:
+            var legion_foe: Dictionary = {"pos": legion_volley.slots[0]["pos"] + offset, "hp": 100, "delay": 0.0}
+            legion_volley.enemies.append(legion_foe)
+            legion_foes.append(legion_foe)
+        legion_volley.attack_with_towers(0.01)
+        var legion_projectiles := 0
+        for trail in legion_volley.shot_trails:
+            if str(trail.get("kind", "")) == "necro" and str(trail.get("specialization", "")) == "swarm" and str(trail.get("phase", "")) == "projectile":
+                legion_projectiles += 1
+                check(is_equal_approx(float(trail.get("duration", 0.0)), 0.32), "Legion projectile has a timed flight phase")
+        check(legion_projectiles == 3, "Legion launches three independent soul projectiles")
+        check(legion_foes[0]["hp"] < 100 and legion_foes[1]["hp"] < 100 and legion_foes[2]["hp"] < 100 and legion_foes[3]["hp"] == 100, "Legion hits up to three enemies, not a beam")
+        legion_volley.update_shot_trails(0.32)
+        var legion_impacts := 0
+        var legion_flying := 0
+        for trail in legion_volley.shot_trails:
+            if str(trail.get("kind", "")) == "necro" and str(trail.get("phase", "")) == "impact":
+                legion_impacts += 1
+            elif str(trail.get("kind", "")) == "necro" and str(trail.get("phase", "")) == "projectile":
+                legion_flying += 1
+        check(legion_impacts == 3 and legion_flying == 0, "Each Legion projectile transitions into its own impact animation")
+        legion_volley.queue_free()
     # Economy benchmark: same starting treasury, exact purchase/upgrade/sale
     # prices for each school. No wave rewards or meta bonuses in this scenario.
     if specialization_balance_scene != null:
@@ -2660,6 +2708,13 @@ func run_tests() -> void:
             if not impact_path.is_empty():
                 var impact_texture: Texture2D = load(impact_path)
                 check(impact_texture != null and impact_texture.get_width() >= 6 * projectile_maps.vfx_frame_size(kind, "weapon_impact").x, "Impact sheet has at least six frames: %s lv%d" % [kind, level])
+    check(is_equal_approx(projectile_maps.projectile_rotation(Vector2.ZERO, Vector2.RIGHT), 0.0), "Soul projectile faces right for rightward travel")
+    check(is_equal_approx(projectile_maps.projectile_rotation(Vector2.ZERO, Vector2.DOWN), PI * 0.5), "Soul projectile rotates downward with travel direction")
+    check(is_equal_approx(projectile_maps.projectile_rotation(Vector2.ZERO, Vector2.UP), -PI * 0.5), "Soul projectile rotates upward with travel direction")
+    check(projectile_maps.animation_frame(0.17, 24.0, 8, false) == 4, "Projectile animation advances from elapsed time")
+    check(projectile_maps.animation_frame(1.0, 24.0, 8, false) == 7, "Projectile animation clamps to final frame")
+    check(is_equal_approx(projectile_maps.production_necro_source_rect("siege").position.x, 40.0), "Reaper renderer crops detached scythe sliver")
+    check(is_equal_approx(projectile_maps.production_necro_source_rect("swarm").size.x, 192.0), "Legion keeps the full production sprite bounds")
     check(projectile_maps.vfx_path("necro", 1, "weapon_impact").contains("soul_impact_8f.png"), "Necro uses authored impact texture")
     check(projectile_maps.vfx_frame_size("necro", "projectiles") == (Vector2i(64, 64) if installed_originals else Vector2i(32, 32)), "Necro projectile cell matches source pack")
     check(projectile_maps.vfx_frame_size("necro", "weapon_impact") == (Vector2i(128, 128) if installed_originals else Vector2i(64, 64)), "Necro impact cell matches source pack")
