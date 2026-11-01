@@ -31,8 +31,8 @@ def oval(im,cx,cy,rx,ry,c):
   for x in range(-int(rx),int(rx)+1):
    if x*x*ry*ry+y*y*rx*rx<=rx*rx*ry*ry: point(im,cx+x,cy+y,c)
 def line(im,x0,y0,x1,y1,thick,c):
- n=int(max(abs(x1-x0),abs(y1-y0))*2+1)
- for i in range(n+1):
+ n=max(abs(x1-x0),abs(y1-y0))*2+1
+ for i in range(math.floor(n)+1):
   x=x0+(x1-x0)*i/n; y=y0+(y1-y0)*i/n
   x=math.floor(x+0.5);y=math.floor(y+0.5)
   box(im,x-thick,y-thick,x+thick,y+thick,c)
