@@ -34,13 +34,13 @@
 ### Active gameplay IDs
 The current shop/runtime still uses four IDs in `scripts/td/td_tower_stats.gd`: `bone`, `fire`, `necro`, `frost`. `SHOP_ORDER` is these four IDs. `spark` and `pulse` are design/asset identities, not separate playable combat types yet. Preserve existing IDs and save compatibility unless a dedicated migration is designed and tested.
 
-### Upgrade state-machine change (branch in progress)
+### Upgrade state-machine change (PR #307 merged)
 In `scripts/topdown_td_prototype.gd` and `scripts/td/td_tower_stats.gd`:
 - The implementation now defines L1→L2 for 20, L2→L3 for 40, and a fourth purchase at L3 for 60 that opens specialization without changing base level.
 - `specialization_pending_slot` locks the modal to the tower being evolved; `choose_specialization()` only accepts `siege`/`swarm` on that level-3 unspecialized tower.
 - Existing level-2-specialized fortress snapshots are accepted and normalized to level 3 for backward compatibility.
 - `td_tower_tooltips.gd` now explains the two remaining base steps and the separate fourth evolution step.
-- Regression tests cover affordability, modal slot lock, invalid/repeated choice, all four current runtime IDs, and legacy-save migration. Exact-head CI and merge are still required before marking this shipped.
+- Regression tests cover affordability, modal slot lock, invalid/repeated choice, all four current runtime IDs, and legacy-save migration. PR #307 is merged; automated CI passed. Owner should verify the new cost/progression in Windows EXE.
 
 ### Existing visual/combat defects still open
 - `SPECIALIZATION_BUTTONS`, `SPECIALIZATION_LABELS`, `specialization_open`, selected slot UI, and `tower_info_for_slot()` / hover panels remain in the controller.
@@ -147,4 +147,4 @@ After every merged PR or meaningful milestone:
 
 ## 8. Current next task
 
-First verify and merge the fourth-step upgrade PR. Then implement the user's screenshot fixes and projectile/impact animation/direction. The 17 unreferenced root SVGs under backgrounds/buildings/characters/enemies/towers were removed in PR #306; see `docs/art/LEGACY_ASSET_CLEANUP.md`. Active `assets/spire` fallbacks and source files remain until their Pixel Art replacements are tested. Do not delete active sprite folders.
+Implement the user's screenshot fixes: correct Soul Altar scale/pivot and remove the detached scythe fragment; then split base/Reaper/Legion projectile and impact records, animate/rotate the projectile by travel vector, add a rotating/8-way upper weapon layer, and remove the necro line fallback. The 17 unreferenced root SVGs were removed in PR #306; see `docs/art/LEGACY_ASSET_CLEANUP.md`. Active `assets/spire` fallbacks and source files remain until their Pixel Art replacements are tested. Do not delete active sprite folders.
