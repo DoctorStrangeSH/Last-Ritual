@@ -1,18 +1,21 @@
-# ТЕКУЩИЙ СНИМОК — 01.11.2026 (после PR #310)
+# ТЕКУЩИЙ СНИМОК — 01.11.2026 (после PR #312)
 
-Код main: `300415d74ba7abc1e768673d59cc435c89d394c9` (PR #309); актуальная документация: `583b2986bc01f508558bfac5ca8b3dae078ac572` (PR #310). Godot 4.4.1. Main CI #41281253322: jobs `checks` и `windows-preview` завершились success. Это не заменяет ручную визуальную проверку владельцем.
+Код main: `955252af84ab0eba86775a859fbb029122996e29` (PR #312); последняя документация main до этого обновления — PR #310, commit `583b2986bc01f508558bfac5ca8b3dae078ac572`. Godot 4.4.1. Exact-head PR CI #41284865922 прошёл, включая новый modular contract smoke-test и существующий top-down smoke-test. Post-merge main CI #41284911635 поставлен в очередь; Windows Preview ещё не подтверждён.
+
+**PR #312 — архитектура Алтаря душ:** добавлены `assets/spire/towers/necro/manifest.json`, `scripts/td/td_modular_tower_assets.gd`, `tests/td_modular_tower_assets_smoke.gd`. Контракт задаёт базу L1–L3, отдельные ветви base/Reaper/Legion, восемь направлений, общий pivot (64,90), самостоятельные projectile/impact наборы и параметры анимаций. Маппинг specialization: `siege→reaper`, `swarm→legion`. **Это пока только архитектурный контракт:** `runtime_enabled=false`, PNG по новым путям ещё не созданы, живой renderer не переключён.
 
 **Решение владельца:** вся Last Ritual переходит на единый hand-authored dark-fantasy Pixel Art. Старые спрайты разрешено полностью удалять из Git после того, как соответствующее пиксельное семейство создано, подключено, проверено и заменило все runtime-ссылки. Старые спрайты не нужно сохранять как вечные fallback. Сохранять юридические лицензии/атрибуцию, исходники новых пиксельных ассетов, manifests/export tools и утверждённый концепт Алтаря душ как reference.
 
 **PR #307 — прокачка:** L1→L2 (20)→L3 (40)→четвёртая покупка (60) с выбором Жнец/Легион. Базовый уровень остаётся 3. Save migration, UI и regression tests merged.
 
-**PR #309 — боевые визуалы:** башня увеличена и центрирована в коде (120 px height), обрезан detached Reaper sliver только в display region; некро beam fallback удалён; направленный soul bolt анимируется 24 FPS, вращается по from→to, после прилёта проигрывается отдельный 8-frame impact; Reaper — одиночный мощный снаряд, Legion — до трёх независимых снарядов по трём целям. Main CI checks + Windows preview passed. Верхнее оружие пока не наводится независимо; уникальные pixel-art projectile/impact sheets ещё не созданы. Владелец должен проверить новый EXE вручную.
+**PR #309 — боевые визуалы:** башня увеличена и центрирована в коде (120 px height), обрезан detached Reaper sliver только в display region; некро beam fallback удалён; направленный soul bolt анимируется 24 FPS, вращается по from→to, после прилёта проигрывается отдельный 8-frame impact; Reaper — одиночный мощный снаряд, Legion — до трёх независимых снарядов по трём целям. Верхнее оружие пока не наводится независимо; уникальные pixel-art projectile/impact sheets ещё не созданы. Владелец должен проверить новый EXE вручную.
 
-**Следующий этап:** создать полный Pixel Art pilot для Алтаря душ (L1/L2/L3, Жнец/Легион, base + upper weapon/8-way poses, три уникальных projectile/impact набора, idle/attack/build effects, icons, editable source, manifest). После визуального одобрения — мигрировать башни, врагов, героя, окружение, комнаты, эффекты и UI по семействам, удаляя заменённую старую графику отдельными проверенными PR.
+**Следующий этап:** создать полный hand-authored Pixel Art pilot для Алтаря душ (L1/L2/L3, Жнец/Легион, base + upper weapon/8-way poses, три уникальных projectile/impact набора, idle/attack/build/sell effects, icons, editable source и экспорт PNG). После появления всех ресурсов — включить manifest, подключить modular renderer, пройти Godot import/smoke и Windows export; визуальное одобрение владельца остаётся отдельным gate. Затем мигрировать остальные башни и игру по семействам, удаляя заменённую старую графику отдельными проверенными PR.
 
 Подробности: [AI_HANDOFF_PIXEL_ART.md](AI_HANDOFF_PIXEL_ART.md), [ROADMAP.md](ROADMAP.md), [Pixel Art Style Guide](art/PIXEL_ART_STYLE_GUIDE.md), [Migration Inventory](art/PIXEL_ART_MIGRATION_INVENTORY.md).
 
 ---
+
 
 
 > **31.10.2026 — #254 merged:** процедурный визуальный эффект строительства/продажи башни 0,42 с включён в main (`aed18a2`), без изменений экономики/боевых правил. #253 atlas merged. Оригинальные покадровые BuilderPack эффекты и враги ещё не интегрированы. PR #217 конфликтует с main, требуется адаптация. Windows QA не подтверждена.
