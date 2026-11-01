@@ -1,6 +1,6 @@
-# АКТУАЛЬНЫЙ ПЛАН — 01.11.2026 (после PR #309)
+# АКТУАЛЬНЫЙ ПЛАН — 01.11.2026 (после PR #312)
 
-Снимок игрового кода: `300415d74ba7abc1e768673d59cc435c89d394c9` (PR #309); документация обновлена PR #310, commit `583b2986bc01f508558bfac5ca8b3dae078ac572`. PR #307 и #309 объединены. Подробная передача: [AI_HANDOFF_PIXEL_ART.md](AI_HANDOFF_PIXEL_ART.md). Художественный стандарт: [Pixel Art Style Guide](art/PIXEL_ART_STYLE_GUIDE.md). Инвентарь и политика удаления: [PIXEL_ART_MIGRATION_INVENTORY.md](art/PIXEL_ART_MIGRATION_INVENTORY.md).
+Снимок игрового кода: `955252af84ab0eba86775a859fbb029122996e29` (PR #312); предыдущая документация main — PR #310, commit `583b2986bc01f508558bfac5ca8b3dae078ac572`. PR #312 добавил manifest-driven контракт модульной башни и тесты восьми направлений. Exact-head CI #41284865922 success; post-merge main CI #41284911635 queued. Это архитектурная основа, не готовый Pixel Art и не переключение runtime. Подробная передача: [AI_HANDOFF_PIXEL_ART.md](AI_HANDOFF_PIXEL_ART.md). Художественный стандарт: [Pixel Art Style Guide](art/PIXEL_ART_STYLE_GUIDE.md). Инвентарь и политика удаления: [PIXEL_ART_MIGRATION_INVENTORY.md](art/PIXEL_ART_MIGRATION_INVENTORY.md).
 
 ## Решения владельца
 - Перевести **всю игру** на цельный hand-authored dark-fantasy Pixel Art: башни, враги, герой, окружение, TD-маршруты, комнаты, VFX, UI, иконки и меню.
@@ -31,6 +31,7 @@
 - [ ] Верхняя часть башни ещё не наводится независимо: нужен модульный Pixel Art base + weapon или 8 направлений.
 
 ## P1 — Pixel Art pilot: Алтарь душ
+- [x] PR #312: manifest-driven asset contract, общий loader/validator, canonical eight-way aim mapping и отдельный Godot smoke-test. Runtime остаётся отключённым до появления всех production PNG.
 - [ ] Нарисовать настоящий пиксельный комплект L1/L2/L3, не фильтровать старые реалистичные PNG.
 - [ ] Отдельные визуальные формы Жнеца и Легиона.
 - [ ] Статичное основание + верхнее оружие с 8-направленными позами (предпочтительно для crisp pixel art).
@@ -64,6 +65,7 @@
 - [ ] Новый EXE публикуется только после успешной сборки main; ручная визуальная приёмка отмечается отдельно.
 
 ## Текущая база
+- [x] PR #312: `assets/spire/towers/necro/manifest.json`, `scripts/td/td_modular_tower_assets.gd`, `tests/td_modular_tower_assets_smoke.gd`; exact-head CI #${prCi} success. Manifest `runtime_enabled=false`; production Pixel Art assets ещё не созданы.
 - [x] PR #304: original Soul Altar v0.5 source + production candidate PNGs committed.
 - [x] PR #305: Pixel Art handoff/style guide committed.
 - [x] PR #306: удалены 17 неиспользуемых root SVG.
