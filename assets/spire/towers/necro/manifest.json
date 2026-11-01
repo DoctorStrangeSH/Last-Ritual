@@ -112,7 +112,7 @@
   },
   "projectiles": {
     "base": {
-      "path": "projectiles/base/projectile_8f.png",
+      "path": "vfx/soul_projectile_8f.png",
       "frame_size": [
         32,
         32
@@ -123,7 +123,7 @@
       "forward_axis": "+X"
     },
     "reaper": {
-      "path": "projectiles/reaper/projectile_8f.png",
+      "path": "approved_renders/vfx/reaper_projectile_8f.png",
       "frame_size": [
         48,
         48
@@ -134,7 +134,7 @@
       "forward_axis": "+X"
     },
     "legion": {
-      "path": "projectiles/legion/projectile_8f.png",
+      "path": "approved_renders/vfx/legion_projectile_8f.png",
       "frame_size": [
         32,
         32
@@ -147,17 +147,17 @@
   },
   "impacts": {
     "base": {
-      "path": "impacts/base/impact_8f.png",
+      "path": "vfx/soul_impact_8f.png",
       "frame_size": [
-        48,
-        48
+        64,
+        64
       ],
       "frame_count": 8,
       "fps": 24,
       "loop": false
     },
     "reaper": {
-      "path": "impacts/reaper/impact_8f.png",
+      "path": "approved_renders/vfx/reaper_impact_8f.png",
       "frame_size": [
         64,
         64
@@ -167,7 +167,7 @@
       "loop": false
     },
     "legion": {
-      "path": "impacts/legion/impact_8f.png",
+      "path": "approved_renders/vfx/legion_impact_8f.png",
       "frame_size": [
         48,
         48
@@ -239,6 +239,7 @@
     "The current contract remains disabled for runtime until transparent Pixel Art exports, modular weapon poses, and separate projectile/impact sheets are committed and approved.",
     "Weapon sheets are eight horizontal frames in the canonical direction_order; every frame shares the pivot.",
     "Projectile sheets face +X and are rotated to the actual travel vector.",
-    "Reaper maps to runtime specialization siege; Legion maps to swarm."
+    "Reaper maps to runtime specialization siege; Legion maps to swarm.",
+    "Six existing, committed VFX strips are reused by this contract. They remain subject to the same alpha/frame checks and separate owner visual QA; modular base and weapon art are not yet available."
   ]
 }

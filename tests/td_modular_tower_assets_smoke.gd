@@ -37,11 +37,11 @@ func run_tests() -> void:
 		check(bool(validation.get("valid", false)), "Soul Altar manifest satisfies schema v1")
 		check(not contract.runtime_ready(manifest), "Pixel Art runtime stays disabled until the complete approved kit exists")
 		var missing: Array[String] = contract.missing_runtime_art(manifest)
-		check(missing.size() == 12, "Modular build explicitly reports three base sheets and nine weapon/VFX atlases still missing")
+		check(missing.size() == 6, "Modular build reports three base sheets and three eight-way weapon atlases still missing")
 		check(missing.has("res://assets/spire/towers/necro/base/level_1.png"), "Missing report identifies first authored base layer")
 		check(missing.has("res://assets/spire/towers/necro/weapon/reaper/weapon_8way.png"), "Missing report identifies eight-way Reaper weapon rather than using its whole-tower PNG")
 		check(missing.has("res://assets/spire/towers/necro/weapon/legion/weapon_8way.png"), "Missing report identifies eight-way Legion weapon")
-		check(missing.has("res://assets/spire/towers/necro/impacts/legion/impact_8f.png"), "Missing report does not confuse preview impact PNG with modular production atlas")
+		check(not missing.has("res://assets/spire/towers/necro/approved_renders/vfx/legion_impact_8f.png"), "Committed Legion impact strip is no longer considered missing")
 		check(contract.missing_runtime_art({}) == ["manifest:invalid"], "Invalid modular manifest yields explicit actionable error")
 
 		var tower_visuals = load("res://scripts/td/td_tower_visuals.gd")
@@ -98,9 +98,21 @@ func run_tests() -> void:
 		var base_projectile: Dictionary = contract.resolve_vfx(manifest, "projectiles", "")
 		var reaper_projectile: Dictionary = contract.resolve_vfx(manifest, "projectiles", "siege")
 		var legion_impact: Dictionary = contract.resolve_vfx(manifest, "impacts", "swarm")
-		check(base_projectile.get("path", "").ends_with("projectiles/base/projectile_8f.png"), "Base projectile has an independent asset family")
-		check(reaper_projectile.get("path", "").ends_with("projectiles/reaper/projectile_8f.png"), "Reaper projectile has an independent asset family")
-		check(legion_impact.get("path", "").ends_with("impacts/legion/impact_8f.png") and not bool(legion_impact.get("loop", true)), "Legion impact is an independent one-shot animation")
+		check(base_projectile.get("path", "").ends_with("vfx/soul_projectile_8f.png"), "Base projectile has an independent asset family")
+		check(reaper_projectile.get("path", "").ends_with("approved_renders/vfx/reaper_projectile_8f.png"), "Reaper projectile has an independent asset family")
+		check(legion_impact.get("path", "").ends_with("approved_renders/vfx/legion_impact_8f.png") and not bool(legion_impact.get("loop", true)), "Legion impact is an independent one-shot animation")
+		# The six separate flight/impact atlases already exist in main; do not
+		# require duplicate copies under future production folders.
+		for category in ["projectiles", "impacts"]:
+			for branch in ["base", "reaper", "legion"]:
+				var entry: Dictionary = manifest[category][branch]
+				var path: String = "res://assets/spire/towers/necro/" + str(entry["path"])
+				var dims: Array = entry["frame_size"]
+				check(contract._transparent_png_ready(path, Vector2i(int(dims[0]), int(dims[1])), 8), "Existing VFX passes modular readiness: %s / %s" % [category, branch])
+		var remaining_art: Array[String] = contract.missing_runtime_art(manifest)
+		check(remaining_art.size() == 6, "Only three bases and three eight-way weapons remain missing")
+		for path in remaining_art:
+			check(path.contains("/base/") or path.contains("/weapon/"), "Missing list excludes existing VFX: " + path)
 		check(contract.resolve_tower_layers(manifest, 4, "", Vector2.ZERO, Vector2.RIGHT).is_empty(), "Invalid tower level is rejected")
 		check(contract.resolve_tower_layers(manifest, 3, "unknown", Vector2.ZERO, Vector2.RIGHT).is_empty(), "Unknown specialization is rejected")
 		check(contract.resolve_vfx(manifest, "unknown", "").is_empty(), "Unknown VFX category is rejected")
