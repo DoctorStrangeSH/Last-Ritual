@@ -29,16 +29,6 @@ Keep:
 - Manifest status is `contract_only`; `runtime_enabled=false`. The PNG paths are future targets, not files already present. The current live renderer still uses the existing assembled/candidate art.
 - Keep this manifest generic enough to reuse for the other towers. Create editable pixel source, production PNGs and provenance before enabling it.
 
-## Approved Soul Altar Pixel Art runtime slice
-
-- Transparent indexed atlas committed at `assets/spire/towers/necro/production/pixel_art/soul_altar_approved_atlas.png`: 320×88 px, five 64×88 frames (L1, L2, L3, Reaper, Legion), real palette alpha.
-- Live draw resolver: `scripts/td/td_tower_visuals.gd`; actual TD renderer: `scripts/topdown_td_prototype.gd::draw_tower_figure()`; frames render at 2× nearest-neighbour (128×176).
-- `tools/export_soul_altar_approved_atlas.py` extracts individual frames and 2× variants.
-- Approved concept reference remains `assets/spire/towers/necro/source/concepts/soul_altar_tower_concept_v05.png`.
-- High-resolution generated PNG originals remain in the review ZIP; the Aseprite layered project does not exist. Do not claim either has been committed.
-- First runtime slice only: no independent base/upper-weapon layer, no 8-way weapon poses, no Pixel Art projectile/impact sheets or idle/build/sell animations yet. Modular manifest runtime stays disabled.
-- Keep non-SVG legacy resources until the full modular replacement is tested in Windows and visually approved by the owner.
-
 ## Current active gameplay identities
 
 Defined in `scripts/td/td_tower_stats.gd`:

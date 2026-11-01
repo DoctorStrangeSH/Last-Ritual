@@ -32,6 +32,14 @@ const NECRO_APPROVED_PIXEL_ART_ATLAS := "res://assets/spire/towers/necro/product
 const NECRO_APPROVED_PIXEL_ART_FRAME_SIZE := Vector2i(64, 88)
 const NECRO_APPROVED_PIXEL_ART_RENDER_SIZE := Vector2(128.0, 176.0)
 
+# Compatibility aliases retained for the existing top-down smoke suite.
+const NECRO_APPROVED_PIXEL_ATLAS := NECRO_APPROVED_PIXEL_ART_ATLAS
+
+static func approved_necro_pixel_art_source_rect(texture: Texture2D, level: int, specialization: String = "") -> Rect2:
+    if texture == null:
+        return Rect2()
+    return approved_necro_pixel_art_region(level, specialization)
+
 static func approved_necro_pixel_art_ready() -> bool:
     return ResourceLoader.exists(NECRO_APPROVED_PIXEL_ART_ATLAS)
 

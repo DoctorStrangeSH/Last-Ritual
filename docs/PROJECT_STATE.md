@@ -1,11 +1,6 @@
-# ТЕКУЩИЙ СНИМОК — 01.11.2026 (approved Soul Altar Pixel Art runtime slice)
+# ТЕКУЩИЙ СНИМОК — 01.11.2026 (после PR #314)
 
-Main до этого PR: `5bb40ec30d91fe37c52435117868dd56e7c6a482`. Godot 4.4.1. SVG cleanup PR #314 merged; tracked SVG files отсутствуют.
-
-**Новый реальный шаг:** прозрачный atlas `assets/spire/towers/necro/production/pixel_art/soul_altar_approved_atlas.png` содержит пять кадров L1/L2/L3/Reaper/Legion (64×88). `scripts/td/td_tower_visuals.gd` разрешает нужный кадр, `scripts/topdown_td_prototype.gd::draw_tower_figure()` рисует утверждённый Pixel Art в игре в размере 128×176 (2× nearest). Сохранены скрипт извлечения и README. CI и Windows Preview — gate этого PR; ручная проверка владельцем ещё нужна.
-
-**Граница реализации:** atlas содержит цельные силуэты, не отдельные base/weapon слои. Верхняя часть пока не наводится независимо. Pixel Art projectile/impact/idle/build/sell ещё не сделаны. Modular manifest `runtime_enabled=false` намеренно остаётся выключенным. Высокодетальные generated source PNG находятся в review ZIP, а не отдельными файлами Git; Aseprite файл не выдумываем. Не удалять старые не-SVG runtime ресурсы до полной модульной замены и owner QA.
-
+Код main: `e3dd4c6898ab20eaf627e2993bbeaa48ccecb262` (PR #314). Godot 4.4.1. Exact-head PR CI #41284865922 прошёл, включая новый modular contract smoke-test и существующий top-down smoke-test. PR #314 CI #41287057434 и post-merge main CI #41287125006 успешно прошли; Windows EXE экспортирован и опубликован. Ручная проверка владельцем остаётся отдельным этапом.
 
 **PR #314 — SVG cleanup:** удалены все 33 SVG-файла, включая старые шаблоны Алтаря душ/Frost, VFX и иконки специализаций; удалены пять SVG export/validation tools и CI-шаги. `td_specialization_icons.gd` временно возвращает пустой путь, текстовые русские названия специализаций остаются. В Git больше нет `.svg` файлов. Новая Pixel Art башня пока не подключена.
 

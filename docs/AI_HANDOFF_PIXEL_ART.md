@@ -1,15 +1,17 @@
-# Last Ritual — Handoff: Pixel Art Migration & Soul Altar
+# Last Ritual — Handoff: Pixel Art Migration & Soul Altar Rework
 
-**Updated:** 2026-11-01 — approved Soul Altar atlas wired into the live TD renderer.  
-**Base main:** `5bb40ec30d91fe37c52435117868dd56e7c6a482`. Godot 4.4.1.  
-**Owner decision:** the already-selected Soul Altar design is final; do not generate another tower concept.
+**Updated:** 2026-11-01 (after PR #314)  
+**Verified main snapshot:** `e3dd4c6898ab20eaf627e2993bbeaa48ccecb262` (PR #314)  
+**Primary roadmap:** [ROADMAP.md](ROADMAP.md)  
+**Art standard:** [PIXEL_ART_STYLE_GUIDE.md](art/PIXEL_ART_STYLE_GUIDE.md)  
+**Asset inventory:** [PIXEL_ART_MIGRATION_INVENTORY.md](art/PIXEL_ART_MIGRATION_INVENTORY.md)  
+**Project:** `DoctorStrangeSH/Last-Ritual`, Godot 4.4.1, top-down roguelite + Tower Defense.
 
-**Runtime integration:** `assets/spire/towers/necro/production/pixel_art/soul_altar_approved_atlas.png` contains five transparent 64×88 cells in order L1/L2/L3/Reaper/Legion. The TD renderer displays the selected cell at 2× nearest-neighbour size (128×176). The resolver and live drawing are in `scripts/td/td_tower_visuals.gd` and `scripts/topdown_td_prototype.gd::draw_tower_figure()`. A Godot smoke test verifies import, alpha, atlas size and all five mappings.
+> This is the durable handoff for the next AI/developer. Read it before changing art, upgrade logic, combat, or deleting assets. It supersedes older historical statements below when they conflict with the current snapshot.
 
-**Source policy:** the atlas is the committed raster source; the approved concept PNG remains under `source/concepts/`; `tools/export_soul_altar_approved_atlas.py` extracts each frame and 2× version. The five high-resolution generated source PNGs remain in the review ZIP, not yet as individual Git files. No Aseprite project was supplied, so do not fabricate one.
+**PR #312 — modular asset contract merged:** `scripts/td/td_modular_tower_assets.gd` provides manifest loading/validation, eight-way aim quantization and resolution of base/weapon/VFX entries. `assets/spire/towers/necro/manifest.json` documents the target kit and canonical pivot/direction order. The manifest is intentionally `contract_only` with `runtime_enabled=false`; it references planned future Pixel Art exports, not existing production files. Exact-head Godot CI #41284865922 passed the new contract test and existing smoke test. Post-merge main CI #41284911635 passed `checks` and `windows-preview`; the Windows EXE was published to the rolling preview release.
 
-**Still outstanding:** the atlas is five complete tower silhouettes, not separate base and weapon layers. The upper weapon does not aim independently. Separate Pixel Art projectile/impact families, idle/attack/build/sell animations and UI icons remain to be made from this same approved art direction. Keep modular `runtime_enabled=false` until those resources exist; do not delete non-SVG fallback assets before the full replacement passes owner QA.
-
+**Important boundary:** PR #312 is still an asset contract only; no new Pixel Art runtime art has switched. PR #314 removed all 33 legacy SVG files and SVG exporter/validator tools. The UI icon resolver now returns an empty texture path until approved PNG icons exist; Russian labels remain. Current production PNG/VFX assets remain as temporary runtime assets. A five-frame transparent Pixel Art tower atlas and its five high-resolution generated source PNGs have been packaged for review; the binary atlas is not yet committed to Git. Do not claim integration until they are in Git, loaded by Godot and visible in the Windows build. Upper weapon 8-way aiming and separate Pixel Art projectile/impact sets remain unimplemented. No Aseprite project is present; do not invent one.
 
 ## 1. Owner decisions (confirmed)
 

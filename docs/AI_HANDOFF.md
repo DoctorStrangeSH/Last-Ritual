@@ -1,13 +1,8 @@
-# CURRENT HANDOFF — 2026-11-01 (approved Soul Altar Pixel Art runtime slice)
+# CURRENT HANDOFF — 2026-11-01 (main after PR #314)
 
-**Main before this PR:** `5bb40ec30d91fe37c52435117868dd56e7c6a482`. Godot 4.4.1. PR #314 removed all tracked SVGs; main has zero SVG files. PR #312 provides the reusable modular tower manifest contract.
+**Read first:** [AI_HANDOFF_PIXEL_ART.md](AI_HANDOFF_PIXEL_ART.md), [ROADMAP.md](ROADMAP.md), [Pixel Art Style Guide](art/PIXEL_ART_STYLE_GUIDE.md), [Pixel Art Migration Inventory](art/PIXEL_ART_MIGRATION_INVENTORY.md).
 
-**This PR integrates the owner's already-approved Soul Altar design.** The transparent five-frame atlas at `assets/spire/towers/necro/production/pixel_art/soul_altar_approved_atlas.png` contains L1, L2, L3, Reaper, Legion. The TD renderer selects the matching cell and draws it at 2× nearest-neighbour size (128×176), so the selected art is now used in the actual game.
-
-**Exact implementation:** `scripts/td/td_tower_visuals.gd`, `scripts/topdown_td_prototype.gd::draw_tower_figure()`, `tests/td_soul_altar_pixel_art_smoke.gd`, `tools/export_soul_altar_approved_atlas.py`.
-
-**Boundary:** the atlas contains assembled whole-tower sprites, not separate base/weapon layers. The upper part does not aim independently yet; Pixel Art projectile/impact sheets and idle/build/sell animations remain outstanding. The modular manifest `runtime_enabled=false` remains intentional. The approved concept is retained at `source/concepts/soul_altar_tower_concept_v05.png`. High-resolution generated source PNGs remain in the review ZIP, not individual Git files; no Aseprite project is fabricated. Keep old non-SVG resources until modular replacement and owner QA.
-
+**Verified code main:** `e3dd4c6898ab20eaf627e2993bbeaa48ccecb262` (PR #314). Godot 4.4.1. PR #314 exact-head CI #41287057434 passed; post-merge main CI #41287125006 passed `checks` and `windows-preview`. Windows EXE exported and published to the rolling `windows-preview` release. The Git tree now contains zero tracked SVG files. CI success is not owner visual approval.
 
 **SVG cleanup — PR #314 merged:** removed all 33 tracked SVG sprite/template/icon/VFX files and five SVG export/validation tools. Workflow no longer calls those tools. `td_specialization_icons.gd` returns an empty path until approved PNG icons exist; Russian labels remain. The approved concept PNG and current PNG production assets are retained.
 
