@@ -36,3 +36,8 @@
 
 ## Контроль качества
 Игровой кадр: все шесть башен Lv1 / Lv2 / Lv3 + обе специализации, на светлой и тёмной сцене, показ без UI и с UI; проверка nearest/pivot, читаемости при zoom 1×, fps/memory; сравнение с иконками в `assets/spire/towers/*/specializations/*/icon.svg`. До завершения такого теста ассет считается «кандидат», не «готов к релизу».
+
+
+## Pixel Art production rules (v2)
+
+The owner confirmed that the **entire game**, not only the six towers, must use one cohesive, detailed, hand-authored dark-fantasy Pixel Art style. The binding technical standard is [`PIXEL_ART_STYLE_GUIDE.md`](PIXEL_ART_STYLE_GUIDE.md). Do not use a pixelation filter on realistic assets as the final solution. New tower kits must have static base + pivot-consistent aiming upper layer, explicit directional pose/rotation metadata, animated projectile and one-shot impact sheets, editable source, PNG export and manifest. Use Nearest filtering and integer scaling after verifying compatibility with the current Godot viewport. Existing realistic assets remain temporary during staged migration and may be deleted only after replacement, reference audit and QA.
