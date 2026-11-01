@@ -11,7 +11,7 @@ The owner has explicitly authorized deleting the old non-pixel sprite families f
 Keep:
 - license, attribution and mapping/provenance records required for any redistributed third-party-derived content;
 - new editable Pixel Art sources, deterministic export scripts, manifests and palette/pivot data;
-- approved Soul Altar v0.5 concept and original cutouts as reference/provenance, byte-for-byte, unless the owner later explicitly asks to remove even those reference sources.
+- approved Soul Altar v0.5 concept sheet as a non-runtime art-direction reference (keep only while useful); old raster cutouts and all old runtime sprite exports are eligible for complete deletion after the Pixel Art replacements are accepted.
 
 ## Current active gameplay identities
 
