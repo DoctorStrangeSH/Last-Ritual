@@ -1,6 +1,6 @@
-# АКТУАЛЬНЫЙ ПЛАН — 01.11.2026 (после PR #312; SVG cleanup in progress)
+# АКТУАЛЬНЫЙ ПЛАН — 01.11.2026 (после PR #314)
 
-Снимок игрового кода: `955252af84ab0eba86775a859fbb029122996e29` (PR #312); предыдущая документация main — PR #310, commit `583b2986bc01f508558bfac5ca8b3dae078ac572`. PR #312 добавил manifest-driven контракт модульной башни и тесты восьми направлений. Exact-head CI #41284865922 success; post-merge main CI #41284911635 passed `checks` + `windows-preview`; Windows EXE published. Это архитектурная основа, не готовый Pixel Art и не переключение runtime. Подробная передача: [AI_HANDOFF_PIXEL_ART.md](AI_HANDOFF_PIXEL_ART.md). Художественный стандарт: [Pixel Art Style Guide](art/PIXEL_ART_STYLE_GUIDE.md). Инвентарь и политика удаления: [PIXEL_ART_MIGRATION_INVENTORY.md](art/PIXEL_ART_MIGRATION_INVENTORY.md).
+Снимок игрового кода: `e3dd4c6898ab20eaf627e2993bbeaa48ccecb262` (PR #314). PR #312 добавил manifest-driven контракт модульной башни и тесты восьми направлений. Exact-head CI #41284865922 success; post-merge main CI #41284911635 passed `checks` + `windows-preview`; Windows EXE published. Это архитектурная основа, не готовый Pixel Art и не переключение runtime. Подробная передача: [AI_HANDOFF_PIXEL_ART.md](AI_HANDOFF_PIXEL_ART.md). Художественный стандарт: [Pixel Art Style Guide](art/PIXEL_ART_STYLE_GUIDE.md). Инвентарь и политика удаления: [PIXEL_ART_MIGRATION_INVENTORY.md](art/PIXEL_ART_MIGRATION_INVENTORY.md).
 
 ## Решения владельца
 - Перевести **всю игру** на цельный hand-authored dark-fantasy Pixel Art: башни, враги, герой, окружение, TD-маршруты, комнаты, VFX, UI, иконки и меню.
@@ -31,8 +31,8 @@
 - [ ] Верхняя часть башни ещё не наводится независимо: нужен модульный Pixel Art base + weapon или 8 направлений.
 
 ## P1 — Pixel Art pilot: Алтарь душ
-- [x] SVG cleanup PR: удалены 33 устаревших SVG-шаблона/иконки/VFX и старые SVG export tools; helper и CI очищены от зависимостей.
-- [ ] Добавить в Git готовые прозрачные Pixel Art PNG, подготовленные из утверждённого дизайна; только после этого переключать runtime.
+- [x] PR #314 merged: удалены 33 устаревших SVG-шаблона/иконки/VFX и старые SVG export tools; helper и CI очищены от зависимостей.
+- [ ] Добавить в Git прозрачный пятикадровый Pixel Art atlas и пять исходных PNG из утверждённого дизайна; затем переключить runtime. Пакет подготовлен, но ещё не закоммичен как бинарные Git-ресурсы.
 - [x] PR #312: manifest-driven asset contract, общий loader/validator, canonical eight-way aim mapping и отдельный Godot smoke-test. Runtime остаётся отключённым до появления всех production PNG.
 - [ ] Завершить импорт утверждённых пиксельных PNG L1/L2/L3; не фильтровать старые реалистичные PNG.
 - [ ] Импортировать отдельные визуальные формы Жнеца и Легиона из утверждённого набора.
