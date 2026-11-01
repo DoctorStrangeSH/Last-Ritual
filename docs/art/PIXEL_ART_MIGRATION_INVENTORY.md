@@ -1,6 +1,6 @@
 # Pixel Art Migration Inventory & Legacy Sprite Removal Plan
 
-**Updated:** 2026-11-01, SVG cleanup branch from main `de2f0bdd5d0595da0173bd6717ef4cda713f054c`.
+**Updated:** 2026-11-01, PR #314 merged at `e3dd4c6898ab20eaf627e2993bbeaa48ccecb262`.
 
 This is the working inventory for replacing the old art and then removing it completely. It is not a claim that the Pixel Art migration is already complete.
 
@@ -13,13 +13,13 @@ Keep:
 - new editable Pixel Art sources, deterministic export scripts, manifests and palette/pivot data;
 - approved Soul Altar v0.5 concept sheet as a non-runtime art-direction reference (keep only while useful); old raster cutouts and all old runtime sprite exports are eligible for complete deletion after the Pixel Art replacements are accepted.
 
-## SVG cleanup — PR in progress
+## SVG cleanup — PR #314 merged
 
 - Removed all 33 tracked SVG files from the repository tree: old Soul Altar/Frost source layers and VFX, plus old specialization icon SVGs for the six tower families.
 - Removed the obsolete SVG validation/export tools and their CI jobs.
 - Updated the specialization icon resolver to return no texture until approved Pixel Art PNG icons exist. Russian specialization labels remain visible; no broken SVG resource paths remain.
 - Kept approved concept PNG, source/original PNG snapshots, current production PNG/VFX assets and third-party license/provenance records. These are not SVG.
-- This cleanup does not claim that new Pixel Art art is integrated. The approved transparent tower sprites prepared in the working session still need to be added as binary Git assets before runtime is switched.
+- This cleanup does not claim that new Pixel Art art is integrated. The approved transparent tower sprites are packaged in a working-session ZIP but still need to be added as binary Git assets before runtime is switched.
 
 ## Soul Altar modular manifest contract (PR #312)
 
