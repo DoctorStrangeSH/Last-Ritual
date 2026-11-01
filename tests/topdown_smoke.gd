@@ -16,6 +16,13 @@ func left_click_event(point: Vector2) -> InputEventMouseButton:
     event.pressed = true
     return event
 
+func upgrade_to_specialization(game, path: String) -> bool:
+    # L1 -> L2 -> L3 -> fourth purchase opens the branch choice.
+    for step in range(3):
+        if not game.upgrade_selected():
+            return false
+    return game.specialization_open and game.choose_specialization(path)
+
 func _initialize() -> void:
     call_deferred("run_tests")
 
@@ -207,10 +214,13 @@ func run_tests() -> void:
         root.add_child(spec_game)
         spec_game.choose_tower("bone")
         spec_game.build_tower(0)
-        spec_game.coins = 100
+        spec_game.coins = 200
         spec_game.select_slot(0)
-        check(spec_game.upgrade_selected(), "Tower reaches specialization threshold")
-        check(spec_game.specialization_open, "Specialization choice opens at level two")
+        check(spec_game.upgrade_selected() and int(spec_game.slots[0]["level"]) == 2, "First upgrade reaches base level two")
+        check(not spec_game.specialization_open, "Level two does not open specialization")
+        check(spec_game.upgrade_selected() and int(spec_game.slots[0]["level"]) == 3, "Second upgrade reaches base level three")
+        check(not spec_game.specialization_open, "Level three remains an unspecialized base tower")
+        check(spec_game.upgrade_selected() and spec_game.specialization_open and int(spec_game.slots[0]["level"]) == 3, "Fourth upgrade opens specialization without changing base level")
         var blocked_click := InputEventMouseButton.new()
         blocked_click.button_index = MOUSE_BUTTON_LEFT
         blocked_click.pressed = true
@@ -235,7 +245,7 @@ func run_tests() -> void:
         check(school.build_tower(0), "Build fire specialization tower")
         school.coins = 200
         school.select_slot(0)
-        check(school.upgrade_selected() and school.choose_specialization("siege"), "Fire chooses Inferno")
+        check(upgrade_to_specialization(school, "siege"), "Fire chooses Inferno")
         var burning := {"burn_time": 0.0, "hp": 20}
         school.apply_burn(burning)
         check(int(burning["burn_damage"]) >= 1, "Fire burn effect initializes")
@@ -279,7 +289,7 @@ func run_tests() -> void:
         var sparks = specialization_balance_scene.instantiate()
         root.add_child(sparks)
         check(sparks.choose_tower("fire") and sparks.build_tower(0), "Sparks benchmark purchases fire tower")
-        check(sparks.upgrade_selected() and sparks.choose_specialization("swarm"), "Sparks benchmark invests in level two")
+        check(upgrade_to_specialization(sparks, "swarm"), "Sparks benchmark invests in level two")
         check(sparks.coins == 85, "Fire level-two build costs 45 plus 20 gold")
         var sparks_foes: Array[Dictionary] = []
         for offset in [Vector2(20, 10), Vector2(50, 10), Vector2(80, 10), Vector2(110, 10)]:
@@ -297,7 +307,7 @@ func run_tests() -> void:
         var inferno = specialization_balance_scene.instantiate()
         root.add_child(inferno)
         check(inferno.choose_tower("fire") and inferno.build_tower(0), "Inferno benchmark purchases fire tower")
-        check(inferno.upgrade_selected() and inferno.choose_specialization("siege"), "Inferno benchmark uses equal gold investment")
+        check(upgrade_to_specialization(inferno, "siege"), "Inferno benchmark uses equal gold investment")
         var sturdy_foe: Dictionary = {"pos": inferno.slots[0]["pos"] + Vector2(20, 10), "hp": 100, "delay": 0.0}
         inferno.enemies.append(sturdy_foe)
         inferno.attack_with_towers(1.0)
@@ -311,7 +321,7 @@ func run_tests() -> void:
         var ballista = specialization_balance_scene.instantiate()
         root.add_child(ballista)
         check(ballista.choose_tower("bone") and ballista.build_tower(0), "Ballista benchmark builds bone tower")
-        check(ballista.upgrade_selected() and ballista.choose_specialization("siege"), "Ballista benchmark upgrades for 20 gold")
+        check(upgrade_to_specialization(ballista, "siege"), "Ballista benchmark upgrades for 20 gold")
         check(ballista.coins == 100, "Ballista costs 50 gold total")
         var ballista_foe: Dictionary = {"pos": ballista.slots[0]["pos"] + Vector2(30, 0), "hp": 100, "delay": 0.0}
         ballista.enemies.append(ballista_foe)
@@ -324,7 +334,7 @@ func run_tests() -> void:
         var bone_swarm = specialization_balance_scene.instantiate()
         root.add_child(bone_swarm)
         check(bone_swarm.choose_tower("bone") and bone_swarm.build_tower(0), "Bone swarm benchmark builds bone tower")
-        check(bone_swarm.upgrade_selected() and bone_swarm.choose_specialization("swarm"), "Bone swarm benchmark upgrades for 20 gold")
+        check(upgrade_to_specialization(bone_swarm, "swarm"), "Bone swarm benchmark upgrades for 20 gold")
         check(bone_swarm.coins == 100, "Bone swarm also costs 50 gold total")
         var swarm_foe: Dictionary = {"pos": bone_swarm.slots[0]["pos"] + Vector2(30, 0), "hp": 100, "delay": 0.0}
         bone_swarm.enemies.append(swarm_foe)
@@ -341,7 +351,7 @@ func run_tests() -> void:
             var piercing = specialization_balance_scene.instantiate()
             root.add_child(piercing)
             check(piercing.choose_tower("bone") and piercing.build_tower(0), "Piercing benchmark builds bone tower " + bone_path)
-            check(piercing.upgrade_selected() and piercing.choose_specialization(bone_path), "Piercing benchmark chooses " + bone_path)
+            check(upgrade_to_specialization(piercing, bone_path), "Piercing benchmark chooses " + bone_path)
             var base: Vector2 = piercing.slots[0]["pos"]
             var front: Dictionary = {"pos": base + Vector2(20, 0), "hp": 100, "delay": 0.0, "role": "runner"}
             var behind_a: Dictionary = {"pos": base + Vector2(60, 0), "hp": 100, "delay": 0.0, "role": "brute"}
@@ -359,7 +369,7 @@ func run_tests() -> void:
             var runner_game = specialization_balance_scene.instantiate()
             root.add_child(runner_game)
             check(runner_game.choose_tower("bone") and runner_game.build_tower(0), "Runner benchmark builds tower: " + bone_path)
-            check(runner_game.upgrade_selected() and runner_game.choose_specialization(bone_path), "Runner benchmark selects path: " + bone_path)
+            check(upgrade_to_specialization(runner_game, bone_path), "Runner benchmark selects path: " + bone_path)
             var runner: Dictionary = {"pos": runner_game.slots[0]["pos"] + Vector2(30, 0), "hp": 5, "delay": 0.0, "role": "runner"}
             runner_game.enemies.append(runner)
             runner_game.attack_with_towers(0.01)
@@ -376,7 +386,7 @@ func run_tests() -> void:
             var necro_balance = specialization_balance_scene.instantiate()
             root.add_child(necro_balance)
             check(necro_balance.choose_tower("necro") and necro_balance.build_tower(0), "Necro benchmark builds tower: " + necro_path)
-            check(necro_balance.upgrade_selected() and necro_balance.choose_specialization(necro_path), "Necro benchmark chooses path: " + necro_path)
+            check(upgrade_to_specialization(necro_balance, necro_path), "Necro benchmark chooses path: " + necro_path)
             check(necro_balance.coins == 70, "Both necromancer paths cost 80 gold: " + necro_path)
             # Put three low-health enemies in range, one per forced shot.
             # Reset cooldown between shots to isolate kill-trigger thresholds.
@@ -405,13 +415,17 @@ func run_tests() -> void:
             economy.coins = base_cost - 1
             check(economy.choose_tower(economy_kind), "Economy selects school " + economy_kind)
             check(not economy.build_tower(0) and economy.coins == base_cost - 1, "Insufficient treasury blocks purchase " + economy_kind)
-            economy.coins = 150
-            check(economy.build_tower(0) and economy.coins == 150 - base_cost, "School purchase charges exact price " + economy_kind)
-            check(economy.upgrade_selected() and economy.coins == 130 - base_cost, "Level two upgrade costs 20 gold " + economy_kind)
-            check(economy.choose_specialization("siege"), "Economy selects specialization " + economy_kind)
-            check(economy.upgrade_selected() and economy.coins == 90 - base_cost, "Level three upgrade costs 40 gold " + economy_kind)
-            check(not economy.upgrade_selected() and economy.coins == 90 - base_cost, "Level three is the upgrade cap " + economy_kind)
-            check(economy.sell_selected() and economy.coins == 120 - base_cost, "Level three sale returns 30 gold " + economy_kind)
+            economy.coins = base_cost + 120
+            check(economy.build_tower(0) and economy.coins == 120, "School purchase leaves exact upgrade budget " + economy_kind)
+            check(economy.upgrade_selected() and economy.coins == 100, "Level two upgrade costs 20 gold " + economy_kind)
+            check(not economy.specialization_open, "Level two cannot specialize " + economy_kind)
+            check(economy.upgrade_selected() and economy.coins == 60 and int(economy.slots[0]["level"]) == 3, "Level three upgrade costs 40 gold " + economy_kind)
+            check(not economy.specialization_open, "Level three is still the base form " + economy_kind)
+            check(economy.upgrade_selected() and economy.coins == 0 and economy.specialization_open, "Fourth upgrade costs 60 gold and opens specialization " + economy_kind)
+            check(not economy.upgrade_selected() and economy.coins == 0, "Pending specialization blocks another upgrade " + economy_kind)
+            check(economy.choose_specialization("siege") and int(economy.slots[0]["level"]) == 3, "Specialization keeps base level three " + economy_kind)
+            check(not economy.upgrade_selected() and economy.coins == 0, "Fully evolved tower cannot upgrade again " + economy_kind)
+            check(economy.sell_selected() and economy.coins == 30, "Level three sale returns 30 gold " + economy_kind)
             check(economy.slots[0]["tower"] == "" and int(economy.slots[0]["level"]) == 0, "Sale clears slot " + economy_kind)
             economy.queue_free()
     # Stage 174: day-specific timing must be predictable without changing
@@ -1255,7 +1269,7 @@ func run_tests() -> void:
         check(layout.build_tower(0), "Build tower for relocation")
         layout.coins = 100
         layout.select_slot(0)
-        check(layout.upgrade_selected(), "Tower upgrades before relocation")
+        check(upgrade_to_specialization(layout, "siege"), "Tower upgrades before relocation")
         check(layout.choose_specialization("siege"), "Tower chooses specialization before relocation")
         layout.cycle_target_priority()
         var coins_before: int = layout.coins
@@ -1310,7 +1324,7 @@ func run_tests() -> void:
         check(details["kind"] == "bone" and int(details["level"]) == 1, "Card shows tower type and level")
         check(int(details["upgrade_cost"]) == 20, "Card shows upgrade price")
         inspector.coins = 80
-        inspector.upgrade_selected()
+        upgrade_to_specialization(inspector, "siege")
         inspector.choose_specialization("siege")
         details = inspector.selected_tower_info()
         check(details["specialization"] == "siege" and int(details["damage"]) > 0, "Card updates with specialization and damage")
@@ -1387,7 +1401,10 @@ func run_tests() -> void:
         economy_probe.choose_tower("necro")
         check(economy_probe.build_tower(1), "Building is possible after wave cleared")
         economy_probe.select_slot(0)
-        check(economy_probe.upgrade_selected(), "Upgrading is possible between waves")
+        check(economy_probe.upgrade_selected() and economy_probe.slots[0]["level"] == 2, "First base upgrade is available between waves")
+        check(economy_probe.upgrade_selected() and economy_probe.slots[0]["level"] == 3, "Second base upgrade reaches level three")
+        check(not economy_probe.specialization_open, "Level three does not yet lock into a path")
+        check(economy_probe.upgrade_selected() and economy_probe.specialization_open, "Fourth purchase opens specialization choice")
         check(not economy_probe.can_modify_towers() and not economy_probe.sell_selected(), "Specialization choice cannot be skipped by selling or another upgrade")
         check(economy_probe.choose_specialization("siege") and economy_probe.can_modify_towers(), "Finishing specialization restores preparations")
         economy_probe.wave_number = 6
@@ -1445,7 +1462,7 @@ func run_tests() -> void:
         check(td.build_tower(0) and td.coins == 120, "Build bone tower at fixed slot")
         check(not td.build_tower(0), "Occupied slot rejects duplicate building")
         check(td.choose_tower("necro") and td.build_tower(1), "Different tower uses its own build slot")
-        check(td.select_slot(0) and td.upgrade_selected(), "Click selected tower to upgrade")
+        check(td.select_slot(0) and upgrade_to_specialization(td, "siege"), "Click selected tower to upgrade")
         check(td.choose_specialization("siege"), "Choose specialization before selling the upgraded tower")
         check(td.sell_selected() and td.slots[0]["tower"] == "", "Sold tower frees slot")
         check(td.choose_tower("fire") and td.build_tower(0), "Freed slot can be built again")
