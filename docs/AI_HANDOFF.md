@@ -1,10 +1,10 @@
-# CURRENT HANDOFF — 2026-11-01 (main after PR #312)
+# CURRENT HANDOFF — 2026-11-01 (main after PR #314)
 
 **Read first:** [AI_HANDOFF_PIXEL_ART.md](AI_HANDOFF_PIXEL_ART.md), [ROADMAP.md](ROADMAP.md), [Pixel Art Style Guide](art/PIXEL_ART_STYLE_GUIDE.md), [Pixel Art Migration Inventory](art/PIXEL_ART_MIGRATION_INVENTORY.md).
 
-**Verified code main:** `955252af84ab0eba86775a859fbb029122996e29` (PR #312). **Latest docs main before this refresh:** `583b2986bc01f508558bfac5ca8b3dae078ac572` (PR #310). Godot 4.4.1. PR #312 exact-head CI run #41284865922 passed all checks, including the new modular asset contract smoke test and existing top-down smoke test. Post-merge main CI run #41284911635 passed both `checks` and `windows-preview`; the Windows EXE was exported and published to the rolling `windows-preview` release. CI success is not owner visual approval.
+**Verified code main:** `e3dd4c6898ab20eaf627e2993bbeaa48ccecb262` (PR #314). Godot 4.4.1. PR #314 exact-head CI #41287057434 passed; post-merge main CI #41287125006 passed `checks` and `windows-preview`. Windows EXE exported and published to the rolling `windows-preview` release. The Git tree now contains zero tracked SVG files. CI success is not owner visual approval.
 
-**SVG cleanup — branch `chore/remove-legacy-svg-art-assets`:** removes all 33 tracked SVG sprite/template/icon/VFX files and five SVG export/validation tools. Workflow no longer calls those tools. `td_specialization_icons.gd` returns an empty path until approved PNG icons exist; Russian labels remain. The approved concept PNG and current PNG production assets are retained. This branch is not merged yet.
+**SVG cleanup — PR #314 merged:** removed all 33 tracked SVG sprite/template/icon/VFX files and five SVG export/validation tools. Workflow no longer calls those tools. `td_specialization_icons.gd` returns an empty path until approved PNG icons exist; Russian labels remain. The approved concept PNG and current PNG production assets are retained.
 
 **Architecture — PR #312 merged:** Added `scripts/td/td_modular_tower_assets.gd`, `assets/spire/towers/necro/manifest.json`, and `tests/td_modular_tower_assets_smoke.gd`. The manifest defines a shared 128×128 canvas/pivot, base levels 1–3, separate base/Reaper/Legion weapon sheets, canonical eight-way order (N, NE, E, SE, S, SW, W, NW), independent projectile and impact families, FPS, and projectile +X forward axis. Runtime specialization mapping is `siege→reaper`, `swarm→legion`. **This is an asset contract only:** `runtime_enabled=false`; no art or runtime renderer has been switched.
 
