@@ -2592,6 +2592,25 @@ func run_tests() -> void:
                     if art_image != null:
                         check(art_image.get_used_rect().has_area(), "Authored %s %s level %d contains visible art" % [art_kind, art_layer, art_level])
                         check(art_image.get_pixel(0, 0).a < 0.05, "Authored %s %s level %d preserves a transparent background" % [art_kind, art_layer, art_level])
+    # Production artwork can be imported as a complete set, but must never
+    # partially override gameplay textures during a build or first launch.
+    var installed_originals: bool = tower_visuals.production_necro_ready()
+    for source_level in range(1, 4):
+        var source_path: String = tower_visuals.production_necro_tower_path(source_level)
+        check(source_path != "" if installed_originals else source_path == "", "Necro original art only activates when full kit is present")
+    if installed_originals:
+        for specialization in ["siege", "swarm"]:
+            var original_spec: String = tower_visuals.production_necro_tower_path(3, specialization)
+            check(original_spec != "" and ResourceLoader.exists(original_spec), "Original necro specialty PNG imports: " + specialization)
+        for source_level in range(1, 4):
+            var idle_path: String = tower_visuals.production_necro_idle_path(source_level)
+            var idle_texture: Texture2D = load(idle_path)
+            check(idle_texture != null and idle_texture.get_size() == Vector2(1536, 192), "Original necro idle atlas imports 8 frames: L%d" % source_level)
+        for vfx_kind in ["projectiles", "weapon_impact"]:
+            var original_fx_path: String = tower_visuals.vfx_path("necro", 1, vfx_kind)
+            var original_fx: Texture2D = load(original_fx_path)
+            var cell: Vector2i = tower_visuals.vfx_frame_size("necro", vfx_kind)
+            check(original_fx != null and original_fx.get_size() == Vector2(cell.x * 8, cell.y), "Original necro VFX atlas imports eight frames: " + vfx_kind)
     var projectile_maps = load("res://scripts/td/td_tower_visuals.gd")
     for kind in ["bone", "fire", "necro", "frost"]:
         for level in range(1, 4):
@@ -2605,16 +2624,16 @@ func run_tests() -> void:
             if not impact_path.is_empty():
                 var impact_texture: Texture2D = load(impact_path)
                 check(impact_texture != null and impact_texture.get_width() >= 6 * projectile_maps.vfx_frame_size(kind, "weapon_impact").x, "Impact sheet has at least six frames: %s lv%d" % [kind, level])
-    check(projectile_maps.vfx_path("necro", 1, "weapon_impact").contains("/necro/vfx/soul_impact_8f.png"), "Necro uses authored impact texture")
-    check(projectile_maps.vfx_frame_size("necro", "projectiles") == Vector2i(32, 32), "Necro projectile atlas cell is 32x32")
-    check(projectile_maps.vfx_frame_size("necro", "weapon_impact") == Vector2i(64, 64), "Necro impact atlas cell is 64x64")
+    check(projectile_maps.vfx_path("necro", 1, "weapon_impact").contains("soul_impact_8f.png"), "Necro uses authored impact texture")
+    check(projectile_maps.vfx_frame_size("necro", "projectiles") == (Vector2i(64, 64) if installed_originals else Vector2i(32, 32)), "Necro projectile cell matches source pack")
+    check(projectile_maps.vfx_frame_size("necro", "weapon_impact") == (Vector2i(128, 128) if installed_originals else Vector2i(64, 64)), "Necro impact cell matches source pack")
     var necro_projectile: Texture2D = load(projectile_maps.vfx_path("necro", 1, "projectiles"))
     var necro_impact: Texture2D = load(projectile_maps.vfx_path("necro", 1, "weapon_impact"))
-    check(necro_projectile != null and necro_projectile.get_width() == 256 and necro_projectile.get_height() == 32, "Necro projectile eight-frame atlas imports")
-    check(necro_impact != null and necro_impact.get_width() == 512 and necro_impact.get_height() == 64, "Necro impact eight-frame atlas imports")
+    check(necro_projectile != null and necro_projectile.get_width() == 8 * projectile_maps.vfx_frame_size("necro", "projectiles").x and necro_projectile.get_height() == projectile_maps.vfx_frame_size("necro", "projectiles").y, "Necro projectile eight-frame atlas imports")
+    check(necro_impact != null and necro_impact.get_width() == 8 * projectile_maps.vfx_frame_size("necro", "weapon_impact").x and necro_impact.get_height() == projectile_maps.vfx_frame_size("necro", "weapon_impact").y, "Necro impact eight-frame atlas imports")
     if necro_impact != null:
-        check(projectile_maps.frame_region(necro_impact, Vector2i(64, 64), 7).size == Vector2(64, 64), "Necro final impact frame exists")
-        check(projectile_maps.frame_region(necro_impact, Vector2i(64, 64), 8).size == Vector2.ZERO, "Necro out-of-range impact frame is rejected")
+        check(projectile_maps.frame_region(necro_impact, projectile_maps.vfx_frame_size("necro", "weapon_impact"), 7).size == Vector2(projectile_maps.vfx_frame_size("necro", "weapon_impact")), "Necro final impact frame exists")
+        check(projectile_maps.frame_region(necro_impact, projectile_maps.vfx_frame_size("necro", "weapon_impact"), 8).size == Vector2.ZERO, "Necro out-of-range impact frame is rejected")
     var fire_splash = load("res://scripts/td/td_fire_splash.gd")
     var splash_main: Dictionary = {"pos": Vector2(100, 100), "delay": 0.0}
     var splash_close: Dictionary = {"pos": Vector2(120, 100), "delay": 0.0}
