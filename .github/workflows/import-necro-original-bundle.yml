@@ -1,7 +1,7 @@
 name: Import original Soul Altar PNG bundle from owner comment
 on:
   issue_comment:
-    types: [created]
+    types: [created, edited]
 
 permissions:
   contents: write
@@ -11,7 +11,7 @@ permissions:
 jobs:
   import-art:
     # Only the repository owner can request this exact, SHA-pinned import.
-    if: ${{ github.event.issue.number == 300 && github.event.comment.user.login == github.repository_owner && startsWith(github.event.comment.body, 'IMPORT_SOUL_ALTAR_V05') }}
+    if: ${{ github.event.issue.number == 300 && github.event.comment.user.login == github.repository_owner && contains(github.event.comment.body, 'IMPORT_SOUL_ALTAR_V05') }}
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
