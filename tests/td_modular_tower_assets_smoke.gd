@@ -36,6 +36,17 @@ func run_tests() -> void:
 		var validation: Dictionary = contract.validate_manifest(manifest)
 		check(bool(validation.get("valid", false)), "Soul Altar manifest satisfies schema v1")
 		check(not contract.runtime_ready(manifest), "Pixel Art runtime stays disabled until the complete approved kit exists")
+		var tower_visuals = load("res://scripts/td/td_tower_visuals.gd")
+		check(tower_visuals.approved_necro_sprite_path(1, "") == "res://assets/spire/towers/necro/approved_renders/sprites/level_1.png", "Approved level 1 render is selected")
+		check(tower_visuals.approved_necro_sprite_path(2, "") == "res://assets/spire/towers/necro/approved_renders/sprites/level_2.png", "Approved level 2 render is selected")
+		check(tower_visuals.approved_necro_sprite_path(3, "") == "res://assets/spire/towers/necro/approved_renders/sprites/level_3.png", "Approved level 3 render is selected")
+		check(tower_visuals.approved_necro_sprite_path(3, "siege").ends_with("/reaper.png"), "Approved Reaper render is selected for siege specialization")
+		check(tower_visuals.approved_necro_sprite_path(3, "swarm") == "", "Missing approved Legion render never gets substituted")
+		for approved_level in range(1, 4):
+			var approved_path: String = tower_visuals.approved_necro_sprite_path(approved_level, "")
+			check(tower_visuals.approved_necro_sprite_ready(approved_path), "Approved level %d PNG is RGBA 192x192 with clean transparent corners" % approved_level)
+		check(tower_visuals.approved_necro_sprite_ready(tower_visuals.approved_necro_sprite_path(3, "siege")), "Approved Reaper PNG passes runtime image checks")
+
 		var td_scene = load("res://scenes/topdown_td_prototype.tscn")
 		if td_scene != null:
 			var td = td_scene.instantiate()
