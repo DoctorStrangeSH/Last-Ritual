@@ -1,13 +1,17 @@
 # Last Ritual — Handoff: Pixel Art Migration & Soul Altar Rework
 
-**Updated:** 2026-11-01 (after PR #309)  
-**Verified main snapshot:** PR #309, commit `300415d74ba7abc1e768673d59cc435c89d394c9`  
+**Updated:** 2026-11-01 (after PR #312)  
+**Verified main snapshot:** `955252af84ab0eba86775a859fbb029122996e29` (PR #312)  
 **Primary roadmap:** [ROADMAP.md](ROADMAP.md)  
 **Art standard:** [PIXEL_ART_STYLE_GUIDE.md](art/PIXEL_ART_STYLE_GUIDE.md)  
 **Asset inventory:** [PIXEL_ART_MIGRATION_INVENTORY.md](art/PIXEL_ART_MIGRATION_INVENTORY.md)  
 **Project:** `DoctorStrangeSH/Last-Ritual`, Godot 4.4.1, top-down roguelite + Tower Defense.
 
-> This document is the durable handoff for the next AI/developer. Read it before changing art, upgrade logic, combat, or deleting assets. It supersedes older historical statements below when they conflict with the current snapshot. Update it after every meaningful implementation/asset/QA milestone.
+> This is the durable handoff for the next AI/developer. Read it before changing art, upgrade logic, combat, or deleting assets. It supersedes older historical statements below when they conflict with the current snapshot.
+
+**PR #312 — modular asset contract merged:** `scripts/td/td_modular_tower_assets.gd` provides manifest loading/validation, eight-way aim quantization and resolution of base/weapon/VFX entries. `assets/spire/towers/necro/manifest.json` documents the target kit and canonical pivot/direction order. The manifest is intentionally `contract_only` with `runtime_enabled=false`; it references planned future Pixel Art exports, not existing production files. Exact-head Godot CI #41284865922 passed the new contract test and existing smoke test. Post-merge main CI #41284911635 is queued.
+
+**Important boundary:** no runtime art has switched in PR #312. Current production Soul Altar PNGs are still assembled non-pixel images; previous SVG layers and generated PNGs remain candidates only. Upper weapon aiming and distinct Pixel Art projectile/impact sets remain unimplemented. Do not mark the Pixel Art pilot complete until the editable source and all production exports are committed, runtime is wired, and the owner approves the Windows build at gameplay 1×.
 
 ## 1. Owner decisions (confirmed)
 
@@ -51,6 +55,16 @@ In `scripts/topdown_td_prototype.gd` and `scripts/td/td_tower_stats.gd`:
 - Reaper fires one large heavy single-target projectile; Legion fires up to three independent smaller projectiles at up to three targets. Both still share the current candidate soul projectile/impact texture family; unique hand-authored Pixel Art sheets are not done.
 - Upper tower weapon/head does NOT yet aim independently. Current assembled production PNG is one image; do not rotate the complete tower. Create modular pixel-art base + upper weapon layer or eight directional upper poses.
 - The screenshot's scale/crop issues have code fixes but still need owner confirmation in the latest EXE. Global Pixel Art migration has not started.
+
+### Modular asset contract (PR #312 merged)
+
+- Manifest: `assets/spire/towers/necro/manifest.json`.
+- Shared helper: `scripts/td/td_modular_tower_assets.gd`.
+- Contract test: `tests/td_modular_tower_assets_smoke.gd`, wired into `.github/workflows/windows-build.yml`.
+- Canonical weapon direction order: north, north-east, east, south-east, south, south-west, west, north-west. The helper maps the existing specialization IDs `siege→reaper` and `swarm→legion`.
+- The manifest describes a 128×128 shared canvas and pivot (64,90), three base levels, separate base/Reaper/Legion weapon sheets, and independent projectile/impact sheets with frame sizes/FPS/forward axis.
+- **Contract only:** `runtime_enabled=false`; all listed PNGs are planned paths, not committed Pixel Art exports. The helper is not yet used by the live renderer. Do not remove or replace current runtime art based on the manifest alone.
+- Exact-head PR CI #41284865922 passed; post-merge main CI #41284911635 was queued at documentation time.
 
 ### Exact combat/visual entry points
 - `attack_with_towers(delta)` selects targets via `choose_tower_target(slot_id)`, uses `TD_MULTIHIT.targets(...)`, applies damage through `scripts/td/td_tower_damage.gd`, and appends visual records to `shot_trails`.
