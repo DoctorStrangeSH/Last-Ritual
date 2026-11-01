@@ -54,6 +54,17 @@ func run_tests() -> void:
 		check(display_rect.position == Vector2(220, 70) and display_rect.size == Vector2(120, 120), "Approved tower art is centred and its feet stay on the pad anchor")
 		check(tower_visuals.approved_necro_display_rect(Vector2.ZERO, Vector2i.ZERO).size == Vector2.ZERO, "Invalid art dimensions are rejected before drawing")
 
+		for spec in ["siege", "swarm"]:
+			for layer in ["projectiles", "weapon_impact"]:
+				var authored: Dictionary = tower_visuals.necro_specialization_vfx(spec, layer)
+				check(not authored.is_empty(), "Pixel Art VFX atlas exists for %s / %s" % [spec, layer])
+				if not authored.is_empty():
+					var tex: Texture2D = load(authored["path"])
+					check(tex != null and tex.get_size() == Vector2(authored["cell"].x * 8, authored["cell"].y), "Pixel Art atlas has eight exact frames")
+					check(tower_visuals.frame_region(tex, authored["cell"], 7).size == Vector2(authored["cell"]), "All eight frames are addressable")
+		check(tower_visuals.necro_specialization_vfx("", "projectiles").is_empty(), "Base Soul Altar keeps existing VFX")
+		check(tower_visuals.necro_specialization_vfx("invalid", "projectiles").is_empty(), "Unknown VFX specialization is rejected")
+
 		var td_scene = load("res://scenes/topdown_td_prototype.tscn")
 		if td_scene != null:
 			var td = td_scene.instantiate()
