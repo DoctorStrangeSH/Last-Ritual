@@ -37,11 +37,11 @@ func run_tests() -> void:
 		check(bool(validation.get("valid", false)), "Soul Altar manifest satisfies schema v1")
 		check(not contract.runtime_ready(manifest), "Pixel Art runtime stays disabled until the complete approved kit exists")
 		var missing: Array[String] = contract.missing_runtime_art(manifest)
-		check(missing.size() == 12, "Modular build explicitly reports three base sheets and nine weapon/VFX atlases still missing")
+		check(missing.size() == 6, "Modular build reports three base sheets and three eight-way weapon atlases still missing")
 		check(missing.has("res://assets/spire/towers/necro/base/level_1.png"), "Missing report identifies first authored base layer")
 		check(missing.has("res://assets/spire/towers/necro/weapon/reaper/weapon_8way.png"), "Missing report identifies eight-way Reaper weapon rather than using its whole-tower PNG")
 		check(missing.has("res://assets/spire/towers/necro/weapon/legion/weapon_8way.png"), "Missing report identifies eight-way Legion weapon")
-		check(missing.has("res://assets/spire/towers/necro/impacts/legion/impact_8f.png"), "Missing report does not confuse preview impact PNG with modular production atlas")
+		check(not missing.has("res://assets/spire/towers/necro/approved_renders/vfx/legion_impact_8f.png"), "Committed Legion impact strip is no longer considered missing")
 		check(contract.missing_runtime_art({}) == ["manifest:invalid"], "Invalid modular manifest yields explicit actionable error")
 
 		var tower_visuals = load("res://scripts/td/td_tower_visuals.gd")
