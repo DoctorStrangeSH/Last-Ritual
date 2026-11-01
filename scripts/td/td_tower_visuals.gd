@@ -30,6 +30,21 @@ const NECRO_PRODUCTION_ROOT := "res://assets/spire/towers/necro/production/"
 ## Owner-approved standalone Soul Altar renders (whole-tower sprites, not modular layers).
 const APPROVED_NECRO_ROOT := "res://assets/spire/towers/necro/approved_renders/sprites/"
 
+## Preserve the full source aspect ratio and keep the sprite's feet on the pad anchor.
+## The approved art is 192px RGBA; the live map renders it at 120px high.
+static func approved_necro_display_size(source_size: Vector2i, target_height: int = 120) -> Vector2i:
+    if source_size.x <= 0 or source_size.y <= 0 or target_height <= 0:
+        return Vector2i.ZERO
+    var scale_factor: float = float(target_height) / float(source_size.y)
+    return Vector2i(maxi(1, roundi(float(source_size.x) * scale_factor)), target_height)
+
+static func approved_necro_display_rect(pos: Vector2, source_size: Vector2i, target_height: int = 120) -> Rect2:
+    var display_size: Vector2i = approved_necro_display_size(source_size, target_height)
+    if display_size == Vector2i.ZERO:
+        return Rect2()
+    var size := Vector2(display_size)
+    return Rect2(Vector2(pos.x - size.x * 0.5, pos.y - size.y), size)
+
 static func approved_necro_sprite_path(level: int, specialization: String = "") -> String:
     if specialization == "swarm":
         # The approved ZIP does not contain a Legion render; retain the existing
