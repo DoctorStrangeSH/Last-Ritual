@@ -2628,6 +2628,12 @@ func run_tests() -> void:
     check(necro_profiles.trail_samples(visual_origin, visual_target, 0.7, "siege") == reaper_motes, "Flight motes are deterministic for a given shot")
     for visual_mote in reaper_motes:
         check(float(visual_mote["radius"]) > 0.0 and float(visual_mote["opacity"]) > 0.0 and float(visual_mote["opacity"]) <= 1.0, "Flight trail radii and transparency stay valid")
+    check(necro_profiles.trail_samples(visual_origin, visual_target, 1.0, "siege").is_empty(), "Reaper trail disappears precisely at landing")
+    check(necro_profiles.trail_samples(visual_origin, visual_target, 1.0, "swarm").is_empty(), "Legion trail disappears precisely at landing")
+    var landing_motes: Array[Dictionary] = necro_profiles.trail_samples(visual_origin, visual_target, 0.95, "siege")
+    check(landing_motes.size() == 4 and float(landing_motes[0]["opacity"]) < float(reaper_motes[0]["opacity"]), "Reaper motes fade before the impact and do not pop out")
+    check(necro_profiles.trail_samples(visual_origin, visual_target, 1.4, "siege").is_empty(), "Late projectile frames do not leave lingering trail particles")
+    check(necro_profiles.trail_samples(visual_origin, visual_target, 0.99, "swarm").size() == 2, "Legion late trails stay bounded until the impact frame")
     # Per-hit cost audit; do not mistake direct-hit numbers for real DPS.
     var audit_damage = load("res://scripts/td/td_tower_damage.gd")
     var audit_stats = load("res://scripts/td/td_tower_stats.gd")
