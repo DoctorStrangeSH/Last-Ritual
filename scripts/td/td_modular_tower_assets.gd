@@ -181,7 +181,11 @@ static func missing_runtime_art(manifest: Dictionary) -> Array[String]:
 			var entry: Dictionary = manifest.get(category, {}).get(branch, {})
 			var dims: Array = entry.get("frame_size", [0, 0])
 			var path: String = root + str(entry.get("path", ""))
-			if dims.size() != 2 or not _transparent_png_ready(path, Vector2i(int(dims[0]), int(dims[1])), int(entry.get("frame_count", 0))):
+			var checked := false
+			if dims.size() == 2:
+				var cell := Vector2i(int(dims[0]), int(dims[1]))
+				checked = _weapon_sheet_ready(path, cell) if category == "weapon" else _transparent_png_ready(path, cell, int(entry.get("frame_count", 0)))
+			if not checked:
 				missing.append(path)
 	return missing
 
@@ -207,9 +211,40 @@ static func runtime_ready(manifest: Dictionary) -> bool:
 			if dimensions.size() != 2:
 				return false
 			var cell := Vector2i(int(dimensions[0]), int(dimensions[1]))
-			if not _transparent_png_ready(root + str(entry.get("path", "")), cell, int(entry.get("frame_count", 0))):
+			var path: String = root + str(entry.get("path", ""))
+			if group_name == "weapon":
+				if not _weapon_sheet_ready(path, cell):
+					return false
+			elif not _transparent_png_ready(path, cell, int(entry.get("frame_count", 0))):
 				return false
 	return true
+
+## The weapon atlas must contain eight genuinely distinct authored poses.
+## Eight repeated copies of one picture are not an eight-direction animation.
+static func _weapon_poses_distinct(img: Image, cell: Vector2i) -> bool:
+	if img == null or img.is_empty() or img.get_size() != Vector2i(cell.x * 8, cell.y):
+		return false
+	var fingerprints: Dictionary = {}
+	for index in range(8):
+		var pixels := PackedByteArray()
+		for y in range(cell.y):
+			for x in range(cell.x):
+				var pixel := img.get_pixel(index * cell.x + x, y)
+				pixels.append(int(roundf(pixel.r * 255.0)))
+				pixels.append(int(roundf(pixel.g * 255.0)))
+				pixels.append(int(roundf(pixel.b * 255.0)))
+				pixels.append(int(roundf(pixel.a * 255.0)))
+		var key := pixels.hex_encode()
+		if fingerprints.has(key):
+			return false
+		fingerprints[key] = true
+	return true
+
+static func _weapon_sheet_ready(path: String, cell: Vector2i) -> bool:
+	if not _transparent_png_ready(path, cell, 8):
+		return false
+	var texture := load(path) as Texture2D
+	return texture != null and _weapon_poses_distinct(texture.get_image(), cell)
 
 static func _transparent_png_ready(path: String, cell_size: Vector2i, frames: int) -> bool:
 	if cell_size.x <= 0 or cell_size.y <= 0 or frames <= 0:

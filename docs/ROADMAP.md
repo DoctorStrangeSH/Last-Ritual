@@ -1,5 +1,8 @@
 # АКТУАЛЬНЫЙ ПЛАН — 01.11.2026 (после PR #314)
 
+**01.11.2026 — PR #332:** strengthened the modular Soul Altar art gate: eight-way weapon strips must contain eight distinct rendered frames, not eight repeated copies of a static weapon. The production readiness check and missing-art report now use this check; authored PNGs and gameplay remain untouched. Headless regression tests cover distinct frames, duplicate frames and wrong dimensions. This is asset QA, not a claim that approved 8-way artwork exists.
+
+
 **01.11.2026 — modular-art readiness (PR #331):** добавлен точный список недостающих production PNG для неподвижного основания и отдельного 8-way оружия Алтаря душ: 3 основания + 3 оружейных атласа + 3 атласа снарядов + 3 атласа попаданий = 12. Функция `missing_runtime_art()` проверяет реальные прозрачные кадры требуемого размера, а не наличие концепта/превью; smoke-тест охраняет список. Готовые цельные спрайты и отдельные VFX (#330) остаются подключены, но НЕ считаются готовыми модульными слоями. `runtime_enabled=false` — менять только после полного утверждённого набора и визуального QA.
 
 
