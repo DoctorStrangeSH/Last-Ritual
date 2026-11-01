@@ -1,5 +1,8 @@
 # ТЕКУЩИЙ СНИМОК — 01.11.2026 (после PR #314)
 
+**01.11.2026 — Soul Altar display follow-up (PR #323):** approved RGBA sprites are now the in-game visual candidate for Necro levels 1–3 and Reaper. Runtime conversion is nearest-neighbour to 120px high, cached per texture; source aspect ratio and bottom pad anchor are preserved. The approved art remains standalone complete-tower images; no eight-way weapon rotation is claimed. Legion remains on its previous asset pending owner-approved art.
+
+
 **01.11.2026 — PR #322 merged:** the owner's approved Soul Altar archive is now committed under `assets/spire/towers/necro/approved_renders/`: four original RGBA sources plus four 192×192 transparent sprites and SHA-256 manifest. The binaries are no longer only in chat/release.
 
 **Next implementation slice (PR in progress):** render approved level 1/2/3 sprites and approved Reaper sprite directly in the TD scene. These are whole-tower sprites, not modular base/weapon layers. The ZIP has no approved Legion render, so Legion retains its existing production art until its matching approved image exists. Modular `runtime_enabled=false` remains unchanged; do not claim eight-way modular animation is complete.
