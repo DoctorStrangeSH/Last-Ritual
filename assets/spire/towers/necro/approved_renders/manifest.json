@@ -1,0 +1,52 @@
+{
+  "status": "standalone-art-qa-only",
+  "canvas": [
+    192,
+    192
+  ],
+  "production_ready": false,
+  "runtime_enabled": false,
+  "source_kind": "approved-generated-RGBA",
+  "entries": {
+    "level_1": {
+      "source": "source/level_1_original.png",
+      "source_sha256": "a131a909d39b654caf8a3676ea8f3c4581f867de526d1f56e34efcd44b8a2caf",
+      "sprite": "sprites/level_1.png",
+      "sprite_sha256": "173b739691cecfaff840146c0e2d9405c63fff8ef471999a9d0f8851293ef904",
+      "size": [
+        192,
+        192
+      ]
+    },
+    "level_2": {
+      "source": "source/level_2_original.png",
+      "source_sha256": "4589b4e3c5db6ff2f2a8e99f75858f03cb281aeb1431fc6dc56d313fab823959",
+      "sprite": "sprites/level_2.png",
+      "sprite_sha256": "1a66a6284d3e632903550b989b3d8922be94112217ecd053b103285cc952ccf3",
+      "size": [
+        192,
+        192
+      ]
+    },
+    "level_3": {
+      "source": "source/level_3_original.png",
+      "source_sha256": "5c014b3a68b25330fdb5b26628fb35523a645e411c9e561d86bf1b473986259f",
+      "sprite": "sprites/level_3.png",
+      "sprite_sha256": "88e47ea6d9f4118a34761bcff032222705ac3885323d9509255289c6feefc98b",
+      "size": [
+        192,
+        192
+      ]
+    },
+    "reaper": {
+      "source": "source/reaper_original.png",
+      "source_sha256": "919cf3ce1982cb296104a6ec9b0a89931e6c839921c18337722ea8673628844e",
+      "sprite": "sprites/reaper.png",
+      "sprite_sha256": "fa49bebfb21318bd4f7de4fdf17618a929555306e6727f79d76221054445e429",
+      "size": [
+        192,
+        192
+      ]
+    }
+  }
+}
