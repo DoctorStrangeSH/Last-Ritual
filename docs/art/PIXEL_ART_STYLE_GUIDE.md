@@ -134,3 +134,7 @@ Migration must be safe and family-based:
 
 Do not delete currently loaded assets before replacement: the game still uses legacy art in several tower families. The owner approved removal of the old art, not a broken intermediate build. There is no requirement to keep old sprites in the shipped game after a family has migrated.
 
+
+## 11. Complete removal of superseded art
+
+The owner has authorized complete removal of old sprite families. After a replacement family has been accepted in the game, remove its old runtime sprites, experimental PNGs, old SVG source layers/vector drafts, specialization icon SVGs and legacy atlas data once all references are switched and CI/export passes. Do not keep the previous art as an optional fallback. Retain required license/attribution records and the editable sources/manifests for the new Pixel Art. The Soul Altar v0.5 concept board may remain as a non-runtime reference; its old cutout sprites are eligible for deletion after the new Pixel Art kit is approved.
