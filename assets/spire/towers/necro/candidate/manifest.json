@@ -1,0 +1,242 @@
+{
+  "schema_version": 1,
+  "id": "necro",
+  "display_name": "Алтарь душ",
+  "status": "candidate_for_review",
+  "runtime_enabled": false,
+  "camera": "top_down_3_quarter",
+  "canvas": {
+    "width": 128,
+    "height": 128,
+    "pivot": [
+      64,
+      90
+    ],
+    "ground_anchor": [
+      64,
+      118
+    ]
+  },
+  "direction_order": [
+    "north",
+    "north_east",
+    "east",
+    "south_east",
+    "south",
+    "south_west",
+    "west",
+    "north_west"
+  ],
+  "base": {
+    "levels": {
+      "1": "candidate/base/level_1.png",
+      "2": "candidate/base/level_2.png",
+      "3": "candidate/base/level_3.png"
+    },
+    "frame_size": [
+      128,
+      128
+    ],
+    "anchor": "ground_anchor"
+  },
+  "weapon": {
+    "base": {
+      "path": "candidate/weapon/base/weapon_8way.png",
+      "frame_size": [
+        128,
+        128
+      ],
+      "frame_count": 8,
+      "direction_order": [
+        "north",
+        "north_east",
+        "east",
+        "south_east",
+        "south",
+        "south_west",
+        "west",
+        "north_west"
+      ],
+      "pivot": [
+        64,
+        90
+      ],
+      "forward_direction": "north"
+    },
+    "reaper": {
+      "path": "candidate/weapon/reaper/weapon_8way.png",
+      "frame_size": [
+        128,
+        128
+      ],
+      "frame_count": 8,
+      "direction_order": [
+        "north",
+        "north_east",
+        "east",
+        "south_east",
+        "south",
+        "south_west",
+        "west",
+        "north_west"
+      ],
+      "pivot": [
+        64,
+        90
+      ],
+      "forward_direction": "north"
+    },
+    "legion": {
+      "path": "candidate/weapon/legion/weapon_8way.png",
+      "frame_size": [
+        128,
+        128
+      ],
+      "frame_count": 8,
+      "direction_order": [
+        "north",
+        "north_east",
+        "east",
+        "south_east",
+        "south",
+        "south_west",
+        "west",
+        "north_west"
+      ],
+      "pivot": [
+        64,
+        90
+      ],
+      "forward_direction": "north"
+    }
+  },
+  "projectiles": {
+    "base": {
+      "path": "vfx/soul_projectile_8f.png",
+      "frame_size": [
+        32,
+        32
+      ],
+      "frame_count": 8,
+      "fps": 24,
+      "loop": true,
+      "forward_axis": "+X"
+    },
+    "reaper": {
+      "path": "approved_renders/vfx/reaper_projectile_8f.png",
+      "frame_size": [
+        48,
+        48
+      ],
+      "frame_count": 8,
+      "fps": 24,
+      "loop": true,
+      "forward_axis": "+X"
+    },
+    "legion": {
+      "path": "approved_renders/vfx/legion_projectile_8f.png",
+      "frame_size": [
+        32,
+        32
+      ],
+      "frame_count": 8,
+      "fps": 24,
+      "loop": true,
+      "forward_axis": "+X"
+    }
+  },
+  "impacts": {
+    "base": {
+      "path": "vfx/soul_impact_8f.png",
+      "frame_size": [
+        64,
+        64
+      ],
+      "frame_count": 8,
+      "fps": 24,
+      "loop": false
+    },
+    "reaper": {
+      "path": "approved_renders/vfx/reaper_impact_8f.png",
+      "frame_size": [
+        64,
+        64
+      ],
+      "frame_count": 8,
+      "fps": 24,
+      "loop": false
+    },
+    "legion": {
+      "path": "approved_renders/vfx/legion_impact_8f.png",
+      "frame_size": [
+        48,
+        48
+      ],
+      "frame_count": 8,
+      "fps": 24,
+      "loop": false
+    }
+  },
+  "animations": {
+    "idle": {
+      "path": "animations/idle_8f.png",
+      "frame_size": [
+        128,
+        128
+      ],
+      "frame_count": 8,
+      "fps": 8,
+      "loop": true
+    },
+    "attack": {
+      "path": "animations/attack_6f.png",
+      "frame_size": [
+        128,
+        128
+      ],
+      "frame_count": 6,
+      "fps": 18,
+      "loop": false
+    },
+    "build": {
+      "path": "animations/build_8f.png",
+      "frame_size": [
+        128,
+        128
+      ],
+      "frame_count": 8,
+      "fps": 18,
+      "loop": false
+    },
+    "sell": {
+      "path": "animations/sell_8f.png",
+      "frame_size": [
+        128,
+        128
+      ],
+      "frame_count": 8,
+      "fps": 18,
+      "loop": false
+    }
+  },
+  "icons": {
+    "tower": "icons/tower.png",
+    "upgrade": "icons/upgrade.png",
+    "specialization_reaper": "icons/specialization_reaper.png",
+    "specialization_legion": "icons/specialization_legion.png"
+  },
+  "source": {
+    "editable_project": "candidate/SOURCE.md",
+    "palette": "source/palette.png",
+    "provenance": "source/PROVENANCE.md",
+    "approved_reference": "source/concepts/soul_altar_tower_concept_v05.png",
+    "editable_project_status": "procedural_geometry_source_to_be_committed"
+  },
+  "notes": [
+    "INDEPENDENT REVIEW CANDIDATE ONLY — not approved as replacement art.",
+    "Generated native pixel shapes, NOT a pixelation filter on existing renders.",
+    "Three stationary 128x128 bases and three independent 1024x128 eight-way weapon strips.",
+    "The candidate remains disabled; production manifest and live rendering are untouched.",
+    "Eight distinct poses are directional hand-scripted geometry, requiring owner visual QA and further quality iteration."
+  ]
+}
