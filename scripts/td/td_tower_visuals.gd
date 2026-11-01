@@ -23,6 +23,35 @@ const NECRO_EXPERIMENTAL_ROOT := "res://assets/spire/towers/necro/experimental/"
 const FROST_EXPERIMENTAL_ART := true
 const FROST_EXPERIMENTAL_ROOT := "res://assets/spire/towers/frost/experimental/"
 
+## Original detailed concept-derived PNGs are preferred only when the complete
+## reviewed kit is actually committed. Never ship references to absent textures.
+const NECRO_PRODUCTION_ROOT := "res://assets/spire/towers/necro/production/"
+
+static func production_necro_ready() -> bool:
+    for level in range(1, 4):
+        if not ResourceLoader.exists(NECRO_PRODUCTION_ROOT + "level_%d_192.png" % level):
+            return false
+        if not ResourceLoader.exists(NECRO_PRODUCTION_ROOT + "level_%d_idle_8f.png" % level):
+            return false
+    for name in ["specialization_reaper_192.png", "specialization_legion_192.png", "soul_projectile_8f.png", "soul_impact_8f.png"]:
+        if not ResourceLoader.exists(NECRO_PRODUCTION_ROOT + name):
+            return false
+    return true
+
+static func production_necro_tower_path(level: int, specialization: String = "") -> String:
+    if level < 1 or level > 3 or not production_necro_ready():
+        return ""
+    if level == 3 and specialization == "siege":
+        return NECRO_PRODUCTION_ROOT + "specialization_reaper_192.png"
+    if level == 3 and specialization == "swarm":
+        return NECRO_PRODUCTION_ROOT + "specialization_legion_192.png"
+    return NECRO_PRODUCTION_ROOT + "level_%d_192.png" % level
+
+static func production_necro_idle_path(level: int) -> String:
+    if level < 1 or level > 3 or not production_necro_ready():
+        return ""
+    return NECRO_PRODUCTION_ROOT + "level_%d_idle_8f.png" % level
+
 static func uses_experimental_frost(kind: String) -> bool:
     return FROST_EXPERIMENTAL_ART and kind == "frost"
 
@@ -97,6 +126,11 @@ static func vfx_path(kind: String, level: int, layer: String) -> String:
             return "res://assets/spire/towers/frost/vfx/ice_shard_projectile_8f.png"
         if layer == "weapon_impact":
             return "res://assets/spire/towers/frost/vfx/ice_burst_impact_8f.png"
+    if kind == "necro" and level >= 1 and level <= 3 and production_necro_ready():
+        if layer == "projectiles":
+            return NECRO_PRODUCTION_ROOT + "soul_projectile_8f.png"
+        if layer == "weapon_impact":
+            return NECRO_PRODUCTION_ROOT + "soul_impact_8f.png"
     # Authored necromancer atlases are shared by all three upgrade levels.
     # Do not change base/weapon mapping or saved tower kinds.
     if kind == "necro" and level >= 1 and level <= 3:
@@ -120,6 +154,11 @@ static func vfx_frame_size(kind: String, layer: String) -> Vector2i:
         if layer == "weapon_impact":
             return Vector2i(64, 64)
     if kind == "necro":
+        if production_necro_ready():
+            if layer == "projectiles":
+                return Vector2i(128, 128)
+            if layer == "weapon_impact":
+                return Vector2i(128, 128)
         if layer == "projectiles":
             return Vector2i(32, 32)
         if layer == "weapon_impact":
