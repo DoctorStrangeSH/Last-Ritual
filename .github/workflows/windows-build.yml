@@ -71,6 +71,10 @@ jobs:
         run: python -m py_compile tools/import_necro_git_bundle.py
       - name: Reject invalid Soul Altar Pixel Art atlases
         run: timeout 120s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --script res://tests/soul_altar_art_gate.gd
+      - name: Compile Soul Altar review frame exporter
+        run: python -m py_compile tools/export_soul_altar_review_frames.py
+      - name: Validate assembled Soul Altar Pixel Art review source
+        run: timeout 120s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --script res://tests/soul_altar_assembled_review_smoke.gd
       - name: Run modular tower asset contract tests
         run: timeout 120s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --script res://tests/td_modular_tower_assets_smoke.gd
       - name: Run top-down smoke tests
