@@ -1,5 +1,8 @@
 # ТЕКУЩИЙ СНИМОК — 01.11.2026 (после PR #314)
 
+**01.11.2026 — проверка видимых поз оружия (PR ожидает CI):** улучшен gate восьми направлений Алтаря душ: RGB скрытых полностью прозрачных пикселей больше не делает одинаковые видимые кадры ложными «разными» позами. Smoke-тест охраняет этот случай и подтверждает, что реально различимые кадры остаются допустимыми. Модульный runtime по-прежнему выключен (`runtime_enabled=false`); новые PNG, механика, сохранения и утверждённые изображения не изменены. После успешного CI проверить PR, затем продолжить создание отдельных оснований L1–L3 и авторских восьминаправленных оружейных атласов для base/Жнеца/Легиона. Ручное Windows QA не выполнено.
+
+
 **01.11.2026 — PR #332:** strengthened the modular Soul Altar art gate: eight-way weapon strips must contain eight distinct rendered frames, not eight repeated copies of a static weapon. The production readiness check and missing-art report now use this check; authored PNGs and gameplay remain untouched. Headless regression tests cover distinct frames, duplicate frames and wrong dimensions. This is asset QA, not a claim that approved 8-way artwork exists.
 
 

@@ -230,10 +230,15 @@ static func _weapon_poses_distinct(img: Image, cell: Vector2i) -> bool:
 		for y in range(cell.y):
 			for x in range(cell.x):
 				var pixel := img.get_pixel(index * cell.x + x, y)
-				pixels.append(int(roundf(pixel.r * 255.0)))
-				pixels.append(int(roundf(pixel.g * 255.0)))
-				pixels.append(int(roundf(pixel.b * 255.0)))
-				pixels.append(int(roundf(pixel.a * 255.0)))
+				var alpha_byte := clampi(roundi(pixel.a * 255.0), 0, 255)
+				# Invisible RGB differences must not count as different poses.
+				if alpha_byte == 0:
+					pixels.append_array(PackedByteArray([0, 0, 0, 0]))
+				else:
+					pixels.append(clampi(roundi(pixel.r * 255.0), 0, 255))
+					pixels.append(clampi(roundi(pixel.g * 255.0), 0, 255))
+					pixels.append(clampi(roundi(pixel.b * 255.0), 0, 255))
+					pixels.append(alpha_byte)
 		var key := pixels.hex_encode()
 		if fingerprints.has(key):
 			return false

@@ -48,5 +48,16 @@ func verify() -> void:
 		duplicated.set_pixel(index * 16 + 4, 6, Color.WHITE)
 		duplicated.set_pixel(index * 16 + 5, 7, Color.WHITE)
 	check(not resolver._weapon_poses_distinct(duplicated, cell), "Eight duplicate frames are rejected as fake aiming")
+	# RGB values beneath alpha=0 can differ across PNG exports while the
+	# displayed pixels are identical. Such atlases must fail the pose gate.
+	var hidden_rgb := duplicated.duplicate()
+	for index in range(8):
+		hidden_rgb.set_pixel(index * cell.x + 1, 1, Color(float(index + 1) / 9.0, 0.0, 0.0, 0.0))
+	check(not resolver._weapon_poses_distinct(hidden_rgb, cell), "Invisible RGB differences do not count as distinct poses")
+	# Visible one-pixel variations still count, even when transparency elsewhere varies.
+	var visible_diff := hidden_rgb.duplicate()
+	for index in range(8):
+		visible_diff.set_pixel(index * cell.x + 2 + index, 2, Color(0.8, 0.5, 1.0, 1.0))
+	check(resolver._weapon_poses_distinct(visible_diff, cell), "Distinct visible poses remain valid")
 	check(not resolver._weapon_poses_distinct(unique, Vector2i(32, 16)), "Invalid weapon cell dimensions are rejected")
 	quit(1 if failures > 0 else 0)
