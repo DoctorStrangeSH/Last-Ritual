@@ -21,7 +21,7 @@ func upgrade_to_specialization(game, path: String) -> bool:
     for step in range(3):
         if not game.upgrade_selected():
             return false
-    return game.specialization_open and game.choose_specialization(path)
+    return game.specialization_open and int(game.slots[game.selected_slot]["level"]) == 3 and game.choose_specialization(path)
 
 func _initialize() -> void:
     call_deferred("run_tests")
@@ -289,7 +289,7 @@ func run_tests() -> void:
         fire_timing.tick_burning(5.0)
         check(fire_timing.enemies.is_empty() and fire_timing.coins == coins_before_fire + 5 and fire_timing.enemies_defeated == kills_before_fire + 1, "Lethal burn grants exactly one kill and one gold reward")
         fire_timing.queue_free()
-    # Same 65-gold fire investment, distinct roles: Inferno wins against
+    # Same 165-gold fire investment, distinct roles: Inferno wins against
     # one durable foe, while Sparks distributes ordinary burns to a group.
     var specialization_balance_scene = load("res://scenes/topdown_td_prototype.tscn") as PackedScene
     if specialization_balance_scene != null:
@@ -323,7 +323,7 @@ func run_tests() -> void:
         inferno.tick_burning(3.0)
         check(inferno.coins == 35 and sturdy_foe["hp"] == 77, "Level-three Inferno spends the same gold and burns down a single armored target faster")
         inferno.queue_free()
-    # Bone specialization benchmark: equal 50-gold investment, isolated tower,
+    # Bone specialization benchmark: equal 150-gold investment, isolated tower,
     # one durable target. Ballista has stronger individual shots, while Swarm
     # gains additional shots over time. No hero, relic or synergy modifiers.
     if specialization_balance_scene != null:
@@ -338,7 +338,7 @@ func run_tests() -> void:
         ballista.attack_with_towers(0.01)
         check(ballista_foe["hp"] == 92, "Level-three Ballista hits one durable target for eight damage")
         ballista.attack_with_towers(0.45)
-        check(ballista_foe["hp"] == 94, "Ballista has not reloaded after 0.45 seconds")
+        check(ballista_foe["hp"] == 92, "Ballista has not reloaded after 0.45 seconds")
         ballista.queue_free()
 
         var bone_swarm = specialization_balance_scene.instantiate()
@@ -389,7 +389,7 @@ func run_tests() -> void:
             check(runner_game.enemies.is_empty() == (bone_path == "siege"), "Ballista instantly stops 6-HP runner, Swarm needs another shot: " + bone_path)
             if bone_path == "swarm":
                 runner_game.attack_with_towers(0.45)
-                check(runner_game.enemies.is_empty(), "Swarm defeats 5-HP runner on second shot")
+                check(runner_game.enemies.is_empty(), "Swarm defeats 6-HP runner on second shot")
             check(runner_game.enemies_defeated == 1 and runner_game.coins == 105, "Runner kill pays exactly once: " + bone_path)
             runner_game.queue_free()
     # Necromancy benchmark: equal 80 gold investments, distinct spirit roles.
