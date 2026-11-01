@@ -3,6 +3,15 @@ extends RefCounted
 const COSTS := {"bone": 30, "fire": 45, "necro": 60, "frost": 50}
 const RANGES := {"bone": 135.0, "fire": 160.0, "necro": 125.0, "frost": 145.0}
 const DAMAGES := {"bone": 2, "fire": 1, "necro": 3, "frost": 1}
+const SPECIALIZATION_UPGRADE_COST := 60
+
+## First two steps improve the base tower; the fourth purchase unlocks a path.
+static func upgrade_cost(level: int, specialization: String) -> int:
+    if level < 1 or level > 3:
+        return 0
+    if level < 3:
+        return 20 * level
+    return 0 if specialization != "" else SPECIALIZATION_UPGRADE_COST
 const SPECIALIZATION_LABELS := {
     "bone": ["БАЛЛИСТА: +2 УРОН", "РОЙ: СКОРОСТЬ"],
     "fire": ["ИНФЕРНО: ПЛАМЯ", "ИСКРЫ: 3 ЦЕЛИ"],
