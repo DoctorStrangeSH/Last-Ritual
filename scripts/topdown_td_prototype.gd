@@ -25,6 +25,7 @@ const TD_ENEMY_ARMOR = preload("res://scripts/td/td_enemy_armor.gd")
 const TD_EMBER_HEART = preload("res://scripts/td/td_ember_heart.gd")
 const TD_MULTIHIT = preload("res://scripts/td/td_multihit.gd")
 const TD_NECRO_SPIRITS = preload("res://scripts/td/td_necro_spirits.gd")
+const TD_NECRO_ATTACK_PROFILE = preload("res://scripts/td/td_necro_attack_profile.gd")
 const TD_FROST_EFFECT = preload("res://scripts/td/td_frost_effect.gd")
 var sfx: Node
 const SLOT_POSITIONS := [Vector2(280, 190), Vector2(430, 190), Vector2(590, 190), Vector2(750, 190), Vector2(280, 440), Vector2(430, 440), Vector2(590, 440), Vector2(750, 440)]
@@ -575,6 +576,7 @@ func attack_with_towers(delta: float) -> void:
         var target: Dictionary = choose_tower_target(slot_id)
         if target.is_empty():
             continue
+        var necro_profile: Dictionary = TD_NECRO_ATTACK_PROFILE.for_specialization(str(tower.get("specialization", ""))) if kind == "necro" else {}
         if kind == "necro":
             tower_aim_targets[slot_id] = Vector2(target["pos"])
         var hit_targets: Array = TD_MULTIHIT.targets(tower, target, enemies, float(TOWER_RANGE[kind]))
@@ -612,11 +614,14 @@ func attack_with_towers(delta: float) -> void:
                 if kind == "necro":
                     coins += necro_kill_bonus
                     necro_kill_streak += 1
-                    var spirit_threshold: int = 2 if tower.get("specialization", "") == "swarm" else 3
+                    var spirit_threshold: int = int(necro_profile["kill_streak_threshold"])
                     if necro_kill_streak >= spirit_threshold:
                         necro_kill_streak = 0
-                        spawn_necro_spirit(tower["pos"], tower.get("specialization", "") == "siege", has_adjacent_tower(slot_id, "frost"))
-        tower_cooldowns[slot_id] = 0.45 if tower.get("specialization", "") == "swarm" else 0.8
+                        spawn_necro_spirit(tower["pos"], bool(necro_profile["empowered_spirit"]), has_adjacent_tower(slot_id, "frost"))
+        if kind == "necro":
+            tower_cooldowns[slot_id] = float(necro_profile["cooldown"])
+        else:
+            tower_cooldowns[slot_id] = 0.45 if tower.get("specialization", "") == "swarm" else 0.8
     queue_redraw()
 
 func spawn_necro_spirit(origin: Vector2, empowered: bool = false, frost_link: bool = false) -> void:
@@ -1717,11 +1722,8 @@ func _draw() -> void:
                 var impact_texture: Texture2D = cached_tower_texture(impact_path)
                 var impact_cell: Vector2i = TOWER_VISUALS.vfx_frame_size("necro", "weapon_impact")
                 var impact_region: Rect2 = TOWER_VISUALS.frame_region(impact_texture, impact_cell, frame)
-                var impact_size: Vector2 = Vector2(44.0, 44.0)
-                if specialization == "siege":
-                    impact_size = Vector2(54.0, 54.0)
-                elif specialization == "swarm":
-                    impact_size = Vector2(36.0, 36.0)
+                var attack_profile: Dictionary = TD_NECRO_ATTACK_PROFILE.for_specialization(specialization)
+                var impact_size: Vector2 = attack_profile["impact_size"]
                 var impact_point: Vector2 = Vector2(trail.get("to", Vector2.ZERO))
                 var impact_alpha: float = clampf(1.0 - elapsed / duration, 0.0, 1.0)
                 if impact_texture != null and impact_region.size != Vector2.ZERO:
@@ -1742,14 +1744,9 @@ func _draw() -> void:
             var projectile_from: Vector2 = Vector2(trail.get("from", Vector2.ZERO))
             var projectile_to: Vector2 = Vector2(trail.get("to", Vector2.ZERO))
             var projectile_point: Vector2 = projectile_from.lerp(projectile_to, clampf(elapsed / duration, 0.0, 1.0))
-            var projectile_size: Vector2 = Vector2(32.0, 32.0)
-            var projectile_tint: Color = Color.WHITE
-            if specialization == "siege":
-                projectile_size = Vector2(40.0, 40.0)
-                projectile_tint = Color("#efffe7")
-            elif specialization == "swarm":
-                projectile_size = Vector2(26.0, 26.0)
-                projectile_tint = Color("#9affbd")
+            var attack_profile: Dictionary = TD_NECRO_ATTACK_PROFILE.for_specialization(specialization)
+            var projectile_size: Vector2 = attack_profile["projectile_size"]
+            var projectile_tint: Color = attack_profile["projectile_tint"]
             # Source sheet faces right (+X); rotate that forward axis toward travel.
             draw_set_transform(projectile_point, TOWER_VISUALS.projectile_rotation(projectile_from, projectile_to), Vector2.ONE)
             if projectile_texture != null and projectile_region.size != Vector2.ZERO:

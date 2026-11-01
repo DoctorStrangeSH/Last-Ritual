@@ -2594,6 +2594,18 @@ func run_tests() -> void:
         check(archetypes.shot_trail_style("bone")["impact"] == "shard", "Bone retains projectile identity")
         check(archetypes.shot_trail_style("necro")["impact"] == "spirit", "Necro retains spirit identity")
         archetypes.queue_free()
+    # Necromancer attack profiles centralize existing balance and VFX differences.
+    var necro_profiles = load("res://scripts/td/td_necro_attack_profile.gd")
+    var base_profile: Dictionary = necro_profiles.for_specialization("")
+    var reaper_profile: Dictionary = necro_profiles.for_specialization("siege")
+    var legion_profile: Dictionary = necro_profiles.for_specialization("swarm")
+    check(base_profile["cooldown"] == 0.8 and base_profile["kill_streak_threshold"] == 3, "Base Soul Altar keeps its established firing cadence")
+    check(reaper_profile["cooldown"] == 0.8 and reaper_profile["empowered_spirit"], "Reaper keeps the empowered spirit cadence")
+    check(reaper_profile["projectile_size"] == Vector2(40, 40) and reaper_profile["impact_size"] == Vector2(54, 54), "Reaper keeps its heavy projectile and impact scale")
+    check(legion_profile["cooldown"] == 0.45 and legion_profile["kill_streak_threshold"] == 2, "Legion keeps its faster spirit cadence")
+    check(legion_profile["projectile_size"] == Vector2(26, 26) and legion_profile["impact_size"] == Vector2(36, 36), "Legion keeps its compact projectile and impact scale")
+    check(legion_profile["projectile_tint"] != reaper_profile["projectile_tint"], "Legion and Reaper keep distinct projectile tints")
+    check(necro_profiles.for_specialization("unknown") == base_profile, "Unknown specialization safely falls back to base attack profile")
     # Per-hit cost audit; do not mistake direct-hit numbers for real DPS.
     var audit_damage = load("res://scripts/td/td_tower_damage.gd")
     var audit_stats = load("res://scripts/td/td_tower_stats.gd")
