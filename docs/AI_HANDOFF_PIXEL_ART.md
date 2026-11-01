@@ -4,6 +4,7 @@
 **Verified main snapshot:** PR #309, commit `300415d74ba7abc1e768673d59cc435c89d394c9`  
 **Primary roadmap:** [ROADMAP.md](ROADMAP.md)  
 **Art standard:** [PIXEL_ART_STYLE_GUIDE.md](art/PIXEL_ART_STYLE_GUIDE.md)  
+**Asset inventory:** [PIXEL_ART_MIGRATION_INVENTORY.md](art/PIXEL_ART_MIGRATION_INVENTORY.md)  
 **Project:** `DoctorStrangeSH/Last-Ritual`, Godot 4.4.1, top-down roguelite + Tower Defense.
 
 > This document is the durable handoff for the next AI/developer. Read it before changing art, upgrade logic, combat, or deleting assets. It supersedes older historical statements below when they conflict with the current snapshot. Update it after every meaningful implementation/asset/QA milestone.
@@ -129,17 +130,18 @@ Do not delete an active runtime asset before its Pixel Art replacement is commit
 5. Run Godot 4.4.1 headless import and `tests/topdown_smoke.gd`; inspect workflow and Windows export.
 6. Keep a recoverable commit in Git history. Never delete original Soul Altar sources or licensed provenance.
 
-## 6. PR / QA order (current order after PR #307 and #309)
+## 6. PR / QA order (current after PR #307 and #309)
 
-1. **Owner QA of current EXE:** verify four-step progression, tower size/centre/Reaper crop, Reaper single-target and Legion multi-target attacks, projectile animation/rotation, impact and no necro beam.
-2. **Pixel-art pilot:** create a true hand-authored Soul Altar kit; no pixelation filter over realistic art.
-3. **Modular aiming:** static base plus upper weapon/head layer with 8-way poses (preferred) or a carefully validated rotatable layer.
-4. **Unique combat art:** separate base/Reaper/Legion animated projectile and impact sheets; preserve actual independent Legion projectile records and Reaper single-target semantics.
-5. **Reproducible source pipeline:** editable source, deterministic export, palette, manifest, pivots, frame timings, forward axis, provenance and contact sheet.
-6. **Owner approval at gameplay 1×**; only then freeze the Pixel Art standard and use Soul Altar as the reference family.
-7. **Migrate remaining tower families, enemies, hero, environment, dungeon, VFX and UI** one family at a time.
-8. **Delete superseded old sprites completely** after runtime paths are switched, reference scans are clean, and Godot import/smoke/Windows export pass. Do not keep old sprite fallbacks.
-9. **Release and documentation:** update all handoffs, roadmap, inventory and project state; publish EXE only from successful main build.
+1. Owner manually verifies the latest Windows EXE: L1/L2/L3/fourth specialization purchase, scale/centre/Reaper crop, Reaper single shot, Legion multi-shot, projectile animation/rotation, impacts and no necro beam.
+2. Create the first true hand-authored Pixel Art pilot kit for Soul Altar; do not pixelate realistic source images with a filter.
+3. Separate static base from aiming upper weapon/head, preferably with eight directional pixel poses sharing one pivot.
+4. Create unique base/Reaper/Legion projectile and impact sheets; keep real gameplay projectile records distinct.
+5. Commit editable source, deterministic exporter, palette, manifest (dimensions, frames, FPS, pivot, forward axis, license/provenance) and contact sheet.
+6. Get owner approval at gameplay 1×; only then lock the pilot as the visual reference for other families.
+7. Migrate remaining towers, enemies, hero, world, dungeon, VFX and UI family by family.
+8. After each family is switched and validated, delete its old sprite assets completely; no permanent legacy fallback.
+9. Run Godot import/smoke tests and Windows export; manual owner QA is recorded separately.
+10. Update handoffs, roadmap and inventory after every meaningful merge, asset migration/deletion and owner QA.
 
 ## 7. Required recurring documentation updates
 
