@@ -1392,6 +1392,21 @@ func cached_tower_texture(path: String) -> Texture2D:
     return tower_texture_cache[path]
 
 func draw_tower_figure(pos: Vector2, kind: String, level: int, specialization: String = "") -> void:
+    # Owner-approved transparent Pixel Art atlas. Each frame is 64x88 and is
+    # displayed at exact 2x nearest-neighbour scale; the ground anchor is at pos.
+    # Frames: L1, L2, L3, Reaper, Legion. The tower is static until modular
+    # eight-way upper-weapon sprites are produced from this same approved design.
+    if kind == "necro" and TOWER_VISUALS.approved_necro_pixel_art_ready():
+        var approved_path: String = TOWER_VISUALS.NECRO_APPROVED_PIXEL_ATLAS
+        var approved_texture: Texture2D = cached_tower_texture(approved_path)
+        var approved_region: Rect2 = TOWER_VISUALS.approved_necro_pixel_art_source_rect(approved_texture, level, specialization)
+        if approved_texture != null and approved_region.size == Vector2(64, 88):
+            var previous_filter: int = texture_filter
+            texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+            var approved_rect := Rect2(Vector2(pos.x - 64.0, pos.y - 168.0), Vector2(128.0, 176.0))
+            draw_texture_rect_region(approved_texture, approved_rect, approved_region)
+            texture_filter = previous_filter
+            return
     # Prefer the original concept-derived PNG, not its simplified SVG substitute.
     # Preserve prior art if any member of the production pack is missing.
     if kind == "necro" and TOWER_VISUALS.production_necro_ready():
