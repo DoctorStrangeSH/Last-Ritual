@@ -233,12 +233,13 @@
     "editable_project_status": "not_created"
   },
   "notes": [
-    "The owner-approved design reference is source/concepts/soul_altar_tower_concept_v05.png; no alternate Soul Altar concept may be generated.",
-    "The five-frame transparent Pixel Art atlas at production/pixel_art/soul_altar_approved_atlas.png is used by the current runtime for assembled static tower sprites.",
-    "Atlas frame order is level_1, level_2, level_3, reaper, legion; each frame is 64x88 and is drawn at 2x nearest-neighbour scale.",
-    "The assembled atlas does not yet provide independent base/weapon layers or eight upper-weapon directions; the modular contract remains runtime-disabled.",
-    "Unique transparent projectile and impact sheets, attack/idle/build/sell animations, PNG UI icons and a real editable Aseprite source remain pending.",
-    "No Aseprite project is present. Do not fabricate an editable source file.",
+    "Owner-approved art direction reference: source/concepts/soul_altar_tower_concept_v05.png. Do not generate alternate Soul Altar concepts.",
+    "The committed transparent Pixel Art atlas is used by the live top-down TD renderer for L1, L2, L3, Reaper and Legion.",
+    "The five atlas frames are complete tower sprites, not independent base and aiming upper-weapon layers.",
+    "The modular manifest runtime remains disabled until separate base, eight-way weapon, projectile, impact and animation assets are completed.",
+    "Legacy SVG templates and SVG VFX/icon assets were removed in PR #314; no tracked SVG files remain.",
+    "No editable Aseprite project has been supplied or fabricated. The committed PNG atlas is the current raster source; the approved concept is retained as reference.",
+    "Projectile sheets must face +X and be rotated to the actual travel vector.",
     "Reaper maps to runtime specialization siege; Legion maps to swarm."
   ],
   "approved_assembled_atlas": {
@@ -262,5 +263,28 @@
     ],
     "filter": "nearest",
     "alpha": "RGBA"
+  },
+  "approved_pixel_art": {
+    "status": "runtime_static_whole_tower",
+    "atlas_path": "production/pixel_art/soul_altar_approved_atlas.png",
+    "frame_size": [
+      64,
+      88
+    ],
+    "render_size": [
+      128,
+      176
+    ],
+    "frame_count": 5,
+    "frame_order": [
+      "level_1",
+      "level_2",
+      "level_3",
+      "reaper",
+      "legion"
+    ],
+    "scale": 2,
+    "filtering": "nearest",
+    "transparency": "indexed PNG palette alpha"
   }
 }

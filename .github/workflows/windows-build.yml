@@ -66,9 +66,11 @@ jobs:
       - name: Validate original Soul Altar ZIP importers syntax
         run: python -m py_compile tools/import_necro_original_art.py tools/install_necro_full_pack.py
       - name: Compile verified Soul Altar Git importer
-        run: python -m py_compile tools/import_necro_git_bundle.py
+        run: python -m py_compile tools/import_necro_git_bundle.py tools/export_soul_altar_approved_atlas.py
       - name: Run modular tower asset contract tests
         run: timeout 120s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --script res://tests/td_modular_tower_assets_smoke.gd
+      - name: Run approved Soul Altar Pixel Art tests
+        run: timeout 120s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --script res://tests/td_soul_altar_pixel_art_smoke.gd
       - name: Run top-down smoke tests
         run: timeout 120s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --script res://tests/topdown_smoke.gd
 
