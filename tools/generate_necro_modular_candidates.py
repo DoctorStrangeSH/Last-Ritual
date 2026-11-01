@@ -41,6 +41,43 @@ def skull(im,x,y,s=1):
  box(im,x-2*s,y+2*s,x+2*s,y+4*s,14)
  box(im,x-3*s,y-2*s,x-1*s,y,1);box(im,x+1*s,y-2*s,x+3*s,y,1)
  box(im,x-1*s,y+2*s,x+1*s,y+3*s,1);point(im,x,y-1*s,11)
+def gothic_base_detail(im,level):
+ # Deliberate handmade-pixel forms on the stationary stone foundation.
+ # Shared geometry is mirrored, while taller spires unlock at later levels.
+ for side in (-1,1):
+  cx=64+side*(35+level*2)
+  box(im,cx-5,80,cx+5,90,1)
+  box(im,cx-4,80,cx+4,87,3)
+  box(im,cx-4,80,cx-3,87,6)
+  box(im,cx+3,80,cx+4,87,6)
+  line(im,cx-4,79,cx,75,1,1)
+  line(im,cx,75,cx+4,79,1,1)
+  line(im,cx,77,cx,81,0,7)
+  oval(im,cx,83,2,3,9)
+  point(im,cx,82,12)
+ for k in range(-2,3):
+  x=64+k*12
+  point(im,x,108,7)
+  line(im,x-3,110,x+3,110,0,1)
+ for dx in (-11,11):
+  box(im,64+dx-2,95,64+dx+2,97,1)
+  point(im,64+dx,96,11)
+ if level>=2:
+  for side in (-1,1):
+   x=64+side*21
+   box(im,x-3,76,x+3,85,1)
+   box(im,x-2,78,x+2,84,8)
+   line(im,x-3,75,x,69,1,6)
+   line(im,x,69,x+3,75,1,7)
+   point(im,x,76,12)
+ if level>=3:
+  for side in (-1,1):
+   x=64+side*27
+   line(im,x,78,x+side*5,65,2,1)
+   line(im,x,77,x+side*5,66,0,7)
+  box(im,57,84,71,87,1)
+  box(im,58,85,70,86,6)
+  for x in (59,64,69): point(im,x,85,12)
 def base(level):
  im=canvas()
  oval(im,64,106,43+level*3,16+level,1)
@@ -69,6 +106,7 @@ def base(level):
   for dx in (-22,22):
    line(im,64+dx,84,64+dx*1.17,75,2,1)
    line(im,64+dx,82,64+dx*1.17,76,0,7)
+ gothic_base_detail(im,level)
  return im
 def weapon(branch):
  atlas=canvas(1024,128)
