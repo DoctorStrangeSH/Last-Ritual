@@ -46,6 +46,13 @@ func run_tests() -> void:
 			var approved_path: String = tower_visuals.approved_necro_sprite_path(approved_level, "")
 			check(tower_visuals.approved_necro_sprite_ready(approved_path), "Approved level %d PNG is RGBA 192x192 with clean transparent corners" % approved_level)
 		check(tower_visuals.approved_necro_sprite_ready(tower_visuals.approved_necro_sprite_path(3, "siege")), "Approved Reaper PNG passes runtime image checks")
+		var display_size: Vector2i = tower_visuals.approved_necro_display_size(Vector2i(192, 192), 120)
+		check(display_size == Vector2i(120, 120), "Approved square tower art uses a crisp 120px display size")
+		var wide_size: Vector2i = tower_visuals.approved_necro_display_size(Vector2i(192, 128), 120)
+		check(wide_size == Vector2i(180, 120), "Approved tower display preserves non-square source aspect ratio")
+		var display_rect: Rect2 = tower_visuals.approved_necro_display_rect(Vector2(280, 190), Vector2i(192, 192), 120)
+		check(display_rect.position == Vector2(220, 70) and display_rect.size == Vector2(120, 120), "Approved tower art is centred and its feet stay on the pad anchor")
+		check(tower_visuals.approved_necro_display_rect(Vector2.ZERO, Vector2i.ZERO).size == Vector2.ZERO, "Invalid art dimensions are rejected before drawing")
 
 		var td_scene = load("res://scenes/topdown_td_prototype.tscn")
 		if td_scene != null:
@@ -53,6 +60,9 @@ func run_tests() -> void:
 			root.add_child(td)
 			check(not td.modular_necro_enabled, "Incomplete modular kit does not override current art")
 			check(td.modular_necro_manifest.get("id", "") == "necro", "TD scene loads the modular manifest")
+			var approved_path: String = tower_visuals.approved_necro_sprite_path(1, "")
+			var crisp_texture: Texture2D = td.cached_approved_necro_texture(approved_path)
+			check(crisp_texture != null and crisp_texture.get_size() == Vector2(120, 120), "TD renderer creates a cached nearest-neighbour 120px approved sprite")
 			td.queue_free()
 
 
