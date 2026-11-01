@@ -60,6 +60,9 @@ func run_tests() -> void:
 			root.add_child(td)
 			check(not td.modular_necro_enabled, "Incomplete modular kit does not override current art")
 			check(td.modular_necro_manifest.get("id", "") == "necro", "TD scene loads the modular manifest")
+			var approved_path: String = tower_visuals.approved_necro_sprite_path(1, "")
+			var crisp_texture: Texture2D = td.cached_approved_necro_texture(approved_path)
+			check(crisp_texture != null and crisp_texture.get_size() == Vector2(120, 120), "TD renderer creates a cached nearest-neighbour 120px approved sprite")
 			td.queue_free()
 
 
