@@ -234,9 +234,16 @@ func run_tests() -> void:
         var spec_next = spec_scene.instantiate()
         root.add_child(spec_next)
         check(spec_next.import_fortress_state(spec_snapshot), "Specialization persists across day scenes")
-        check(spec_next.slots[0]["specialization"] == "siege", "Restored tower keeps specialization")
+        check(spec_next.slots[0]["specialization"] == "siege" and int(spec_next.slots[0]["level"]) == 3, "Restored tower keeps specialization at base level three")
+        var legacy_snapshot: Dictionary = spec_snapshot.duplicate(true)
+        legacy_snapshot["buildings"][0]["level"] = 2
+        var migrated_scene = spec_scene.instantiate()
+        root.add_child(migrated_scene)
+        check(migrated_scene.import_fortress_state(legacy_snapshot), "Old level-two specialization save remains loadable")
+        check(int(migrated_scene.slots[0]["level"]) == 3 and migrated_scene.slots[0]["specialization"] == "siege", "Old specialized tower migrates to level three")
         spec_game.queue_free()
         spec_next.queue_free()
+        migrated_scene.queue_free()
     var school_scene = load("res://scenes/topdown_td_prototype.tscn")
     if school_scene != null:
         var school = school_scene.instantiate()
@@ -428,9 +435,14 @@ func run_tests() -> void:
             check(not economy.specialization_open, "Level two cannot specialize " + economy_kind)
             check(economy.upgrade_selected() and economy.coins == 60 and int(economy.slots[0]["level"]) == 3, "Level three upgrade costs 40 gold " + economy_kind)
             check(not economy.specialization_open, "Level three is still the base form " + economy_kind)
+            economy.coins = 59
+            check(not economy.upgrade_selected() and not economy.specialization_open and economy.coins == 59, "Insufficient gold blocks the fourth step " + economy_kind)
+            economy.coins = 60
             check(economy.upgrade_selected() and economy.coins == 0 and economy.specialization_open, "Fourth upgrade costs 60 gold and opens specialization " + economy_kind)
             check(not economy.upgrade_selected() and economy.coins == 0, "Pending specialization blocks another upgrade " + economy_kind)
+            check(not economy.choose_specialization("unknown"), "Invalid specialization is rejected " + economy_kind)
             check(economy.choose_specialization("siege") and int(economy.slots[0]["level"]) == 3, "Specialization keeps base level three " + economy_kind)
+            check(not economy.choose_specialization("swarm"), "Specialization cannot be changed after selection " + economy_kind)
             check(not economy.upgrade_selected() and economy.coins == 0, "Fully evolved tower cannot upgrade again " + economy_kind)
             check(economy.sell_selected() and economy.coins == 30, "Level three sale returns 30 gold " + economy_kind)
             check(economy.slots[0]["tower"] == "" and int(economy.slots[0]["level"]) == 0, "Sale clears slot " + economy_kind)
@@ -1275,7 +1287,7 @@ func run_tests() -> void:
         root.add_child(layout)
         layout.choose_tower("fire")
         check(layout.build_tower(0), "Build tower for relocation")
-        layout.coins = 100
+        layout.coins = 200
         layout.select_slot(0)
         check(upgrade_to_specialization(layout, "siege"), "Tower upgrades through level three and specialization before relocation")
         layout.cycle_target_priority()
@@ -1332,7 +1344,6 @@ func run_tests() -> void:
         check(int(details["upgrade_cost"]) == 20, "Card shows upgrade price")
         inspector.coins = 150
         check(upgrade_to_specialization(inspector, "siege"), "Detail card tower can complete fourth-step specialization")
-        inspector.choose_specialization("siege")
         details = inspector.selected_tower_info()
         check(details["specialization"] == "siege" and int(details["damage"]) > 0, "Card updates with specialization and damage")
         inspector.queue_free()
@@ -1469,8 +1480,8 @@ func run_tests() -> void:
         check(td.build_tower(0) and td.coins == 120, "Build bone tower at fixed slot")
         check(not td.build_tower(0), "Occupied slot rejects duplicate building")
         check(td.choose_tower("necro") and td.build_tower(1), "Different tower uses its own build slot")
+        td.coins = 180
         check(td.select_slot(0) and upgrade_to_specialization(td, "siege"), "Click selected tower to upgrade through level three and specialization")
-        check(td.choose_specialization("siege"), "Choose specialization before selling the upgraded tower")
         check(td.sell_selected() and td.slots[0]["tower"] == "", "Sold tower frees slot")
         check(td.choose_tower("fire") and td.build_tower(0), "Freed slot can be built again")
         td.coins = 0
