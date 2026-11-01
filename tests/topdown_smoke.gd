@@ -227,6 +227,7 @@ func run_tests() -> void:
         blocked_click.position = Vector2(100, 570)
         spec_game._unhandled_input(blocked_click)
         check(spec_game.wave_number == 0 and spec_game.specialization_open, "Modal blocks clicks on underlying wave start")
+        check(not spec_game.select_slot(1) and spec_game.selected_slot == 0, "Specialization modal locks selection to the tower being evolved")
 
         check(spec_game.choose_specialization("siege"), "Player can choose siege specialization")
         check(spec_game.slots[0]["specialization"] == "siege", "Specialization stored on tower")
@@ -422,7 +423,7 @@ func run_tests() -> void:
     # Economy benchmark: same starting treasury, exact purchase/upgrade/sale
     # prices for each school. No wave rewards or meta bonuses in this scenario.
     if specialization_balance_scene != null:
-        for economy_kind in ["bone", "fire", "necro"]:
+        for economy_kind in ["bone", "fire", "necro", "frost"]:
             var economy = specialization_balance_scene.instantiate()
             root.add_child(economy)
             var base_cost: int = int(economy.COSTS[economy_kind])
