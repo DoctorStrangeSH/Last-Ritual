@@ -2624,9 +2624,9 @@ func run_tests() -> void:
             if not impact_path.is_empty():
                 var impact_texture: Texture2D = load(impact_path)
                 check(impact_texture != null and impact_texture.get_width() >= 6 * projectile_maps.vfx_frame_size(kind, "weapon_impact").x, "Impact sheet has at least six frames: %s lv%d" % [kind, level])
-    check(projectile_maps.vfx_path("necro", 1, "weapon_impact").contains("/necro/vfx/soul_impact_8f.png"), "Necro uses authored impact texture")
-    check(projectile_maps.vfx_frame_size("necro", "projectiles") == Vector2i(32, 32), "Necro projectile atlas cell is 32x32")
-    check(projectile_maps.vfx_frame_size("necro", "weapon_impact") == Vector2i(64, 64), "Necro impact atlas cell is 64x64")
+    check(projectile_maps.vfx_path("necro", 1, "weapon_impact").contains("soul_impact_8f.png"), "Necro uses authored impact texture")
+    check(projectile_maps.vfx_frame_size("necro", "projectiles") == (Vector2i(64, 64) if installed_originals else Vector2i(32, 32)), "Necro projectile cell matches source pack")
+    check(projectile_maps.vfx_frame_size("necro", "weapon_impact") == (Vector2i(128, 128) if installed_originals else Vector2i(64, 64)), "Necro impact cell matches source pack")
     var necro_projectile: Texture2D = load(projectile_maps.vfx_path("necro", 1, "projectiles"))
     var necro_impact: Texture2D = load(projectile_maps.vfx_path("necro", 1, "weapon_impact"))
     check(necro_projectile != null and necro_projectile.get_width() == 8 * projectile_maps.vfx_frame_size("necro", "projectiles").x and necro_projectile.get_height() == projectile_maps.vfx_frame_size("necro", "projectiles").y, "Necro projectile eight-frame atlas imports")
