@@ -98,9 +98,21 @@ func run_tests() -> void:
 		var base_projectile: Dictionary = contract.resolve_vfx(manifest, "projectiles", "")
 		var reaper_projectile: Dictionary = contract.resolve_vfx(manifest, "projectiles", "siege")
 		var legion_impact: Dictionary = contract.resolve_vfx(manifest, "impacts", "swarm")
-		check(base_projectile.get("path", "").ends_with("projectiles/base/projectile_8f.png"), "Base projectile has an independent asset family")
-		check(reaper_projectile.get("path", "").ends_with("projectiles/reaper/projectile_8f.png"), "Reaper projectile has an independent asset family")
-		check(legion_impact.get("path", "").ends_with("impacts/legion/impact_8f.png") and not bool(legion_impact.get("loop", true)), "Legion impact is an independent one-shot animation")
+		check(base_projectile.get("path", "").ends_with("vfx/soul_projectile_8f.png"), "Base projectile has an independent asset family")
+		check(reaper_projectile.get("path", "").ends_with("approved_renders/vfx/reaper_projectile_8f.png"), "Reaper projectile has an independent asset family")
+		check(legion_impact.get("path", "").ends_with("approved_renders/vfx/legion_impact_8f.png") and not bool(legion_impact.get("loop", true)), "Legion impact is an independent one-shot animation")
+		# The six separate flight/impact atlases already exist in main; do not
+		# require duplicate copies under future production folders.
+		for category in ["projectiles", "impacts"]:
+			for branch in ["base", "reaper", "legion"]:
+				var entry: Dictionary = manifest[category][branch]
+				var path: String = "res://assets/spire/towers/necro/" + str(entry["path"])
+				var dims: Array = entry["frame_size"]
+				check(contract._transparent_png_ready(path, Vector2i(int(dims[0]), int(dims[1])), 8), "Existing VFX passes modular readiness: %s / %s" % [category, branch])
+		var missing: Array[String] = contract.missing_runtime_art(manifest)
+		check(missing.size() == 6, "Only three bases and three eight-way weapons remain missing")
+		for path in missing:
+			check(path.contains("/base/") or path.contains("/weapon/"), "Missing list excludes existing VFX: " + path)
 		check(contract.resolve_tower_layers(manifest, 4, "", Vector2.ZERO, Vector2.RIGHT).is_empty(), "Invalid tower level is rejected")
 		check(contract.resolve_tower_layers(manifest, 3, "unknown", Vector2.ZERO, Vector2.RIGHT).is_empty(), "Unknown specialization is rejected")
 		check(contract.resolve_vfx(manifest, "unknown", "").is_empty(), "Unknown VFX category is rejected")
