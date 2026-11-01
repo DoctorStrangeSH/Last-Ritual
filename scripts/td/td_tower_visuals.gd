@@ -156,7 +156,7 @@ static func vfx_frame_size(kind: String, layer: String) -> Vector2i:
     if kind == "necro":
         if production_necro_ready():
             if layer == "projectiles":
-                return Vector2i(128, 128)
+                return Vector2i(64, 64)
             if layer == "weapon_impact":
                 return Vector2i(128, 128)
         if layer == "projectiles":
