@@ -2,7 +2,7 @@
   "schema_version": 1,
   "id": "necro",
   "display_name": "Алтарь душ",
-  "status": "contract_only",
+  "status": "approved_assembled_pixel_art_runtime",
   "runtime_enabled": false,
   "camera": "top_down_3_quarter",
   "canvas": {
@@ -233,12 +233,34 @@
     "editable_project_status": "not_created"
   },
   "notes": [
-    "Approved art direction is the concept image at source/concepts/soul_altar_tower_concept_v05.png.",
-    "Legacy SVG templates and SVG VFX/icon assets were removed; they are not production source files.",
-    "The Aseprite project is not yet present. Do not fabricate an editable source file.",
-    "The current contract remains disabled for runtime until transparent Pixel Art exports, modular weapon poses, and separate projectile/impact sheets are committed and approved.",
-    "Weapon sheets are eight horizontal frames in the canonical direction_order; every frame shares the pivot.",
-    "Projectile sheets face +X and are rotated to the actual travel vector.",
+    "The owner-approved design reference is source/concepts/soul_altar_tower_concept_v05.png; no alternate Soul Altar concept may be generated.",
+    "The five-frame transparent Pixel Art atlas at production/pixel_art/soul_altar_approved_atlas.png is used by the current runtime for assembled static tower sprites.",
+    "Atlas frame order is level_1, level_2, level_3, reaper, legion; each frame is 64x88 and is drawn at 2x nearest-neighbour scale.",
+    "The assembled atlas does not yet provide independent base/weapon layers or eight upper-weapon directions; the modular contract remains runtime-disabled.",
+    "Unique transparent projectile and impact sheets, attack/idle/build/sell animations, PNG UI icons and a real editable Aseprite source remain pending.",
+    "No Aseprite project is present. Do not fabricate an editable source file.",
     "Reaper maps to runtime specialization siege; Legion maps to swarm."
-  ]
+  ],
+  "approved_assembled_atlas": {
+    "path": "production/pixel_art/soul_altar_approved_atlas.png",
+    "frame_size": [
+      64,
+      88
+    ],
+    "frame_count": 5,
+    "frame_order": [
+      "level_1",
+      "level_2",
+      "level_3",
+      "reaper",
+      "legion"
+    ],
+    "display_scale": 2,
+    "display_size": [
+      128,
+      176
+    ],
+    "filter": "nearest",
+    "alpha": "RGBA"
+  }
 }
