@@ -230,18 +230,13 @@
     "palette": "source/palette.png",
     "provenance": "source/PROVENANCE.md",
     "approved_reference": "source/concepts/soul_altar_tower_concept_v05.png",
-    "legacy_editable_layers": [
-      "source/layers/base_level_1.svg",
-      "source/layers/base_level_2.svg",
-      "source/layers/base_level_3.svg",
-      "source/layers/weapon_level_1.svg",
-      "source/layers/weapon_level_2.svg",
-      "source/layers/weapon_level_3.svg"
-    ]
+    "editable_project_status": "not_created"
   },
   "notes": [
-    "Contract only: no Pixel Art production exports are installed yet.",
-    "Do not set runtime_enabled=true until every required PNG exists, imports, and receives visual approval.",
+    "Approved art direction is the concept image at source/concepts/soul_altar_tower_concept_v05.png.",
+    "Legacy SVG templates and SVG VFX/icon assets were removed; they are not production source files.",
+    "The Aseprite project is not yet present. Do not fabricate an editable source file.",
+    "The current contract remains disabled for runtime until transparent Pixel Art exports, modular weapon poses, and separate projectile/impact sheets are committed and approved.",
     "Weapon sheets are eight horizontal frames in the canonical direction_order; every frame shares the pivot.",
     "Projectile sheets face +X and are rotated to the actual travel vector.",
     "Reaper maps to runtime specialization siege; Legion maps to swarm."
