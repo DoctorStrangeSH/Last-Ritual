@@ -1341,6 +1341,24 @@ func cached_tower_texture(path: String) -> Texture2D:
     return tower_texture_cache[path]
 
 func draw_tower_figure(pos: Vector2, kind: String, level: int, specialization: String = "") -> void:
+    # Prefer the original concept-derived PNG, not its simplified SVG substitute.
+    # Preserve prior art if any member of the production pack is missing.
+    if kind == "necro" and TOWER_VISUALS.production_necro_ready():
+        var production_path: String = TOWER_VISUALS.production_necro_tower_path(level, specialization)
+        var tower_sheet: Texture2D = cached_tower_texture(production_path)
+        if tower_sheet != null:
+            # 192px transparent square, feet anchored at the tower slot.
+            var tower_rect := Rect2(pos + Vector2(-43, -76), Vector2(86, 86))
+            if level < 3 or specialization == "":
+                var idle_sheet: Texture2D = cached_tower_texture(TOWER_VISUALS.production_necro_idle_path(level))
+                if idle_sheet != null:
+                    var idle_frame: int = int(Time.get_ticks_msec() / 160) % 8
+                    var idle_region: Rect2 = TOWER_VISUALS.frame_region(idle_sheet, Vector2i(192, 192), idle_frame)
+                    if idle_region.size != Vector2.ZERO:
+                        draw_texture_rect_region(idle_sheet, tower_rect, idle_region)
+                        return
+            draw_texture_rect(tower_sheet, tower_rect, false)
+            return
     # A tower is base + weapon. Show the first, stable weapon pose rather than
     # endlessly cycling sprite-sheet cells as if they were building frames.
     var base_texture: Texture2D = cached_tower_texture(TOWER_VISUALS.path_for(kind, level, "base"))
