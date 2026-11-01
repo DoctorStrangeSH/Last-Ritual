@@ -27,6 +27,36 @@ const FROST_EXPERIMENTAL_ROOT := "res://assets/spire/towers/frost/experimental/"
 ## reviewed kit is actually committed. Never ship references to absent textures.
 const NECRO_PRODUCTION_ROOT := "res://assets/spire/towers/necro/production/"
 
+## Owner-approved standalone Soul Altar renders (whole-tower sprites, not modular layers).
+const APPROVED_NECRO_ROOT := "res://assets/spire/towers/necro/approved_renders/sprites/"
+
+static func approved_necro_sprite_path(level: int, specialization: String = "") -> String:
+    if specialization == "swarm":
+        # The approved ZIP does not contain a Legion render; retain the existing
+        # production Legion art until the owner approves its matching asset.
+        return ""
+    if level == 3 and specialization == "siege":
+        return APPROVED_NECRO_ROOT + "reaper.png"
+    if specialization != "" or level < 1 or level > 3:
+        return ""
+    return APPROVED_NECRO_ROOT + "level_%d.png" % level
+
+static func approved_necro_sprite_ready(path: String) -> bool:
+    if not path.begins_with(APPROVED_NECRO_ROOT) or not ResourceLoader.exists(path):
+        return false
+    var texture := load(path) as Texture2D
+    if texture == null or texture.get_size() != Vector2(192, 192):
+        return false
+    var image := texture.get_image()
+    if image == null or image.is_empty() or not image.detect_alpha():
+        return false
+    if image.get_used_rect().size == Vector2i.ZERO:
+        return false
+    for corner in [Vector2i.ZERO, Vector2i(191, 0), Vector2i(0, 191), Vector2i(191, 191)]:
+        if image.get_pixelv(corner).a > 0.015:
+            return false
+    return true
+
 static func production_necro_ready() -> bool:
     for level in range(1, 4):
         if not ResourceLoader.exists(NECRO_PRODUCTION_ROOT + "level_%d_192.png" % level):
