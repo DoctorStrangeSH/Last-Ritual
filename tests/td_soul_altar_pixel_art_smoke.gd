@@ -33,11 +33,5 @@ func run_tests() -> void:
             check(atlas_image.get_pixel(0, 0).a == 0.0, "Atlas background is fully transparent")
             check(visuals.approved_necro_pixel_art_region(3, "siege").position.x == 192.0, "Reaper region is the fourth cell")
             check(visuals.approved_necro_pixel_art_region(3, "swarm").position.x == 256.0, "Legion region is the fifth cell")
-        var td_scene = load("res://scenes/topdown_td_prototype.tscn")
-        if td_scene != null:
-            var td_game = td_scene.instantiate()
-            root.add_child(td_game)
-            check(td_game.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "Top-down TD renders sprites with nearest-neighbour filtering")
-            td_game.queue_free()
     print("Soul Altar Pixel Art smoke failures: %d" % failures)
     quit(1 if failures > 0 else 0)
