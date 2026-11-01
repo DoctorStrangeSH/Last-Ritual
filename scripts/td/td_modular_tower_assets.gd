@@ -161,6 +161,30 @@ static func resolve_vfx(manifest: Dictionary, category: String, specialization: 
 		"forward_axis": str(entry.get("forward_axis", ""))
 	}
 
+## Exact missing files for the modular base + eight-way weapon workflow.
+## Existing whole-tower and standalone VFX previews are NOT substitutes.
+static func missing_runtime_art(manifest: Dictionary) -> Array[String]:
+	var missing: Array[String] = []
+	if not bool(validate_manifest(manifest).get("valid", false)):
+		missing.append("manifest:invalid")
+		return missing
+	var root: String = "res://assets/spire/towers/%s/" % str(manifest.get("id", ""))
+	var canvas: Dictionary = manifest.get("canvas", {})
+	var base_size := Vector2i(int(canvas.get("width", 0)), int(canvas.get("height", 0)))
+	var levels: Dictionary = manifest.get("base", {}).get("levels", {})
+	for level in ["1", "2", "3"]:
+		var base_path: String = root + str(levels[level])
+		if not _transparent_png_ready(base_path, base_size, 1):
+			missing.append(base_path)
+	for category in ["weapon", "projectiles", "impacts"]:
+		for branch in ["base", "reaper", "legion"]:
+			var entry: Dictionary = manifest.get(category, {}).get(branch, {})
+			var dims: Array = entry.get("frame_size", [0, 0])
+			var path: String = root + str(entry.get("path", ""))
+			if dims.size() != 2 or not _transparent_png_ready(path, Vector2i(int(dims[0]), int(dims[1])), int(entry.get("frame_count", 0))):
+				missing.append(path)
+	return missing
+
 static func runtime_ready(manifest: Dictionary) -> bool:
 	if not bool(validate_manifest(manifest).get("valid", false)) or not bool(manifest.get("runtime_enabled", false)):
 		return false
