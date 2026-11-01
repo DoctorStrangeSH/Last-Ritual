@@ -1,6 +1,6 @@
 # Last Ritual — Handoff: Pixel Art Migration & Soul Altar Rework
 
-**Updated:** 2026-11-01 (after PR #312)  
+**Updated:** 2026-11-01 (after PR #312; SVG cleanup branch)  
 **Verified main snapshot:** `955252af84ab0eba86775a859fbb029122996e29` (PR #312)  
 **Primary roadmap:** [ROADMAP.md](ROADMAP.md)  
 **Art standard:** [PIXEL_ART_STYLE_GUIDE.md](art/PIXEL_ART_STYLE_GUIDE.md)  
@@ -11,7 +11,7 @@
 
 **PR #312 — modular asset contract merged:** `scripts/td/td_modular_tower_assets.gd` provides manifest loading/validation, eight-way aim quantization and resolution of base/weapon/VFX entries. `assets/spire/towers/necro/manifest.json` documents the target kit and canonical pivot/direction order. The manifest is intentionally `contract_only` with `runtime_enabled=false`; it references planned future Pixel Art exports, not existing production files. Exact-head Godot CI #41284865922 passed the new contract test and existing smoke test. Post-merge main CI #41284911635 passed `checks` and `windows-preview`; the Windows EXE was published to the rolling preview release.
 
-**Important boundary:** no runtime art has switched in PR #312. Current production Soul Altar PNGs are still assembled non-pixel images; previous SVG layers and generated PNGs remain candidates only. Upper weapon aiming and distinct Pixel Art projectile/impact sets remain unimplemented. Do not mark the Pixel Art pilot complete until the editable source and all production exports are committed, runtime is wired, and the owner approves the Windows build at gameplay 1×.
+**Important boundary:** PR #312 is still an asset contract only; no new Pixel Art runtime art has switched. The 33 legacy SVG files and SVG exporter/validator tools were removed in the cleanup branch. The UI icon resolver now returns an empty texture path until approved PNG icons exist; Russian labels remain. Current production PNG/VFX assets remain as temporary runtime assets. The five transparent Pixel Art tower images prepared in the current session have not yet been committed as binary Git assets. Do not claim integration until they are in Git, loaded by Godot and visible in the Windows build. Upper weapon 8-way aiming and separate Pixel Art projectile/impact sets remain unimplemented. No Aseprite project is present; do not invent one.
 
 ## 1. Owner decisions (confirmed)
 
@@ -75,7 +75,7 @@ In `scripts/topdown_td_prototype.gd` and `scripts/td/td_tower_stats.gd`:
 - `draw_tower_figure(pos, kind, level, specialization)` currently renders the assembled Soul Altar production PNG on a 120px-tall rect, aspect-preserving and bottom-centred at the placement slot; Reaper display crop is `Rect2(40, 0, 152, 192)` to hide a disconnected left-edge sliver. Older experimental layered fallbacks still use a 66×66 rect. Treat 120px as an unverified calibration, not final approval: measure visible alpha bounds and align the stone footprint to the pad.
 - The current production images are complete assembled tower sprites, not separate rotatable weapon layers. Do **not** rotate the entire tower image. New pixel-art production source should separate static base and aiming upper/weapon layer, or provide 8-direction upper-layer poses.
 - `scripts/td/td_tower_visuals.gd` owns asset paths and sprite-sheet cell validation (`first_frame_region`, `frame_region`, `vfx_path`, `vfx_frame_size`). It currently maps legacy `necro→pulse` and `frost→spark` fallback folders, while Soul Altar production PNG overrides some paths.
-- `scripts/td/td_specialization_icons.gd` maps active IDs to specialization icon SVGs. Replace with pixel-art icons only when replacements are committed and loaded.
+- `scripts/td/td_specialization_icons.gd` currently returns an empty texture path after SVG cleanup. Russian text labels remain; add PNG icon paths only when approved transparent icons are committed.
 - `scripts/td/td_tower_stats.gd` owns shop order, labels, costs/ranges/damage; `scripts/td/td_tower_damage.gd` owns direct-hit damage; `scripts/td/td_targeting.gd` owns target selection.
 
 ## 3. Required Soul Altar implementation
@@ -129,9 +129,9 @@ The owner explicitly authorizes **complete removal of the old non-pixel sprite f
 - New pixel-art editable sources (Aseprite/LibreSprite or equivalent), export scripts, manifests, palette, pivots and source provenance.
 
 ### Legacy sprites to remove after replacements
-- Active art under `assets/spire/towers/{ballista,fire,pulse,spark,frost,necro}/`, including experimental PNGs, legacy tower/weapon/projectile/impact PNGs, specialization SVG icons and obsolete source SVG art, is slated for deletion when the corresponding Pixel Art kit is integrated.
+- Active art under `assets/spire/towers/{ballista,fire,pulse,spark,frost,necro}/` still contains legacy PNGs and experimental candidates. All 33 SVG assets were removed in the cleanup branch; replace remaining PNG art family-by-family after approved Pixel Art kits are committed and switched.
 - `assets/spire/towers_atlas.png` and `assets/spire/variants/specialization_icons_atlas.png` are also candidates for deletion after a reference scan proves they are no longer loaded.
-- The 17 unreferenced root SVGs already removed by PR #306 stay deleted.
+- PR #306 removed 17 root SVGs; the SVG cleanup branch removes the remaining 33 tracked SVGs. Keep the repository free of new SVG sprite templates.
 
 ### Safety gate
 Do not delete an active runtime asset before its Pixel Art replacement is committed and the runtime path has been switched; otherwise the current EXE/game will lose visuals. The owner authorizes full removal **as part of migration**, not a broken interim build. Every deletion PR must include a generated inventory, exact removed paths, a reference scan covering scripts/scenes/resources/settings/tests/tools, Godot import + smoke tests, and a successful Windows export. Preserve Git history; do not retain obsolete sprites as a fallback after a family is migrated.
