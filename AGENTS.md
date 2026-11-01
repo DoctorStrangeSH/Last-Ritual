@@ -35,3 +35,10 @@
 ## Определение готовности этапа
 
 Этап готов, когда выполнены все его критерии из ROADMAP, тесты обновлены и проходят, CI зелёный, документация отражает фактический код, а оставшиеся ручные проверки явно записаны. «Код написан» не означает «этап завершён».
+
+## Pixel Art migration and recurring handoff
+
+- The owner approved a whole-game, detailed dark-fantasy Pixel Art direction. Read `docs/AI_HANDOFF_PIXEL_ART.md` and `docs/art/PIXEL_ART_STYLE_GUIDE.md` before art or tower-renderer work.
+- After every meaningful PR, asset import, implementation stage or QA result, update the current summary in `docs/AI_HANDOFF.md`, the detailed handoff, `docs/PROJECT_STATE.md` and the first current section of `docs/ROADMAP.md`. Record decisions in `docs/DECISIONS.md` when the design changes. Do not let these documents drift.
+- Owner permits old sprite deletion, but never use blanket deletion. Inventory exact references (including dynamically constructed paths), classify runtime/fallback/source/licence/test-only assets, and remove only proven-unused resources in a dedicated PR with Godot import, smoke and Windows checks. Preserve original Soul Altar source files and third-party licence/provenance.
+- Do not mark visual QA complete based on headless CI. Record the owner's actual Windows feedback and update the handoff accordingly.
