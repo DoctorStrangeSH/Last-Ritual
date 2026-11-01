@@ -109,9 +109,9 @@ func run_tests() -> void:
 				var path: String = "res://assets/spire/towers/necro/" + str(entry["path"])
 				var dims: Array = entry["frame_size"]
 				check(contract._transparent_png_ready(path, Vector2i(int(dims[0]), int(dims[1])), 8), "Existing VFX passes modular readiness: %s / %s" % [category, branch])
-		var missing: Array[String] = contract.missing_runtime_art(manifest)
-		check(missing.size() == 6, "Only three bases and three eight-way weapons remain missing")
-		for path in missing:
+		var remaining_art: Array[String] = contract.missing_runtime_art(manifest)
+		check(remaining_art.size() == 6, "Only three bases and three eight-way weapons remain missing")
+		for path in remaining_art:
 			check(path.contains("/base/") or path.contains("/weapon/"), "Missing list excludes existing VFX: " + path)
 		check(contract.resolve_tower_layers(manifest, 4, "", Vector2.ZERO, Vector2.RIGHT).is_empty(), "Invalid tower level is rejected")
 		check(contract.resolve_tower_layers(manifest, 3, "unknown", Vector2.ZERO, Vector2.RIGHT).is_empty(), "Unknown specialization is rejected")
