@@ -61,7 +61,7 @@ def extract_verified(archive: Path, output: Path) -> dict:
                 ("sprite", "sprite_sha256", REQUIRED_SIZE),
             ):
                 path = record.get(key)
-                if path != f"{key}/{name}{'_original' if key == 'source' else ''}.png":
+                if path != f"{'source' if key == 'source' else 'sprites'}/{name}{'_original' if key == 'source' else ''}.png":
                     raise ValueError(f"Unexpected {key} path for {name}")
                 meta = package.getinfo(path)
                 if meta.file_size > MAX_ITEM_BYTES:
