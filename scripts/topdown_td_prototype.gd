@@ -736,6 +736,8 @@ func _process(delta: float) -> void:
 
 
 func _ready() -> void:
+    # Pixel Art must stay crisp at gameplay zoom; do not linearly blur the approved atlas.
+    texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
     sfx = SFX_SCRIPT.new()
     add_child(sfx)
     for i in range(SLOT_POSITIONS.size()):

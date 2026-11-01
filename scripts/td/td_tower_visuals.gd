@@ -27,40 +27,6 @@ const FROST_EXPERIMENTAL_ROOT := "res://assets/spire/towers/frost/experimental/"
 ## reviewed kit is actually committed. Never ship references to absent textures.
 const NECRO_PRODUCTION_ROOT := "res://assets/spire/towers/necro/production/"
 
-## Owner-approved five-frame Pixel Art atlas: L1/L2/L3/Reaper/Legion.
-const NECRO_APPROVED_PIXEL_ART_ATLAS := "res://assets/spire/towers/necro/production/pixel_art/soul_altar_approved_atlas.png"
-const NECRO_APPROVED_PIXEL_ART_FRAME_SIZE := Vector2i(64, 88)
-const NECRO_APPROVED_PIXEL_ART_RENDER_SIZE := Vector2(128.0, 176.0)
-
-# Compatibility aliases retained for the existing top-down smoke suite.
-const NECRO_APPROVED_PIXEL_ATLAS := NECRO_APPROVED_PIXEL_ART_ATLAS
-
-static func approved_necro_pixel_art_source_rect(texture: Texture2D, level: int, specialization: String = "") -> Rect2:
-    if texture == null:
-        return Rect2()
-    return approved_necro_pixel_art_region(level, specialization)
-
-static func approved_necro_pixel_art_ready() -> bool:
-    return ResourceLoader.exists(NECRO_APPROVED_PIXEL_ART_ATLAS)
-
-static func approved_necro_pixel_art_atlas_path() -> String:
-    return NECRO_APPROVED_PIXEL_ART_ATLAS if approved_necro_pixel_art_ready() else ""
-
-static func approved_necro_pixel_art_frame_index(level: int, specialization: String = "") -> int:
-    if level < 1 or level > 3:
-        return -1
-    if level == 3 and specialization == "siege":
-        return 3
-    if level == 3 and specialization == "swarm":
-        return 4
-    return level - 1
-
-static func approved_necro_pixel_art_region(level: int, specialization: String = "") -> Rect2:
-    var frame_index := approved_necro_pixel_art_frame_index(level, specialization)
-    if frame_index < 0 or not approved_necro_pixel_art_ready():
-        return Rect2()
-    return Rect2(Vector2(frame_index * NECRO_APPROVED_PIXEL_ART_FRAME_SIZE.x, 0), Vector2(NECRO_APPROVED_PIXEL_ART_FRAME_SIZE))
-
 const NECRO_APPROVED_PIXEL_ATLAS := NECRO_PRODUCTION_ROOT + "pixel_art/soul_altar_approved_atlas.png"
 const NECRO_APPROVED_PIXEL_CELL := Vector2i(64, 88)
 const NECRO_APPROVED_PIXEL_SCALE := 2
@@ -84,6 +50,20 @@ static func approved_necro_pixel_art_source_rect(texture: Texture2D, level: int,
     if frame_index < 0:
         return Rect2()
     return frame_region(texture, NECRO_APPROVED_PIXEL_CELL, frame_index)
+
+## Renderer aliases keep atlas path and source cell resolution explicit.
+const NECRO_APPROVED_PIXEL_ART_ATLAS := NECRO_APPROVED_PIXEL_ATLAS
+const NECRO_APPROVED_PIXEL_ART_FRAME_SIZE := NECRO_APPROVED_PIXEL_CELL
+const NECRO_APPROVED_PIXEL_ART_RENDER_SIZE := Vector2(128.0, 176.0)
+
+static func approved_necro_pixel_art_atlas_path() -> String:
+    return NECRO_APPROVED_PIXEL_ATLAS if approved_necro_pixel_art_ready() else ""
+
+static func approved_necro_pixel_art_region(level: int, specialization: String = "") -> Rect2:
+    var frame_index := approved_necro_pixel_art_frame_index(level, specialization)
+    if frame_index < 0 or not approved_necro_pixel_art_ready():
+        return Rect2()
+    return Rect2(Vector2(frame_index * NECRO_APPROVED_PIXEL_CELL.x, 0), Vector2(NECRO_APPROVED_PIXEL_CELL))
 
 static func production_necro_ready() -> bool:
     for level in range(1, 4):

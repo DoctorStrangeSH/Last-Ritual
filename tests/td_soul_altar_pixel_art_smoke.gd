@@ -25,14 +25,19 @@ func run_tests() -> void:
         check(visuals.approved_necro_pixel_art_frame_index(3, "siege") == 3, "Reaper maps to frame 3")
         check(visuals.approved_necro_pixel_art_frame_index(3, "swarm") == 4, "Legion maps to frame 4")
         check(visuals.approved_necro_pixel_art_frame_index(4, "") == -1, "Invalid level is rejected")
-        var atlas_image := Image.new()
-        var atlas_error := atlas_image.load(atlas_path)
-        check(atlas_error == OK, "Approved atlas imports as PNG")
-        if atlas_error == OK:
+        var atlas_image: Image = Image.load_from_file(atlas_path)
+        check(atlas_image != null, "Approved atlas imports as PNG")
+        if atlas_image != null:
             check(atlas_image.get_size() == Vector2i(320, 88), "Atlas uses five 64x88 frames")
             check(atlas_image.has_alpha(), "Atlas has alpha transparency")
             check(atlas_image.get_pixel(0, 0).a == 0.0, "Atlas background is fully transparent")
             check(visuals.approved_necro_pixel_art_region(3, "siege").position.x == 192.0, "Reaper region is the fourth cell")
             check(visuals.approved_necro_pixel_art_region(3, "swarm").position.x == 256.0, "Legion region is the fifth cell")
+        var td_scene = load("res://scenes/topdown_td_prototype.tscn")
+        if td_scene != null:
+            var td_game = td_scene.instantiate()
+            root.add_child(td_game)
+            check(td_game.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "Top-down TD renders sprites with nearest-neighbour filtering")
+            td_game.queue_free()
     print("Soul Altar Pixel Art smoke failures: %d" % failures)
     quit(1 if failures > 0 else 0)
