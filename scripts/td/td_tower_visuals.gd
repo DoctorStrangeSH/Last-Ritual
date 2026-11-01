@@ -109,6 +109,23 @@ static func production_necro_tower_path(level: int, specialization: String = "")
         return NECRO_PRODUCTION_ROOT + "specialization_legion_192.png"
     return NECRO_PRODUCTION_ROOT + "level_%d_192.png" % level
 
+## Resolve the complete-tower art actually used by the current renderer.
+## Prefer the approved standalone renders; use the production pack as fallback,
+## notably for Legion until its matching approved render exists.
+static func necro_full_tower_sprite_path(level: int, specialization: String = "") -> String:
+    if level < 1 or level > 3 or not ["", "siege", "swarm"].has(specialization):
+        return ""
+    if not specialization.is_empty() and level != 3:
+        return ""
+    var approved_path := approved_necro_sprite_path(level, specialization)
+    if approved_necro_sprite_ready(approved_path):
+        return approved_path
+    if production_necro_ready():
+        var production_path := production_necro_tower_path(level, specialization)
+        if not production_path.is_empty() and ResourceLoader.exists(production_path):
+            return production_path
+    return ""
+
 static func production_necro_idle_path(level: int) -> String:
     if level < 1 or level > 3 or not production_necro_ready():
         return ""

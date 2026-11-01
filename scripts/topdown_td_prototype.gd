@@ -1452,23 +1452,18 @@ func draw_tower_figure(pos: Vector2, kind: String, level: int, specialization: S
                 draw_texture_rect(base_tex, rect, false)
                 draw_texture_rect_region(weapon_tex, rect, region)
                 return
-    # The owner's approved standalone PNGs are whole-tower sprites, not
-    # separable base/weapon layers. Display them directly for levels 1-3 and
-    # Reaper. Legion intentionally keeps its existing production art because
-    # the approved archive does not contain a Legion render yet.
-    if kind == "necro":
-        var approved_path: String = TOWER_VISUALS.approved_necro_sprite_path(level, specialization)
-        if not approved_path.is_empty() and TOWER_VISUALS.approved_necro_sprite_ready(approved_path):
-            var source_texture: Texture2D = cached_tower_texture(approved_path)
-            var approved_texture: Texture2D = cached_approved_necro_texture(approved_path)
-            if source_texture != null and approved_texture != null:
-                var approved_rect: Rect2 = TOWER_VISUALS.approved_necro_display_rect(pos, Vector2i(source_texture.get_size()), 120)
-                if approved_rect.size != Vector2.ZERO:
-                    draw_texture_rect(approved_texture, approved_rect, false)
-                    return
-    # Preserve the existing production pack for Legion and as a safe fallback.
-    if kind == "necro" and TOWER_VISUALS.production_necro_ready():
-        var production_path: String = TOWER_VISUALS.production_necro_tower_path(level, specialization)
+    var full_tower_path: String = TOWER_VISUALS.necro_full_tower_sprite_path(level, specialization) if kind == "necro" else ""
+    var approved_path: String = TOWER_VISUALS.approved_necro_sprite_path(level, specialization) if kind == "necro" else ""
+    if not full_tower_path.is_empty() and full_tower_path == approved_path:
+        var source_texture: Texture2D = cached_tower_texture(full_tower_path)
+        var approved_texture: Texture2D = cached_approved_necro_texture(full_tower_path)
+        if source_texture != null and approved_texture != null:
+            var approved_rect: Rect2 = TOWER_VISUALS.approved_necro_display_rect(pos, Vector2i(source_texture.get_size()), 120)
+            if approved_rect.size != Vector2.ZERO:
+                draw_texture_rect(approved_texture, approved_rect, false)
+                return
+    if not full_tower_path.is_empty() and full_tower_path != approved_path:
+        var production_path: String = full_tower_path
         var tower_sheet: Texture2D = cached_tower_texture(production_path)
         if tower_sheet != null:
             # Preserve the source aspect ratio and anchor the visible stone base
