@@ -58,3 +58,24 @@ static func projectile_rotation(origin: Vector2, target: Vector2, progress: floa
     var arc_height: float = float(for_specialization(specialization)["arc_height"])
     var tangent := delta + Vector2(-delta.y, delta.x).normalized() * (4.0 * (1.0 - 2.0 * t) * arc_height)
     return tangent.angle()
+
+## Lightweight visual-only particle samples attached to a flying soul.
+## This generates no gameplay objects and leaves all approved PNGs untouched.
+static func trail_samples(origin: Vector2, target: Vector2, progress: float, specialization: String) -> Array[Dictionary]:
+    var samples: Array[Dictionary] = []
+    if specialization != "siege" and specialization != "swarm":
+        return samples
+    var count := 4 if specialization == "siege" else 2
+    var step := 0.055 if specialization == "siege" else 0.09
+    var max_radius := 4.5 if specialization == "siege" else 3.0
+    for index in range(count):
+        var age_progress: float = clampf(progress - float(index + 1) * step, 0.0, 1.0)
+        if progress <= float(index + 1) * step:
+            continue
+        var opacity := (1.0 - float(index) / float(count)) * 0.65
+        samples.append({
+            "position": projectile_position(origin, target, age_progress, specialization),
+            "radius": max_radius * (1.0 - float(index) / float(count)) + 0.5,
+            "opacity": opacity
+        })
+    return samples
