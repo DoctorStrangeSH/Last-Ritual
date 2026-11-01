@@ -2592,6 +2592,25 @@ func run_tests() -> void:
                     if art_image != null:
                         check(art_image.get_used_rect().has_area(), "Authored %s %s level %d contains visible art" % [art_kind, art_layer, art_level])
                         check(art_image.get_pixel(0, 0).a < 0.05, "Authored %s %s level %d preserves a transparent background" % [art_kind, art_layer, art_level])
+    # Production artwork can be imported as a complete set, but must never
+    # partially override gameplay textures during a build or first launch.
+    var installed_originals: bool = tower_visuals.production_necro_ready()
+    for source_level in range(1, 4):
+        var source_path: String = tower_visuals.production_necro_tower_path(source_level)
+        check(source_path != "" if installed_originals else source_path == "", "Necro original art only activates when full kit is present")
+    if installed_originals:
+        for specialization in ["siege", "swarm"]:
+            var original_spec: String = tower_visuals.production_necro_tower_path(3, specialization)
+            check(original_spec != "" and ResourceLoader.exists(original_spec), "Original necro specialty PNG imports: " + specialization)
+        for source_level in range(1, 4):
+            var idle_path: String = tower_visuals.production_necro_idle_path(source_level)
+            var idle_texture: Texture2D = load(idle_path)
+            check(idle_texture != null and idle_texture.get_size() == Vector2(1536, 192), "Original necro idle atlas imports 8 frames: L%d" % source_level)
+        for vfx_kind in ["projectiles", "weapon_impact"]:
+            var original_fx_path: String = tower_visuals.vfx_path("necro", 1, vfx_kind)
+            var original_fx: Texture2D = load(original_fx_path)
+            var cell: Vector2i = tower_visuals.vfx_frame_size("necro", vfx_kind)
+            check(original_fx != null and original_fx.get_size() == Vector2(cell.x * 8, cell.y), "Original necro VFX atlas imports eight frames: " + vfx_kind)
     var projectile_maps = load("res://scripts/td/td_tower_visuals.gd")
     for kind in ["bone", "fire", "necro", "frost"]:
         for level in range(1, 4):
