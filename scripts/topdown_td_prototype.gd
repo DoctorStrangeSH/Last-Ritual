@@ -736,8 +736,6 @@ func _process(delta: float) -> void:
 
 
 func _ready() -> void:
-    # Pixel Art must stay crisp at gameplay zoom; do not linearly blur the approved atlas.
-    texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
     sfx = SFX_SCRIPT.new()
     add_child(sfx)
     for i in range(SLOT_POSITIONS.size()):
@@ -1390,20 +1388,18 @@ func cached_tower_texture(path: String) -> Texture2D:
     if path.is_empty():
         return null
     if not tower_texture_cache.has(path):
-        tower_texture_cache[path] = load(path) as Texture2D
+        if path == TOWER_VISUALS.NECRO_APPROVED_PIXEL_ATLAS:
+            var atlas_image := Image.new()
+            if atlas_image.load(path) == OK:
+                TOWER_VISUALS.sanitize_approved_necro_pixel_art_alpha(atlas_image)
+                tower_texture_cache[path] = ImageTexture.create_from_image(atlas_image)
+            else:
+                tower_texture_cache[path] = load(path) as Texture2D
+        else:
+            tower_texture_cache[path] = load(path) as Texture2D
     return tower_texture_cache[path]
 
 func draw_tower_figure(pos: Vector2, kind: String, level: int, specialization: String = "") -> void:
-    # First live slice of the owner's approved Pixel Art design. These are
-    # complete tower silhouettes; the separate base/aiming weapon is a later step.
-    if kind == "necro" and TOWER_VISUALS.approved_necro_pixel_art_ready():
-        var approved_atlas: Texture2D = cached_tower_texture(TOWER_VISUALS.approved_necro_pixel_art_atlas_path())
-        var approved_region: Rect2 = TOWER_VISUALS.approved_necro_pixel_art_region(level, specialization)
-        if approved_atlas != null and approved_region.size != Vector2.ZERO:
-            var approved_size: Vector2 = TOWER_VISUALS.NECRO_APPROVED_PIXEL_ART_RENDER_SIZE
-            var approved_rect := Rect2(Vector2(pos.x - approved_size.x * 0.5, pos.y - approved_size.y), approved_size)
-            draw_texture_rect_region(approved_atlas, approved_rect, approved_region)
-            return
     # Owner-approved transparent Pixel Art atlas. Each frame is 64x88 and is
     # displayed at exact 2x nearest-neighbour scale; the ground anchor is at pos.
     # Frames: L1, L2, L3, Reaper, Legion. The tower is static until modular

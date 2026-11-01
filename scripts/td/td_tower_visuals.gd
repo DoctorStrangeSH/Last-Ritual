@@ -51,6 +51,17 @@ static func approved_necro_pixel_art_source_rect(texture: Texture2D, level: int,
         return Rect2()
     return frame_region(texture, NECRO_APPROVED_PIXEL_CELL, frame_index)
 
+## The indexed atlas leaves empty pixels at alpha 1/255. Normalize them to zero at runtime.
+static func sanitize_approved_necro_pixel_art_alpha(image: Image) -> Image:
+    if image == null:
+        return image
+    for y in range(image.get_height()):
+        for x in range(image.get_width()):
+            var pixel := image.get_pixel(x, y)
+            if pixel.a <= (1.0 / 255.0):
+                image.set_pixel(x, y, Color(0, 0, 0, 0))
+    return image
+
 ## Renderer aliases keep atlas path and source cell resolution explicit.
 const NECRO_APPROVED_PIXEL_ART_ATLAS := NECRO_APPROVED_PIXEL_ATLAS
 const NECRO_APPROVED_PIXEL_ART_FRAME_SIZE := NECRO_APPROVED_PIXEL_CELL

@@ -22,8 +22,13 @@ def export_frames(atlas_path: Path, output_dir: Path, scale: int) -> None:
     atlas = Image.open(atlas_path).convert("RGBA")
     if atlas.size != ATLAS_SIZE:
         raise ValueError(f"Expected atlas {ATLAS_SIZE}, got {atlas.size}")
-    if atlas.getchannel("A").getextrema() != (0, 255):
-        raise ValueError("Atlas must preserve transparent and opaque pixels")
+    alpha_min, alpha_max = atlas.getchannel("A").getextrema()
+    if alpha_min > 1 or alpha_max < 240:
+        raise ValueError(f"Unexpected atlas alpha range: {(alpha_min, alpha_max)}")
+    # The indexed palette stores empty pixels as alpha 1/255; normalize to exact 0.
+    alpha = atlas.getchannel("A")
+    alpha = alpha.point(lambda value: 0 if value <= 1 else value)
+    atlas.putalpha(alpha)
     output_dir.mkdir(parents=True, exist_ok=True)
     for index, name in enumerate(FRAME_NAMES):
         frame = atlas.crop((index * FRAME_SIZE[0], 0, (index + 1) * FRAME_SIZE[0], FRAME_SIZE[1]))

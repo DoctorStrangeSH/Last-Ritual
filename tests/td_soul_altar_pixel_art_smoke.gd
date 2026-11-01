@@ -29,6 +29,12 @@ func run_tests() -> void:
         check(atlas_texture != null, "Approved atlas imports as a Texture2D")
         if atlas_texture != null:
             check(atlas_texture.get_width() == 320 and atlas_texture.get_height() == 88, "Atlas uses five 64x88 frames")
+            var source_image: Image = Image.load_from_file(atlas_path)
+            check(source_image != null, "Atlas source image loads for alpha normalization")
+            if source_image != null:
+                check(source_image.get_pixel(0, 0).a <= (1.0 / 255.0) + 0.000001, "Atlas empty pixels have only the indexed-alpha residual")
+                visuals.sanitize_approved_necro_pixel_art_alpha(source_image)
+                check(source_image.get_pixel(0, 0).a == 0.0, "Runtime alpha normalization makes the atlas background fully transparent")
             check(visuals.approved_necro_pixel_art_region(3, "siege").position.x == 192.0, "Reaper region is the fourth cell")
             check(visuals.approved_necro_pixel_art_region(3, "swarm").position.x == 256.0, "Legion region is the fifth cell")
     print("Soul Altar Pixel Art smoke failures: %d" % failures)
