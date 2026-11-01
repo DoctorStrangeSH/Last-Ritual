@@ -17,7 +17,7 @@
 - Reaper and Legion must be different gameplay branches and use different projectile/impact visuals.
 - Projectiles must animate frame-by-frame and face their actual travel direction. The tower's upper weapon/head should aim toward its current target while the base stays planted.
 - Fix the user-tested defects: tower too small/off-centre, stray detached sprite fragment, unreadable tiny projectiles, and occasional line/beam shots.
-- Owner explicitly allows removal of old sprite art. Removal must be dependency-aware: delete obsolete/unused files, but do not break the game, discard the new approved Soul Altar originals, or remove source/licence records needed to reproduce assets.
+- Owner explicitly authorizes complete deletion of old non-pixel sprite families from the repository and shipped game after their Pixel Art replacements are integrated. Do not retain old art as permanent fallback. Preserve legal licenses/attribution, editable sources for new art and the approved Soul Altar concept sheet as a reference; old cutout/gameplay sprites may be deleted after replacement.
 
 ## 2. Current verified runtime facts (do not guess)
 
@@ -129,18 +129,17 @@ Do not delete an active runtime asset before its Pixel Art replacement is commit
 5. Run Godot 4.4.1 headless import and `tests/topdown_smoke.gd`; inspect workflow and Windows export.
 6. Keep a recoverable commit in Git history. Never delete original Soul Altar sources or licensed provenance.
 
-## 6. PR / QA order
+## 6. PR / QA order (current order after PR #307 and #309)
 
-1. **P0 gameplay fix:** implement Soul Altar L1→L2→L3→specialization step 4 and tests.
-2. **P0 visual fix:** correct tower scale, center/pivot and detached fragment; test five forms on the actual TD pad.
-3. **P0 combat VFX:** split base/Reaper/Legion projectile and impact records, animate and rotate projectiles, remove necro line fallback.
-4. **Pixel-art pilot:** create and approve a complete Soul Altar pixel-art kit; compare against owner screenshot/reference at in-game 1×.
-5. **Style pipeline:** add source files, export/validation tool, manifest and palette/pivot rules.
-6. **Tower migration:** convert other active tower kits one at a time; do not expose new tower IDs before combat exists.
-7. **World migration:** enemies, hero, environment, paths, dungeon rooms and UI.
-8. **Cleanup:** remove superseded old sprites only after references are gone and replacements pass QA.
-9. **Windows manual QA:** owner tests current EXE; record scale, centering, projectile direction, animation, impacts, specialization choice and performance.
-10. **Release:** update roadmap, AI handoff and project state; publish EXE only from successful main build.
+1. **Owner QA of current EXE:** verify four-step progression, tower size/centre/Reaper crop, Reaper single-target and Legion multi-target attacks, projectile animation/rotation, impact and no necro beam.
+2. **Pixel-art pilot:** create a true hand-authored Soul Altar kit; no pixelation filter over realistic art.
+3. **Modular aiming:** static base plus upper weapon/head layer with 8-way poses (preferred) or a carefully validated rotatable layer.
+4. **Unique combat art:** separate base/Reaper/Legion animated projectile and impact sheets; preserve actual independent Legion projectile records and Reaper single-target semantics.
+5. **Reproducible source pipeline:** editable source, deterministic export, palette, manifest, pivots, frame timings, forward axis, provenance and contact sheet.
+6. **Owner approval at gameplay 1×**; only then freeze the Pixel Art standard and use Soul Altar as the reference family.
+7. **Migrate remaining tower families, enemies, hero, environment, dungeon, VFX and UI** one family at a time.
+8. **Delete superseded old sprites completely** after runtime paths are switched, reference scans are clean, and Godot import/smoke/Windows export pass. Do not keep old sprite fallbacks.
+9. **Release and documentation:** update all handoffs, roadmap, inventory and project state; publish EXE only from successful main build.
 
 ## 7. Required recurring documentation updates
 
