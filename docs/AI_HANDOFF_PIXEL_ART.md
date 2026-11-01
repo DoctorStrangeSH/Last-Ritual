@@ -1,7 +1,7 @@
 # Last Ritual — Handoff: Pixel Art Migration & Soul Altar Rework
 
-**Updated:** 2026-11-01 (after PR #312; SVG cleanup branch)  
-**Verified main snapshot:** `955252af84ab0eba86775a859fbb029122996e29` (PR #312)  
+**Updated:** 2026-11-01 (after PR #314)  
+**Verified main snapshot:** `e3dd4c6898ab20eaf627e2993bbeaa48ccecb262` (PR #314)  
 **Primary roadmap:** [ROADMAP.md](ROADMAP.md)  
 **Art standard:** [PIXEL_ART_STYLE_GUIDE.md](art/PIXEL_ART_STYLE_GUIDE.md)  
 **Asset inventory:** [PIXEL_ART_MIGRATION_INVENTORY.md](art/PIXEL_ART_MIGRATION_INVENTORY.md)  
@@ -11,7 +11,7 @@
 
 **PR #312 — modular asset contract merged:** `scripts/td/td_modular_tower_assets.gd` provides manifest loading/validation, eight-way aim quantization and resolution of base/weapon/VFX entries. `assets/spire/towers/necro/manifest.json` documents the target kit and canonical pivot/direction order. The manifest is intentionally `contract_only` with `runtime_enabled=false`; it references planned future Pixel Art exports, not existing production files. Exact-head Godot CI #41284865922 passed the new contract test and existing smoke test. Post-merge main CI #41284911635 passed `checks` and `windows-preview`; the Windows EXE was published to the rolling preview release.
 
-**Important boundary:** PR #312 is still an asset contract only; no new Pixel Art runtime art has switched. The 33 legacy SVG files and SVG exporter/validator tools were removed in the cleanup branch. The UI icon resolver now returns an empty texture path until approved PNG icons exist; Russian labels remain. Current production PNG/VFX assets remain as temporary runtime assets. The five transparent Pixel Art tower images prepared in the current session have not yet been committed as binary Git assets. Do not claim integration until they are in Git, loaded by Godot and visible in the Windows build. Upper weapon 8-way aiming and separate Pixel Art projectile/impact sets remain unimplemented. No Aseprite project is present; do not invent one.
+**Important boundary:** PR #312 is still an asset contract only; no new Pixel Art runtime art has switched. PR #314 removed all 33 legacy SVG files and SVG exporter/validator tools. The UI icon resolver now returns an empty texture path until approved PNG icons exist; Russian labels remain. Current production PNG/VFX assets remain as temporary runtime assets. A five-frame transparent Pixel Art tower atlas and its five high-resolution generated source PNGs have been packaged for review; the binary atlas is not yet committed to Git. Do not claim integration until they are in Git, loaded by Godot and visible in the Windows build. Upper weapon 8-way aiming and separate Pixel Art projectile/impact sets remain unimplemented. No Aseprite project is present; do not invent one.
 
 ## 1. Owner decisions (confirmed)
 
