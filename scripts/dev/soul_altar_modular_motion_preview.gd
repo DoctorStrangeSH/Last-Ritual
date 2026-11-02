@@ -323,10 +323,42 @@ func _draw() -> void:
     draw_line(TOWER_ORIGIN, _target_position, Color("#a879d7"), 2.0)
     draw_circle(_target_position, 13.0, Color("#ffcf74"))
     draw_arc(_target_position, 22.0, 0.0, TAU, 32, Color("#fff0bd"), 2.0)
+    if _shot_active and _projectile_texture != null:
+        var shot_progress := clampf(_shot_elapsed / SHOT_DURATION, 0.0, 1.0)
+        var projectile_position := _shot_origin.lerp(_shot_target, shot_progress)
+        var projectile_frame := get_projectile_frame_index()
+        var projectile_source := Rect2(
+            Vector2(float(projectile_frame) * _projectile_frame_size.x, 0.0),
+            _projectile_frame_size
+        )
+        var projectile_draw_size := _projectile_frame_size * 1.7
+        draw_set_transform(projectile_position, (_shot_target - _shot_origin).angle(), Vector2.ONE)
+        draw_texture_rect_region(
+            _projectile_texture,
+            Rect2(-projectile_draw_size * 0.5, projectile_draw_size),
+            projectile_source
+        )
+        draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+    if _impact_active and _impact_texture != null:
+        var impact_frame := get_impact_frame_index()
+        var impact_source := Rect2(
+            Vector2(float(impact_frame) * _impact_frame_size.x, 0.0),
+            _impact_frame_size
+        )
+        var impact_draw_size := _impact_frame_size * 1.5
+        draw_texture_rect_region(
+            _impact_texture,
+            Rect2(_shot_target - impact_draw_size * 0.5, impact_draw_size),
+            impact_source
+        )
+
     draw_circle(TOWER_ORIGIN, 5.0, Color("#ffffff"))
 
     var branch_label: String = str({"base": "Обычный Алтарь", "reaper": "Жнец", "legion": "Легион"}.get(_branch, _branch))
     draw_string(ThemeDB.fallback_font, Vector2(32, 630), "Уровень: %d    Оружие: %s    Направление: %s (%d)" % [_level, branch_label, CONTRACT.direction_name(_direction_index), _direction_index], HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color("#f0e8ff"))
-    draw_string(ThemeDB.fallback_font, Vector2(32, 662), "1/2/3 — уровень     B — Алтарь     R — Жнец     L — Легион", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#c8bdd8"))
-    draw_string(ThemeDB.fallback_font, Vector2(32, 684), "NumPad 8/9/6/3/2/1/4/7 — направление     A — авто     H — направляющие", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#c8bdd8"))
-    draw_string(ThemeDB.fallback_font, Vector2(32, 706), "Review scene only. Approved production sprites and runtime manifest are unchanged.", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("#9e91ad"))
+    var attack_label := "Атака: сгусток души" if _branch == "base" else ("Атака: серп Жнеца" if _branch == "reaper" else "Атака: триада Легиона")
+    draw_string(ThemeDB.fallback_font, Vector2(32, 652), attack_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#e5c8ff"))
+    draw_string(ThemeDB.fallback_font, Vector2(32, 676), "1/2/3 — уровень     B/R/L — оружие     F — выстрел", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#c8bdd8"))
+    draw_string(ThemeDB.fallback_font, Vector2(32, 698), "NumPad 8/9/6/3/2/1/4/7 — направление     A — авто     H — направляющие", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("#c8bdd8"))
+    draw_string(ThemeDB.fallback_font, Vector2(32, 718), "Review scene only. Approved production sprites and runtime manifest are unchanged.", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color("#9e91ad"))
