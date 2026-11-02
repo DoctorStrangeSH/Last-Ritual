@@ -1,5 +1,8 @@
 # Last Ritual — Handoff: Pixel Art Migration & Soul Altar Rework
 
+**02.11.2026 — обычное оружие Алтаря душ v3 (арт-кандидат):** обновлены `candidate/weapon/base/weapon_8way.png` и `altar_weapon_detail()` в `tools/generate_necro_modular_candidates.py`. Добавлены восьминаправленная руническая корона, золотые крепления призмы и фиолетовые искры. Это черновой PNG-кандидат, а не утверждённая production-графика. Остальные 5 PNG, игровой рендер и production manifest не изменены. `runtime_enabled=false`; ручной визуальный QA отдельно от CI.
+
+
 **02.11.2026 — Легион v3 (черновой Pixel Art, без runtime):** обновлены исходник `legion_detail()` в `tools/generate_necro_modular_candidates.py` и настоящий восьмикадровый PNG `candidate/weapon/legion/weapon_8way.png`. Добавлены декоративные золотые рунические крепления, три светящихся излучателя и магические искры, ориентированные по восьми направлениям. Это прототип, НЕ финально утверждённый артефакт. Рендер, production manifest (`runtime_enabled=false`) и остальные пять кандидатных PNG не менялись. Проверить воспроизведение RGBA в CI, ручная художественная приёмка ещё не выполнена.
 
 
