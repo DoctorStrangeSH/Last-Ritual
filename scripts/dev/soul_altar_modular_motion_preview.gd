@@ -291,6 +291,10 @@ func _set_error(message: String) -> void:
     _error_message = message
     _base_texture = null
     _weapon_texture = null
+    _projectile_texture = null
+    _impact_texture = null
+    _shot_active = false
+    _impact_active = false
     queue_redraw()
 
 
