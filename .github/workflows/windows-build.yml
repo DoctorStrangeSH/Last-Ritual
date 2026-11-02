@@ -82,9 +82,11 @@ jobs:
       - name: Render modular Soul Altar review sheet
         run: |
           python tools/render_necro_modular_preview.py --level 3
-          python -c "from PIL import Image; im=Image.open('build/soul_altar_modular_contact_sheet.png'); assert im.size == (2156, 924), im.size"
+          python -c "from PIL import Image; im=Image.open('build/soul_altar_modular_contact_sheet.png'); assert im.size == (2156, 1092), im.size"
       - name: Validate candidate Soul Altar modular Pixel Art
         run: timeout 120s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --script res://tests/soul_altar_modular_candidate_smoke.gd
+      - name: Run isolated Soul Altar modular motion preview smoke tests
+        run: timeout 120s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --script res://tests/soul_altar_modular_motion_preview_smoke.gd
       - name: Run modular tower asset contract tests
         run: timeout 120s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --script res://tests/td_modular_tower_assets_smoke.gd
       - name: Run top-down smoke tests
