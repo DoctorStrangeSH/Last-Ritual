@@ -10,6 +10,7 @@ const PREVIEW_SCALE := 2.5
 const TOWER_ORIGIN := Vector2(640.0, 410.0)
 const GROUND_ANCHOR := Vector2(64.0, 118.0)
 const WEAPON_PIVOT := Vector2(64.0, 90.0)
+const SHOT_DURATION := 0.48
 const DIRECTION_VECTORS := [
     Vector2.UP, Vector2(1, -1), Vector2.RIGHT, Vector2(1, 1),
     Vector2.DOWN, Vector2(-1, 1), Vector2.LEFT, Vector2(-1, -1)
@@ -18,6 +19,20 @@ const DIRECTION_VECTORS := [
 var _manifest: Dictionary = {}
 var _base_texture: Texture2D
 var _weapon_texture: Texture2D
+var _projectile_texture: Texture2D
+var _impact_texture: Texture2D
+var _projectile_frame_size := Vector2(32.0, 32.0)
+var _impact_frame_size := Vector2(64.0, 64.0)
+var _projectile_frame_count := 8
+var _impact_frame_count := 8
+var _projectile_fps := 24.0
+var _impact_fps := 24.0
+var _shot_active := false
+var _impact_active := false
+var _shot_elapsed := 0.0
+var _impact_elapsed := 0.0
+var _shot_origin := TOWER_ORIGIN
+var _shot_target := TOWER_ORIGIN + Vector2.RIGHT * 240.0
 var _level := 3
 var _branch := "base"
 var _elapsed := 0.0
@@ -39,6 +54,10 @@ func load_preview_assets(manifest_path: String = MANIFEST_PATH) -> bool:
     _manifest.clear()
     _base_texture = null
     _weapon_texture = null
+    _projectile_texture = null
+    _impact_texture = null
+    _shot_active = false
+    _impact_active = false
     _error_message = ""
 
     var file := FileAccess.open(manifest_path, FileAccess.READ)
@@ -67,10 +86,21 @@ func _reload_selection() -> bool:
     var base_path := ASSET_ROOT + str(levels[str(_level)])
     var weapon_entry: Dictionary = weapons[_branch]
     var weapon_path := ASSET_ROOT + str(weapon_entry.get("path", ""))
+    var projectiles: Dictionary = _manifest.get("projectiles", {})
+    var impacts: Dictionary = _manifest.get("impacts", {})
+    if not projectiles.has(_branch) or not impacts.has(_branch):
+        _set_error("Candidate projectile or impact entry is missing for " + _branch)
+        return false
+    var projectile_entry: Dictionary = projectiles[_branch]
+    var impact_entry: Dictionary = impacts[_branch]
+    var projectile_path := ASSET_ROOT + str(projectile_entry.get("path", ""))
+    var impact_path := ASSET_ROOT + str(impact_entry.get("path", ""))
     var base_candidate := load(base_path) as Texture2D
     var weapon_candidate := load(weapon_path) as Texture2D
-    if base_candidate == null or weapon_candidate == null:
-        _set_error("Candidate texture is missing. Production art is untouched.")
+    var projectile_candidate := load(projectile_path) as Texture2D
+    var impact_candidate := load(impact_path) as Texture2D
+    if base_candidate == null or weapon_candidate == null or projectile_candidate == null or impact_candidate == null:
+        _set_error("Candidate base, weapon, projectile or impact texture is missing. Production art is untouched.")
         return false
     if base_candidate.get_size() != FRAME_SIZE:
         _set_error("Base texture must be 128x128")
@@ -79,8 +109,36 @@ func _reload_selection() -> bool:
         _set_error("Weapon atlas must be 1024x128 (eight 128px frames)")
         return false
 
+    var projectile_dimensions: Array = projectile_entry.get("frame_size", [32, 32])
+    var impact_dimensions: Array = impact_entry.get("frame_size", [64, 64])
+    var projectile_size := Vector2(float(projectile_dimensions[0]), float(projectile_dimensions[1]))
+    var impact_size := Vector2(float(impact_dimensions[0]), float(impact_dimensions[1]))
+    var projectile_count := int(projectile_entry.get("frame_count", 0))
+    var impact_count := int(impact_entry.get("frame_count", 0))
+    if projectile_count != 8 or impact_count != 8:
+        _set_error("Candidate projectile and impact atlases must contain eight frames")
+        return false
+    if projectile_candidate.get_size() != Vector2(projectile_size.x * projectile_count, projectile_size.y):
+        _set_error("Projectile atlas dimensions do not match its manifest")
+        return false
+    if impact_candidate.get_size() != Vector2(impact_size.x * impact_count, impact_size.y):
+        _set_error("Impact atlas dimensions do not match its manifest")
+        return false
+
+    _shot_active = false
+    _impact_active = false
+    _shot_elapsed = 0.0
+    _impact_elapsed = 0.0
     _base_texture = base_candidate
     _weapon_texture = weapon_candidate
+    _projectile_texture = projectile_candidate
+    _impact_texture = impact_candidate
+    _projectile_frame_size = projectile_size
+    _impact_frame_size = impact_size
+    _projectile_frame_count = projectile_count
+    _impact_frame_count = impact_count
+    _projectile_fps = maxf(1.0, float(projectile_entry.get("fps", 24)))
+    _impact_fps = maxf(1.0, float(impact_entry.get("fps", 24)))
     _error_message = ""
     queue_redraw()
     return true
@@ -94,6 +152,17 @@ func _process(delta: float) -> void:
             sin(_elapsed * 0.51) * 170.0
         )
         _direction_index = preview_direction_for_target(_target_position)
+
+    if _shot_active:
+        _shot_elapsed += delta
+        if _shot_elapsed >= SHOT_DURATION:
+            _shot_active = false
+            _impact_active = true
+            _impact_elapsed = 0.0
+    elif _impact_active:
+        _impact_elapsed += delta
+        if _impact_elapsed >= float(_impact_frame_count) / _impact_fps:
+            _impact_active = false
     queue_redraw()
 
 
@@ -137,6 +206,8 @@ func _unhandled_key_input(event: InputEvent) -> void:
         KEY_H:
             _show_alignment_guides = not _show_alignment_guides
             queue_redraw()
+        KEY_F:
+            fire_preview_shot()
         _:
             return
 
@@ -162,6 +233,42 @@ func resume_auto_target() -> void:
 
 func preview_direction_for_target(target: Vector2) -> int:
     return CONTRACT.direction_index(TOWER_ORIGIN, target)
+
+
+func fire_preview_shot() -> bool:
+    if _projectile_texture == null or _impact_texture == null:
+        return false
+    if _shot_active or _impact_active:
+        return false
+    _shot_target = _target_position
+    var shot_direction := (_shot_target - TOWER_ORIGIN).normalized()
+    if shot_direction == Vector2.ZERO:
+        shot_direction = Vector2.RIGHT
+        _shot_target = TOWER_ORIGIN + shot_direction * 180.0
+    _shot_origin = TOWER_ORIGIN + shot_direction * 28.0
+    _shot_elapsed = 0.0
+    _impact_elapsed = 0.0
+    _shot_active = true
+    queue_redraw()
+    return true
+
+
+func get_projectile_frame_index() -> int:
+    return posmod(int(floor(_shot_elapsed * _projectile_fps)), _projectile_frame_count)
+
+
+func get_impact_frame_index() -> int:
+    return clampi(int(floor(_impact_elapsed * _impact_fps)), 0, _impact_frame_count - 1)
+
+
+func is_preview_shot_active() -> bool:
+    return _shot_active
+
+
+func is_preview_impact_active() -> bool:
+    return _impact_active
+
+
 
 
 func get_base_draw_rect() -> Rect2:
@@ -190,6 +297,10 @@ func _set_error(message: String) -> void:
     _error_message = message
     _base_texture = null
     _weapon_texture = null
+    _projectile_texture = null
+    _impact_texture = null
+    _shot_active = false
+    _impact_active = false
     queue_redraw()
 
 
@@ -222,10 +333,42 @@ func _draw() -> void:
     draw_line(TOWER_ORIGIN, _target_position, Color("#a879d7"), 2.0)
     draw_circle(_target_position, 13.0, Color("#ffcf74"))
     draw_arc(_target_position, 22.0, 0.0, TAU, 32, Color("#fff0bd"), 2.0)
+    if _shot_active and _projectile_texture != null:
+        var shot_progress := clampf(_shot_elapsed / SHOT_DURATION, 0.0, 1.0)
+        var projectile_position := _shot_origin.lerp(_shot_target, shot_progress)
+        var projectile_frame := get_projectile_frame_index()
+        var projectile_source := Rect2(
+            Vector2(float(projectile_frame) * _projectile_frame_size.x, 0.0),
+            _projectile_frame_size
+        )
+        var projectile_draw_size := _projectile_frame_size * 1.7
+        draw_set_transform(projectile_position, (_shot_target - _shot_origin).angle(), Vector2.ONE)
+        draw_texture_rect_region(
+            _projectile_texture,
+            Rect2(-projectile_draw_size * 0.5, projectile_draw_size),
+            projectile_source
+        )
+        draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+    if _impact_active and _impact_texture != null:
+        var impact_frame := get_impact_frame_index()
+        var impact_source := Rect2(
+            Vector2(float(impact_frame) * _impact_frame_size.x, 0.0),
+            _impact_frame_size
+        )
+        var impact_draw_size := _impact_frame_size * 1.5
+        draw_texture_rect_region(
+            _impact_texture,
+            Rect2(_shot_target - impact_draw_size * 0.5, impact_draw_size),
+            impact_source
+        )
+
     draw_circle(TOWER_ORIGIN, 5.0, Color("#ffffff"))
 
     var branch_label: String = str({"base": "Обычный Алтарь", "reaper": "Жнец", "legion": "Легион"}.get(_branch, _branch))
     draw_string(ThemeDB.fallback_font, Vector2(32, 630), "Уровень: %d    Оружие: %s    Направление: %s (%d)" % [_level, branch_label, CONTRACT.direction_name(_direction_index), _direction_index], HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color("#f0e8ff"))
-    draw_string(ThemeDB.fallback_font, Vector2(32, 662), "1/2/3 — уровень     B — Алтарь     R — Жнец     L — Легион", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#c8bdd8"))
-    draw_string(ThemeDB.fallback_font, Vector2(32, 684), "NumPad 8/9/6/3/2/1/4/7 — направление     A — авто     H — направляющие", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#c8bdd8"))
-    draw_string(ThemeDB.fallback_font, Vector2(32, 706), "Review scene only. Approved production sprites and runtime manifest are unchanged.", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("#9e91ad"))
+    var attack_label := "Атака: сгусток души" if _branch == "base" else ("Атака: серп Жнеца" if _branch == "reaper" else "Атака: триада Легиона")
+    draw_string(ThemeDB.fallback_font, Vector2(32, 652), attack_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#e5c8ff"))
+    draw_string(ThemeDB.fallback_font, Vector2(32, 676), "1/2/3 — уровень     B/R/L — оружие     F — выстрел", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#c8bdd8"))
+    draw_string(ThemeDB.fallback_font, Vector2(32, 698), "NumPad 8/9/6/3/2/1/4/7 — направление     A — авто     H — направляющие", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("#c8bdd8"))
+    draw_string(ThemeDB.fallback_font, Vector2(32, 718), "Review scene only. Approved production sprites and runtime manifest are unchanged.", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color("#9e91ad"))

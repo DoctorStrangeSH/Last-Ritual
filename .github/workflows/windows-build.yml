@@ -84,8 +84,12 @@ jobs:
         run: |
           python -m pip install Pillow
           python tools/generate_necro_modular_candidates.py --verify
-          python -m py_compile tools/render_necro_modular_preview.py
+          python -m py_compile tools/render_necro_modular_preview.py tools/render_necro_vfx_contact_sheet.py tools/generate_necro_modular_candidates.py
           python3 -m unittest discover -s tests -p 'test_necro_modular_preview.py' -v
+          python3 -m unittest discover -s tests -p 'test_necro_modular_vfx.py' -v
+          python3 -m unittest discover -s tests -p 'test_necro_vfx_contact_sheet.py' -v
+          python tools/render_necro_vfx_contact_sheet.py
+          python -c "from PIL import Image; im=Image.open('build/soul_altar_attack_vfx_sheet.png'); assert im.size == (2216, 582), im.size"
       - name: Render modular Soul Altar review sheet
         run: |
           python tools/render_necro_modular_preview.py --all-levels
@@ -164,10 +168,11 @@ jobs:
           echo "Game: https://github.com/$GITHUB_REPOSITORY/releases/download/windows-preview/LastRitual.exe"
           echo "Art preview: https://github.com/$GITHUB_REPOSITORY/releases/download/windows-preview/LastRitual-ArtPreview.exe"
 
-      - name: Publish modular art REVIEW sheet (not final game art)
+      - name: Publish modular art REVIEW sheets (not final game art)
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           python -m pip install Pillow
-          python tools/render_necro_modular_preview.py --level 3
-          gh release upload windows-preview build/soul_altar_modular_contact_sheet.png --clobber
+          python tools/render_necro_modular_preview.py --all-levels
+          python tools/render_necro_vfx_contact_sheet.py
+          gh release upload windows-preview build/soul_altar_modular_contact_sheet.png build/soul_altar_attack_vfx_sheet.png --clobber

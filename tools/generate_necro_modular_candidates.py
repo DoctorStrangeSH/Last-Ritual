@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Rebuild the six ORIGINAL Soul Altar candidate PNGs with a pixel grid.
+"""Rebuild the Soul Altar modular and animated VFX candidate PNGs with a pixel grid.
 
 This is the editable reproducible source for the rough candidate, NOT approved
 Soul Altar production artwork. Pillow is required; --verify never changes files.
@@ -16,6 +16,7 @@ PALETTE = [
  (94,77,98,255),(138,109,95,255),(188,149,92,255),(244,200,125,255),
  (42,17,64,255),(89,24,113,255),(151,43,183,255),(212,93,248,255),
  (255,184,251,255),(92,76,140,255),(215,205,211,255),(249,241,255,255),
+ (18,48,64,255),(34,112,139,255),(81,194,215,255),(184,245,255,255),
 ]
 DIRECTIONS=((0,-1),(.707,-.707),(1,0),(.707,.707),(0,1),(-.707,.707),(-1,0),(-.707,-.707))
 def canvas(w=128,h=128):
@@ -195,10 +196,120 @@ def rgba(im):
  out=Image.new("RGBA",im.size)
  out.putdata([PALETTE[index] for index in im.getdata()])
  return out
+def diamond(im,cx,cy,r,c):
+ for y in range(-r,r+1):
+  span=r-abs(y)
+  box(im,cx-span,cy+y,cx+span,cy+y,c)
+def ring(im,cx,cy,r,thick,c,start=0,end=360):
+ for angle in range(start,end,3):
+  a=math.radians(angle)
+  for radius in range(max(1,int(r-thick)),int(r+thick)+1):
+   point(im,cx+math.cos(a)*radius,cy+math.sin(a)*radius,c)
+def ray(im,cx,cy,angle,length,thick,c):
+ a=math.radians(angle)
+ line(im,cx,cy,cx+math.cos(a)*length,cy+math.sin(a)*length,thick,c)
+def vfx_projectile(branch):
+ size=48 if branch=="reaper" else 32
+ atlas=canvas(size*8,size)
+ for frame in range(8):
+  im=canvas(size,size)
+  cx=cy=size//2
+  phase=frame*math.tau/8
+  if branch=="base":
+   radius=7+(frame%3)
+   ring(im,cx,cy,radius,2,9)
+   ring(im,cx,cy,radius-3,1,12)
+   diamond(im,cx,cy,4,8)
+   diamond(im,cx,cy,2,12)
+   for q in range(4):
+    a=phase+q*math.pi/2
+    point(im,cx+math.cos(a)*11,cy+math.sin(a)*11,11)
+   for q in range(3):
+    point(im,5+q*3,cy+math.sin(phase+q)*4,10 if q%2 else 12)
+   point(im,cx,cy,15)
+  elif branch=="reaper":
+   rotation=frame*11
+   for angle in range(25+rotation,305+rotation,3):
+    a=math.radians(angle)
+    for radius in range(14,19):
+     point(im,cx+math.cos(a)*radius,cy+math.sin(a)*radius,10 if radius<17 else 8)
+   for angle in range(42+rotation,270+rotation,4):
+    a=math.radians(angle)
+    point(im,cx+math.cos(a)*20,cy+math.sin(a)*20,7)
+   ring(im,cx,cy,7,1,9,rotation,rotation+300)
+   diamond(im,cx,cy,4,8)
+   diamond(im,cx,cy,2,12)
+   for q in range(4):
+    a=phase+q*math.pi/2
+    point(im,cx+math.cos(a)*22,cy+math.sin(a)*22,12 if q%2 else 7)
+  else:
+   for q in range(3):
+    a=phase+q*math.tau/3
+    px=cx+math.cos(a)*8
+    py=cy+math.sin(a)*8
+    diamond(im,px,py,4,16)
+    diamond(im,px,py,2,18)
+    point(im,px+math.cos(a)*3,py+math.sin(a)*3,19)
+   oval(im,cx,cy,4,4,8)
+   oval(im,cx,cy,2,2,19)
+   for q in range(3):
+    a=phase+q*math.tau/3
+    point(im,cx+math.cos(a)*14,cy+math.sin(a)*14,18)
+  atlas.paste(im,(frame*size,0))
+ return atlas
+def vfx_impact(branch):
+ size=64 if branch in ("base","reaper") else 48
+ atlas=canvas(size*8,size)
+ cx=cy=size//2
+ for frame in range(8):
+  im=canvas(size,size)
+  progress=frame/7.0
+  if branch=="base":
+   radius=5+progress*22
+   ring(im,cx,cy,radius,2,10 if frame<5 else 8)
+   ring(im,cx,cy,max(2,radius-5),1,12 if frame<6 else 9)
+   for q in range(8):
+    a=q*math.tau/8+progress*.35
+    length=8+progress*17
+    ray(im,cx,cy,math.degrees(a),length,0,11 if q%2 else 12)
+    diamond(im,cx+math.cos(a)*length,cy+math.sin(a)*length,2,12)
+   diamond(im,cx,cy,max(1,5-frame//2),8)
+   point(im,cx,cy,15 if frame<4 else 12)
+  elif branch=="reaper":
+   radius=8+progress*20
+   for offset in (0,145):
+    ring(im,cx,cy,radius,2,10 if frame<6 else 8,offset+frame*8,offset+frame*8+235)
+    ring(im,cx,cy,radius-4,1,7,offset+frame*8+15,offset+frame*8+195)
+   for q in range(4):
+    a=math.radians(q*90+frame*13)
+    ray(im,cx,cy,math.degrees(a),9+progress*18,0,12 if q%2 else 7)
+   diamond(im,cx,cy,max(1,4-frame//2),8)
+   point(im,cx,cy,15 if frame<3 else 11)
+  else:
+   radius=5+progress*15
+   for q in range(3):
+    a=q*math.tau/3+frame*.12
+    ray(im,cx,cy,math.degrees(a),radius,1,17)
+    ray(im,cx,cy,math.degrees(a+.25),radius*.78,0,19)
+    for sub in (0,1,2):
+     px=cx+math.cos(a+sub*.16)*radius
+     py=cy+math.sin(a+sub*.16)*radius
+     diamond(im,px,py,max(1,2-frame//4),18)
+   ring(im,cx,cy,max(2,8+progress*10),1,16,frame*12,frame*12+260)
+   oval(im,cx,cy,max(1,5-frame//2),max(1,5-frame//2),8)
+   point(im,cx,cy,19 if frame<4 else 18)
+  atlas.paste(im,(frame*size,0))
+ return atlas
+def vfx_assets():
+ for branch in ("base","reaper","legion"):
+  yield ROOT/f"vfx/{branch}_projectile_8f.png",rgba(vfx_projectile(branch))
+  yield ROOT/f"vfx/{branch}_impact_8f.png",rgba(vfx_impact(branch))
+
 def assets():
  for level in (1,2,3): yield ROOT/f"base/level_{level}.png",rgba(base(level))
  for branch in ("base","reaper","legion"):
   yield ROOT/f"weapon/{branch}/weapon_8way.png",rgba(weapon(branch))
+ yield from vfx_assets()
 def main():
  p=argparse.ArgumentParser(description=__doc__)
  p.add_argument("--verify",action="store_true",help="compare pixel-by-pixel, never overwrite files")
@@ -217,5 +328,5 @@ def main():
   generated.save(target)
   print(f"generated: {target}")
  if failed: raise SystemExit("\n".join(failed))
- if args.verify: print("PASS: all six candidate atlases match the reproducible pixel source")
+ if args.verify: print("PASS: all twelve candidate art atlases match the reproducible pixel source")
 if __name__=="__main__": main()

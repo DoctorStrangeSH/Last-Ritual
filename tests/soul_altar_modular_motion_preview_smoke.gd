@@ -27,6 +27,8 @@ func verify() -> void:
 
     check(preview.get("_base_texture") != null, "Candidate base texture loads")
     check(preview.get("_weapon_texture") != null, "Candidate eight-way weapon atlas loads")
+    check(preview.get("_projectile_texture") != null, "Candidate projectile atlas loads")
+    check(preview.get("_impact_texture") != null, "Candidate impact atlas loads")
     var manifest_value: Variant = preview.get("_manifest")
     check(typeof(manifest_value) == TYPE_DICTIONARY, "Candidate manifest loads as a dictionary")
     if typeof(manifest_value) != TYPE_DICTIONARY:
@@ -66,8 +68,26 @@ func verify() -> void:
     preview.resume_auto_target()
     check(int(preview.get("_manual_direction")) == -1, "Automatic moving-target mode can be restored")
 
+    for branch in ["base", "reaper", "legion"]:
+        check(bool(preview.select_review_asset(3, branch)), "Load %s attack VFX candidate" % branch)
+        check(preview.get("_projectile_texture") != null, "%s projectile atlas loads" % branch)
+        check(preview.get("_impact_texture") != null, "%s impact atlas loads" % branch)
+        check(bool(preview.fire_preview_shot()), "%s preview shot starts" % branch)
+        check(bool(preview.is_preview_shot_active()), "%s projectile enters travel state" % branch)
+        check(not bool(preview.fire_preview_shot()), "%s cannot overlap a second shot" % branch)
+        preview._process(0.08)
+        check(int(preview.get_projectile_frame_index()) > 0, "%s projectile advances animation frames" % branch)
+        preview._process(0.42)
+        check(not bool(preview.is_preview_shot_active()), "%s projectile travel completes" % branch)
+        check(bool(preview.is_preview_impact_active()), "%s impact animation starts" % branch)
+        preview._process(0.08)
+        check(int(preview.get_impact_frame_index()) > 0, "%s impact advances animation frames" % branch)
+        preview._process(0.4)
+        check(not bool(preview.is_preview_impact_active()), "%s impact animation ends without looping" % branch)
+
     check(not bool(preview.load_preview_assets("res://assets/spire/towers/necro/candidate/missing_manifest.json")), "Missing manifest fails safely")
     check(preview.get("_base_texture") == null and preview.get("_weapon_texture") == null, "Missing assets leave preview empty instead of using production fallback")
+    check(preview.get("_projectile_texture") == null and preview.get("_impact_texture") == null, "Missing manifest clears attack VFX without production fallback")
     check(not str(preview.get("_error_message")).is_empty(), "Missing assets produce an explicit preview warning")
 
     preview.queue_free()
