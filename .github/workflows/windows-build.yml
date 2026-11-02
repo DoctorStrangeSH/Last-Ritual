@@ -79,6 +79,10 @@ jobs:
         run: |
           python -m pip install Pillow
           python tools/generate_necro_modular_candidates.py --verify
+      - name: Render modular Soul Altar review sheet
+        run: |
+          python tools/render_necro_modular_preview.py --level 3
+          python -c "from PIL import Image; im=Image.open('build/soul_altar_modular_contact_sheet.png'); assert im.size == (2156, 924), im.size"
       - name: Validate candidate Soul Altar modular Pixel Art
         run: timeout 120s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --script res://tests/soul_altar_modular_candidate_smoke.gd
       - name: Run modular tower asset contract tests
@@ -144,3 +148,11 @@ jobs:
               --prerelease
           fi
           echo "Download: https://github.com/$GITHUB_REPOSITORY/releases/download/windows-preview/LastRitual.exe"
+
+      - name: Publish modular art REVIEW sheet (not final game art)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python -m pip install Pillow
+          python tools/render_necro_modular_preview.py --level 3
+          gh release upload windows-preview build/soul_altar_modular_contact_sheet.png --clobber
