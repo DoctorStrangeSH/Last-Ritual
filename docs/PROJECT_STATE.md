@@ -2,8 +2,8 @@
 
 Дата: 02.11.2026  
 Ветка: main  
-HEAD: 587304e2a82b1979fff91394fd638e39c2452f89  
-Последняя проверенная сборка main: GitHub Actions #41438238070 — SUCCESS.
+HEAD (проверенный main после PR #357): b4e3c128a4ba6fb86d294a2aff37c71b37a39d68  
+PR #357 exact-head проверка GitHub Actions #41476104817 — SUCCESS. Последний отдельно подтверждённый post-merge main workflow (после PR #358): #41474757990 — SUCCESS.
 
 ## Запускаемая игра
 
@@ -29,9 +29,9 @@ HEAD: 587304e2a82b1979fff91394fd638e39c2452f89
 - Текущий боевой renderer использует цельный спрайт Алтаря душ (approved render, production fallback для отсутствующего approved варианта).
 - Модульный renderer существует, но gated: modular_necro_enabled определяется runtime_ready(manifest) и сейчас false.
 - Candidate-набор: 3 основания, 3 восьминаправленных оружейных атласа и 6 VFX атласов.
-- Последняя итерация: Жнец и Легион v4, PR #354; документация обновлена PR #355.
+- Последняя итерация: Жнец и Легион v4 (PR #354), base weapon v4 — гранёная фиолетовая призма и золотая корона (PR #357 merged). Битый PNG восстановлен из кодового генератора; временный recovery workflow удалён.
 - Candidate manifest runtime_enabled=false. Художественная приёмка владельцем не выполнена.
-- Следующий арт-пункт: обычное оружие base v4, затем основания L1–L3.
+- Следующий арт-пункт: основания L1–L3; ручная оценка base v4 на масштабе 1× всё ещё не проведена.
 
 ## Текущие инструменты просмотра
 
@@ -67,4 +67,4 @@ CI не заменяет ручной запуск EXE и визуальную �
 
 ## Следующее действие
 
-Начать отдельный PR для base weapon v4 в tools/generate_necro_modular_candidates.py и соответствующих тестов. Не менять production manifest, renderer, баланс и сохранения.
+Начать отдельный PR для более высоких и компактных оснований L1–L3 в tools/generate_necro_modular_candidates.py и соответствующих тестов. Не менять production manifest, renderer, баланс и сохранения.
