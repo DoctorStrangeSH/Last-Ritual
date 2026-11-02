@@ -139,6 +139,22 @@ def base(level):
    oval(im,xx,76,3,3,9)
    point(im,xx,74,12)
  gothic_base_detail(im,level)
+ # Restrained material pass: paired gilded brackets frame a larger soul rune.
+ # Keep the core dark and use bright pixels sparingly so the glow reads at 1x.
+ for side in (-1,1):
+  edge=64+side*13
+  line(im,edge,84,edge,91,0,6)
+  point(im,edge,83,7)
+  point(im,edge,92,7)
+ # A broad, tier-specific rune instead of a cloud of tiny spark pixels.
+ oval(im,64,88,3+level,2+level//2,8)
+ oval(im,64,87,2+level//2,2,10)
+ line(im,62,87,66,87,0,11)
+ point(im,64,86,12)
+ # A short warm gold edge separates stone from magic without washing it out.
+ line(im,55,94,73,94,0,6)
+ for x in (58,64,70):
+  point(im,x,94,7)
  return im
 def reaper_detail(im,dx,dy,x,y):
  # Directional blade ribs, chained skull pommel and purple soul-fire.
