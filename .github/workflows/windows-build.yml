@@ -97,6 +97,8 @@ jobs:
           python tools/render_necro_modular_preview.py --all-levels
           python -c "from PIL import Image; im=Image.open('build/soul_altar_modular_contact_sheet.png'); assert im.size == (2156, 3312), im.size"
           python tools/render_necro_modular_preview.py --all-levels --scale 1 --output build/soul_altar_modular_contact_sheet_1x.png
+          python tools/render_soul_altar_compact_review.py
+          python -c "from PIL import Image; im=Image.open('build/soul_altar_9_compositions_1x.png'); assert im.size == (472, 662), im.size"
           python -c "from PIL import Image; im=Image.open('build/soul_altar_modular_contact_sheet_1x.png'); assert im.size == (1132, 1908), im.size"
       - name: Validate candidate Soul Altar modular Pixel Art
         run: timeout 120s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --script res://tests/soul_altar_modular_candidate_smoke.gd
@@ -179,5 +181,7 @@ jobs:
           python -m pip install Pillow
           python tools/render_necro_modular_preview.py --all-levels
           python tools/render_necro_modular_preview.py --all-levels --scale 1 --output build/soul_altar_modular_contact_sheet_1x.png
+          python tools/render_soul_altar_compact_review.py
+          python -c "from PIL import Image; im=Image.open('build/soul_altar_9_compositions_1x.png'); assert im.size == (472, 662), im.size"
           python tools/render_necro_vfx_contact_sheet.py
-          gh release upload windows-preview build/soul_altar_modular_contact_sheet.png build/soul_altar_modular_contact_sheet_1x.png build/soul_altar_attack_vfx_sheet.png --clobber
+          gh release upload windows-preview build/soul_altar_modular_contact_sheet.png build/soul_altar_modular_contact_sheet_1x.png build/soul_altar_9_compositions_1x.png build/soul_altar_attack_vfx_sheet.png --clobber
