@@ -1,0 +1,28 @@
+name: Rebuild Legion candidate (temporary)
+on:
+  push:
+    branches: [art/soul-altar-legion-readability-v5]
+    paths: [.github/workflows/regenerate-legion-once.yml]
+permissions:
+  contents: write
+jobs:
+  regenerate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: art/soul-altar-legion-readability-v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install Pillow
+      - name: Build reproducible 8-direction Legion candidate
+        run: |
+          python tools/generate_necro_modular_candidates.py
+          python tools/generate_necro_modular_candidates.py --verify
+          python3 -m unittest discover -s tests -p 'test_necro_weapon_silhouettes.py' -v
+          git add assets/spire/towers/necro/candidate/weapon/legion/weapon_8way.png
+          if ! git diff --cached --quiet; then
+            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'Regenerate simplified Legion candidate weapon atlas'
+            git push origin HEAD:art/soul-altar-legion-readability-v5
+          fi
