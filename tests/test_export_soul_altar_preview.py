@@ -22,14 +22,14 @@ class SoulAltarPreviewExportTests(unittest.TestCase):
         self.assertIn(MODULE.PRODUCTION_SCENE, original)
         self.assertIn(MODULE.PRODUCTION_NAME, original)
         self.assertEqual(
-            updated.replace(MODULE.PREVIEW_SCENE, MODULE.PRODUCTION_SCENE).replace(MODULE.PREVIEW_NAME, MODULE.PRODUCTION_NAME),
+            updated\n            .replace(MODULE.PREVIEW_SCENE, MODULE.PRODUCTION_SCENE)\n            .replace(MODULE.PREVIEW_NAME, MODULE.PRODUCTION_NAME),
             original,
         )
 
     def test_duplicate_or_unexpected_project_settings_are_rejected(self):
         original = (ROOT / "project.godot").read_text(encoding="utf-8")
         with self.assertRaises(ValueError):
-            MODULE.make_preview_config(original + "\\n" + MODULE.PRODUCTION_SCENE)
+            MODULE.make_preview_config(original + "\n" + MODULE.PRODUCTION_SCENE)
 
     def test_preview_scene_is_the_isolated_review_scene(self):
         self.assertEqual(
