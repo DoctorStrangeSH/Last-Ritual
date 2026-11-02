@@ -153,13 +153,14 @@ jobs:
           if gh release view windows-preview >/dev/null 2>&1; then
             gh release upload windows-preview build/windows/LastRitual.exe build/windows/LastRitual-ArtPreview.exe --clobber
           else
-            gh release create windows-preview build/windows/LastRitual.exe \
+            gh release create windows-preview build/windows/LastRitual.exe build/windows/LastRitual-ArtPreview.exe \
               --target "$GITHUB_SHA" \
               --title "Last Ritual — Windows preview" \
               --notes "Тестовая Windows-сборка из main; заменяется при следующей успешной сборке." \
               --prerelease
           fi
-          echo "Game: https://github.com/$GITHUB_REPOSITORY/releases/download/windows-preview/LastRitual.exe"\n          echo "Art preview: https://github.com/$GITHUB_REPOSITORY/releases/download/windows-preview/LastRitual-ArtPreview.exe"
+          echo "Game: https://github.com/$GITHUB_REPOSITORY/releases/download/windows-preview/LastRitual.exe"
+          echo "Art preview: https://github.com/$GITHUB_REPOSITORY/releases/download/windows-preview/LastRitual-ArtPreview.exe"
 
       - name: Publish modular art REVIEW sheet (not final game art)
         env:
