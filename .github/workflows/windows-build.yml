@@ -87,6 +87,7 @@ jobs:
           python -m py_compile tools/render_necro_modular_preview.py tools/render_necro_vfx_contact_sheet.py tools/generate_necro_modular_candidates.py
           python3 -m unittest discover -s tests -p 'test_necro_modular_preview.py' -v
           python3 -m unittest discover -s tests -p 'test_necro_modular_vfx.py' -v
+          python3 -m unittest discover -s tests -p 'test_necro_weapon_silhouettes.py' -v
           python3 -m unittest discover -s tests -p 'test_necro_vfx_contact_sheet.py' -v
           python tools/render_necro_vfx_contact_sheet.py
           python -c "from PIL import Image; im=Image.open('build/soul_altar_attack_vfx_sheet.png'); assert im.size == (2216, 582), im.size"
