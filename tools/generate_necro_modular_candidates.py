@@ -127,6 +127,22 @@ def reaper_detail(im,dx,dy,x,y):
  point(im,66,68,12)
  for k in (1,2,3):
   point(im,tx+dx*k+sx*5,ty+dy*k+sy*5,12)
+def legion_detail(im,dx,dy,x,y):
+ # A triple soul conduit: gilded arms, distinct runic skulls and violet sparks.
+ sx,sy=-dy,dx
+ for q in (-1,0,1):
+  ex=x+sx*q*11+dx*(5 if q==0 else 0)
+  ey=y+sy*q*11+dy*(5 if q==0 else 0)
+  line(im,64+sx*q*3,72+sy*q*3,ex,ey,0,7)
+  oval(im,ex,ey,3,3,9)
+  point(im,ex,ey-1,12)
+  point(im,ex+dx*7,ey+dy*7,11)
+  point(im,ex+dx*9,ey+dy*9,12)
+ for k in (-1,0,1):
+  x0=64+sx*k*7
+  y0=69+sy*k*7
+  point(im,x0,y0,6)
+ line(im,59,83,69,83,0,7)
 def weapon(branch):
  atlas=canvas(1024,128)
  for idx,(dx,dy) in enumerate(DIRECTIONS):
@@ -155,6 +171,7 @@ def weapon(branch):
     oval(im,ex,ey,6,7,1);oval(im,ex,ey,4,5,10)
     point(im,ex-2,ey-1,12);point(im,ex+2,ey-1,12);point(im,ex,ey+2,1)
    skull(im,64,70)
+   legion_detail(im,dx,dy,x,y)
   atlas.paste(im,(idx*128,0))
  return atlas
 def rgba(im):
