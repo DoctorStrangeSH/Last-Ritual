@@ -54,6 +54,16 @@ func verify() -> void:
     var pivot_offset := weapon_rect.position - base_rect.position
     check(is_equal_approx(pivot_offset.x, 0.0) and is_equal_approx(pivot_offset.y, 70.0), "Weapon pivot aligns to ground anchor (28px source offset)")
 
+    var scales := [4.0, 1.0, 2.0, 2.5]
+    for scale in scales:
+        check(is_equal_approx(float(preview.cycle_preview_scale()), scale), "Art preview cycles to %sx scale" % scale)
+        var scaled_base: Rect2 = preview.get_base_draw_rect()
+        var scaled_weapon: Rect2 = preview.get_weapon_draw_rect()
+        check(scaled_base.size == Vector2.ONE * (128.0 * scale), "Base retains source pixel dimensions at %sx" % scale)
+        check(scaled_weapon.size == scaled_base.size, "Weapon and base scales match at %sx" % scale)
+        check(is_equal_approx(scaled_weapon.position.y - scaled_base.position.y, 28.0 * scale), "Pivot stays aligned at %sx" % scale)
+    check(is_equal_approx(float(preview.get_preview_scale()), 2.5), "Inspection scale returns to default")
+
     for level in range(1, 4):
         for branch in ["base", "reaper", "legion"]:
             check(bool(preview.select_review_asset(level, branch)), "Select level %d / %s review asset" % [level, branch])

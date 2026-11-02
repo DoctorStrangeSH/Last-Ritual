@@ -6,7 +6,7 @@ const MANIFEST_PATH := "res://assets/spire/towers/necro/candidate/manifest.json"
 const ASSET_ROOT := "res://assets/spire/towers/necro/"
 const CONTRACT := preload("res://scripts/td/td_modular_tower_assets.gd")
 const FRAME_SIZE := Vector2(128.0, 128.0)
-const PREVIEW_SCALE := 2.5
+const PREVIEW_SCALES := [1.0, 2.0, 2.5, 4.0]
 const TOWER_ORIGIN := Vector2(640.0, 410.0)
 const GROUND_ANCHOR := Vector2(64.0, 118.0)
 const WEAPON_PIVOT := Vector2(64.0, 90.0)
@@ -37,6 +37,7 @@ var _level := 3
 var _branch := "base"
 var _elapsed := 0.0
 var _target_position := TOWER_ORIGIN + Vector2(240.0, 0.0)
+var _scale_index := 2
 var _direction_index := 2
 var _manual_direction := -1
 var _show_alignment_guides := true
@@ -208,6 +209,8 @@ func _unhandled_key_input(event: InputEvent) -> void:
             queue_redraw()
         KEY_F:
             fire_preview_shot()
+        KEY_Z:
+            cycle_preview_scale()
         _:
             return
 
@@ -271,17 +274,27 @@ func is_preview_impact_active() -> bool:
 
 
 
+func get_preview_scale() -> float:
+    return float(PREVIEW_SCALES[_scale_index])
+
+
+func cycle_preview_scale() -> float:
+    _scale_index = (_scale_index + 1) % PREVIEW_SCALES.size()
+    queue_redraw()
+    return get_preview_scale()
+
+
 func get_base_draw_rect() -> Rect2:
     return Rect2(
-        TOWER_ORIGIN - GROUND_ANCHOR * PREVIEW_SCALE,
-        FRAME_SIZE * PREVIEW_SCALE
+        TOWER_ORIGIN - GROUND_ANCHOR * get_preview_scale(),
+        FRAME_SIZE * get_preview_scale()
     )
 
 
 func get_weapon_draw_rect() -> Rect2:
     return Rect2(
-        TOWER_ORIGIN - WEAPON_PIVOT * PREVIEW_SCALE,
-        FRAME_SIZE * PREVIEW_SCALE
+        TOWER_ORIGIN - WEAPON_PIVOT * get_preview_scale(),
+        FRAME_SIZE * get_preview_scale()
     )
 
 
@@ -369,6 +382,6 @@ func _draw() -> void:
     draw_string(ThemeDB.fallback_font, Vector2(32, 630), "Уровень: %d    Оружие: %s    Направление: %s (%d)" % [_level, branch_label, CONTRACT.direction_name(_direction_index), _direction_index], HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color("#f0e8ff"))
     var attack_label := "Атака: сгусток души" if _branch == "base" else ("Атака: серп Жнеца" if _branch == "reaper" else "Атака: триада Легиона")
     draw_string(ThemeDB.fallback_font, Vector2(32, 652), attack_label, HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#e5c8ff"))
-    draw_string(ThemeDB.fallback_font, Vector2(32, 676), "1/2/3 — уровень     B/R/L — оружие     F — выстрел", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#c8bdd8"))
+    draw_string(ThemeDB.fallback_font, Vector2(32, 676), "1/2/3 — уровень     B/R/L — оружие     F — выстрел     Z — масштаб 1x/2x/2.5x/4x", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#c8bdd8"))
     draw_string(ThemeDB.fallback_font, Vector2(32, 698), "NumPad 8/9/6/3/2/1/4/7 — направление     A — авто     H — направляющие", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("#c8bdd8"))
     draw_string(ThemeDB.fallback_font, Vector2(32, 718), "Review scene only. Approved production sprites and runtime manifest are unchanged.", HORIZONTAL_ALIGNMENT_LEFT, -1, 11, Color("#9e91ad"))
