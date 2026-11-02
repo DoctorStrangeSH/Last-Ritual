@@ -160,36 +160,68 @@ def altar_weapon_detail(im,dx,dy,x,y):
  oval(im,64,71,5,4,1)
  oval(im,64,70,3,3,6)
  point(im,64,69,12)
+def hooded_hub(im):
+ # Shared dark hood + skull that anchors both specialisation weapons at pivot (64,70).
+ oval(im,64,69,10,11,1);oval(im,64,68,8,9,8);oval(im,64,66,5,5,9)
+ skull(im,64,68)
+ for gx in (-9,9): point(im,64+gx,64,7)
+def reaper_scythe(im,dx,dy):
+ # Reaper: a long gilded shaft that ends in an unmistakable curved crescent blade.
+ sx,sy=-dy,dx
+ tx,ty=64+dx*37,70+dy*33
+ line(im,64,70,tx,ty,2,1);line(im,64,70,tx,ty,1,5);line(im,64,70,tx,ty,0,7)
+ for k in (17,24,31):
+  bx,by=64+dx*k,70+dy*k*0.89
+  line(im,bx-sx*2,by-sy*2,bx+sx*2,by+sy*2,1,1);line(im,bx-sx*2,by-sy*2,bx+sx*2,by+sy*2,0,6)
+ hooded_hub(im)
+ pts=[]
+ for i in range(27):
+  th=math.radians(i*4.3)
+  pts.append((tx+sx*25*math.sin(th)-dx*15*(1-math.cos(th)),ty+sy*25*math.sin(th)-dy*13*(1-math.cos(th)),i/26))
+ for px,py,t in pts:
+  w=int(round(5*(1-t)+1)); box(im,px-w,py-w,px+w,py+w,1)
+ for px,py,t in pts:
+  w=int(round(4*(1-t)+0.4)); box(im,px-w+1,py-w+1,px+w-1,py+w-1,9 if t>0.55 else 10)
+ for px,py,t in pts:
+  point(im,px+dx*(3.2*(1-t)+1),py+dy*(3.2*(1-t)+1),12 if t<0.8 else 11)
+ line(im,tx-dx*3,ty-dy*3,tx+dx*3,ty+dy*3,1,1);line(im,tx-dx*2,ty-dy*2,tx+dx*2,ty+dy*2,0,7)
+ ex,ey=pts[-1][0],pts[-1][1]
+ for k in (1,2,3): point(im,ex-dx*k*2+sx*k,ey-dy*k*2+sy*k,12 if k==1 else 11)
+ line(im,64-sx*7,70-sy*7,64-sx*13-dx*4,70-sy*13-dy*4,0,7);oval(im,64-sx*13-dx*4,70-sy*13-dy*4,2,2,6)
+def legion_skull_swarm(im,dx,dy):
+ # Legion: a gilded fan of three armoured arms, each carrying a burning soul skull.
+ sx,sy=-dy,dx
+ heads=[]
+ for q in (-1,0,1):
+  hx=64+dx*(24 if q==0 else 20)+sx*q*16
+  hy=70+dy*(21 if q==0 else 17)+sy*q*14
+  heads.append((q,hx,hy))
+ for q,hx,hy in heads:
+  line(im,64+sx*q*3,70+sy*q*3,hx,hy,2,1);line(im,64+sx*q*3,70+sy*q*3,hx,hy,1,5);line(im,64+sx*q*3,70+sy*q*3,hx,hy,0,7)
+ hooded_hub(im)
+ for q,hx,hy in heads:
+  for k in (5,4,3,2):
+   oval(im,hx-dx*k*2.5,hy-dy*k*2.5,k//2+1,k//2+1,9 if k>3 else 10)
+  oval(im,hx,hy,8,8,1);oval(im,hx,hy,6,6,8)
+  skull(im,hx,hy)
+  box(im,hx-3,hy-8,hx+3,hy-7,7);point(im,hx,hy-9,12)
+  point(im,hx-dx*7+sx*3,hy-dy*7+sy*3,12);point(im,hx+dx*7-sx*3,hy+dy*7-sy*3,11)
 def weapon(branch):
  atlas=canvas(1024,128)
  for idx,(dx,dy) in enumerate(DIRECTIONS):
   im=canvas()
   box(im,57,74,71,88,1);box(im,60,76,68,85,5);box(im,62,78,66,83,7)
   x,y=64+dx*30,65+dy*27
-  line(im,64,70,x,y,6,1);line(im,64,70,x,y,4,3);line(im,64,70,x,y,2,6)
   if branch=="base":
+   line(im,64,70,x,y,6,1);line(im,64,70,x,y,4,3);line(im,64,70,x,y,2,6)
    oval(im,x,y,10,11,1);oval(im,x,y,8,9,8);oval(im,x,y-1,6,7,10)
    oval(im,x,y-2,4,5,11);point(im,x,y-4,12)
    skull(im,64,70);line(im,x-4,y+5,x+4,y+5,0,7)
    altar_weapon_detail(im,dx,dy,x,y)
   elif branch=="reaper":
-   line(im,64,70,x+dx*5,y+dy*5,2,7)
-   tip=(x+dx*13,y+dy*13);sx,sy=-dy,dx
-   line(im,tip[0]-sx*13,tip[1]-sy*13,tip[0]+sx*10,tip[1]+sy*10,3,1)
-   line(im,tip[0]-sx*12,tip[1]-sy*12,tip[0]+sx*9,tip[1]+sy*9,2,10)
-   line(im,tip[0]-sx*8,tip[1]-sy*8,tip[0]+sx*4,tip[1]+sy*4,0,12)
-   oval(im,64,66,11,12,1);oval(im,64,64,8,9,8);skull(im,64,67)
-   reaper_detail(im,dx,dy,x,y)
+   reaper_scythe(im,dx,dy)
   else:
-   sx,sy=-dy,dx
-   for q in (-1,0,1):
-    ex=x+sx*q*11+dx*(5 if q==0 else 0)
-    ey=y+sy*q*11+dy*(5 if q==0 else 0)
-    line(im,64+sx*q*3,72+sy*q*3,ex,ey,2,5)
-    oval(im,ex,ey,6,7,1);oval(im,ex,ey,4,5,10)
-    point(im,ex-2,ey-1,12);point(im,ex+2,ey-1,12);point(im,ex,ey+2,1)
-   skull(im,64,70)
-   legion_detail(im,dx,dy,x,y)
+   legion_skull_swarm(im,dx,dy)
   atlas.paste(im,(idx*128,0))
  return atlas
 def rgba(im):
