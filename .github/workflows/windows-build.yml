@@ -71,6 +71,11 @@ jobs:
         run: python -m py_compile tools/import_necro_git_bundle.py
       - name: Reject invalid Soul Altar Pixel Art atlases
         run: timeout 120s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --script res://tests/soul_altar_art_gate.gd
+      - name: Validate standalone Soul Altar preview exporter
+        run: |
+          python -m py_compile tools/export_soul_altar_preview.py
+          python3 -m unittest discover -s tests -p 'test_export_soul_altar_preview.py' -v
+          python tools/export_soul_altar_preview.py --dry-run
       - name: Compile Soul Altar review frame exporter
         run: python -m py_compile tools/export_soul_altar_review_frames.py
       - name: Validate assembled Soul Altar Pixel Art review source
@@ -134,6 +139,11 @@ jobs:
           mkdir -p build/windows
           timeout 180s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --export-release "Windows Desktop" build/windows/LastRitual.exe
           test -s build/windows/LastRitual.exe
+      - name: Export standalone Soul Altar art preview EXE
+        run: |
+          python tools/export_soul_altar_preview.py --godot ./Godot_v4.4.1-stable_linux.x86_64 --output build/windows/LastRitual-ArtPreview.exe
+          test -s build/windows/LastRitual-ArtPreview.exe
+          grep -F 'run/main_scene="res://scenes/run_loop.tscn"' project.godot
       # Reuse the same rolling Release asset: no Actions artifact storage.
       - name: Publish Windows EXE to GitHub Releases
         env:
@@ -141,15 +151,16 @@ jobs:
         run: |
           set -euo pipefail
           if gh release view windows-preview >/dev/null 2>&1; then
-            gh release upload windows-preview build/windows/LastRitual.exe --clobber
+            gh release upload windows-preview build/windows/LastRitual.exe build/windows/LastRitual-ArtPreview.exe --clobber
           else
-            gh release create windows-preview build/windows/LastRitual.exe \
+            gh release create windows-preview build/windows/LastRitual.exe build/windows/LastRitual-ArtPreview.exe \
               --target "$GITHUB_SHA" \
               --title "Last Ritual — Windows preview" \
               --notes "Тестовая Windows-сборка из main; заменяется при следующей успешной сборке." \
               --prerelease
           fi
-          echo "Download: https://github.com/$GITHUB_REPOSITORY/releases/download/windows-preview/LastRitual.exe"
+          echo "Game: https://github.com/$GITHUB_REPOSITORY/releases/download/windows-preview/LastRitual.exe"
+          echo "Art preview: https://github.com/$GITHUB_REPOSITORY/releases/download/windows-preview/LastRitual-ArtPreview.exe"
 
       - name: Publish modular art REVIEW sheet (not final game art)
         env:
