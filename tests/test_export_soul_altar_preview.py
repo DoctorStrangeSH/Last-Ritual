@@ -1,6 +1,8 @@
 import importlib.util
 import unittest
 from pathlib import Path
+from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location(
@@ -29,6 +31,22 @@ class SoulAltarPreviewExportTests(unittest.TestCase):
         original = (ROOT / "project.godot").read_text(encoding="utf-8")
         with self.assertRaises(ValueError):
             MODULE.make_preview_config(original + "\n" + MODULE.PRODUCTION_SCENE)
+
+    def test_project_file_is_restored_byte_for_byte_when_export_fails(self):
+        original_root = MODULE.ROOT
+        with TemporaryDirectory() as temp_dir:
+            temp_root = Path(temp_dir)
+            project_file = temp_root / "project.godot"
+            original_bytes = (ROOT / "project.godot").read_bytes()
+            project_file.write_bytes(original_bytes)
+            MODULE.ROOT = temp_root
+            try:
+                with patch.object(MODULE.subprocess, "run", side_effect=RuntimeError("simulated export failure")):
+                    with self.assertRaises(RuntimeError):
+                        MODULE.export_preview(Path("fake-godot"), temp_root / "preview.exe")
+                self.assertEqual(project_file.read_bytes(), original_bytes)
+            finally:
+                MODULE.ROOT = original_root
 
     def test_preview_scene_is_the_isolated_review_scene(self):
         self.assertEqual(
