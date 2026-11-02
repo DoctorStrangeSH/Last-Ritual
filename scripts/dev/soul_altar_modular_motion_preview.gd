@@ -10,6 +10,10 @@ const PREVIEW_SCALE := 2.5
 const TOWER_ORIGIN := Vector2(640.0, 410.0)
 const GROUND_ANCHOR := Vector2(64.0, 118.0)
 const WEAPON_PIVOT := Vector2(64.0, 90.0)
+const DIRECTION_VECTORS := [
+    Vector2.UP, Vector2(1, -1), Vector2.RIGHT, Vector2(1, 1),
+    Vector2.DOWN, Vector2(-1, 1), Vector2.LEFT, Vector2(-1, -1)
+]
 
 var _manifest: Dictionary = {}
 var _base_texture: Texture2D
@@ -19,6 +23,8 @@ var _branch := "base"
 var _elapsed := 0.0
 var _target_position := TOWER_ORIGIN + Vector2(240.0, 0.0)
 var _direction_index := 2
+var _manual_direction := -1
+var _show_alignment_guides := true
 var _error_message := ""
 
 
@@ -82,11 +88,12 @@ func _reload_selection() -> bool:
 
 func _process(delta: float) -> void:
     _elapsed += delta
-    _target_position = TOWER_ORIGIN + Vector2(
-        cos(_elapsed * 0.72) * 245.0,
-        sin(_elapsed * 0.51) * 170.0
-    )
-    _direction_index = preview_direction_for_target(_target_position)
+    if _manual_direction < 0:
+        _target_position = TOWER_ORIGIN + Vector2(
+            cos(_elapsed * 0.72) * 245.0,
+            sin(_elapsed * 0.51) * 170.0
+        )
+        _direction_index = preview_direction_for_target(_target_position)
     queue_redraw()
 
 
@@ -98,20 +105,59 @@ func _unhandled_key_input(event: InputEvent) -> void:
         return
     match key.keycode:
         KEY_1:
-            _level = 1
+            select_review_asset(1, _branch)
         KEY_2:
-            _level = 2
+            select_review_asset(2, _branch)
         KEY_3:
-            _level = 3
+            select_review_asset(3, _branch)
         KEY_B:
-            _branch = "base"
+            select_review_asset(_level, "base")
         KEY_R:
-            _branch = "reaper"
+            select_review_asset(_level, "reaper")
         KEY_L:
-            _branch = "legion"
+            select_review_asset(_level, "legion")
+        KEY_KP_8:
+            set_manual_direction(0)
+        KEY_KP_9:
+            set_manual_direction(1)
+        KEY_KP_6:
+            set_manual_direction(2)
+        KEY_KP_3:
+            set_manual_direction(3)
+        KEY_KP_2:
+            set_manual_direction(4)
+        KEY_KP_1:
+            set_manual_direction(5)
+        KEY_KP_4:
+            set_manual_direction(6)
+        KEY_KP_7:
+            set_manual_direction(7)
+        KEY_A:
+            resume_auto_target()
+        KEY_H:
+            _show_alignment_guides = not _show_alignment_guides
+            queue_redraw()
         _:
             return
-    _reload_selection()
+
+
+func select_review_asset(level: int, branch: String) -> bool:
+    if level < 1 or level > 3 or not ["base", "reaper", "legion"].has(branch):
+        return false
+    _level = level
+    _branch = branch
+    return _reload_selection()
+
+
+func set_manual_direction(index: int) -> void:
+    _manual_direction = posmod(index, DIRECTION_VECTORS.size())
+    _direction_index = _manual_direction
+    _target_position = TOWER_ORIGIN + DIRECTION_VECTORS[_direction_index] * 245.0
+    queue_redraw()
+
+
+func resume_auto_target() -> void:
+    _manual_direction = -1
 
 
 func preview_direction_for_target(target: Vector2) -> int:
@@ -167,6 +213,12 @@ func _draw() -> void:
     var source := Rect2(float(_direction_index * 128), 0.0, 128.0, 128.0)
     draw_texture_rect_region(_weapon_texture, get_weapon_draw_rect(), source)
 
+    if _show_alignment_guides:
+        draw_rect(get_base_draw_rect(), Color("#75d9b0"), false, 1.5)
+        draw_rect(get_weapon_draw_rect(), Color("#d9a5ff"), false, 1.5)
+        draw_circle(TOWER_ORIGIN, 8.0, Color("#ffffff"))
+        draw_arc(TOWER_ORIGIN, 14.0, 0.0, TAU, 24, Color("#ffffff"), 1.5)
+
     draw_line(TOWER_ORIGIN, _target_position, Color("#a879d7"), 2.0)
     draw_circle(_target_position, 13.0, Color("#ffcf74"))
     draw_arc(_target_position, 22.0, 0.0, TAU, 32, Color("#fff0bd"), 2.0)
@@ -174,5 +226,6 @@ func _draw() -> void:
 
     var branch_label: String = str({"base": "Обычный Алтарь", "reaper": "Жнец", "legion": "Легион"}.get(_branch, _branch))
     draw_string(ThemeDB.fallback_font, Vector2(32, 630), "Уровень: %d    Оружие: %s    Направление: %s (%d)" % [_level, branch_label, CONTRACT.direction_name(_direction_index), _direction_index], HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color("#f0e8ff"))
-    draw_string(ThemeDB.fallback_font, Vector2(32, 666), "1/2/3 — уровень     B — Алтарь     R — Жнец     L — Легион", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#c8bdd8"))
-    draw_string(ThemeDB.fallback_font, Vector2(32, 694), "Review scene only. Approved production sprites and runtime manifest are unchanged.", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#9e91ad"))
+    draw_string(ThemeDB.fallback_font, Vector2(32, 662), "1/2/3 — уровень     B — Алтарь     R — Жнец     L — Легион", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#c8bdd8"))
+    draw_string(ThemeDB.fallback_font, Vector2(32, 684), "NumPad 8/9/6/3/2/1/4/7 — направление     A — авто     H — направляющие", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#c8bdd8"))
+    draw_string(ThemeDB.fallback_font, Vector2(32, 706), "Review scene only. Approved production sprites and runtime manifest are unchanged.", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("#9e91ad"))

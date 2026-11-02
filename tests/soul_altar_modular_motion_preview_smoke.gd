@@ -52,6 +52,20 @@ func verify() -> void:
     var pivot_offset := weapon_rect.position - base_rect.position
     check(is_equal_approx(pivot_offset.x, 0.0) and is_equal_approx(pivot_offset.y, 70.0), "Weapon pivot aligns to ground anchor (28px source offset)")
 
+    for level in range(1, 4):
+        for branch in ["base", "reaper", "legion"]:
+            check(bool(preview.select_review_asset(level, branch)), "Select level %d / %s review asset" % [level, branch])
+            check(preview.get("_base_texture") != null, "Level %d base loads for %s" % [level, branch])
+            check(preview.get("_weapon_texture") != null, "Eight-way %s weapon loads at level %d" % [branch, level])
+    check(not bool(preview.select_review_asset(4, "base")), "Invalid review level is rejected")
+    check(not bool(preview.select_review_asset(2, "unknown")), "Unknown review weapon is rejected")
+
+    for index in range(8):
+        preview.set_manual_direction(index)
+        check(int(preview.get_current_direction_index()) == index, "Manual inspection selects exact direction %d" % index)
+    preview.resume_auto_target()
+    check(int(preview.get("_manual_direction")) == -1, "Automatic moving-target mode can be restored")
+
     check(not bool(preview.load_preview_assets("res://assets/spire/towers/necro/candidate/missing_manifest.json")), "Missing manifest fails safely")
     check(preview.get("_base_texture") == null and preview.get("_weapon_texture") == null, "Missing assets leave preview empty instead of using production fallback")
     check(not str(preview.get("_error_message")).is_empty(), "Missing assets produce an explicit preview warning")
