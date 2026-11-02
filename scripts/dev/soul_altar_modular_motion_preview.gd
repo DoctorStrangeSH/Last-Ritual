@@ -148,6 +148,17 @@ func _process(delta: float) -> void:
             sin(_elapsed * 0.51) * 170.0
         )
         _direction_index = preview_direction_for_target(_target_position)
+
+    if _shot_active:
+        _shot_elapsed += delta
+        if _shot_elapsed >= SHOT_DURATION:
+            _shot_active = false
+            _impact_active = true
+            _impact_elapsed = 0.0
+    elif _impact_active:
+        _impact_elapsed += delta
+        if _impact_elapsed >= float(_impact_frame_count) / _impact_fps:
+            _impact_active = false
     queue_redraw()
 
 
@@ -191,6 +202,8 @@ func _unhandled_key_input(event: InputEvent) -> void:
         KEY_H:
             _show_alignment_guides = not _show_alignment_guides
             queue_redraw()
+        KEY_F:
+            fire_preview_shot()
         _:
             return
 
@@ -216,6 +229,40 @@ func resume_auto_target() -> void:
 
 func preview_direction_for_target(target: Vector2) -> int:
     return CONTRACT.direction_index(TOWER_ORIGIN, target)
+
+
+func fire_preview_shot() -> bool:
+    if _projectile_texture == null or _impact_texture == null:
+        return false
+    if _shot_active or _impact_active:
+        return false
+    _shot_origin = TOWER_ORIGIN
+    _shot_target = _target_position
+    if _shot_origin.distance_squared_to(_shot_target) < 1.0:
+        _shot_target = _shot_origin + Vector2.RIGHT * 180.0
+    _shot_elapsed = 0.0
+    _impact_elapsed = 0.0
+    _shot_active = true
+    queue_redraw()
+    return true
+
+
+func get_projectile_frame_index() -> int:
+    return posmod(int(floor(_shot_elapsed * _projectile_fps)), _projectile_frame_count)
+
+
+func get_impact_frame_index() -> int:
+    return clampi(int(floor(_impact_elapsed * _impact_fps)), 0, _impact_frame_count - 1)
+
+
+func is_preview_shot_active() -> bool:
+    return _shot_active
+
+
+func is_preview_impact_active() -> bool:
+    return _impact_active
+
+
 
 
 func get_base_draw_rect() -> Rect2:
