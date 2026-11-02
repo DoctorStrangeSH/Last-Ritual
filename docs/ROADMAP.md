@@ -1,5 +1,8 @@
 # АКТУАЛЬНЫЙ ПЛАН — 01.11.2026 (после PR #314)
 
+**02.11.2026 — отдельный Windows Art Preview EXE (PR ожидает CI):** добавлены `tools/export_soul_altar_preview.py` и `tests/test_export_soul_altar_preview.py`. CI временно меняет только `project.godot` main scene/name, экспортирует `build/windows/LastRitual-ArtPreview.exe`, затем восстанавливает `project.godot` байт-в-байт в `finally` и проверяет, что production main scene вернулась. В Release публикуются два разных EXE: обычный `LastRitual.exe` (run_loop) и `LastRitual-ArtPreview.exe` (изолированная сцена движущейся цели), плюс contact sheet. Это отдельный QA билд; runtime manifest остаётся `runtime_enabled=false`, production art/renderer не меняются. Не считать Art Preview игровым билдом.
+
+
 **02.11.2026 — изолированная демонстрация поворота модульного оружия (PR ожидает CI):** добавлена отдельная сцена `scenes/dev/soul_altar_modular_motion_preview.tscn` и скрипт `scripts/dev/soul_altar_modular_motion_preview.gd`. Движущаяся цель обновляет кадр по `direction_index`; клавиши 1/2/3 выбирают уровень, B/R/L — Алтарь/Жнец/Легион. Сцена читает только `candidate/manifest.json` и отказывается от `runtime_enabled=true`; отсутствие манифеста/текстур показывает предупреждение без fallback на production-арт. Исправлен контактный лист: оружейный pivot (64,90) теперь совмещается с ground anchor (64,118), то есть оружие сдвинуто на 28 px относительно основания; холст превью 128×156, итог 2156×1092. Добавлен Godot smoke test на 8 направлений, pivot offset, размеры и missing-asset fallback. Это техническое review-превью, не включение боевого рендера и не художественная приёмка.
 
 
