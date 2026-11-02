@@ -27,25 +27,29 @@ LEVEL_HEADER = 28
 LABEL = 26
 
 
-def sheet_dimensions(level_count: int) -> tuple[int, int]:
+def sheet_dimensions(level_count: int, scale: int = SCALE) -> tuple[int, int]:
     if level_count < 1 or level_count > 3:
         raise ValueError("The contact sheet supports one to three base levels")
-    tile = FRAME[0] * SCALE
-    tile_height = COMPOSITE[1] * SCALE
+    if scale not in (1, 2):
+        raise ValueError("The review sheet supports native 1x or enlarged 2x scale")
+    tile = FRAME[0] * scale
+    tile_height = COMPOSITE[1] * scale
     row_height = LABEL + tile_height + GAP
     width = GAP + 8 * (tile + GAP)
     height = HEADER + level_count * (LEVEL_HEADER + len(BRANCHES) * row_height + GAP)
     return width, height
 
 
-def render(output: Path = DEST, level: int = 3, all_levels: bool = False) -> None:
+def render(output: Path = DEST, level: int = 3, all_levels: bool = False, scale: int = SCALE) -> None:
     if level not in (1, 2, 3):
         raise ValueError("Level must be 1, 2 or 3")
     levels = (1, 2, 3) if all_levels else (level,)
-    tile = FRAME[0] * SCALE
-    tile_height = COMPOSITE[1] * SCALE
+    if scale not in (1, 2):
+        raise ValueError("The review sheet supports native 1x or enlarged 2x scale")
+    tile = FRAME[0] * scale
+    tile_height = COMPOSITE[1] * scale
     row_height = LABEL + tile_height + GAP
-    width, height = sheet_dimensions(len(levels))
+    width, height = sheet_dimensions(len(levels), scale)
 
     bases: dict[int, Image.Image] = {}
     for selected_level in levels:
@@ -70,7 +74,7 @@ def render(output: Path = DEST, level: int = 3, all_levels: bool = False) -> Non
     level_label = "ALL LEVELS" if all_levels else f"L{level}"
     draw.text(
         (GAP, 9),
-        f"SOUL ALTAR - MODULAR CANDIDATE / {level_label} / 72 POSES / NOT APPROVED",
+        f"SOUL ALTAR - MODULAR CANDIDATE / {level_label} / {scale}X / 72 POSES / NOT APPROVED",
         fill="#efdbb3",
     )
 
@@ -113,17 +117,18 @@ def render(output: Path = DEST, level: int = 3, all_levels: bool = False) -> Non
 
     output.parent.mkdir(parents=True, exist_ok=True)
     sheet.save(output)
-    print(f"Created {output} ({width}x{height}; {len(levels) * len(BRANCHES) * 8} poses)")
+    print(f"Created {output} ({width}x{height}; {scale}x; {len(levels) * len(BRANCHES) * 8} poses)")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=DEST)
     parser.add_argument("--level", type=int, choices=(1, 2, 3), default=3)
+    parser.add_argument("--scale", type=int, choices=(1, 2), default=SCALE, help="Native 1x pixels or enlarged 2x review scale")
     parser.add_argument(
         "--all-levels",
         action="store_true",
         help="Render levels 1, 2 and 3 (72 base/weapon/direction combinations)",
     )
     args = parser.parse_args()
-    render(args.output, args.level, args.all_levels)
+    render(args.output, args.level, args.all_levels, args.scale)
