@@ -107,6 +107,37 @@ def base(level):
   for dx in (-22,22):
    line(im,64+dx,84,64+dx*1.17,75,2,1)
    line(im,64+dx,82,64+dx*1.17,76,0,7)
+ # Structural silhouette upgrade: compact central body, taller tiers and bold
+ # architectural markers visible even at 1x (not extra fine surface noise).
+ # These are candidate-only layers, intentionally independent of weapon rotation.
+ box(im,49,80,79,96,1)
+ box(im,52,80,76,93,3)
+ box(im,55,83,73,88,5)
+ line(im,52,80,76,80,1,6)
+ oval(im,64,81,5+level,6,8)
+ oval(im,64,79,3+level,4,10)
+ point(im,64,77,12)
+ # Every tier has a taller, distinctive outline:
+ # L1: one central crest; L2: two short side spires;
+ # L3: high triple spires plus a raised gilded arch.
+ spire_height={1:13,2:19,3:28}[level]
+ box(im,60,80-spire_height,68,82,1)
+ box(im,62,83-spire_height,66,79,5)
+ line(im,64,78-spire_height,64,77,1,6)
+ point(im,64,76-spire_height,7)
+ if level>=2:
+  for xx in (47,81):
+   h=14 if level==2 else 22
+   box(im,xx-4,84-h,xx+4,91,1)
+   box(im,xx-2,86-h,xx+2,87,5)
+   line(im,xx,81-h,xx,83,1,6)
+   point(im,xx,79-h,7)
+ if level==3:
+  line(im,47,75,64,68,1,6)
+  line(im,64,68,81,75,1,6)
+  for xx in (54,74):
+   oval(im,xx,76,3,3,9)
+   point(im,xx,74,12)
  gothic_base_detail(im,level)
  return im
 def reaper_detail(im,dx,dy,x,y):
