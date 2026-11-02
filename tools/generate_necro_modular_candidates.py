@@ -282,15 +282,15 @@ def vfx_impact(branch):
     ring(im,cx,cy,radius-4,1,7,offset+frame*8+15,offset+frame*8+195)
    for q in range(4):
     a=math.radians(q*90+frame*13)
-    ray(im,cx,cy,a,9+progress*18,0,12 if q%2 else 7)
+    ray(im,cx,cy,math.degrees(a),9+progress*18,0,12 if q%2 else 7)
    diamond(im,cx,cy,max(1,4-frame//2),8)
    point(im,cx,cy,15 if frame<3 else 11)
   else:
    radius=5+progress*15
    for q in range(3):
     a=q*math.tau/3+frame*.12
-    ray(im,cx,cy,a,radius,1,17)
-    ray(im,cx,cy,a+.25,radius*.78,0,19)
+    ray(im,cx,cy,math.degrees(a),radius,1,17)
+    ray(im,cx,cy,math.degrees(a+.25),radius*.78,0,19)
     for sub in (0,1,2):
      px=cx+math.cos(a+sub*.16)*radius
      py=cy+math.sin(a+sub*.16)*radius
