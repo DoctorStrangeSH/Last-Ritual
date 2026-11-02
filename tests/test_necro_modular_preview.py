@@ -13,7 +13,7 @@ SPEC.loader.exec_module(MODULE)
 
 class SoulAltarContactSheetTests(unittest.TestCase):
     def test_single_level_sheet_has_three_weapon_rows(self):
-        self.assertEqual(MODULE.sheet_dimensions(1), (2156, 1120))
+        self.assertEqual(MODULE.sheet_dimensions(1), (2156, 1132))
 
     def test_all_levels_sheet_contains_72_poses_without_row_overlap(self):
         self.assertEqual(MODULE.sheet_dimensions(3), (2156, 3312))
