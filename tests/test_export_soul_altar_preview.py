@@ -21,10 +21,9 @@ class SoulAltarPreviewExportTests(unittest.TestCase):
         self.assertNotIn(MODULE.PRODUCTION_NAME, updated)
         self.assertIn(MODULE.PRODUCTION_SCENE, original)
         self.assertIn(MODULE.PRODUCTION_NAME, original)
-        self.assertEqual(
-            updated\n            .replace(MODULE.PREVIEW_SCENE, MODULE.PRODUCTION_SCENE)\n            .replace(MODULE.PREVIEW_NAME, MODULE.PRODUCTION_NAME),
-            original,
-        )
+        restored = updated.replace(MODULE.PREVIEW_SCENE, MODULE.PRODUCTION_SCENE)
+        restored = restored.replace(MODULE.PREVIEW_NAME, MODULE.PRODUCTION_NAME)
+        self.assertEqual(restored, original)
 
     def test_duplicate_or_unexpected_project_settings_are_rejected(self):
         original = (ROOT / "project.godot").read_text(encoding="utf-8")
