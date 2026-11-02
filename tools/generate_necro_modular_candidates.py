@@ -108,6 +108,25 @@ def base(level):
    line(im,64+dx,82,64+dx*1.17,76,0,7)
  gothic_base_detail(im,level)
  return im
+def reaper_detail(im,dx,dy,x,y):
+ # Directional blade ribs, chained skull pommel and purple soul-fire.
+ sx,sy=-dy,dx
+ tx,ty=x+dx*13,y+dy*13
+ for k in range(-3,4):
+  px,py=tx+sx*k*3,ty+sy*k*3
+  point(im,px+dx*2,py+dy*2,11 if k%2 else 12)
+ line(im,tx-sx*15,ty-sy*15,tx+sx*11,ty+sy*11,0,7)
+ for k in (0,1,2,3):
+  cx=64-dx*k*4+sx*4
+  cy=70-dy*k*4+sy*4
+  oval(im,cx,cy,2,2,1)
+  point(im,cx,cy,6)
+ line(im,64-sx*5,72-sy*5,64+sx*5,72+sy*5,1,6)
+ oval(im,64,69,5,4,9)
+ point(im,62,68,12)
+ point(im,66,68,12)
+ for k in (1,2,3):
+  point(im,tx+dx*k+sx*5,ty+dy*k+sy*5,12)
 def weapon(branch):
  atlas=canvas(1024,128)
  for idx,(dx,dy) in enumerate(DIRECTIONS):
@@ -126,6 +145,7 @@ def weapon(branch):
    line(im,tip[0]-sx*12,tip[1]-sy*12,tip[0]+sx*9,tip[1]+sy*9,2,10)
    line(im,tip[0]-sx*8,tip[1]-sy*8,tip[0]+sx*4,tip[1]+sy*4,0,12)
    oval(im,64,66,11,12,1);oval(im,64,64,8,9,8);skull(im,64,67)
+   reaper_detail(im,dx,dy,x,y)
   else:
    sx,sy=-dy,dx
    for q in (-1,0,1):
