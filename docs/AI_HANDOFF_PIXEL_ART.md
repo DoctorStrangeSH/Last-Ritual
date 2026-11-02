@@ -1,5 +1,8 @@
 # Last Ritual — Handoff: Pixel Art Migration & Soul Altar Rework
 
+**02.11.2026 — изолированная демонстрация поворота модульного оружия (PR ожидает CI):** добавлена отдельная сцена `scenes/dev/soul_altar_modular_motion_preview.tscn` и скрипт `scripts/dev/soul_altar_modular_motion_preview.gd`. Движущаяся цель обновляет кадр по `direction_index`; клавиши 1/2/3 выбирают уровень, B/R/L — Алтарь/Жнец/Легион. Сцена читает только `candidate/manifest.json` и отказывается от `runtime_enabled=true`; отсутствие манифеста/текстур показывает предупреждение без fallback на production-арт. Исправлен контактный лист: оружейный pivot (64,90) теперь совмещается с ground anchor (64,118), то есть оружие сдвинуто на 28 px относительно основания; холст превью 128×156, итог 2156×1092. Добавлен Godot smoke test на 8 направлений, pivot offset, размеры и missing-asset fallback. Это техническое review-превью, не включение боевого рендера и не художественная приёмка.
+
+
 **02.11.2026 — визуальная контактная таблица модульного Алтаря душ (PR ожидает CI):** добавлен `tools/render_necro_modular_preview.py`, который накладывает реальный candidate/base L3 на 8 кадров каждого оружия base/Жнец/Легион (24 комбинации), 2× nearest, с названиями направлений и явной меткой NOT APPROVED. В CI проверяется сборка PNG 2156×924. После main Windows-build лист публикуется как `soul_altar_modular_contact_sheet.png` в rolling GitHub Release без расхода GitHub Actions artifacts. Скрипт поддерживает `--level 1|2|3`. Не gameplay/не визуальная приёмка, runtime остаётся выключен.
 
 
