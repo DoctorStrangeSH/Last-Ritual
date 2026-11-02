@@ -261,8 +261,15 @@ def reaper_scythe(im,dx,dy):
   w=int(round(5*(1-t)+1)); box(im,px-w,py-w,px+w,py+w,1)
  for px,py,t in pts:
   w=int(round(4*(1-t)+0.4)); box(im,px-w+1,py-w+1,px+w-1,py+w-1,9 if t>0.55 else 10)
+ # A single controlled ivory-violet cutting edge, without stray sparks
+ # inside the blade. Make the curvature read in all eight directions.
  for px,py,t in pts:
-  point(im,px+dx*(3.2*(1-t)+1),py+dy*(3.2*(1-t)+1),12 if t<0.8 else 11)
+  point(im,px+dx*(3.2*(1-t)+1),py+dy*(3.2*(1-t)+1),12 if t<0.7 else 11)
+ # The soul-fire tip has a compact three-pixel highlight.
+ ex,ey=pts[-1][0],pts[-1][1]
+ point(im,ex,ey,12)
+ point(im,ex-dx*2+sx,ey-dy*2+sy,11)
+ point(im,ex-dx*4+sx*2,ey-dy*4+sy*2,10)
  line(im,tx-dx*3,ty-dy*3,tx+dx*3,ty+dy*3,1,1);line(im,tx-dx*2,ty-dy*2,tx+dx*2,ty+dy*2,0,7)
  ex,ey=pts[-1][0],pts[-1][1]
  for k in (1,2,3): point(im,ex-dx*k*2+sx*k,ey-dy*k*2+sy*k,12 if k==1 else 11)
