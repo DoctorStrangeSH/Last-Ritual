@@ -279,12 +279,16 @@ def legion_skull_swarm(im,dx,dy):
   line(im,64+sx*q*3,70+sy*q*3,hx,hy,2,1);line(im,64+sx*q*3,70+sy*q*3,hx,hy,1,5);line(im,64+sx*q*3,70+sy*q*3,hx,hy,0,7)
  hooded_hub(im)
  for q,hx,hy in heads:
-  for k in (5,4,3,2):
-   oval(im,hx-dx*k*2.5,hy-dy*k*2.5,k//2+1,k//2+1,9 if k>3 else 10)
-  oval(im,hx,hy,8,8,1);oval(im,hx,hy,6,6,8)
+  # Keep exactly three distinct skulls, with a compact aura rather
+  # than overlapping trails of violet particles at native 1x.
+  oval(im,hx,hy,8,8,1)
+  oval(im,hx,hy,6,6,8)
   skull(im,hx,hy)
-  box(im,hx-3,hy-8,hx+3,hy-7,7);point(im,hx,hy-9,12)
-  point(im,hx-dx*7+sx*3,hy-dy*7+sy*3,12);point(im,hx+dx*7-sx*3,hy+dy*7-sy*3,11)
+  # The gold brow and one violet soul-flame mark the skull silhouette.
+  line(im,hx-4,hy-8,hx+4,hy-8,0,6)
+  point(im,hx,hy-9,7)
+  point(im,hx-dx*7,hy-dy*7,11)
+  point(im,hx-dx*9,hy-dy*9,12)
 def weapon(branch):
  atlas=canvas(1024,128)
  for idx,(dx,dy) in enumerate(DIRECTIONS):
