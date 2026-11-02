@@ -1,13 +1,32 @@
-# Ревизия репозитория — 31 октября 2026
+# Last Ritual — ревизия репозитория
 
-Проверено: PR #251, #252, #255 объединены; main CI 41193468399 success. Открыты PR #217, #253, #254.
+Снимок на 02.11.2026.
 
-PR #253 заблокирован: Godot не импортирует assets/spire/towers_atlas.png, run 41194045372 failure. Не объединять до успешного exact-head CI. PR #254 зависит от #253.
+## Текущее состояние
 
-README.md описывает ранний прототип и может быть устаревшим. Проверять фактические скрипты, ROADMAP.md, PROJECT_STATE.md и AI_HANDOFF.md.
+- Репозиторий: DoctorStrangeSH/Last-Ritual, публичный, default branch main.
+- HEAD: 587304e2a82b1979fff91394fd638e39c2452f89.
+- Рекурсивное дерево main: 489 путей; дерево не обрезано GitHub API.
+- История PR #1–#355 просмотрена по спискам, названиям и статусам. Последние PR #354/#355 и их CI проверены подробно.
+- Открытые Issues на момент проверки не найдены.
+- #289 закрыт как устаревший snapshot, заменённый более поздними Soul Altar source/approved assets.
+- #295 остаётся открытым Draft review snapshot Frost Obelisk; его PNG — кандидатные материалы, не production.
 
-В main 62 файла, из них 14 docs и 18 assets; файлов более 1 МБ не найдено. Исторические ветки и архивную ветку платформера не удалять без проверки и резервной копии.
+## Release и CI
 
-Оригинальные Foozle ZIP не входят в main; каталог источников — docs/FOOZLE_ASSETS.md. Спрайты и лицензии складывать в assets/spire, только используемые файлы. Не коммитить архивы, GIF-превью и исходники редакторов без необходимости.
+- Главный workflow: .github/workflows/windows-build.yml.
+- Последний main CI #41438238070 — SUCCESS.
+- Rolling Release windows-preview публикует игровой EXE, отдельный Art Preview EXE и contact sheets. Предпочитать release assets вместо большого числа Actions artifacts, чтобы не возвращать проблему quota.
 
-Следующие шаги: починить atlas #253 и пройти Godot CI; затем #254; проверить полезность #217; сверить README и статусы ROADMAP; отдельно оценить старые ветки. Ручной Windows-плейтест пока не подтверждён.
+## Безопасная очистка
+
+- Не удалять архивы, PNG, SVG, fallback или source folders пакетно.
+- Перед удалением искать прямые и динамические ссылки, manifest entries, preload/load paths и тестовые ссылки.
+- Сначала отдельный PR на замену и переключение runtime, затем CI и Windows QA, затем отдельный cleanup PR.
+- Сохранять provenance, лицензии и воспроизводимые исходники.
+- Не удалять ветки и старые PR без проверки, что в них нет уникальных source assets или полезного аудита.
+- Сохранять candidate/approved/rejected разделение арта.
+
+## Документы
+
+README, ROADMAP, PROJECT_STATE, AI_HANDOFF, AI_HANDOFF_PIXEL_ART, ARCHITECTURE и QA документы должны описывать main, а не исторический платформер. Исторические решения хранить в DECISIONS и Git history; текущие handoff-файлы держать компактными.

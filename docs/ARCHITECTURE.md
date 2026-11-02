@@ -1,29 +1,47 @@
-> **Актуальная архитектура (29.10.2026):** Godot 4.4.1; главная сцена `scenes/run_loop.tscn`, скрипт `scripts/run_loop.gd`; дневной режим `scenes/topdown_td_prototype.tscn` + `scripts/topdown_td_prototype.gd`; ночной `scenes/topdown_night_prototype.tscn` + `scripts/topdown_night_prototype.gd`; прогресс `scripts/meta_progression.gd`; smoke `tests/topdown_smoke.gd`. Все три основных скрипта рисуют большую часть HUD через `Node2D._draw()`; план выделения TileMapLayer и Control — [GAMEPLAY_OVERHAUL.md](GAMEPLAY_OVERHAUL.md). Архитектура ниже — историческая, от удалённой платформенной версии.
+# Архитектура Last Ritual
 
----
+Актуально на 02.11.2026. Godot 4.4.1, main scene — scenes/run_loop.tscn.
 
-# Архитектура
+## Точки входа
 
-## Текущая реализация
+- project.godot — конфигурация и main scene.
+- scenes/run_loop.tscn / scripts/run_loop.gd — хаб, выбор сложности, автоматический цикл пяти дней и ночей, переходы, награды, состояние крепости и мета-прогресс.
+- scenes/topdown_td_prototype.tscn / scripts/topdown_td_prototype.gd — дневная защита, волны, башни, враги, герой, эффекты и TD UI.
+- scenes/topdown_night_prototype.tscn / scripts/topdown_night_prototype.gd — ночная арена, комнаты, враги, бой, награды, двери и магазины.
+- scripts/dungeon_floor_graph.gd — воспроизводимый граф комнат.
+- scripts/meta_progression.gd — версионированный постоянный профиль.
+- scripts/td/ — характеристики, каталог, targeting, damage, synergy, tower visuals, tooltip, VFX и модульный art contract.
 
-- Движок: Godot 4.4.1 в CI; проект сохраняет совместимость с Godot 4.
-- Главная сцена: scenes/main.tscn.
-- Главный скрипт: scripts/main.gd — большой Node2D-монолит.
-- Большая часть игрового поля и интерфейса рисуется через _draw(); отдельные визуальные ресурсы находятся в assets/.
-- Тесты состояний и регрессий: tests/campaign_smoke.gd.
-- Сборка/проверки: .github/workflows/windows-build.yml.
+## Состояние архитектуры
 
-## Фазы игры
+Крупная игровая логика дневной и ночной сцен всё ещё сосредоточена в больших Node2D scripts, значительная часть рендеринга выполняется через _draw(). Вынесены отдельные helper-модули для независимых правил и тестируемых расчётов. Не переписывать большие сцены одним PR; выносить один компонент за раз, с regression tests.
 
-title, day, night, reward, ritual, final_siege, win, lose. Разделы главного меню (включая достижения, таланты и постоянный прогресс) управляются отдельно через menu_page.
+## Башни и ресурсы
 
-## Состояние и сохранения
+Игровые ID магазина: bone, fire, necro, frost. Каталог дизайна содержит ещё spark и pulse, но их боевые системы не подключены отдельно. Не менять legacy IDs, структуру сохранений и asset aliases без тестов и миграции.
 
-- Контрольная точка кампании сохраняется на алтаре; формат JSON валидируется при загрузке.
-- Постоянный прогресс и настройки аудио хранятся отдельно от состояния текущего забега.
-- В тестах используется отдельный путь сохранения; не трогай пользовательские данные тестовым запуском.
-- Снаряды, частицы и временные эффекты должны очищаться при сбросе/переходах фаз.
+Для Алтаря душ:
+- цельные approved sprites и production fallback используются текущим рендером;
+- модульный renderer загружает manifest и включается только через runtime_ready;
+- candidate art лежит отдельно в assets/spire/towers/necro/candidate;
+- candidate runtime выключен, пока не созданы шесть обязательных production base/weapon файлов и владелец не одобрил набор.
 
-## Безопасный план рефакторинга
+## Тестирование и сборка
 
-Не переписывать весь main.gd одним PR. Сначала описать зависимости, затем выносить по одному изолированному компоненту, добавляя тесты и проверяя поведение до/после. Приоритет — сохранение состояния и сущности с чёткими входами/выходами. Не разделять ради разделения, если компонент не снижает связность.
+Главный workflow: .github/workflows/windows-build.yml. Используется Godot 4.4.1; workflow выполняет импорт, Python tests, headless Godot tests и Windows export.
+
+Ключевые smoke tests:
+- tests/topdown_smoke.gd
+- tests/td_modular_tower_assets_smoke.gd
+- tests/soul_altar_art_gate.gd
+- tests/soul_altar_assembled_review_smoke.gd
+- tests/soul_altar_modular_candidate_smoke.gd
+- tests/soul_altar_modular_motion_preview_smoke.gd
+
+## Правила изменений
+
+- Сначала читать AGENTS.md, PROJECT_STATE, ROADMAP и соответствующий handoff.
+- Не изменять пользовательские сохранения тестами.
+- Любое изменение формата save требует versioning, validation и migration tests.
+- Не удалять ресурсы без поиска динамических и статических ссылок.
+- Не считать headless тесты ручной проверкой визуала.
