@@ -86,10 +86,21 @@ func _reload_selection() -> bool:
     var base_path := ASSET_ROOT + str(levels[str(_level)])
     var weapon_entry: Dictionary = weapons[_branch]
     var weapon_path := ASSET_ROOT + str(weapon_entry.get("path", ""))
+    var projectiles: Dictionary = _manifest.get("projectiles", {})
+    var impacts: Dictionary = _manifest.get("impacts", {})
+    if not projectiles.has(_branch) or not impacts.has(_branch):
+        _set_error("Candidate projectile or impact entry is missing for " + _branch)
+        return false
+    var projectile_entry: Dictionary = projectiles[_branch]
+    var impact_entry: Dictionary = impacts[_branch]
+    var projectile_path := ASSET_ROOT + str(projectile_entry.get("path", ""))
+    var impact_path := ASSET_ROOT + str(impact_entry.get("path", ""))
     var base_candidate := load(base_path) as Texture2D
     var weapon_candidate := load(weapon_path) as Texture2D
-    if base_candidate == null or weapon_candidate == null:
-        _set_error("Candidate texture is missing. Production art is untouched.")
+    var projectile_candidate := load(projectile_path) as Texture2D
+    var impact_candidate := load(impact_path) as Texture2D
+    if base_candidate == null or weapon_candidate == null or projectile_candidate == null or impact_candidate == null:
+        _set_error("Candidate base, weapon, projectile or impact texture is missing. Production art is untouched.")
         return false
     if base_candidate.get_size() != FRAME_SIZE:
         _set_error("Base texture must be 128x128")
@@ -98,8 +109,32 @@ func _reload_selection() -> bool:
         _set_error("Weapon atlas must be 1024x128 (eight 128px frames)")
         return false
 
+    var projectile_dimensions: Array = projectile_entry.get("frame_size", [32, 32])
+    var impact_dimensions: Array = impact_entry.get("frame_size", [64, 64])
+    var projectile_size := Vector2(float(projectile_dimensions[0]), float(projectile_dimensions[1]))
+    var impact_size := Vector2(float(impact_dimensions[0]), float(impact_dimensions[1]))
+    var projectile_count := int(projectile_entry.get("frame_count", 0))
+    var impact_count := int(impact_entry.get("frame_count", 0))
+    if projectile_count != 8 or impact_count != 8:
+        _set_error("Candidate projectile and impact atlases must contain eight frames")
+        return false
+    if projectile_candidate.get_size() != Vector2(projectile_size.x * projectile_count, projectile_size.y):
+        _set_error("Projectile atlas dimensions do not match its manifest")
+        return false
+    if impact_candidate.get_size() != Vector2(impact_size.x * impact_count, impact_size.y):
+        _set_error("Impact atlas dimensions do not match its manifest")
+        return false
+
     _base_texture = base_candidate
     _weapon_texture = weapon_candidate
+    _projectile_texture = projectile_candidate
+    _impact_texture = impact_candidate
+    _projectile_frame_size = projectile_size
+    _impact_frame_size = impact_size
+    _projectile_frame_count = projectile_count
+    _impact_frame_count = impact_count
+    _projectile_fps = maxf(1.0, float(projectile_entry.get("fps", 24)))
+    _impact_fps = maxf(1.0, float(impact_entry.get("fps", 24)))
     _error_message = ""
     queue_redraw()
     return true
