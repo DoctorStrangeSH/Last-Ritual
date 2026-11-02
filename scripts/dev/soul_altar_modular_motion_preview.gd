@@ -136,6 +136,10 @@ func get_current_direction_index() -> int:
     return _direction_index
 
 
+func get_tower_origin() -> Vector2:
+    return TOWER_ORIGIN
+
+
 func _set_error(message: String) -> void:
     _error_message = message
     _base_texture = null
