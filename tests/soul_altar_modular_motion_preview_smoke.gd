@@ -27,7 +27,13 @@ func verify() -> void:
 
     check(preview.get("_base_texture") != null, "Candidate base texture loads")
     check(preview.get("_weapon_texture") != null, "Candidate eight-way weapon atlas loads")
-    var manifest: Dictionary = preview.get("_manifest")
+    var manifest_value: Variant = preview.get("_manifest")
+    check(typeof(manifest_value) == TYPE_DICTIONARY, "Candidate manifest loads as a dictionary")
+    if typeof(manifest_value) != TYPE_DICTIONARY:
+        preview.queue_free()
+        quit(1)
+        return
+    var manifest: Dictionary = manifest_value
     check(not bool(manifest.get("runtime_enabled", true)), "Preview refuses to enable candidate runtime art")
 
     var origin: Vector2 = preview.get_tower_origin()
