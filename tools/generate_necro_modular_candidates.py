@@ -143,6 +143,22 @@ def legion_detail(im,dx,dy,x,y):
   y0=69+sy*k*7
   point(im,x0,y0,6)
  line(im,59,83,69,83,0,7)
+def altar_weapon_detail(im,dx,dy,x,y):
+ # Directional crowned soul prism, runic copper collar and trailing sparks.
+ sx,sy=-dy,dx
+ line(im,64+sx*5,69+sy*5,x+sx*8,y+sy*8,1,7)
+ line(im,64-sx*5,69-sy*5,x-sx*8,y-sy*8,1,6)
+ for q in (-1,1):
+  px=x+sx*q*8
+  py=y+sy*q*8
+  line(im,px-dx*5,py-dy*5,px+dx*4,py+dy*4,1,1)
+  line(im,px-dx*3,py-dy*3,px+dx*3,py+dy*3,0,7)
+  point(im,px+dx*6,py+dy*6,12)
+ for k in (1,2,3):
+  point(im,x+dx*(9+k*3),y+dy*(9+k*3),11 if k%2 else 12)
+ oval(im,64,71,5,4,1)
+ oval(im,64,70,3,3,6)
+ point(im,64,69,12)
 def weapon(branch):
  atlas=canvas(1024,128)
  for idx,(dx,dy) in enumerate(DIRECTIONS):
@@ -154,6 +170,7 @@ def weapon(branch):
    oval(im,x,y,10,11,1);oval(im,x,y,8,9,8);oval(im,x,y-1,6,7,10)
    oval(im,x,y-2,4,5,11);point(im,x,y-4,12)
    skull(im,64,70);line(im,x-4,y+5,x+4,y+5,0,7)
+   altar_weapon_detail(im,dx,dy,x,y)
   elif branch=="reaper":
    line(im,64,70,x+dx*5,y+dy*5,2,7)
    tip=(x+dx*13,y+dy*13);sx,sy=-dy,dx
