@@ -1,5 +1,8 @@
 # Last Ritual — Handoff: Pixel Art Migration & Soul Altar Rework
 
+**02.11.2026 — расширенная художественная приёмка Алтаря душ (PR ожидает CI):** контактный лист теперь охватывает все 3 уровня основания × 3 ветки оружия × 8 направлений = 72 композита (2156×3312, 2× nearest); исправлен прежний расчёт вертикального шага строк, который не учитывал полную высоту 156px. В motion preview добавлены ручной выбор всех восьми кадров через NumPad 8/9/6/3/2/1/4/7, возврат к автоматической цели клавишей A и направляющие bounds/pivot клавишей H. Smoke test проверяет все 9 сочетаний уровень/оружие, 8 ручных кадров, некорректные выборы и прежние fallback-тесты. Python unit test проверяет размеры листа и число поз. Runtime manifest остаётся false; approved art и игровой рендер не меняются. Это review tooling, не художественная приёмка.
+
+
 **02.11.2026 — отдельный Windows Art Preview EXE (PR #346 объединён; Godot CI и Windows export SUCCESS, run #41407881460):** добавлены `tools/export_soul_altar_preview.py` и `tests/test_export_soul_altar_preview.py`. CI временно меняет только `project.godot` main scene/name, экспортирует `build/windows/LastRitual-ArtPreview.exe`, затем восстанавливает `project.godot` байт-в-байт в `finally` и проверяет, что production main scene вернулась. В Release публикуются два разных EXE: обычный `LastRitual.exe` (run_loop) и `LastRitual-ArtPreview.exe` (изолированная сцена движущейся цели), плюс contact sheet. Это отдельный QA билд; runtime manifest остаётся `runtime_enabled=false`, production art/renderer не меняются. Не считать Art Preview игровым билдом.
 
 
