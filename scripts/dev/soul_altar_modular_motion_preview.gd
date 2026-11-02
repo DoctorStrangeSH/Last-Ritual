@@ -172,7 +172,7 @@ func _draw() -> void:
     draw_arc(_target_position, 22.0, 0.0, TAU, 32, Color("#fff0bd"), 2.0)
     draw_circle(TOWER_ORIGIN, 5.0, Color("#ffffff"))
 
-    var branch_label := {"base": "Обычный Алтарь", "reaper": "Жнец", "legion": "Легион"}.get(_branch, _branch)
+    var branch_label: String = str({"base": "Обычный Алтарь", "reaper": "Жнец", "legion": "Легион"}.get(_branch, _branch))
     draw_string(ThemeDB.fallback_font, Vector2(32, 630), "Уровень: %d    Оружие: %s    Направление: %s (%d)" % [_level, branch_label, CONTRACT.direction_name(_direction_index), _direction_index], HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color("#f0e8ff"))
     draw_string(ThemeDB.fallback_font, Vector2(32, 666), "1/2/3 — уровень     B — Алтарь     R — Жнец     L — Легион", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#c8bdd8"))
     draw_string(ThemeDB.fallback_font, Vector2(32, 694), "Review scene only. Approved production sprites and runtime manifest are unchanged.", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#9e91ad"))
