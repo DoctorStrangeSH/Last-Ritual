@@ -91,9 +91,11 @@ func _process(delta: float) -> void:
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
-    if not event is InputEventKey or not event.pressed or event.echo:
+    if not (event is InputEventKey):
         return
     var key := event as InputEventKey
+    if not key.pressed or key.echo:
+        return
     match key.keycode:
         KEY_1:
             _level = 1
