@@ -10,6 +10,7 @@ const PREVIEW_SCALE := 2.5
 const TOWER_ORIGIN := Vector2(640.0, 410.0)
 const GROUND_ANCHOR := Vector2(64.0, 118.0)
 const WEAPON_PIVOT := Vector2(64.0, 90.0)
+const SHOT_DURATION := 0.48
 const DIRECTION_VECTORS := [
     Vector2.UP, Vector2(1, -1), Vector2.RIGHT, Vector2(1, 1),
     Vector2.DOWN, Vector2(-1, 1), Vector2.LEFT, Vector2(-1, -1)
@@ -18,6 +19,20 @@ const DIRECTION_VECTORS := [
 var _manifest: Dictionary = {}
 var _base_texture: Texture2D
 var _weapon_texture: Texture2D
+var _projectile_texture: Texture2D
+var _impact_texture: Texture2D
+var _projectile_frame_size := Vector2(32.0, 32.0)
+var _impact_frame_size := Vector2(64.0, 64.0)
+var _projectile_frame_count := 8
+var _impact_frame_count := 8
+var _projectile_fps := 24.0
+var _impact_fps := 24.0
+var _shot_active := false
+var _impact_active := false
+var _shot_elapsed := 0.0
+var _impact_elapsed := 0.0
+var _shot_origin := TOWER_ORIGIN
+var _shot_target := TOWER_ORIGIN + Vector2.RIGHT * 240.0
 var _level := 3
 var _branch := "base"
 var _elapsed := 0.0
@@ -39,6 +54,10 @@ func load_preview_assets(manifest_path: String = MANIFEST_PATH) -> bool:
     _manifest.clear()
     _base_texture = null
     _weapon_texture = null
+    _projectile_texture = null
+    _impact_texture = null
+    _shot_active = false
+    _impact_active = false
     _error_message = ""
 
     var file := FileAccess.open(manifest_path, FileAccess.READ)
