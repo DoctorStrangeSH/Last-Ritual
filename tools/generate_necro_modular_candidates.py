@@ -145,21 +145,53 @@ def legion_detail(im,dx,dy,x,y):
   point(im,x0,y0,6)
  line(im,59,83,69,83,0,7)
 def altar_weapon_detail(im,dx,dy,x,y):
- # Directional crowned soul prism, runic copper collar and trailing sparks.
+ # A faceted violet soul prism held by a gilded rune crown.
  sx,sy=-dy,dx
- line(im,64+sx*5,69+sy*5,x+sx*8,y+sy*8,1,7)
- line(im,64-sx*5,69-sy*5,x-sx*8,y-sy*8,1,6)
- for q in (-1,1):
-  px=x+sx*q*8
-  py=y+sy*q*8
-  line(im,px-dx*5,py-dy*5,px+dx*4,py+dy*4,1,1)
-  line(im,px-dx*3,py-dy*3,px+dx*3,py+dy*3,0,7)
-  point(im,px+dx*6,py+dy*6,12)
- for k in (1,2,3):
-  point(im,x+dx*(9+k*3),y+dy*(9+k*3),11 if k%2 else 12)
- oval(im,64,71,5,4,1)
- oval(im,64,70,3,3,6)
- point(im,64,69,12)
+ def project(forward,side):
+  return (x+dx*forward+sx*side, y+dy*forward+sy*side)
+ rear=project(-12,0)
+ upper=project(-3,-12)
+ tip=project(16,0)
+ lower=project(-3,12)
+ # The dark outline gives the weapon a crisp, unmistakable diamond silhouette.
+ line(im,*rear,*upper,1,1)
+ line(im,*upper,*tip,1,1)
+ line(im,*tip,*lower,1,1)
+ line(im,*lower,*rear,1,1)
+ # Fill the crystal with three readable purple facets.
+ for f in range(-10,15):
+  width=max(0,int(12*(1-abs(f-2)/13)))
+  if width:
+   shade=8 if f< -4 else (9 if f<4 else 10)
+   line(im,*project(f,-width),*project(f,width),0,shade)
+ # Bright inner facet and a sharp pale highlight toward the point.
+ line(im,*project(-3,-7),*project(12,0),0,11)
+ line(im,*project(-3,6),*project(12,0),0,12)
+ line(im,*project(-6,-8),*project(3,-10),0,10)
+ # Gold crown prongs and a heavy collar frame the crystal.
+ line(im,*project(-10,-14),*project(-5,-10),1,1)
+ line(im,*project(-5,-10),*project(4,-14),0,7)
+ line(im,*project(-10,14),*project(-5,10),1,1)
+ line(im,*project(-5,10),*project(4,14),0,7)
+ line(im,*project(-12,-12),*project(-12,12),1,6)
+ line(im,*project(-13,-9),*project(-13,9),0,7)
+ # Three small runic studs make the collar readable at native scale.
+ for side in (-1,1):
+  a=project(-7,side*15)
+  b=project(-2,side*15)
+  line(im,*a,*b,0,6)
+  point(im,*project(-4,side*15),12)
+  point(im,*project(-1,side*17),7)
+ # The tip is capped in ivory light; trailing sparks reinforce the aim vector.
+ line(im,*project(12,-3),*tip,0,12)
+ point(im,*project(19,0),11)
+ point(im,*project(21,-4),12)
+ point(im,*project(21,4),11)
+ # Small side crystals sit behind the main prism, not around the pivot.
+ for side in (-1,1):
+  cx,cy=project(-10,side*18)
+  point(im,cx,cy,7)
+  point(im,cx+sx*side,cy+sy*side,11)
 def hooded_hub(im):
  # Shared dark hood + skull that anchors both specialisation weapons at pivot (64,70).
  oval(im,64,69,10,11,1);oval(im,64,68,8,9,8);oval(im,64,66,5,5,9)
@@ -211,12 +243,10 @@ def weapon(branch):
  for idx,(dx,dy) in enumerate(DIRECTIONS):
   im=canvas()
   box(im,57,74,71,88,1);box(im,60,76,68,85,5);box(im,62,78,66,83,7)
-  x,y=64+dx*30,65+dy*27
+  x,y=64+dx*27,65+dy*24
   if branch=="base":
    line(im,64,70,x,y,6,1);line(im,64,70,x,y,4,3);line(im,64,70,x,y,2,6)
-   oval(im,x,y,10,11,1);oval(im,x,y,8,9,8);oval(im,x,y-1,6,7,10)
-   oval(im,x,y-2,4,5,11);point(im,x,y-4,12)
-   skull(im,64,70);line(im,x-4,y+5,x+4,y+5,0,7)
+   skull(im,64,70)
    altar_weapon_detail(im,dx,dy,x,y)
   elif branch=="reaper":
    reaper_scythe(im,dx,dy)
