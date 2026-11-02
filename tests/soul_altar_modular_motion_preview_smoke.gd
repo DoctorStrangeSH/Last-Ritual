@@ -21,7 +21,7 @@ func verify() -> void:
         quit(1)
         return
 
-    var preview := packed.instantiate()
+    var preview: Variant = packed.instantiate()
     root.add_child(preview)
     await process_frame
 
@@ -30,7 +30,7 @@ func verify() -> void:
     var manifest: Dictionary = preview.get("_manifest")
     check(not bool(manifest.get("runtime_enabled", true)), "Preview refuses to enable candidate runtime art")
 
-    var origin: Vector2 = preview.get("TOWER_ORIGIN")
+    var origin: Vector2 = preview.get_tower_origin()
     var directions := [
         Vector2.UP, Vector2(1, -1), Vector2.RIGHT, Vector2(1, 1),
         Vector2.DOWN, Vector2(-1, 1), Vector2.LEFT, Vector2(-1, -1)
