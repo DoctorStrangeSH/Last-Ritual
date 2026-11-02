@@ -112,7 +112,7 @@
   },
   "projectiles": {
     "base": {
-      "path": "vfx/soul_projectile_8f.png",
+      "path": "candidate/vfx/base_projectile_8f.png",
       "frame_size": [
         32,
         32
@@ -123,7 +123,7 @@
       "forward_axis": "+X"
     },
     "reaper": {
-      "path": "approved_renders/vfx/reaper_projectile_8f.png",
+      "path": "candidate/vfx/reaper_projectile_8f.png",
       "frame_size": [
         48,
         48
@@ -134,7 +134,7 @@
       "forward_axis": "+X"
     },
     "legion": {
-      "path": "approved_renders/vfx/legion_projectile_8f.png",
+      "path": "candidate/vfx/legion_projectile_8f.png",
       "frame_size": [
         32,
         32
@@ -147,7 +147,7 @@
   },
   "impacts": {
     "base": {
-      "path": "vfx/soul_impact_8f.png",
+      "path": "candidate/vfx/base_impact_8f.png",
       "frame_size": [
         64,
         64
@@ -157,7 +157,7 @@
       "loop": false
     },
     "reaper": {
-      "path": "approved_renders/vfx/reaper_impact_8f.png",
+      "path": "candidate/vfx/reaper_impact_8f.png",
       "frame_size": [
         64,
         64
@@ -167,7 +167,7 @@
       "loop": false
     },
     "legion": {
-      "path": "approved_renders/vfx/legion_impact_8f.png",
+      "path": "candidate/vfx/legion_impact_8f.png",
       "frame_size": [
         48,
         48
@@ -237,6 +237,8 @@
     "Generated native pixel shapes, NOT a pixelation filter on existing renders.",
     "Three stationary 128x128 bases and three independent 1024x128 eight-way weapon strips.",
     "The candidate remains disabled; production manifest and live rendering are untouched.",
-    "Eight distinct poses are directional hand-scripted geometry, requiring owner visual QA and further quality iteration."
+    "Eight distinct poses are directional hand-scripted geometry, requiring owner visual QA and further quality iteration.",
+    "Three original candidate projectile atlases and three distinct impact atlases are generated from editable pixel geometry; eight frames each.",
+    "Attack VFX are review-only and use candidate paths; approved projectile assets and production runtime remain untouched."
   ]
 }
