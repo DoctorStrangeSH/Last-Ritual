@@ -125,6 +125,10 @@ func _reload_selection() -> bool:
         _set_error("Impact atlas dimensions do not match its manifest")
         return false
 
+    _shot_active = false
+    _impact_active = false
+    _shot_elapsed = 0.0
+    _impact_elapsed = 0.0
     _base_texture = base_candidate
     _weapon_texture = weapon_candidate
     _projectile_texture = projectile_candidate
@@ -236,10 +240,12 @@ func fire_preview_shot() -> bool:
         return false
     if _shot_active or _impact_active:
         return false
-    _shot_origin = TOWER_ORIGIN
     _shot_target = _target_position
-    if _shot_origin.distance_squared_to(_shot_target) < 1.0:
-        _shot_target = _shot_origin + Vector2.RIGHT * 180.0
+    var shot_direction := (_shot_target - TOWER_ORIGIN).normalized()
+    if shot_direction == Vector2.ZERO:
+        shot_direction = Vector2.RIGHT
+        _shot_target = TOWER_ORIGIN + shot_direction * 180.0
+    _shot_origin = TOWER_ORIGIN + shot_direction * 28.0
     _shot_elapsed = 0.0
     _impact_elapsed = 0.0
     _shot_active = true
