@@ -15,6 +15,9 @@ DEST = ROOT / "build/soul_altar_modular_contact_sheet.png"
 BRANCHES = (("base", "Обычный алтарь"), ("reaper", "Жнец"), ("legion", "Легион"))
 DIRECTIONS = ("N", "NE", "E", "SE", "S", "SW", "W", "NW")
 FRAME = (128, 128)
+PIVOT = (64, 90)
+GROUND_ANCHOR = (64, 118)
+COMPOSITE = (128, FRAME[1] + GROUND_ANCHOR[1] - PIVOT[1])
 SCALE = 2
 GAP = 12
 HEADER = 42
@@ -40,7 +43,8 @@ def render(output: Path = DEST, level: int = 3) -> None:
 
     tile = FRAME[0] * SCALE
     width = GAP + 8 * (tile + GAP)
-    height = HEADER + 3 * (LABEL + tile + GAP)
+    tile_height = COMPOSITE[1] * SCALE
+    height = HEADER + 3 * (LABEL + tile_height + GAP)
     sheet = Image.new("RGB", (width, height), "#141020")
     draw = ImageDraw.Draw(sheet)
     draw.text((GAP, 9), f"SOUL ALTAR - MODULAR CANDIDATE / L{level} / NOT APPROVED", fill="#efdbb3")
@@ -53,10 +57,12 @@ def render(output: Path = DEST, level: int = 3) -> None:
             y = top + LABEL
             source = (col * FRAME[0], 0, (col + 1) * FRAME[0], FRAME[1])
             weapon = strip.crop(source)
-            composite = Image.alpha_composite(base, weapon)
-            preview = composite.resize((tile, tile), Image.Resampling.NEAREST)
+            composite = Image.new("RGBA", COMPOSITE, (0, 0, 0, 0))
+            composite.alpha_composite(base, (0, 0))
+            composite.alpha_composite(weapon, (GROUND_ANCHOR[0] - PIVOT[0], GROUND_ANCHOR[1] - PIVOT[1]))
+            preview = composite.resize((tile, tile_height), Image.Resampling.NEAREST)
             sheet.paste(preview.convert("RGB"), (x, y), preview.getchannel("A"))
-            draw.rectangle((x, y, x + tile - 1, y + tile - 1), outline="#574369", width=2)
+            draw.rectangle((x, y, x + tile - 1, y + tile_height - 1), outline="#574369", width=2)
             draw.text((x + 8, y + 8), direction, fill="#fff5cc")
     output.parent.mkdir(parents=True, exist_ok=True)
     sheet.save(output)
