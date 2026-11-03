@@ -2,8 +2,8 @@
 
 Обновлено: 03.11.2026  
 Репозиторий: https://github.com/DoctorStrangeSH/Last-Ritual  
-Main snapshot: b583e6d24d15f855900c4eec237757a2c13ea065  
-Последний main CI: #41585682430 — SUCCESS. PR #380 (Ballista candidate) и #381 (handoff) merged. Активная ветка: feat/fire-turret-modular-pixel-art-candidate.
+Main snapshot: e1300d21b6bab9c112653a700d361a24f1ef5268  
+Последний main CI: #41589363962 — SUCCESS. PR #382 (Fire Turret candidate) merged.
 
 ## Как продолжить
 
@@ -66,19 +66,19 @@ Main snapshot: b583e6d24d15f855900c4eec237757a2c13ea065
 - Candidate remains disabled pending owner visual approval and a separate runtime PR.
 
 ### Огненная турель — текущий candidate branch
-- Branch: feat/fire-turret-modular-pixel-art-candidate; candidate pack generated, PR/CI pending.
+- PR #382 merged; exact-head CI #41589195484 and post-merge Windows Preview #41589363962 SUCCESS.
 - Root manifest: assets/spire/towers/fire/manifest.json; review_candidate / runtime_enabled=false.
 - 3 bases, base/inferno/sparks 8-way weapon atlases, 6 VFX strips (8 frames each).
 - Mapping: siege → inferno (heavy flame cannon/explosive impact); swarm → sparks (three-spark volley). Existing UI labels remain unchanged.
 - Gameplay ID stays fire. No combat values, save IDs, legacy Foozle PNGs or live runtime paths changed.
 - Source: tools/generate_fire_turret_modular_candidates.py; preview: tools/render_fire_turret_modular_preview.py; tests: tests/test_fire_turret_modular_candidates.py.
-- Review sheets: assets/spire/towers/fire/candidate/review/contact_sheet_9_1x.png, contact_sheet_72_1x.png, contact_sheet_72_2x.png.
+- Review sheets: assets/spire/towers/fire/candidate/review/contact_sheet_9_1x.png, contact_sheet_72_1x.png, contact_sheet_72_2x.png; published in windows-preview.
 - Candidate is not owner-approved. Preserve all current original fire assets and do not enable runtime.
 
 ### Next art work
-- Complete Fire candidate exact-head CI and post-merge Windows Preview; owner reviews 1× sheet.
-- Then create separate runtime PR only after explicit owner approval. Preserve Foozle fallback until manual Windows QA.
-- Next: confirm owner approval and runtime gates for Frost/Ballista; then continue world/enemy/UI migration.
+- Owner reviews Fire, Frost and Ballista candidate sheets at 1×. CI/contact sheets are not artistic approval.
+- After explicit approval, prepare separate runtime PR per tower, preserving current fallback until Windows QA.
+- Continue world/enemy/UI Pixel Art migration after tower reviews.
 
 ## Ограничения и безопасность
 
