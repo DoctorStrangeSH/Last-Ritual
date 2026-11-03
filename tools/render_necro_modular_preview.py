@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Render a review-only 3-level x 3-weapon x 8-direction Soul Altar sheet.
 
-This is a contact sheet, not a game asset or proof of artistic approval.
+The base/weapon art is owner-approved; this contact sheet remains a review aid, not a game asset.
 Run from the repository root:
     python tools/render_necro_modular_preview.py --all-levels
 """
@@ -74,7 +74,7 @@ def render(output: Path = DEST, level: int = 3, all_levels: bool = False, scale:
     level_label = "ALL LEVELS" if all_levels else f"L{level}"
     draw.text(
         (GAP, 9),
-        f"SOUL ALTAR - MODULAR CANDIDATE / {level_label} / {scale}X / 72 POSES / NOT APPROVED",
+        f"SOUL ALTAR - OWNER-APPROVED MODULAR ART / {level_label} / {scale}X / 72 POSES",
         fill="#efdbb3",
     )
 
