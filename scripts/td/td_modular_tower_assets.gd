@@ -55,7 +55,9 @@ static func specialization_key(specialization: String, manifest: Dictionary = {}
 
 static func branch_names(manifest: Dictionary) -> Array[String]:
 	var names: Array[String] = ["base"]
-	var mapping: Dictionary = manifest.get("specialization_branches", SPECIALIZATION_BRANCH)
+	var mapping: Dictionary = SPECIALIZATION_BRANCH
+	if typeof(manifest.get("specialization_branches", SPECIALIZATION_BRANCH)) == TYPE_DICTIONARY:
+		mapping = manifest.get("specialization_branches", SPECIALIZATION_BRANCH)
 	for specialization in ["siege", "swarm"]:
 		var branch := str(mapping.get(specialization, ""))
 		if not branch.is_empty() and not names.has(branch):
@@ -178,7 +180,7 @@ static func resolve_tower_layers(manifest: Dictionary, level: int, specializatio
 static func resolve_vfx(manifest: Dictionary, category: String, specialization: String) -> Dictionary:
 	if not ["projectiles", "impacts"].has(category) or not bool(validate_manifest(manifest).get("valid", false)):
 		return {}
-	var branch := specialization_key(specialization)
+	var branch := specialization_key(specialization, manifest)
 	if branch.is_empty():
 		return {}
 	var root := "res://assets/spire/towers/%s/" % str(manifest.get("id", ""))
