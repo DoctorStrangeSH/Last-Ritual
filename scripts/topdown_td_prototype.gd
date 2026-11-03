@@ -28,6 +28,11 @@ const TD_NECRO_SPIRITS = preload("res://scripts/td/td_necro_spirits.gd")
 const TD_NECRO_ATTACK_PROFILE = preload("res://scripts/td/td_necro_attack_profile.gd")
 const TD_FROST_EFFECT = preload("res://scripts/td/td_frost_effect.gd")
 const TD_WAVE_OMENS = preload("res://scripts/td/td_wave_omens.gd")
+const TD_BATTLEFIELD_ART = preload("res://scripts/td/td_battlefield_art.gd")
+## Pixel-art battlefield (assets/battlefield). Off until the manifest enables it.
+var battlefield_manifest: Dictionary = {}
+var battlefield_art_enabled := false
+var battlefield_props: Array = []
 const OMEN_BUTTONS := [Rect2(199, 296, 245, 96), Rect2(454, 296, 245, 96), Rect2(709, 296, 245, 96)]
 ## Pre-wave threat choice («Знамения угрозы»). Per-wave only; never saved.
 var omen_choice_open := false
@@ -81,6 +86,7 @@ func set_fortress_map_seed(seed_value: int) -> void:
     slot_positions = generated_map["slots"]
     for slot_index in range(mini(slots.size(), slot_positions.size())):
         slots[slot_index]["pos"] = slot_positions[slot_index]
+    battlefield_props = TD_BATTLEFIELD_ART.prop_layout(seed_value, paths, slot_positions, fortress_altar_center())
     queue_redraw()
 var enemies: Array[Dictionary] = []
 var wave_number := 0
@@ -848,7 +854,19 @@ func _process(delta: float) -> void:
     queue_redraw()
 
 
+## Turn the pixel-art battlefield on/off (manifest at startup; previews/tests).
+func set_battlefield_art_enabled(enabled: bool) -> void:
+    battlefield_art_enabled = enabled and TD_BATTLEFIELD_ART.missing_textures(battlefield_manifest).is_empty()
+    texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST if battlefield_art_enabled else CanvasItem.TEXTURE_FILTER_PARENT_NODE
+    texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED if battlefield_art_enabled else CanvasItem.TEXTURE_REPEAT_PARENT_NODE
+    queue_redraw()
+
+func battlefield_texture(key: String) -> Texture2D:
+    return cached_tower_texture(TD_BATTLEFIELD_ART.texture_path(battlefield_manifest, key))
+
 func _ready() -> void:
+    battlefield_manifest = TD_BATTLEFIELD_ART.load_manifest()
+    set_battlefield_art_enabled(TD_BATTLEFIELD_ART.runtime_ready(battlefield_manifest))
     modular_necro_manifest = MODULAR_ASSETS.load_manifest("necro")
     modular_necro_enabled = MODULAR_ASSETS.runtime_ready(modular_necro_manifest)
     sfx = SFX_SCRIPT.new()
@@ -1307,7 +1325,32 @@ func _unhandled_input(event: InputEvent) -> void:
 
 # Небольшой самостоятельный арт-проход: собственный процедурный рисунок без
 # сторонних лицензий. Позже можно заменить тайлами, сохранив игровую геометрию.
+func draw_pixel_battlefield_ground() -> void:
+    draw_rect(Rect2(0, 0, 1152, 648), Color("#100d1a"))
+    var field: Rect2 = TD_BATTLEFIELD_ART.FIELD
+    draw_texture_rect(battlefield_texture("ground"), field, true)
+    draw_rect(field, Color("#100d1a"), false, 4.0)
+    draw_rect(field.grow(-3.0), Color("#46404f"), false, 1.0)
+    var wall: Texture2D = battlefield_texture("wall")
+    for y in range(88, 520, 66):
+        draw_texture_rect_region(wall, Rect2(1080, y, 48, mini(66, 530 - y)), Rect2(0, 0, 48, mini(66, 530 - y)))
+    var gate: Texture2D = battlefield_texture("gate")
+    var gate_rows: Array[float] = []
+    for lane in paths:
+        var entry_y: float = float(lane[0].y)
+        if gate_rows.any(func(y): return absf(y - entry_y) < 30.0):
+            continue
+        gate_rows.append(entry_y)
+        draw_texture_rect(gate, Rect2(Vector2(10, entry_y - 40.0), Vector2(48, 64)), false)
+    draw_rect(Rect2(0, 0, 1152, 64), Color("#131a27"))
+    draw_line(Vector2(0, 64), Vector2(1152, 64), Color("#a08157"), 2.0)
+    draw_rect(Rect2(0, 534, 1152, 114), Color("#141b27"))
+    draw_line(Vector2(0, 534), Vector2(1152, 534), Color("#8c775b"), 2.0)
+
 func draw_fortress_ground() -> void:
+    if battlefield_art_enabled:
+        draw_pixel_battlefield_ground()
+        return
     draw_rect(Rect2(0, 0, 1152, 648), Color("#111b23"))
     draw_rect(Rect2(28, 66, 1096, 464), Color("#25302f"))
     draw_rect(Rect2(28, 66, 1096, 464), Color("#59665c"), false, 4.0)
@@ -1343,7 +1386,19 @@ func draw_fortress_ground() -> void:
 func fortress_altar_center() -> Vector2:
     return Vector2(1041, 314)
 
+func draw_pixel_battlefield_atmosphere() -> void:
+    var props: Texture2D = battlefield_texture("props")
+    var size: float = float(TD_BATTLEFIELD_ART.PROP_SIZE)
+    for prop in battlefield_props:
+        var origin: Vector2 = Vector2(prop["pos"]) - Vector2(16, 27)
+        draw_texture_rect_region(props, Rect2(origin, Vector2(size, size)), Rect2(float(prop["frame"]) * size, 0, size, size))
+    var center := fortress_altar_center()
+    draw_texture_rect(battlefield_texture("altar"), Rect2(center - Vector2(64, 74), Vector2(128, 128)), false)
+
 func draw_fortress_atmosphere() -> void:
+    if battlefield_art_enabled:
+        draw_pixel_battlefield_atmosphere()
+        return
     # Quiet environmental accents are placed away from build pads and both lanes.
     for corner in [Vector2(118, 144), Vector2(965, 159), Vector2(118, 443), Vector2(962, 447)]:
         draw_circle(corner + Vector2(3, 4), 18.0, Color("#1b2828"))
@@ -1366,7 +1421,25 @@ func draw_fortress_atmosphere() -> void:
     draw_colored_polygon(PackedVector2Array([center + Vector2(0, -19), center + Vector2(11, 0), center + Vector2(0, 16), center + Vector2(-11, 0)]), Color("#d9b78c"))
     draw_circle(center, 6.0, Color("#fff0c5"))
 
+func draw_pixel_battlefield_road(path: Array) -> void:
+    for index in range(path.size() - 1):
+        draw_line(path[index], path[index + 1], Color("#100d1a"), 35.0)
+        draw_line(path[index], path[index + 1], Color("#3a2f29"), 31.0)
+    for point in path:
+        draw_circle(point, 17.0, Color("#100d1a"))
+        draw_circle(point, 15.0, Color("#3a2f29"))
+    var road: Texture2D = battlefield_texture("road")
+    var tile: float = 64.0
+    for quad in TD_BATTLEFIELD_ART.road_quads(path, 26.0):
+        draw_colored_polygon(quad, Color.WHITE, TD_BATTLEFIELD_ART.uvs_for(quad, tile), road)
+    for point in path:
+        var joint: PackedVector2Array = TD_BATTLEFIELD_ART.joint_polygon(point, 13.0)
+        draw_colored_polygon(joint, Color.WHITE, TD_BATTLEFIELD_ART.uvs_for(joint, tile), road)
+
 func draw_fortress_road(path: Array) -> void:
+    if battlefield_art_enabled:
+        draw_pixel_battlefield_road(path)
+        return
     for index in range(path.size() - 1):
         var a: Vector2 = path[index]
         var b: Vector2 = path[index + 1]
@@ -1991,10 +2064,13 @@ func _draw() -> void:
     for i in range(slots.size()):
         var pos: Vector2 = slots[i]["pos"]
         var occupied: bool = slots[i]["tower"] != ""
-        draw_circle(pos + Vector2(3, 5), 35.0, Color("#152024"))
-        draw_circle(pos, 33.0, Color("#64706a") if not occupied else Color("#b48153"))
-        draw_circle(pos, 27.0, Color("#1e353b") if not occupied else Color("#e0bb76"))
-        draw_arc(pos, 23.0, -PI / 2.0, PI * 1.5, 24, Color("#89b6ab") if not occupied else Color("#724b45"), 2.0)
+        if battlefield_art_enabled:
+            draw_texture_rect(battlefield_texture("pad_built" if occupied else "pad_empty"), Rect2(pos - Vector2(32, 34), Vector2(64, 64)), false)
+        else:
+            draw_circle(pos + Vector2(3, 5), 35.0, Color("#152024"))
+            draw_circle(pos, 33.0, Color("#64706a") if not occupied else Color("#b48153"))
+            draw_circle(pos, 27.0, Color("#1e353b") if not occupied else Color("#e0bb76"))
+            draw_arc(pos, 23.0, -PI / 2.0, PI * 1.5, 24, Color("#89b6ab") if not occupied else Color("#724b45"), 2.0)
         if occupied:
             draw_tower_figure(pos, str(slots[i]["tower"]), int(slots[i]["level"]), str(slots[i].get("specialization", "")))
             if slots[i].get("specialization", "") != "":

@@ -141,3 +141,12 @@ Motion Preview: 1/2/3 — уровень; B/R/L — ветка; NumPad — ру�
 - После генерации смотреть git diff: generator может переписать все 12 PNG.
 - Headless CI подтверждает техническую целостность, но не художественное качество.
 - Владелец принимает art в Windows на 1× до переключения runtime.
+
+## Поле боя крепости — review candidate
+
+- Root manifest: `assets/battlefield/manifest.json`; `status=review_candidate`, `runtime_enabled=false`.
+- Спрайты (`assets/battlefield/candidate/`): земля 256×256 (бесшовная плитка), дорога 64×64 (брусчатка, UV по мировым координатам), площадки пустая/занятая 64×64, ритуальный алтарь 128×128, ворота 48×64, стена 48×66, 8 декораций 32×32 (черепа, надгробия, свечи, кости, камни, жаровня).
+- Source: `tools/generate_battlefield_pixel_art.py` (`--verify`); тесты: `tests/test_battlefield_pixel_art.py`, Godot `tests/td_battlefield_art_smoke.gd`.
+- Рендер: `scripts/td/td_battlefield_art.gd` + ветки `draw_pixel_battlefield_*` в `scripts/topdown_td_prototype.gd`; при выключенном manifest рисуется прежний процедурный фон. Декорации раскладываются по seed вне дорог и площадок.
+- Скриншоты до/после: `candidate/review/td_{before,after}_{prep,wave}.png`; снимать `tools/capture_td_screenshot.gd` (нужен xvfb + opengl3, не headless).
+- Включение: только после явного одобрения владельца, отдельным PR (manifest → `runtime_enabled=true`, `status=owner_approved_production`).
