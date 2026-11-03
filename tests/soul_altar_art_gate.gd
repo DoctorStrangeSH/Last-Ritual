@@ -16,7 +16,7 @@ func verify() -> void:
 	var resolver = load("res://scripts/td/td_modular_tower_assets.gd")
 	var manifest: Dictionary = resolver.load_manifest("necro")
 	check(not manifest.is_empty(), "Soul Altar manifest loads")
-	check(not resolver.runtime_ready(manifest), "Incomplete approved sprite set cannot enable live runtime")
+	check(resolver.runtime_ready(manifest), "Owner-approved modular sprite set enables live runtime")
 	var tex_size := Vector2i(16, 16)
 	var good := Image.create_empty(16, 16, false, Image.FORMAT_RGBA8)
 	good.fill(Color(0, 0, 0, 0))

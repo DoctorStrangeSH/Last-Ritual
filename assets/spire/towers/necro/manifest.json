@@ -2,8 +2,8 @@
   "schema_version": 1,
   "id": "necro",
   "display_name": "Алтарь душ",
-  "status": "contract_only",
-  "runtime_enabled": false,
+  "status": "owner_approved_production",
+  "runtime_enabled": true,
   "camera": "top_down_3_quarter",
   "canvas": {
     "width": 128,
@@ -230,16 +230,16 @@
     "palette": "source/palette.png",
     "provenance": "source/PROVENANCE.md",
     "approved_reference": "source/concepts/soul_altar_tower_concept_v05.png",
-    "editable_project_status": "not_created"
+    "editable_project_status": "not_created_procedural_source_is_tools_generate_necro_modular_candidates_py"
   },
   "notes": [
-    "Approved art direction is the concept image at source/concepts/soul_altar_tower_concept_v05.png.",
-    "Legacy SVG templates and SVG VFX/icon assets were removed; they are not production source files.",
-    "The Aseprite project is not yet present. Do not fabricate an editable source file.",
-    "The current contract remains disabled for runtime until transparent Pixel Art exports, modular weapon poses, and separate projectile/impact sheets are committed and approved.",
+    "Owner approved the modular base levels and all three eight-direction weapon atlases for production integration on 2026-11-03.",
+    "Production base and weapon PNGs are exact copies of the reproducible candidate exports; candidate originals remain preserved under candidate/.",
+    "Six previously committed production projectile and impact strips are reused and validated; candidate VFX atlases are not promoted by this change.",
+    "The Aseprite project is not present. Do not fabricate an editable .aseprite file; the procedural source is tools/generate_necro_modular_candidates.py and its documented palette/geometry.",
     "Weapon sheets are eight horizontal frames in the canonical direction_order; every frame shares the pivot.",
     "Projectile sheets face +X and are rotated to the actual travel vector.",
     "Reaper maps to runtime specialization siege; Legion maps to swarm.",
-    "Six existing, committed VFX strips are reused by this contract. They remain subject to the same alpha/frame checks and separate owner visual QA; modular base and weapon art are not yet available."
+    "runtime_enabled is true because the owner approved the base and weapon art and all six production PNGs plus existing production VFX pass asset validation."
   ]
 }

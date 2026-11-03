@@ -1,9 +1,8 @@
 # Last Ritual — текущий снимок проекта
 
-Дата: 02.11.2026  
-Ветка: main  
-HEAD (проверенный main после PR #357): b4e3c128a4ba6fb86d294a2aff37c71b37a39d68  
-PR #357 exact-head проверка GitHub Actions #41476104817 — SUCCESS. Последний отдельно подтверждённый post-merge main workflow (после PR #358): #41474757990 — SUCCESS.
+Дата: 03.11.2026  
+База main перед production-интеграцией: `9a4bda8bb9b8582b74124db68e6af3e491205909`.  
+Текущая рабочая ветка: `feat/approved-soul-altar-modular-production`, PR #376 открыт; exact-head CI ожидается.
 
 ## Запускаемая игра
 
@@ -25,13 +24,14 @@ PR #357 exact-head проверка GitHub Actions #41476104817 — SUCCESS. П�
 
 ## Алтарь душ — фактический статус
 
-- В main присутствуют утверждённые цельные PNG, production pack и VFX.
-- Текущий боевой renderer использует цельный спрайт Алтаря душ (approved render, production fallback для отсутствующего approved варианта).
-- Модульный renderer существует, но gated: modular_necro_enabled определяется runtime_ready(manifest) и сейчас false.
-- Candidate-набор: 3 основания, 3 восьминаправленных оружейных атласа и 6 VFX атласов. Легион v5 (PR #365 merged), Жнец v5 (PR #367 merged, exact-head CI #41486462092 SUCCESS), base v4 (PR #357 merged). Следующее — сравнить полный состав на 1× и получить художественную оценку владельца.
-- Последняя итерация: Жнец и Легион v4 (PR #354), base weapon v4 — гранёная фиолетовая призма и золотая корона (PR #357 merged). Битый PNG восстановлен из кодового генератора; временный recovery workflow удалён.
-- Candidate manifest runtime_enabled=false. Художественная приёмка владельцем не выполнена.
-- Основания L1–L3 обновлены до candidate v4: индивидуальные шпили PR #360 и золотые/фиолетовые акценты PR #363 merged (exact-head CI #41481076084 SUCCESS). Следующее задание — ручная оценка 1× и читаемость Жнеца/Легиона. Художественная приёмка владельца ещё не проведена.
+- Владелец явно одобрил основание L1–L3 и три восьминаправленных оружейных атласа (base, Жнец, Легион) 03.11.2026.
+- На интеграционной ветке шесть production PNG скопированы из approved source archive без изменения байтов; SHA blob каждой пары candidate/production совпадает.
+- Root production manifest переведён в `status=owner_approved_production`, `runtime_enabled=true`; candidate manifest сохранён как `approved_source_archive` и остаётся runtime-disabled.
+- Существующие шесть production projectile/impact strips переиспользуются и проверяются. Новые candidate VFX не продвигаются этим PR.
+- `scripts/topdown_td_prototype.gd` уже включает модульный рендер автоматически через `runtime_ready(manifest)`; gameplay, tower IDs, баланс и формат сохранений не менялись.
+- Reaper соответствует specialization `siege`, Legion — `swarm`; основание неподвижно, оружие выбирает одну из восьми поз.
+- Отдельного Aseprite проекта нет. Не создавать фиктивный файл; воспроизводимый источник геометрии — `tools/generate_necro_modular_candidates.py`.
+- Старые цельные спрайты и fallback не удалялись: при неготовности production manifest renderer продолжает использовать прежний путь.
 
 ## Текущие инструменты просмотра
 
@@ -66,8 +66,8 @@ CI не заменяет ручной запуск EXE и визуальную �
 
 ## Незакрытые риски
 
-- Нет зафиксированной ручной приёмки текущего candidate Pixel Art владельцем.
-- Модульный runtime Алтаря душ выключен.
+- Exact-head CI и post-merge Windows export новой production-интеграции ещё должны завершиться.
+- Нужен ручной игровой QA в Windows EXE: размещение, уровни L1–L3, смена специализаций, восемь направлений и эффекты выстрела/попадания.
 - Полная миграция всех башен, врагов, окружения и UI на Pixel Art не завершена.
 - Самостоятельные gameplay ID spark/pulse ещё не интегрированы.
 - Нужен повторный ручной playtest актуальной Windows-сборки после последних изменений.
@@ -77,7 +77,7 @@ CI не заменяет ручной запуск EXE и визуальную �
 - PR #369: компактный лист `soul_altar_9_compositions_1x.png` опубликован в `windows-preview`, main workflow #41506868156 SUCCESS.
 - PR #370: автоматический запрет случайного продвижения candidate-арта в production, exact-head CI #41507365642 SUCCESS, merged `9ec0683855e1fa342938c7768caf8a251711d0eb`.
 - Специализации: base weapon v4 (#357), Legion v5 (#365), Reaper v5 (#367); основания L1–L3 с контрастными рунами (#363).
-- Художественная приёмка на масштабе 1× **не получена**. `runtime_enabled=false`, отсутствуют шесть production PNG; не включать без согласования.
+- Художественная приёмка владельца получена 03.11.2026; интеграция выполняется отдельным PR. На main до merge production runtime остаётся выключен.
 
 ## Следующее действие
 
@@ -87,5 +87,13 @@ CI не заменяет ручной запуск EXE и визуальную �
 
 - PR #374 merged: `0d63e80662ca8762a1b3475bb3d5d4e166c7b302`.
 - Exact-head CI #41578037939 SUCCESS: новый `tests/test_soul_altar_full_sheet_integrity.py` проверяет пиксели всех 72 вариантов (L1–L3 × base/Reaper/Legion × восемь направлений) против исходных кандидатных PNG.
-- Production manifest не переключать: `runtime_enabled=false`, шесть production PNG отсутствуют; ручная художественная приёмка владельца ещё не получена.
+- После одобрения владельца production integration начата отдельной веткой; финальный CI/Windows QA ожидается.
 - Следующий шаг: просмотреть `soul_altar_9_compositions_1x.png` и `soul_altar_modular_contact_sheet_1x.png` из релиза `windows-preview`, записать замечания/одобрение; только после одобрения отдельный PR production integration.
+
+## Production-интеграция Алтаря душ — 03.11.2026
+
+- Шесть production PNG созданы как байт-в-байт копии утверждённых файлов из `candidate/`; все шесть SHA совпадают.
+- Временный workflow копирования удалён после успешного выполнения; production assets и candidate archive сохранены отдельно.
+- Root manifest включает runtime только при полном наборе слоёв и проверенных существующих VFX.
+- Обновлены Godot smoke tests и Python promotion gate: теперь они ожидают production-ready manifest и подтверждают, что candidate archive остаётся выключенным.
+- До merge ветки `main` не считать интеграцию опубликованной. Следующий ИИ: проверить PR/CI, исправить тесты при необходимости, дождаться post-merge Windows build, затем вручную проверить EXE.

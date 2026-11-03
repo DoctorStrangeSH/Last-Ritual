@@ -45,6 +45,6 @@ func verify() -> void:
                 fingerprints[key] = true
     var modular = load("res://scripts/td/td_modular_tower_assets.gd")
     var manifest: Dictionary = modular.load_manifest("necro")
-    check(not modular.runtime_ready(manifest), "Review atlas never enables modular renderer")
-    check(modular.missing_runtime_art(manifest).size() == 6, "Six modular base and weapon assets are still missing")
+    check(modular.runtime_ready(manifest), "Approved production kit enables modular renderer independently of review atlas")
+    check(modular.missing_runtime_art(manifest).is_empty(), "All required modular production assets are present")
     quit(1 if failures > 0 else 0)

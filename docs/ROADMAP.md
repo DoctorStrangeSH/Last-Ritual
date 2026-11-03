@@ -20,38 +20,30 @@
 - [x] Контактные листы 72 композиций в 1× и 2×, шесть candidate-only VFX атласов и отдельный Art Preview EXE.
 - [x] PR #354: новые силуэты оружия Жнеца и Легиона v4; PR #355: запись результата в документации.
 
-## 2. Текущий активный этап — Pixel Art Алтаря душ
+## 2. Текущий активный этап — production-интеграция Алтаря душ
 
-Все новые модульные изображения остаются в assets/spire/towers/necro/candidate/. Production manifest не переключён; runtime_enabled=false.
+Владелец одобрил основания L1–L3 и три восьминаправленных оружейных атласа 03.11.2026. Начата отдельная интеграция, без изменения gameplay и сохранений.
 
-- [x] Сохранён воспроизводимый источник tools/generate_necro_modular_candidates.py.
-- [x] Три candidate-основания L1–L3 (v3), различимые шпили, PR #360 merged.
-- [x] Обычное оружие (base) — v4, кристалл и руническая корона, PR #357 merged (технически проверено, визуальная приёмка ожидается).
-- [x] Жнец — восьминаправленное оружие v4.
-- [x] Легион — восьминаправленное оружие v4.
-- [x] Шесть candidate VFX: снаряд и попадание для base, Жнеца и Легиона.
-- [x] Проверка 8 уникальных поз, размеров, обрезки, различий силуэтов и палитры.
-- [x] Preview: все 72 сочетания основания/оружия/направления, контактные листы 1×/2×, отдельный Windows EXE.
-- [x] PR #357: переработано base-оружие — гранёная призма и руническая корона; повреждённый PNG восстановлен из исходника, CI SUCCESS.
-- [x] PR #360: переработаны основания L1–L3, проверка exact-head CI #41477386582 SUCCESS. Художественная приёмка 1× остаётся открытой.
-- [x] PR #363: усилен контраст золота и фиолетовых рун оснований L1–L3 (candidate), exact-head CI #41481076084 SUCCESS; визуальная приёмка остаётся открытой.
-- [ ] Следующий арт-этап: ручная проверка 1× и уменьшение шума силуэтов Жнеца/Легиона без включения production runtime.
-- [x] Кандидатные оружия: base v4 (PR #357), Легион v5 (PR #365), Жнец v5 (PR #367; CI #41486462092 SUCCESS). Все 8 направлений технически проверены.
-- [ ] Следующий этап: сравнить три вида оружия и основания L1–L3 на 1×; запросить ручную художественную оценку владельца.
-- [x] PR #369: опубликован компактный обзор 9 сочетаний в 1×; main CI #41506868156 SUCCESS.
-- [x] PR #370: добавлен автоматический gate против случайного включения candidate-арта (CI #41507365642 SUCCESS).
-- [ ] Ручная художественная приёмка владельцем в Windows Art Preview и листах 9/72 сочетаний.
-- [ ] Только после приёмки собрать полный production-набор base L1–L3 + weapon base/Reaper/Legion, включить runtime и проверить боевой EXE.
+- [x] Сохранён воспроизводимый источник `tools/generate_necro_modular_candidates.py`.
+- [x] Подготовлены и проверены основания L1–L3 и оружие base/Reaper/Legion (PR #357, #360, #363, #365, #367).
+- [x] Сравнительные листы 9 и 72 композиций; пиксельные тесты проверяют состав и наложение.
+- [x] Получено явное одобрение владельца на production-интеграцию (03.11.2026).
+- [x] Шесть PNG скопированы в production-пути байт-в-байт из approved source archive; candidate originals сохранены.
+- [x] Root manifest обновлён на `owner_approved_production` / `runtime_enabled=true` на интеграционной ветке.
+- [x] Существующие production VFX переиспользуются; candidate VFX остаются вне runtime.
+- [x] Добавлены/обновлены тесты manifest, alpha, 8-way и включённого runtime; старые цельные спрайты оставлены как fallback.
+- [ ] PR #376: exact-head CI и post-merge main workflow должны пройти.
+- [ ] Windows EXE QA: L1→L2→L3, выбор base/Reaper/Legion, восемь направлений, projectile/impact, сохранение/загрузка.
+- [ ] Только после успешного QA рассмотреть удаление legacy assets отдельным PR после полного поиска ссылок.
 
-### Жёсткий production gate
+### Production paths
 
-Сейчас production-пути всё ещё не содержат шесть необходимых модульных файлов:
-- assets/spire/towers/necro/base/level_1.png, level_2.png, level_3.png;
-- assets/spire/towers/necro/weapon/base/weapon_8way.png;
-- assets/spire/towers/necro/weapon/reaper/weapon_8way.png;
-- assets/spire/towers/necro/weapon/legion/weapon_8way.png.
+- `assets/spire/towers/necro/base/level_1.png`, `level_2.png`, `level_3.png`
+- `assets/spire/towers/necro/weapon/base/weapon_8way.png`
+- `assets/spire/towers/necro/weapon/reaper/weapon_8way.png`
+- `assets/spire/towers/necro/weapon/legion/weapon_8way.png`
 
-Candidate PNG не являются заменой production PNG. VFX-кандидаты уже существуют, но это не означает художественное одобрение. Не включать runtime_enabled до завершения полного набора, ручной приёмки и Windows QA.
+Все шесть production PNG — точные копии одобренных исходников; кандидатный архив остаётся в `candidate/`. Production VFX пути не менялись. Root manifest на интеграционной ветке включает runtime; до merge в main игра продолжает использовать прежний main.
 
 ## 3. Следующие крупные этапы
 

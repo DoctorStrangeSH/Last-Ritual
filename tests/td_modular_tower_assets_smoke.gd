@@ -35,12 +35,12 @@ func run_tests() -> void:
 		check(not manifest.is_empty(), "Soul Altar manifest loads")
 		var validation: Dictionary = contract.validate_manifest(manifest)
 		check(bool(validation.get("valid", false)), "Soul Altar manifest satisfies schema v1")
-		check(not contract.runtime_ready(manifest), "Pixel Art runtime stays disabled until the complete approved kit exists")
+		check(contract.runtime_ready(manifest), "Owner-approved modular Pixel Art kit enables runtime")
 		var missing: Array[String] = contract.missing_runtime_art(manifest)
-		check(missing.size() == 6, "Modular build reports three base sheets and three eight-way weapon atlases still missing")
-		check(missing.has("res://assets/spire/towers/necro/base/level_1.png"), "Missing report identifies first authored base layer")
-		check(missing.has("res://assets/spire/towers/necro/weapon/reaper/weapon_8way.png"), "Missing report identifies eight-way Reaper weapon rather than using its whole-tower PNG")
-		check(missing.has("res://assets/spire/towers/necro/weapon/legion/weapon_8way.png"), "Missing report identifies eight-way Legion weapon")
+		check(missing.is_empty(), "All six production base and weapon PNGs plus existing VFX pass readiness")
+		check(not missing.has("res://assets/spire/towers/necro/base/level_1.png"), "Production base L1 is present")
+		check(not missing.has("res://assets/spire/towers/necro/weapon/reaper/weapon_8way.png"), "Production Reaper eight-way weapon is present")
+		check(not missing.has("res://assets/spire/towers/necro/weapon/legion/weapon_8way.png"), "Production Legion eight-way weapon is present")
 		check(not missing.has("res://assets/spire/towers/necro/approved_renders/vfx/legion_impact_8f.png"), "Committed Legion impact strip is no longer considered missing")
 		check(contract.missing_runtime_art({}) == ["manifest:invalid"], "Invalid modular manifest yields explicit actionable error")
 
@@ -77,7 +77,7 @@ func run_tests() -> void:
 		if td_scene != null:
 			var td = td_scene.instantiate()
 			root.add_child(td)
-			check(not td.modular_necro_enabled, "Incomplete modular kit does not override current art")
+			check(td.modular_necro_enabled, "Approved modular kit is enabled in the TD renderer")
 			check(td.modular_necro_manifest.get("id", "") == "necro", "TD scene loads the modular manifest")
 			var approved_path: String = tower_visuals.approved_necro_sprite_path(1, "")
 			var crisp_texture: Texture2D = td.cached_approved_necro_texture(approved_path)
@@ -110,7 +110,7 @@ func run_tests() -> void:
 				var dims: Array = entry["frame_size"]
 				check(contract._transparent_png_ready(path, Vector2i(int(dims[0]), int(dims[1])), 8), "Existing VFX passes modular readiness: %s / %s" % [category, branch])
 		var remaining_art: Array[String] = contract.missing_runtime_art(manifest)
-		check(remaining_art.size() == 6, "Only three bases and three eight-way weapons remain missing")
+		check(remaining_art.is_empty(), "No required production Soul Altar art remains missing")
 		for path in remaining_art:
 			check(path.contains("/base/") or path.contains("/weapon/"), "Missing list excludes existing VFX: " + path)
 		check(contract.resolve_tower_layers(manifest, 4, "", Vector2.ZERO, Vector2.RIGHT).is_empty(), "Invalid tower level is rejected")
