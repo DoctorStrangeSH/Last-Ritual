@@ -1,6 +1,6 @@
 # Last Ritual — единая актуальная дорожная карта
 
-**Снимок на 03.11.2026. Main: `00c122a0d8cbdb5ec430022953ebf28ecf809cc8`.** PR #376 (Soul Altar production), #377 (handoff docs) и #378 (Frost candidate) merged. Frost exact-head CI #41583127652 и post-merge Windows Preview #41583281398 SUCCESS.
+**Снимок на 03.11.2026. Main: `96d25c3785958eba5a2d1fe490512025ee92a19f`.** PR #376 (Soul Altar production), #377 (handoff docs), #378 (Frost candidate) и #379 (post-merge handoff) merged. Frost exact-head CI #41583127652 и post-merge Windows Preview #41583281398 SUCCESS.
 
 Старые этапы платформера закрыты исторически. Активная разработка — top-down roguelite + Tower Defense.
 
@@ -52,7 +52,9 @@
 - [x] Общий TD renderer учитывает отдельные ground anchor основания и pivot оружия; добавлены Godot/Python регрессионные тесты.
 - [ ] Владелец: визуальная приёмка Ледяного обелиска на 1× (силуэт L1–L3, Мороз, Метель, 8 направлений и VFX); листы опубликованы в windows-preview.
 - [ ] После одобрения — отдельный runtime PR Frost с сохранением текущего экспериментального fallback и ручным Windows QA.
-- [ ] Pixel Art миграция костяной баллисты и огненной турели — после Frost.
+- [x] Подготовлен Ballista modular Pixel Art candidate pack (PR в работе): 3 основания, base/siege/swarm 8-way оружие и 6 VFX strips; runtime выключен.
+- [ ] Художественная приёмка Frost и Ballista на 1×; оба candidate pack остаются вне runtime.
+- [ ] После одобрения Frost — отдельный runtime PR; после одобрения Ballista — отдельный runtime PR. Не менять игровые ID `bone`/`frost` и не удалять Foozle fallback до ручного Windows QA.
 - [ ] Отдельно подтвердить игровые ID, механики и баланс Искрового разрядника и Импульсного излучателя; сейчас это design identities, а не два самостоятельных игровых типа.
 - [ ] Перенести единый Pixel Art стиль на врагов, героя, босса, землю, стены, TD-маршруты, комнаты, UI, предметы и эффекты.
 - [ ] Провести полный ручной пятидневный playtest: Normal, Hard и Nightmare; победа, поражение, сохранения, повторный забег.

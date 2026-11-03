@@ -1,0 +1,201 @@
+{
+  "schema_version": 1,
+  "id": "ballista",
+  "display_name": "Костяная баллиста",
+  "status": "review_candidate",
+  "runtime_enabled": false,
+  "camera": "top_down_3_quarter",
+  "canvas": {
+    "width": 128,
+    "height": 128,
+    "pivot": [
+      64,
+      90
+    ],
+    "ground_anchor": [
+      64,
+      118
+    ]
+  },
+  "direction_order": [
+    "north",
+    "north_east",
+    "east",
+    "south_east",
+    "south",
+    "south_west",
+    "west",
+    "north_west"
+  ],
+  "specialization_branches": {
+    "siege": "siege_bolt",
+    "swarm": "bone_volley"
+  },
+  "specialization_labels": {
+    "siege": "БАЛЛИСТА: +2 УРОН",
+    "swarm": "РОЙ: СКОРОСТЬ"
+  },
+  "base": {
+    "levels": {
+      "1": "candidate/base/level_1.png",
+      "2": "candidate/base/level_2.png",
+      "3": "candidate/base/level_3.png"
+    },
+    "frame_size": [
+      128,
+      128
+    ],
+    "anchor": "ground_anchor"
+  },
+  "weapon": {
+    "base": {
+      "path": "candidate/weapon/base/weapon_8way.png",
+      "frame_size": [
+        128,
+        128
+      ],
+      "frame_count": 8,
+      "direction_order": [
+        "north",
+        "north_east",
+        "east",
+        "south_east",
+        "south",
+        "south_west",
+        "west",
+        "north_west"
+      ],
+      "pivot": [
+        64,
+        90
+      ],
+      "forward_direction": "north"
+    },
+    "siege_bolt": {
+      "path": "candidate/weapon/siege_bolt/weapon_8way.png",
+      "frame_size": [
+        128,
+        128
+      ],
+      "frame_count": 8,
+      "direction_order": [
+        "north",
+        "north_east",
+        "east",
+        "south_east",
+        "south",
+        "south_west",
+        "west",
+        "north_west"
+      ],
+      "pivot": [
+        64,
+        90
+      ],
+      "forward_direction": "north"
+    },
+    "bone_volley": {
+      "path": "candidate/weapon/bone_volley/weapon_8way.png",
+      "frame_size": [
+        128,
+        128
+      ],
+      "frame_count": 8,
+      "direction_order": [
+        "north",
+        "north_east",
+        "east",
+        "south_east",
+        "south",
+        "south_west",
+        "west",
+        "north_west"
+      ],
+      "pivot": [
+        64,
+        90
+      ],
+      "forward_direction": "north"
+    }
+  },
+  "projectiles": {
+    "base": {
+      "path": "candidate/vfx/base_projectile_8f.png",
+      "frame_size": [
+        32,
+        32
+      ],
+      "frame_count": 8,
+      "fps": 24,
+      "loop": true,
+      "forward_axis": "+X"
+    },
+    "siege_bolt": {
+      "path": "candidate/vfx/siege_bolt_projectile_8f.png",
+      "frame_size": [
+        32,
+        32
+      ],
+      "frame_count": 8,
+      "fps": 24,
+      "loop": true,
+      "forward_axis": "+X"
+    },
+    "bone_volley": {
+      "path": "candidate/vfx/bone_volley_projectile_8f.png",
+      "frame_size": [
+        32,
+        32
+      ],
+      "frame_count": 8,
+      "fps": 24,
+      "loop": true,
+      "forward_axis": "+X"
+    }
+  },
+  "impacts": {
+    "base": {
+      "path": "candidate/vfx/base_impact_8f.png",
+      "frame_size": [
+        64,
+        64
+      ],
+      "frame_count": 8,
+      "fps": 24,
+      "loop": false
+    },
+    "siege_bolt": {
+      "path": "candidate/vfx/siege_bolt_impact_8f.png",
+      "frame_size": [
+        64,
+        64
+      ],
+      "frame_count": 8,
+      "fps": 24,
+      "loop": false
+    },
+    "bone_volley": {
+      "path": "candidate/vfx/bone_volley_impact_8f.png",
+      "frame_size": [
+        64,
+        64
+      ],
+      "frame_count": 8,
+      "fps": 24,
+      "loop": false
+    }
+  },
+  "source": {
+    "editable_project": "tools/generate_ballista_modular_candidates.py",
+    "provenance": "candidate/SOURCE.md",
+    "editable_project_status": "procedural_source_is_tools/generate_ballista_modular_candidates.py"
+  },
+  "notes": [
+    "Review-only Pixel Art candidate; owner approval is required before production use.",
+    "runtime_enabled is false; legacy Foozle art and live gameplay are unchanged.",
+    "siege maps to siege_bolt (heavy single-target bone bolt); swarm maps to bone_volley (three-bolt volley).",
+    "All eight weapon poses are independently rasterized from directional geometry and share one pivot.",
+    "The reproducible editable source is tools/generate_ballista_modular_candidates.py; no Aseprite project is claimed.",
+    "Gameplay ID remains bone; the asset folder ID is ballista. Do not migrate saves or rename gameplay IDs in this art-only PR."
+  ]
+}
