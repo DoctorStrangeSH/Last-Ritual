@@ -616,7 +616,7 @@ func run_tests() -> void:
         var first_map = specialization_balance_scene.instantiate()
         root.add_child(first_map)
         first_map.set_fortress_map_seed(4)
-        check(first_map.paths == first_map.TD_PATH_LAYOUTS.layout_for_seed(4), "TD uses selected seed layout")
+        check(first_map.paths == load("res://scripts/td/td_run_map_generator.gd").generate_map(4)["paths"], "TD uses generated routes for selected run seed")
         var map_snapshot: Dictionary = first_map.export_fortress_state()
         var second_map = specialization_balance_scene.instantiate()
         root.add_child(second_map)
@@ -1515,9 +1515,9 @@ func run_tests() -> void:
                 check(clearance >= 42.0, "Tower slots stay outside road corridor")
         var first_lane: Array = td.paths[0]
         var first_direction: Vector2 = (first_lane[1] - first_lane[0]).normalized()
-        check((first_lane[3] - first_lane[2]).normalized().distance_to(first_direction) > 0.2, "Upper lane is not straight")
+        check((first_lane[3] - first_lane[2]).normalized().distance_to(first_direction) > 0.2, "Upper lane has a meaningful bend")
         var second_lane: Array = td.paths[1]
-        check((second_lane[3] - second_lane[2]).normalized().distance_to((second_lane[1] - second_lane[0]).normalized()) > 0.2, "Lower lane is not straight")
+        check((second_lane[3] - second_lane[2]).normalized().distance_to((second_lane[1] - second_lane[0]).normalized()) > 0.2, "Lower lane has a meaningful bend")
         td.enemies.append({"lane": 0, "pos": first_lane[0], "waypoint": 1, "hp": 999, "speed": 85.0, "delay": 0.0})
         td.advance_enemies(8.0)
         check(td.enemies[0]["waypoint"] > 3, "Movement consumes several waypoints per long frame")
