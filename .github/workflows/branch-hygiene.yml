@@ -1,0 +1,48 @@
+name: Branch hygiene (manual, safe)
+
+on:
+  workflow_dispatch:
+    inputs:
+      execute:
+        description: "Delete at most 50 verified merged-PR branches (unchecked = report only)"
+        type: boolean
+        required: true
+        default: false
+      limit:
+        description: "Maximum branches to remove (1-50)"
+        type: choice
+        options: ["10", "25", "50"]
+        required: true
+        default: "25"
+
+permissions:
+  contents: write
+  pull-requests: read
+
+concurrency:
+  group: last-ritual-branch-hygiene
+  cancel-in-progress: false
+
+jobs:
+  audit-and-prune:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Audit branches and optionally remove exact merged-PR heads
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ALLOW_BRANCH_DELETE: ${{ inputs.execute }}
+        run: |
+          if [ "${{ inputs.execute }}" = "true" ]; then
+            python3 tools/branch_cleanup.py --execute --limit "${{ inputs.limit }}"
+          else
+            python3 tools/branch_cleanup.py --limit "${{ inputs.limit }}"
+          fi
+      - name: Upload full audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: branch-hygiene-report
+          path: branch-cleanup-report.json
+          if-no-files-found: warn
+          retention-days: 7
