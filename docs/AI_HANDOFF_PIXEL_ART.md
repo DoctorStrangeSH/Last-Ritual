@@ -62,6 +62,7 @@
 
 Release: https://github.com/DoctorStrangeSH/Last-Ritual/releases/tag/windows-preview
 
+- soul_altar_9_compositions_1x.png — компактное сравнение 9 сочетаний L1–L3 × base/Reaper/Legion (PR #369), удобно для ручной приёмки.
 - soul_altar_modular_contact_sheet_1x.png — все 72 композиции в исходном размере.
 - soul_altar_modular_contact_sheet.png — увеличенный 2× лист.
 - LastRitual-ArtPreview.exe — изолированная сцена, не игровая сборка.
