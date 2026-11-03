@@ -2,7 +2,7 @@
 
 Графику и Pixel Art migration временно не развивать. Приоритет — TD Roguelike gameplay. PR #387 добавил seed-based кривые маршруты и площадки; PR #389 объединил маршруты с общими входом/выходом и разветвлением в средней части. Далее остаются более разнообразные площадки, проверка UI/gate clearance и полная save compatibility.
 
-На main `b78d299ca0aa8aa5c36dc3098068b4a8c0818a87` PR #387–#391 объединены. Генератор создаёт две/три изогнутые ветви с общим входом/выходом и восемь площадок; соседние площадки гарантированно остаются в пределах радиуса синергии 190 px. `run_loop.gd` задаёт seed до импорта fortress state; ID площадок 0–7 повторяются на всех днях забега. Main workflow #41653573389: Godot checks SUCCESS, Windows Preview pending.
+На main `b78d299ca0aa8aa5c36dc3098068b4a8c0818a87` PR #387–#391 объединены. Генератор создаёт две/три изогнутые ветви с общим входом/выходом и восемь площадок; соседние площадки гарантированно остаются в пределах радиуса синергии 190 px. `run_loop.gd` задаёт seed до импорта fortress state; ID площадок 0–7 повторяются на всех днях забега. Main workflow #41653573389: Godot checks + Windows Preview SUCCESS.
 
 В `feature/td-variable-build-sites-v2` площадки получают индивидуальные seed-based Y offsets в безопасных диапазонах, формируя staggered belts вместо двух идеально прямых линий. Используется независимый RNG stream, чтобы вариации маршрута не меняли синергические связи. Добавлены проверки диапазонов и разброса позиций; exact-head CI ещё не запускался.
 
@@ -11,7 +11,7 @@
 # Last Ritual — текущий снимок проекта
 
 Дата: 03.11.2026  
-HEAD main: `b78d299ca0aa8aa5c36dc3098068b4a8c0818a87` (PR #387–#391 merged). Main workflow #41653573389: checks SUCCESS, Windows Preview pending.
+HEAD main: `b78d299ca0aa8aa5c36dc3098068b4a8c0818a87` (PR #387–#391 merged). Main workflow #41653573389: Godot checks + Windows Preview SUCCESS.
 
 ## Запускаемая игра
 
