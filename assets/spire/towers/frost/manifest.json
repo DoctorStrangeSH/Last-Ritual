@@ -1,0 +1,201 @@
+{
+  "schema_version": 1,
+  "id": "frost",
+  "display_name": "Ледяной обелиск",
+  "status": "review_candidate",
+  "runtime_enabled": false,
+  "camera": "top_down_3_quarter",
+  "canvas": {
+    "width": 128,
+    "height": 128,
+    "pivot": [
+      64,
+      90
+    ],
+    "ground_anchor": [
+      64,
+      118
+    ]
+  },
+  "direction_order": [
+    "north",
+    "north_east",
+    "east",
+    "south_east",
+    "south",
+    "south_west",
+    "west",
+    "north_west"
+  ],
+  "specialization_branches": {
+    "siege": "frost_lance",
+    "swarm": "blizzard"
+  },
+  "specialization_labels": {
+    "siege": "МОРОЗ: СИЛЬНЕЕ",
+    "swarm": "МЕТЕЛЬ: БЫСТРЕЕ"
+  },
+  "base": {
+    "levels": {
+      "1": "candidate/base/level_1.png",
+      "2": "candidate/base/level_2.png",
+      "3": "candidate/base/level_3.png"
+    },
+    "frame_size": [
+      128,
+      128
+    ],
+    "anchor": "ground_anchor"
+  },
+  "weapon": {
+    "base": {
+      "path": "candidate/weapon/base/weapon_8way.png",
+      "frame_size": [
+        128,
+        128
+      ],
+      "frame_count": 8,
+      "direction_order": [
+        "north",
+        "north_east",
+        "east",
+        "south_east",
+        "south",
+        "south_west",
+        "west",
+        "north_west"
+      ],
+      "pivot": [
+        64,
+        90
+      ],
+      "forward_direction": "north"
+    },
+    "frost_lance": {
+      "path": "candidate/weapon/frost_lance/weapon_8way.png",
+      "frame_size": [
+        128,
+        128
+      ],
+      "frame_count": 8,
+      "direction_order": [
+        "north",
+        "north_east",
+        "east",
+        "south_east",
+        "south",
+        "south_west",
+        "west",
+        "north_west"
+      ],
+      "pivot": [
+        64,
+        90
+      ],
+      "forward_direction": "north"
+    },
+    "blizzard": {
+      "path": "candidate/weapon/blizzard/weapon_8way.png",
+      "frame_size": [
+        128,
+        128
+      ],
+      "frame_count": 8,
+      "direction_order": [
+        "north",
+        "north_east",
+        "east",
+        "south_east",
+        "south",
+        "south_west",
+        "west",
+        "north_west"
+      ],
+      "pivot": [
+        64,
+        90
+      ],
+      "forward_direction": "north"
+    }
+  },
+  "projectiles": {
+    "base": {
+      "path": "candidate/vfx/base_projectile_8f.png",
+      "frame_size": [
+        32,
+        32
+      ],
+      "frame_count": 8,
+      "fps": 24,
+      "loop": true,
+      "forward_axis": "+X"
+    },
+    "frost_lance": {
+      "path": "candidate/vfx/frost_lance_projectile_8f.png",
+      "frame_size": [
+        32,
+        32
+      ],
+      "frame_count": 8,
+      "fps": 24,
+      "loop": true,
+      "forward_axis": "+X"
+    },
+    "blizzard": {
+      "path": "candidate/vfx/blizzard_projectile_8f.png",
+      "frame_size": [
+        32,
+        32
+      ],
+      "frame_count": 8,
+      "fps": 24,
+      "loop": true,
+      "forward_axis": "+X"
+    }
+  },
+  "impacts": {
+    "base": {
+      "path": "candidate/vfx/base_impact_8f.png",
+      "frame_size": [
+        64,
+        64
+      ],
+      "frame_count": 8,
+      "fps": 24,
+      "loop": false
+    },
+    "frost_lance": {
+      "path": "candidate/vfx/frost_lance_impact_8f.png",
+      "frame_size": [
+        64,
+        64
+      ],
+      "frame_count": 8,
+      "fps": 24,
+      "loop": false
+    },
+    "blizzard": {
+      "path": "candidate/vfx/blizzard_impact_8f.png",
+      "frame_size": [
+        64,
+        64
+      ],
+      "frame_count": 8,
+      "fps": 24,
+      "loop": false
+    }
+  },
+  "source": {
+    "editable_project": "source/layers/README.md",
+    "provenance": "candidate/SOURCE.md",
+    "editable_project_status": "procedural_source_is_tools/generate_frost_modular_candidates.py"
+  },
+  "notes": [
+    "Review-only Pixel Art candidate; owner approval is required before production use.",
+    "runtime_enabled is false; live Frost renderer and all combat values are unchanged.",
+    "siege maps to frost_lance (heavy single-target crystal); swarm maps to blizzard (multi-shard fan).",
+    "All eight weapon poses are individually rasterized from directional geometry, not copied or rotated from one finished sprite.",
+    "The reproducible editable source is tools/generate_frost_modular_candidates.py; no Aseprite project is claimed.",
+    "Existing Spark placeholder art and current Frost experimental art remain untouched pending approval and a separate runtime PR."
+  ]
+}

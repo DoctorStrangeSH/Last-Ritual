@@ -1,7 +1,7 @@
 # Last Ritual — текущий снимок проекта
 
 Дата: 03.11.2026  
-HEAD main: `5a219a3ca17c85c3727766fa5042674fdc7bc18e` (PR #376 merged). Post-merge workflow #41580061364 — SUCCESS; Windows export опубликован.
+HEAD main: `8a052871ecde415474c38d2690b61b0d7e641236` (PR #376 и #377 merged). Post-merge workflow #41580780002 — SUCCESS; Windows export опубликован.
 
 ## Запускаемая игра
 
@@ -32,6 +32,17 @@ HEAD main: `5a219a3ca17c85c3727766fa5042674fdc7bc18e` (PR #376 merged). Post-mer
 - Отдельного Aseprite проекта нет. Не создавать фиктивный файл; воспроизводимый источник геометрии — `tools/generate_necro_modular_candidates.py`.
 - Старые цельные спрайты и fallback не удалялись: при неготовности production manifest renderer продолжает использовать прежний путь.
 
+## Ледяной обелиск — модульный кандидат (отдельная ветка)
+
+- Ветка: `feat/frost-obelisk-modular-pixel-art-candidate`; PR будет создан после exact-head CI.
+- Root manifest: `assets/spire/towers/frost/manifest.json`, статус `review_candidate`, `runtime_enabled=false`.
+- Кандидат содержит 3 основания 128×128, три 8-way оружейных атласа (`base`, `frost_lance`, `blizzard`) и шесть восьмикадровых VFX strips.
+- Ветви специализаций: `siege → frost_lance` («Мороз: сильнее»), `swarm → blizzard` («Метель: быстрее»). Gameplay IDs и баланс не меняются.
+- Воспроизводимый исходник: `tools/generate_frost_modular_candidates.py`; review renderer: `tools/render_frost_modular_preview.py`; PNG и контактные листы — в `assets/spire/towers/frost/candidate/`.
+- Текущий экспериментальный Frost арт остаётся действующим. Новый набор не включён в live renderer и не считается одобренным.
+- Общий manifest contract теперь допускает branch mapping на каждую башню; стандартное mapping Алтаря душ не меняется.
+- TD renderer позиционирует основание по ground_anchor, а оружие — по собственному pivot. Добавлены проверки, что preview/runtime anchors не расходятся.
+
 ## Текущие инструменты просмотра
 
 Release windows-preview:
@@ -50,6 +61,7 @@ https://github.com/DoctorStrangeSH/Last-Ritual/releases/tag/windows-preview
 - tests/soul_altar_assembled_review_smoke.gd
 - tests/soul_altar_modular_candidate_smoke.gd
 - tests/soul_altar_modular_motion_preview_smoke.gd
+- tests/test_frost_modular_candidates.py
 - tests/test_necro_weapon_silhouettes.py
 - tests/test_necro_modular_preview.py
 - tests/test_necro_modular_vfx.py
@@ -67,6 +79,7 @@ CI не заменяет ручной запуск EXE и визуальную �
 
 - PR #376 exact-head CI #41579876954 SUCCESS; post-merge main/Windows export #41580061364 SUCCESS.
 - Нужен ручной игровой QA в Windows EXE: размещение, уровни L1–L3, смена специализаций, восемь направлений и эффекты выстрела/попадания.
+- Frost modular art пока candidate-only; владелец ещё не утвердил его для production.
 - Полная миграция всех башен, врагов, окружения и UI на Pixel Art не завершена.
 - Самостоятельные gameplay ID spark/pulse ещё не интегрированы.
 - Нужен повторный ручной playtest актуальной Windows-сборки после последних изменений.
@@ -77,6 +90,10 @@ CI не заменяет ручной запуск EXE и визуальную �
 - PR #370: автоматический запрет случайного продвижения candidate-арта в production, exact-head CI #41507365642 SUCCESS, merged `9ec0683855e1fa342938c7768caf8a251711d0eb`.
 - Специализации: base weapon v4 (#357), Legion v5 (#365), Reaper v5 (#367); основания L1–L3 с контрастными рунами (#363).
 - Художественная приёмка владельца получена 03.11.2026; модульный renderer включён в main после PR #376.
+
+## Текущее следующее действие — Frost Obelisk
+
+Проверить PR кандидата после exact-head CI. После merge просмотреть контактные листы Frost на 1× и получить художественную приёмку владельца. Не включать runtime до явного одобрения; текущий experimental fallback не удалять. После одобрения — отдельный runtime PR и ручной Windows QA.
 
 ## Следующее действие
 

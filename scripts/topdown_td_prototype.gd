@@ -1447,10 +1447,12 @@ func draw_tower_figure(pos: Vector2, kind: String, level: int, specialization: S
                 var height: float = float(canvas.get("height", 128))
                 var width: float = float(canvas.get("width", 128))
                 var ground: Array = canvas.get("ground_anchor", [64, 118])
-                var scale_factor: float = 120.0 / maxf(1.0, height)
-                var rect := Rect2(pos - Vector2(float(ground[0]), float(ground[1])) * scale_factor, Vector2(width, height) * scale_factor)
-                draw_texture_rect(base_tex, rect, false)
-                draw_texture_rect_region(weapon_tex, rect, region)
+                var canvas_size := Vector2i(int(width), int(height))
+                var base_anchor := Vector2(float(ground[0]), float(ground[1]))
+                var base_rect: Rect2 = MODULAR_ASSETS.layer_display_rect(pos, canvas_size, base_anchor, 120.0)
+                var weapon_rect: Rect2 = MODULAR_ASSETS.layer_display_rect(pos, canvas_size, layers["pivot"], 120.0)
+                draw_texture_rect(base_tex, base_rect, false)
+                draw_texture_rect_region(weapon_tex, weapon_rect, region)
                 return
     var full_tower_path: String = TOWER_VISUALS.necro_full_tower_sprite_path(level, specialization) if kind == "necro" else ""
     var approved_path: String = TOWER_VISUALS.approved_necro_sprite_path(level, specialization) if kind == "necro" else ""
