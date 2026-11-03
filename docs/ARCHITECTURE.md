@@ -10,6 +10,7 @@
 - scenes/topdown_night_prototype.tscn / scripts/topdown_night_prototype.gd — ночная арена, комнаты, враги, бой, награды, двери и магазины.
 - scripts/dungeon_floor_graph.gd — воспроизводимый граф комнат.
 - scripts/meta_progression.gd — версионированный постоянный профиль.
+- `scripts/td/td_run_map_generator.gd` — seed-based генератор дневной карты: маршруты и строительные площадки; ветка `feature/td-branching-route-topology` расширяет его общей точкой входа, развилкой и слиянием.
 - scripts/td/ — характеристики, каталог, targeting, damage, synergy, tower visuals, tooltip, VFX и модульный art contract.
 
 ## Состояние архитектуры
