@@ -1,7 +1,7 @@
 # Last Ritual — текущий снимок проекта
 
 Дата: 03.11.2026  
-HEAD main: `8a052871ecde415474c38d2690b61b0d7e641236` (PR #376 и #377 merged). Post-merge workflow #41580780002 — SUCCESS; Windows export опубликован.
+HEAD main: `96d25c3785958eba5a2d1fe490512025ee92a19f` (PR #376–#379 merged). Post-merge workflow #41583706343 — SUCCESS; Windows export опубликован.
 
 ## Запускаемая игра
 
@@ -42,6 +42,17 @@ HEAD main: `8a052871ecde415474c38d2690b61b0d7e641236` (PR #376 и #377 merged). 
 - Текущий экспериментальный Frost арт остаётся действующим. Новый набор не включён в live renderer и не считается одобренным.
 - Общий manifest contract теперь допускает branch mapping на каждую башню; стандартное mapping Алтаря душ не меняется.
 - TD renderer позиционирует основание по ground_anchor, а оружие — по собственному pivot. Добавлены проверки, что preview/runtime anchors не расходятся.
+
+## Костяная баллиста — модульный кандидат (отдельная ветка)
+
+- Ветка: `feat/ballista-modular-pixel-art-candidate`; candidate pack готовится отдельным PR.
+- Root manifest: `assets/spire/towers/ballista/manifest.json`; `status=review_candidate`, `runtime_enabled=false`.
+- 3 основания 128×128; 3 оружейных 8-way атласа: `base`, `siege_bolt`, `bone_volley`; 6 восьмикадровых VFX strips (projectile 32×32, impact 64×64).
+- Mapping: `siege → siege_bolt` (тяжёлый одиночный болт), `swarm → bone_volley` (залп из трёх болтов). Labels сохраняют текущие design IDs и русские названия.
+- Воспроизводимый источник: `tools/generate_ballista_modular_candidates.py`; review renderer: `tools/render_ballista_modular_preview.py`; Python tests: `tests/test_ballista_modular_candidates.py`.
+- Review sheets: 9 композиций 1×, 72 позы 1×/2×; PNG находятся в `assets/spire/towers/ballista/candidate/`.
+- Gameplay ID остаётся `bone`, folder ID — `ballista`; stats, damage, cooldown, economy, saves и текущие Foozle PNG не менялись.
+- Новый набор не включён в runtime и не считается одобренным. Текущие исходные Foozle assets остаются рабочими до отдельного production PR и ручного QA.
 
 ## Текущие инструменты просмотра
 
@@ -91,9 +102,9 @@ CI не заменяет ручной запуск EXE и визуальную �
 - Специализации: base weapon v4 (#357), Legion v5 (#365), Reaper v5 (#367); основания L1–L3 с контрастными рунами (#363).
 - Художественная приёмка владельца получена 03.11.2026; модульный renderer включён в main после PR #376.
 
-## Текущее следующее действие — Frost Obelisk
+## Текущее следующее действие — Pixel Art review
 
-PR #378 merged, exact-head и post-merge Windows CI прошли. Просмотреть контактные листы Frost на 1× и получить художественную приёмку владельца. Не включать runtime до явного одобрения; текущий experimental fallback не удалять. После одобрения — отдельный runtime PR и ручной Windows QA.
+Просмотреть контактные листы Frost и Ballista на 1× и получить художественную приёмку владельца. Оба candidate pack runtime-disabled; старые рабочие ресурсы остаются нетронутыми. После одобрения — отдельный runtime PR для каждой башни и ручной Windows QA.
 
 ## Следующее действие
 
