@@ -1,7 +1,7 @@
 # Last Ritual — текущий снимок проекта
 
 Дата: 03.11.2026  
-HEAD main: `96d25c3785958eba5a2d1fe490512025ee92a19f` (PR #376–#379 merged). Post-merge workflow #41583706343 — SUCCESS; Windows export опубликован.
+HEAD main: `5f34cc1c3b1a4662b19241ac2f2976a3ef3416c6` (PR #376–#380 merged). Post-merge workflow #41585253951 — SUCCESS; Windows export опубликован.
 
 ## Запускаемая игра
 
@@ -45,12 +45,12 @@ HEAD main: `96d25c3785958eba5a2d1fe490512025ee92a19f` (PR #376–#379 merged). P
 
 ## Костяная баллиста — модульный кандидат (отдельная ветка)
 
-- Ветка: `feat/ballista-modular-pixel-art-candidate`; candidate pack готовится отдельным PR.
+- PR #380 merged (`5f34cc1c`); exact-head CI #41585101342 и post-merge Windows Preview #41585253951 SUCCESS.
 - Root manifest: `assets/spire/towers/ballista/manifest.json`; `status=review_candidate`, `runtime_enabled=false`.
 - 3 основания 128×128; 3 оружейных 8-way атласа: `base`, `siege_bolt`, `bone_volley`; 6 восьмикадровых VFX strips (projectile 32×32, impact 64×64).
 - Mapping: `siege → siege_bolt` (тяжёлый одиночный болт), `swarm → bone_volley` (залп из трёх болтов). Labels сохраняют текущие design IDs и русские названия.
 - Воспроизводимый источник: `tools/generate_ballista_modular_candidates.py`; review renderer: `tools/render_ballista_modular_preview.py`; Python tests: `tests/test_ballista_modular_candidates.py`.
-- Review sheets: 9 композиций 1×, 72 позы 1×/2×; PNG находятся в `assets/spire/towers/ballista/candidate/`.
+- Review sheets: 9 композиций 1×, 72 позы 1×/2×; PNG находятся в `assets/spire/towers/ballista/candidate/` и опубликованы в `windows-preview` как `ballista_9_compositions_1x.png`, `ballista_modular_contact_sheet_1x.png`, `ballista_modular_contact_sheet.png`.
 - Gameplay ID остаётся `bone`, folder ID — `ballista`; stats, damage, cooldown, economy, saves и текущие Foozle PNG не менялись.
 - Новый набор не включён в runtime и не считается одобренным. Текущие исходные Foozle assets остаются рабочими до отдельного production PR и ручного QA.
 
