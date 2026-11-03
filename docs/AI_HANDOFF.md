@@ -2,7 +2,7 @@
 
 Обновлено: 03.11.2026  
 Репозиторий: https://github.com/DoctorStrangeSH/Last-Ritual  
-Main snapshot: `b78d299ca0aa8aa5c36dc3098068b4a8c0818a87` (PR #387–#389 gameplay and PR #391 docs merged). PR #389 exact-head CI #41652362559 and post-merge #41652792964 — SUCCESS; docs post-merge #41653573389 SUCCESS.
+Main snapshot: `47ec4143b6f252d583c93edd5579cd1dd4391a6d` (PR #387–#395 merged). PR #395 exact-head CI #41654287377 and post-merge #41654581974 (Godot checks + Windows Preview) — SUCCESS.
 
 ## Как продолжить
 
@@ -48,9 +48,11 @@ Main snapshot: `b78d299ca0aa8aa5c36dc3098068b4a8c0818a87` (PR #387–#389 gamepl
 - Восемь площадок остаются стабильными по ID 0–7 в пределах забега. Соседние площадки каждого ряда гарантированно находятся в пределах 190 px — текущего радиуса синергий башен; валидатор и тесты защищают это правило для 256 seed.
 - `run_loop.gd` задаёт seed до импорта состояния крепости. `export_fortress_state()` сохраняет постройки по ID и `map_seed`; `import_fortress_state()` отклоняет snapshot от другого seed. Smoke tests проверяют 256 seed, топологию fork/merge, геометрию, строительство, улучшение и перенос башни; полный `topdown_smoke.gd` проверяет боевые синергии.
 - PR #387 merged (`a29bc17f`), PR #388 docs-only (`41584b11`), PR #389 fork/merge routes (`c372d377`), PR #391 handoff (`b78d299c`) merged. Exact-head #41652362559 and post-merge #41652792964 SUCCESS; docs post-merge #41653573389 pending.
-- Ограничение main: площадки пока распределяются в двух почти фиксированных рядах. Ветка `feature/td-build-site-layouts-rebased` расширяет сдвиг/шаг рядов и добавляет проверку радиуса площадки относительно дорог, входа/выхода и фиксированных UI hitboxes; exact-head CI впереди. Сохранение специализаций и legacy snapshots ещё впереди.
+- PR #395 merged: build-site rows now shift and stretch per seed; validation includes roads, gates and fixed UI hitboxes. Exact-head #41654287377 and post-merge #41654581974 SUCCESS.
+- Manual Windows review of map readability remains outstanding.
+- Current branch `feature/td-five-day-fortress-persistence` adds a dedicated five-day state-transfer smoke test: all four tower IDs, both specializations, targeting priorities, treasury and altar health must persist; wrong-seed import must be rejected without mutating the new fortress; legacy snapshots without `map_seed`/`target_priority` must remain loadable. Exact-head CI pending.
 
-После этой ветки проверить фактическую читаемость площадок на Windows, затем перенести специализации/приоритеты и проверить обратную совместимость legacy snapshots. Не переходить к волновой стратегии, пока критерии A–C из ROADMAP не закрыты.
+After the persistence test passes, manually review the generated map on Windows before moving to tactical wave intelligence. Do not mark A–C complete before manual QA and remaining legacy cases.
 
 После карты — стратегические ветвления волн/маршрутов, разведка следующей волны, значимые inter-wave решения, более длинная кривая сложности и связка дневных решений с ночными наградами. Не увеличивать длительность простым растягиванием таймеров.
 
