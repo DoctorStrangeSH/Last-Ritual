@@ -151,17 +151,13 @@ def weapon_frame(branch: str, direction_index: int) -> Image.Image:
     d=ImageDraw.Draw(im)
     origin=(64.0,90.0)
     direction=DIRECTIONS[direction_index]
-    for side in (-1,1):
-        a=op(origin,direction,-7,side*7)
-        b=op(origin,direction,-15,side*10)
-        c=op(origin,direction,-11,side*3)
-        poly(d,[a,b,c],color("outline"))
-        ln(d,b,c,color("ice_mid"),1)
-    start=op(origin,direction,-9,0)
+    # The pivot is the shared ground anchor and stays visually hidden beneath
+    # the foundation. The visible emitter grows forward from the pad, not below it.
+    start=op(origin,direction,0,0)
     end=op(origin,direction,22,0)
-    ln(d,start,end,color("outline"),8)
-    ln(d,start,end,color("stone_mid"),5)
-    ln(d,op(origin,direction,-5,-1),op(origin,direction,18,-1),color("ice_light"),2)
+    ln(d,start,end,color("outline"),7)
+    ln(d,start,end,color("stone_mid"),4)
+    ln(d,op(origin,direction,4,-1),op(origin,direction,19,-1),color("ice_light"),2)
 
     if branch=="base":
         crystal(d,origin,direction,29,0,25,7,color("ice_dark"),color("ice_mid"))
@@ -176,12 +172,9 @@ def weapon_frame(branch: str, direction_index: int) -> Image.Image:
             crystal(d,origin,direction,23,side*10,15,4,color("ice"),color("ice_white"))
             crystal(d,origin,direction,34,side*15,10,3,color("ice_mid"),color("ice_white"))
 
-    d.ellipse((55,81,73,99),fill=color("outline"))
-    d.ellipse((58,84,70,96),fill=color("stone_mid"))
-    d.ellipse((60,86,68,94),fill=color("ice_dark"))
-    d.point((63,87),fill=color("ice_white"))
-    tick=op(origin,direction,-1,-11)
-    d.point((q(tick[0]),q(tick[1])),fill=color("gold_light"))
+    # A narrow collar sits inside the plinth; no detached orb or tail is drawn
+    # below the ground anchor.
+    ln(d,op(origin,direction,8,-5),op(origin,direction,8,5),color("gold_light"),1)
     return im
 
 
