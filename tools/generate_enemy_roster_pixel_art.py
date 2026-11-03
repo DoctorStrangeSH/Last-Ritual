@@ -80,7 +80,7 @@ def draw_limb(p:Painter,role:str,pal,step:float,bob:float):
     if role=="boss":
         leg_w=5
         for side in (-1,1):
-            a=-13+step*side*.55
+            a=-13+step*side*1.25
             x=side*8
             p.polygon([(a-4,x-5),(a+3,x-5),(a+5,x+5),(a-4,x+6)],pal["outline"])
             p.polygon([(a-3,x-4),(a+2,x-4),(a+3,x+4),(a-3,x+4)],pal["metal"])
