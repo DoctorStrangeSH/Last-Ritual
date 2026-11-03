@@ -2,7 +2,7 @@
 
 Обновлено: 03.11.2026  
 Репозиторий: https://github.com/DoctorStrangeSH/Last-Ritual  
-Main snapshot: `41584b119bc294c89fb6edfcdd85e7ce7f248568` (PR #387 gameplay + PR #388 docs merged). Main workflow #41651477278 — SUCCESS.
+Main snapshot: `c372d377b6cd615bfc9d76dbe07403df4d98fe52` (PR #387/#388/#389 merged). Main workflow #41652792964 — Godot checks + Windows Preview SUCCESS.
 
 ## Как продолжить
 
@@ -44,7 +44,7 @@ Main snapshot: `41584b119bc294c89fb6edfcdd85e7ce7f248568` (PR #387 gameplay + PR
 
 Наблюдаемая текущая реализация:
 - `scripts/run_loop.gd` создаёт новый `fortress_map_seed` при `start_run()` и передаёт его в дневную сцену при каждом `start_phase()`.
-- `scripts/td/td_run_map_generator.gd` в main генерирует две/три кривые линии и восемь площадок из seed. PR #389 продолжает это: общий вход и выход с развилкой между ними, seed-based профиль изгибов.
+- `scripts/td/td_run_map_generator.gd` в main генерирует две/три кривые линии и восемь площадок из seed. PR #389 merged: маршруты имеют общий вход и выход, разделяются на несколько коридоров в средней части и сходятся перед алтарём. Валидация проверяет расстояние между площадками и synergy adjacency.
 - `scripts/topdown_td_prototype.gd` применяет карту через `set_fortress_map_seed()`; ID площадок 0–7 стабильны внутри забега. `run_loop.gd` задаёт seed до импорта состояния крепости.
 - `export_fortress_state()` сохраняет постройки по ID, `map_seed` включён в snapshot; `import_fortress_state()` отклоняет snapshot от другого seed. `tests/td_run_map_generation_smoke.gd` проверяет 256 seed, геометрию, разнообразие, строительство, улучшение и перенос башни; `tests/topdown_smoke.gd` проверяет интеграцию.
 - PR #387 merged (`a29bc17f`), PR #388 docs-only merged (`41584b11`). Exact-head #41650546960 SUCCESS; post-merge #41650910386 и #41651477278 SUCCESS.
