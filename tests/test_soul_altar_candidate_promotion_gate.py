@@ -25,6 +25,8 @@ class CandidatePromotionGateTests(unittest.TestCase):
         required = [ART / f"base/level_{level}.png" for level in (1, 2, 3)]
         required.extend(ART / f"weapon/{branch}/weapon_8way.png" for branch in BRANCHES)
         self.assertTrue(all(path.is_file() for path in required))
+        for source, production in zip(sorted((CANDIDATE / "base").glob("*.png")) + [CANDIDATE / f"weapon/{branch}/weapon_8way.png" for branch in BRANCHES], required):
+            self.assertEqual(source.read_bytes(), production.read_bytes())
         self.assertEqual(manifest["base"]["levels"]["1"], "base/level_1.png")
         for branch in BRANCHES:
             self.assertFalse(manifest["weapon"][branch]["path"].startswith("candidate/"))
