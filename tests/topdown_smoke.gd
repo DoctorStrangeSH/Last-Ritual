@@ -26,7 +26,15 @@ func upgrade_to_specialization(game, path: String) -> bool:
 func _initialize() -> void:
     call_deferred("run_tests")
 
+## Fingerprint of the player's real meta profile; tests must never touch it.
+func real_profile_fingerprint() -> String:
+    var path := "user://last_ritual_meta_v1.json"
+    if not FileAccess.file_exists(path):
+        return "absent"
+    return "%d:%s" % [FileAccess.get_modified_time(path), FileAccess.get_md5(path)]
+
 func run_tests() -> void:
+    var real_profile_before := real_profile_fingerprint()
     var floor_generator = load("res://scripts/dungeon_floor_graph.gd")
     check(floor_generator != null, "Dungeon topology generator loads")
     if floor_generator != null:
@@ -1724,6 +1732,7 @@ func run_tests() -> void:
     if run_scene != null:
         check(run_scene != null, "Unified day-night run scene loads")
         var layout_probe = run_scene.instantiate()
+        layout_probe.meta.save_path = "user://last_ritual_meta_run_loop_smoke.json"
         check(layout_probe.DIFFICULTY_BUTTONS.size() == 3 and layout_probe.START_RUN_BUTTON.position.y > layout_probe.DIFFICULTY_BUTTONS[0].end.y, "Difficulty and single start button have vertical separation")
         check(layout_probe.REWARD_BUTTONS.size() == 4 and layout_probe.REWARD_BUTTONS[0].position.x < layout_probe.REWARD_BUTTONS[3].position.x, "Relic reward cards are ordered from left to right")
         check(not layout_probe.REWARD_BUTTONS[0].intersects(layout_probe.REWARD_BUTTONS[1]) and not layout_probe.REWARD_BUTTONS[2].intersects(layout_probe.REWARD_BUTTONS[3]), "Reward cards are spaced without overlap")
@@ -1739,6 +1748,7 @@ func run_tests() -> void:
         check(layout_probe.save_audio_settings(), "Audio settings save to config")
         layout_probe.apply_audio_settings()
         var audio_reload = run_scene.instantiate()
+        audio_reload.meta.save_path = "user://last_ritual_meta_run_loop_smoke.json"
         root.add_child(audio_reload)
         audio_reload.audio_settings_path = layout_probe.audio_settings_path
         audio_reload.load_audio_settings()
@@ -1757,6 +1767,7 @@ func run_tests() -> void:
     check(run_scene != null, "Unified day-night run scene loads")
     if run_scene != null:
         var run = run_scene.instantiate()
+        run.meta.save_path = "user://last_ritual_meta_run_loop_smoke.json"
         root.add_child(run)
         check(run.phase == "hub", "Run opens a single new-run menu")
         check(not run.set_difficulty(-1) and not run.set_difficulty(3), "Invalid difficulty rejected")
@@ -1839,6 +1850,7 @@ func run_tests() -> void:
         check(run.phase == "transition" and run.complete_transition() and run.active_game.necro_kill_bonus == 3, "Necromancer reward carries through dawn")
         run.queue_free()
         var difficulty_run = run_scene.instantiate()
+        difficulty_run.meta.save_path = "user://last_ritual_meta_run_loop_smoke.json"
         root.add_child(difficulty_run)
         check(difficulty_run.set_difficulty(2) and difficulty_run.start_run(), "Nightmare difficulty propagates to first day")
         check(difficulty_run.active_game.difficulty == 2, "Day receives Nightmare setting")
@@ -1892,8 +1904,8 @@ func run_tests() -> void:
     # fortress persistence, nighttime income, victory and replay eligibility.
     if run_scene != null:
         var marathon = run_scene.instantiate()
-        root.add_child(marathon)
         marathon.meta.save_path = "user://last_ritual_full_run_smoke.json"
+        root.add_child(marathon)
         marathon.meta.fragments = 0
         marathon.meta.hero_level = 1
         marathon.meta.treasury_level = 2
@@ -1977,8 +1989,8 @@ func run_tests() -> void:
     # Terminal-state regression: no duplicated loss, rewards, phases or stale timers.
     if run_scene != null:
         var loss_probe = run_scene.instantiate()
-        root.add_child(loss_probe)
         loss_probe.meta.save_path = "user://last_ritual_defeat_smoke.json"
+        root.add_child(loss_probe)
         loss_probe.meta.runs_started = 0
         loss_probe.meta.runs_lost = 0
         loss_probe.meta.runs_won = 0
@@ -2859,5 +2871,9 @@ func run_tests() -> void:
     for particle in build_particles + sell_particles:
         check(float(particle.get("alpha", -1.0)) >= 0.0 and float(particle.get("alpha", 2.0)) <= 1.0, "Transition particle alpha remains in valid range")
         check(float(particle.get("size", 0.0)) > 0.0, "Transition particle has positive size")
+    check(real_profile_fingerprint() == real_profile_before, "Smoke tests leave the real player profile untouched")
+    for test_meta in ["user://last_ritual_meta_run_loop_smoke.json", "user://last_ritual_full_run_smoke.json", "user://last_ritual_defeat_smoke.json"]:
+        if FileAccess.file_exists(test_meta):
+            DirAccess.remove_absolute(ProjectSettings.globalize_path(test_meta))
     print("TOPDOWN SMOKE RESULT: ", "PASS" if failures == 0 else str(failures) + " FAILURES")
     quit(0 if failures == 0 else 1)
