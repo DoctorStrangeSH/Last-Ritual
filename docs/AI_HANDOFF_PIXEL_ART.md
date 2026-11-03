@@ -68,14 +68,14 @@
 
 ## Огненная турель — текущий модульный арт-кандидат
 
-- Candidate branch: feat/fire-turret-modular-pixel-art-candidate; PR/CI pending.
+- PR #382 merged; exact-head CI #41589195484 and post-merge Windows Preview #41589363962 SUCCESS.
 - Root manifest: assets/spire/towers/fire/manifest.json; status=review_candidate, runtime_enabled=false.
 - Gameplay ID remains fire. Existing labels: ИНФЕРНО: ПЛАМЯ (siege), ИСКРЫ: 3 ЦЕЛИ (swarm); branch mapping: siege → inferno, swarm → sparks.
 - 3 bases: candidate/base/level_1..3.png, 128×128 RGBA.
 - Weapon: candidate/weapon/base/weapon_8way.png, inferno/weapon_8way.png, sparks/weapon_8way.png; each atlas is 8×128×128, N, NE, E, SE, S, SW, W, NW.
 - VFX: 8-frame projectile (32×32) and impact (64×64) strips for base/inferno/sparks.
 - Source: tools/generate_fire_turret_modular_candidates.py; renderer: tools/render_fire_turret_modular_preview.py; tests: tests/test_fire_turret_modular_candidates.py.
-- Contact sheets: candidate/review/contact_sheet_9_1x.png, contact_sheet_72_1x.png, contact_sheet_72_2x.png.
+- Contact sheets: candidate/review/contact_sheet_9_1x.png, contact_sheet_72_1x.png, contact_sheet_72_2x.png; also published in windows-preview as fire_turret_9_compositions_1x.png, fire_turret_modular_contact_sheet_1x.png and fire_turret_modular_contact_sheet.png.
 - Original Foozle base/weapon/projectiles/weapon_impact resources remain untouched; no runtime promotion until explicit approval and a separate integration PR.
 - No Aseprite project is claimed; the procedural Python generator is the reproducible editable source.
 

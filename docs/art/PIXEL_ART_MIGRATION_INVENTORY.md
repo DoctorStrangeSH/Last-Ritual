@@ -1,7 +1,7 @@
 # Pixel Art Migration Inventory & Legacy Sprite Removal Plan
 
 **Updated: 03.11.2026 — current main snapshot.**  
-Main: b583e6d24d15f855900c4eec237757a2c13ea065. Soul Altar production art is integrated by PR #376; Frost modular art is candidate-only (PR #378); Ballista modular art is candidate-only (PR #380). Fire Turret candidate is in a separate PR branch.
+Main: e1300d21b6bab9c112653a700d361a24f1ef5268. Soul Altar production art is integrated by PR #376; Frost modular art is candidate-only (PR #378); Ballista modular art is candidate-only (PR #380); Fire Turret modular art is candidate-only (PR #382).
 
 This is the authoritative working inventory for replacing old sprite families and then removing them safely. It does not claim that the complete game has already migrated to Pixel Art.
 
@@ -26,7 +26,7 @@ Do not rename gameplay IDs or migrate save data during art-only PRs. Do not trea
 | Soul Altar (necro) | Owner-approved modular bases L1–L3 and base/Reaper/Legion eight-way weapon atlases; PR #376 | runtime enabled; legacy fallback retained | Owner Windows EXE QA, then separate legacy cleanup |
 | Frost Obelisk (frost) | PR #378 candidate pack: 3 bases, 3 eight-way weapon branches, 6 VFX strips, 9/72 contact sheets | runtime disabled; current experimental/Foozle assets unchanged | Owner visual approval at 1×, then separate runtime PR and Windows QA |
 | Bone Ballista (bone / ballista) | Candidate pack in progress: 3 bases, base/siege_bolt/bone_volley 8-way weapon branches, 6 VFX strips, 9/72 contact sheets | runtime disabled; original Foozle assets unchanged | Candidate PR CI, owner visual approval at 1×, then separate runtime PR and Windows QA |
-| Fire Turret (fire) | New modular candidate pack prepared in feat/fire-turret-modular-pixel-art-candidate: 3 bases, base/inferno/sparks 8-way weapons, 6 VFX strips, 9/72 contact sheets | runtime disabled; original Foozle assets unchanged | Exact-head CI, owner visual approval at 1×, separate runtime PR and Windows QA |
+| Fire Turret (fire) | PR #382 candidate pack: 3 bases, base/inferno/sparks 8-way weapons, 6 VFX strips, 9/72 contact sheets | runtime disabled; original Foozle assets unchanged | Exact-head CI #41589195484 and post-merge Windows Preview #41589363962 SUCCESS; owner visual approval at 1×, separate runtime PR and Windows QA |
 
 ## Soul Altar — production details
 
@@ -58,7 +58,7 @@ Do not rename gameplay IDs or migrate save data during art-only PRs. Do not trea
 
 ## Fire Turret — candidate details
 
-- Candidate branch: feat/fire-turret-modular-pixel-art-candidate; PR/CI pending.
+- PR #382 merged; exact-head CI #41589195484 and post-merge Windows Preview #41589363962 SUCCESS. Review sheets are published in windows-preview.
 - Manifest: assets/spire/towers/fire/manifest.json; review_candidate / runtime_enabled=false.
 - 3 bases; weapon branches base/inferno/sparks; six eight-frame VFX strips.
 - Mapping: siege → inferno (heavy flame cannon/explosive impact); swarm → sparks (three-spark volley). Existing gameplay ID and labels are unchanged.
