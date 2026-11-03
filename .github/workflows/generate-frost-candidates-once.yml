@@ -4,6 +4,8 @@ on:
     branches: [feat/frost-obelisk-modular-pixel-art-candidate]
     paths:
       - .github/workflows/generate-frost-candidates-once.yml
+      - tools/generate_frost_modular_candidates.py
+      - tests/test_frost_modular_candidates.py
 permissions:
   contents: write
 jobs:
