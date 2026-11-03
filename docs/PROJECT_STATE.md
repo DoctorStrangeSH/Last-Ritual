@@ -1,7 +1,7 @@
 # Last Ritual — текущий снимок проекта
 
 Дата: 03.11.2026  
-HEAD main: `5f34cc1c3b1a4662b19241ac2f2976a3ef3416c6` (PR #376–#380 merged). Post-merge workflow #41585253951 — SUCCESS; Windows export опубликован.
+HEAD main: `b583e6d24d15f855900c4eec237757a2c13ea065` (PR #376–#381 merged). Post-merge workflow #41585682430 — SUCCESS; Windows export опубликован. Fire candidate is in a separate PR branch.
 
 ## Запускаемая игра
 
@@ -53,6 +53,17 @@ HEAD main: `5f34cc1c3b1a4662b19241ac2f2976a3ef3416c6` (PR #376–#380 merged). P
 - Review sheets: 9 композиций 1×, 72 позы 1×/2×; PNG находятся в `assets/spire/towers/ballista/candidate/` и опубликованы в `windows-preview` как `ballista_9_compositions_1x.png`, `ballista_modular_contact_sheet_1x.png`, `ballista_modular_contact_sheet.png`.
 - Gameplay ID остаётся `bone`, folder ID — `ballista`; stats, damage, cooldown, economy, saves и текущие Foozle PNG не менялись.
 - Новый набор не включён в runtime и не считается одобренным. Текущие исходные Foozle assets остаются рабочими до отдельного production PR и ручного QA.
+
+## Огненная турель — модульный кандидат (отдельная ветка)
+
+- Ветка: feat/fire-turret-modular-pixel-art-candidate; candidate pack подготовлен, PR/CI ещё впереди.
+- Root manifest: assets/spire/towers/fire/manifest.json; status=review_candidate, runtime_enabled=false.
+- 3 основания 128×128; 3 оружейных 8-way атласа: base, inferno, sparks; 6 восьмикадровых VFX strips (projectile 32×32, impact 64×64).
+- Mapping: siege → inferno (тяжёлый огненный выстрел и взрыв), swarm → sparks (залп искр по нескольким целям). Существующие labels: ИНФЕРНО: ПЛАМЯ / ИСКРЫ: 3 ЦЕЛИ.
+- Воспроизводимый источник: tools/generate_fire_turret_modular_candidates.py; review renderer: tools/render_fire_turret_modular_preview.py; tests: tests/test_fire_turret_modular_candidates.py.
+- Review sheets: 9 композиций 1×, 72 позы 1×/2× в assets/spire/towers/fire/candidate/review/.
+- Gameplay ID остаётся fire; stats, damage, cooldown, economy, saves и исходные Foozle PNG не менялись.
+- Новый набор не включён в runtime и не считается одобренным. Оригинальные assets/spire/towers/fire/base, weapon, projectiles и weapon_impact сохранены.
 
 ## Текущие инструменты просмотра
 
