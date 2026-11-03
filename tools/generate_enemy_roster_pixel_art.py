@@ -37,7 +37,7 @@ def round_px(value:float)->int:
 
 
 class Painter:
-    def __init__(self,draw:ImageDraw.ImageDraw,origin:tuple[float,float],direction:tuple[float,float],scale:int):
+    def __init__(self,draw:ImageDraw.ImageDraw,origin:tuple[float,float],direction:tuple[float,float],scale:float):
         self.draw=draw
         self.origin=origin
         self.direction=direction
@@ -53,10 +53,10 @@ class Painter:
         pts=[self.point(a,b) for a,b in points]
         self.draw.polygon(pts,fill=fill)
         if outline is not None:
-            self.draw.line(pts+[pts[0]],fill=outline,width=max(1,width*self.scale),joint="curve")
+            self.draw.line(pts+[pts[0]],fill=outline,width=max(1,round_px(width*self.scale)),joint="curve")
 
     def line(self,a,b,fill,width:int=1):
-        self.draw.line((*self.point(*a),*self.point(*b)),fill=fill,width=max(1,width*self.scale))
+        self.draw.line((*self.point(*a),*self.point(*b)),fill=fill,width=max(1,round_px(width*self.scale)))
 
     def circle(self,along:float,across:float,radius:float,fill,outline=None,width:int=1):
         pts=[]
@@ -216,8 +216,8 @@ def draw_boss(p:Painter,pal,step:float,bob:float,frame:int):
 def draw_character(role:str,direction_index:int,frame:int)->Image.Image:
     is_boss=role=="boss"
     size=96 if is_boss else 48
-    scale=2 if is_boss else 1
-    origin=(48.0,55.0) if is_boss else (24.0,26.0)
+    # Fractional coordinate scaling is snapped to the pixel grid by Painter.point.\n    # It keeps the 96px boss atlas comfortably inside all eight facing cells.\n    scale=1.4 if is_boss else 1.0
+    origin=(48.0,48.0) if is_boss else (24.0,26.0)
     direction=DIRECTIONS[direction_index]
     image=Image.new("RGBA",(size,size),TRANSPARENT)
     d=ImageDraw.Draw(image)
@@ -268,7 +268,7 @@ def manifest_data()->dict:
             "frame_size":[size,size],"columns":4,"rows":8,"frame_count":32,
             "fps":8,"loop":True,"animation":"walk",
             "direction_order":DIRECTION_ORDER,
-            "pivot":[size//2,70 if role=="boss" else 41],
+            "pivot":[size//2,72 if role=="boss" else 41],
         }
     return {
         "schema_version":1,"id":"enemy_roster","display_name":"Враги осады и Страж ритуала",
