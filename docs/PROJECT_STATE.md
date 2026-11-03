@@ -9,7 +9,7 @@
 # Last Ritual — текущий снимок проекта
 
 Дата: 03.11.2026  
-HEAD main: `47ec4143b6f252d583c93edd5579cd1dd4391a6d` (PR #387–#389 gameplay, #391 docs, #395 build-site layout merged). Post-merge workflow #41654581974 pending.
+HEAD main: `c7a30bee07ec32e9726245c16285f998f7e07c2f` (PR #387–#396 merged). Post-merge #41654581974 and docs workflow #41655117053 SUCCESS.
 
 ## Запускаемая игра
 
