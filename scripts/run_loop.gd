@@ -342,6 +342,6 @@ func _draw() -> void:
             draw_string(ThemeDB.fallback_font, Vector2(255, 527), "После выбора награды следующий день начнётся сам", HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color("#d5e9df"))
         "defeat", "victory":
             draw_string(ThemeDB.fallback_font, Vector2(400, 260), "РИТУАЛ ЗАВЕРШЁН" if phase == "victory" else "ЗАБЕГ ОКОНЧЕН", HORIZONTAL_ALIGNMENT_LEFT, -1, 32, Color.WHITE)
-            draw_string(ThemeDB.fallback_font, Vector2(400, 320), "Пройдено этапов: %d / 6" % completed_phases, HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color("#c7c9d1"))
+            draw_string(ThemeDB.fallback_font, Vector2(400, 320), "Пройдено этапов: %d / %d" % [completed_phases, CAMPAIGN_PHASES], HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color("#c7c9d1"))
             draw_rect(Rect2(430, 480, 290, 70), Color("#527d70"))
             draw_string(ThemeDB.fallback_font, Vector2(485, 523), "НОВЫЙ ЗАБЕГ", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color.WHITE)
