@@ -616,7 +616,7 @@ func run_tests() -> void:
         var first_map = specialization_balance_scene.instantiate()
         root.add_child(first_map)
         first_map.set_fortress_map_seed(4)
-        check(first_map.paths == first_map.TD_PATH_LAYOUTS.layout_for_seed(4), "TD uses selected seed layout")
+        check(first_map.paths == load("res://scripts/td/td_run_map_generator.gd").generate_map(4)["paths"], "TD uses generated routes for selected run seed")
         var map_snapshot: Dictionary = first_map.export_fortress_state()
         var second_map = specialization_balance_scene.instantiate()
         root.add_child(second_map)
