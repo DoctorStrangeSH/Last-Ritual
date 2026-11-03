@@ -2,8 +2,8 @@
 
 Обновлено: 03.11.2026  
 Репозиторий: https://github.com/DoctorStrangeSH/Last-Ritual  
-Main snapshot: 96d25c3785958eba5a2d1fe490512025ee92a19f  
-Последний main CI: #41583706343 — SUCCESS. Активная ветка кандидата: feat/ballista-modular-pixel-art-candidate.
+Main snapshot: 5f34cc1c3b1a4662b19241ac2f2976a3ef3416c6  
+Последний main CI: #41585253951 — SUCCESS. PR #380 (Ballista candidate) merged.
 
 ## Как продолжить
 
@@ -56,13 +56,13 @@ Main snapshot: 96d25c3785958eba5a2d1fe490512025ee92a19f
 - Owner visual approval is still pending. Do not enable runtime; preserve current experimental fallback.
 
 ### Костяная баллиста — candidate-only, текущая ветка
-- Branch: feat/ballista-modular-pixel-art-candidate.
+- PR #380 merged; exact-head CI #41585101342 and post-merge Windows Preview #41585253951 SUCCESS.
 - Root manifest: assets/spire/towers/ballista/manifest.json; review_candidate / runtime_enabled=false.
 - 3 bases, base/siege_bolt/bone_volley 8-way weapon atlases, 6 VFX strips.
 - Mapping: siege → siege_bolt (heavy single target), swarm → bone_volley (three-bolt volley).
 - Gameplay ID stays bone; asset folder is ballista. No stats, balance, save IDs or live Foozle PNGs changed.
 - Source: tools/generate_ballista_modular_candidates.py; preview: tools/render_ballista_modular_preview.py; tests: tests/test_ballista_modular_candidates.py.
-- Review sheets: candidate/review/contact_sheet_9_1x.png, contact_sheet_72_1x.png, contact_sheet_72_2x.png.
+- Review sheets: candidate/review/contact_sheet_9_1x.png, contact_sheet_72_1x.png, contact_sheet_72_2x.png; published in windows-preview.
 - Candidate remains disabled pending owner visual approval and a separate runtime PR.
 
 ### Next art work
