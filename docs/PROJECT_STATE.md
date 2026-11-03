@@ -34,11 +34,11 @@ HEAD main: `8a052871ecde415474c38d2690b61b0d7e641236` (PR #376 и #377 merged). 
 
 ## Ледяной обелиск — модульный кандидат (отдельная ветка)
 
-- Ветка: `feat/frost-obelisk-modular-pixel-art-candidate`; PR будет создан после exact-head CI.
+- PR #378 merged (`00c122a0`); exact-head CI #41583127652 SUCCESS; post-merge main/Windows Preview #41583281398 SUCCESS.
 - Root manifest: `assets/spire/towers/frost/manifest.json`, статус `review_candidate`, `runtime_enabled=false`.
-- Кандидат содержит 3 основания 128×128, три 8-way оружейных атласа (`base`, `frost_lance`, `blizzard`) и шесть восьмикадровых VFX strips.
+- Кандидат содержит 3 основания 128×128, три 8-way оружейных атласа (`base`, `frost_lance`, `blizzard`) и шесть восьмикадровых VFX strips. Review sheets 9/72 at 1×/2× опубликованы в `windows-preview`.
 - Ветви специализаций: `siege → frost_lance` («Мороз: сильнее»), `swarm → blizzard` («Метель: быстрее»). Gameplay IDs и баланс не меняются.
-- Воспроизводимый исходник: `tools/generate_frost_modular_candidates.py`; review renderer: `tools/render_frost_modular_preview.py`; PNG и контактные листы — в `assets/spire/towers/frost/candidate/`.
+- Воспроизводимый исходник: `tools/generate_frost_modular_candidates.py`; review renderer: `tools/render_frost_modular_preview.py`; PNG и контактные листы — в `assets/spire/towers/frost/candidate/`. Python tests: `tests/test_frost_modular_candidates.py`.
 - Текущий экспериментальный Frost арт остаётся действующим. Новый набор не включён в live renderer и не считается одобренным.
 - Общий manifest contract теперь допускает branch mapping на каждую башню; стандартное mapping Алтаря душ не меняется.
 - TD renderer позиционирует основание по ground_anchor, а оружие — по собственному pivot. Добавлены проверки, что preview/runtime anchors не расходятся.
@@ -93,7 +93,7 @@ CI не заменяет ручной запуск EXE и визуальную �
 
 ## Текущее следующее действие — Frost Obelisk
 
-Проверить PR кандидата после exact-head CI. После merge просмотреть контактные листы Frost на 1× и получить художественную приёмку владельца. Не включать runtime до явного одобрения; текущий experimental fallback не удалять. После одобрения — отдельный runtime PR и ручной Windows QA.
+PR #378 merged, exact-head и post-merge Windows CI прошли. Просмотреть контактные листы Frost на 1× и получить художественную приёмку владельца. Не включать runtime до явного одобрения; текущий experimental fallback не удалять. После одобрения — отдельный runtime PR и ручной Windows QA.
 
 ## Следующее действие
 
