@@ -16,6 +16,7 @@ from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parents[1]
 ART = ROOT / "assets/spire/towers/frost"
+CANDIDATE = ART / "candidate"
 DIRECTIONS = (
     (0.0, -1.0), (0.7071, -0.7071), (1.0, 0.0), (0.7071, 0.7071),
     (0.0, 1.0), (-0.7071, 0.7071), (-1.0, 0.0), (-0.7071, -0.7071),
