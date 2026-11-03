@@ -1,112 +1,106 @@
 # Pixel Art Migration Inventory & Legacy Sprite Removal Plan
 
-**01.11.2026 — единый выбор цельного арта Алтаря душ (PR ожидает CI):** `necro_full_tower_sprite_path()` централизует порядок ресурсов: утверждённые `approved_renders/sprites` для L1/L2/L3 и Жнеца; производственный `specialization_legion_192.png` для Легиона, поскольку отдельного утверждённого PNG Легиона в комплекте `approved_renders` нет. Рендер использует этот resolver, smoke-test фиксирует все пять вариантов и отклонение некорректных уровней/специализаций. Это только цельные башни; независимое наведение оружия и модульный runtime по-прежнему не реализованы (`runtime_enabled=false`). Экспериментальные 128×128 base/weapon PNG остаются кандидатами, не финальной заменой. Ручной Windows QA владельцем не заявлен.
+**Updated: 03.11.2026 — main snapshot before Ballista candidate PR.**  
+Main: 96d25c3785958eba5a2d1fe490512025ee92a19f. Soul Altar production art is integrated by PR #376; Frost modular art is candidate-only (PR #378). Ballista modular art is being prepared in a separate candidate PR.
 
+This is the authoritative working inventory for replacing old sprite families and then removing them safely. It does not claim that the complete game has already migrated to Pixel Art.
 
-**Updated:** 2026-11-01, PR #314 merged at `e3dd4c6898ab20eaf627e2993bbeaa48ccecb262`.
+## Owner decision and safe deletion rule
 
-This is the working inventory for replacing the old art and then removing it completely. It is not a claim that the Pixel Art migration is already complete.
+The owner authorized removing the old non-pixel sprite families from the repository and shipped game. Do not keep superseded sprites as permanent fallback art. However, do not delete any resource that the current runtime still loads before its replacement is committed, switched, tested and approved. Keep license/provenance records and editable source for replacement assets.
 
-## Owner decision
+## Current gameplay identities and asset aliases
 
-The owner has explicitly authorized deleting the old non-pixel sprite families from the repository and shipped game. **Do not preserve superseded old sprites as permanent fallback art.** However, do not delete assets that the current runtime still loads before their replacements are committed and switched: doing so would break the game during migration.
+Defined in scripts/td/td_tower_stats.gd:
+- bone — Bone Ballista; asset folder ballista
+- fire — Fire Turret; asset folder fire
+- necro — Soul Altar; legacy asset alias pulse, with approved production Pixel Art overrides
+- frost — Frost Obelisk; legacy asset alias spark, with experimental Frost overrides
 
-Keep:
-- license, attribution and mapping/provenance records required for any redistributed third-party-derived content;
-- new editable Pixel Art sources, deterministic export scripts, manifests and palette/pivot data;
-- approved Soul Altar v0.5 concept sheet as a non-runtime art-direction reference (keep only while useful); old raster cutouts and all old runtime sprite exports are eligible for complete deletion after the Pixel Art replacements are accepted.
+Do not rename gameplay IDs or migrate save data during art-only PRs. Do not treat spark/pulse as independent playable towers; they are asset/design identities, not implemented gameplay IDs.
 
-## SVG cleanup — PR #314 merged
+## Production / candidate status
 
-- Removed all 33 tracked SVG files from the repository tree: old Soul Altar/Frost source layers and VFX, plus old specialization icon SVGs for the six tower families.
-- Removed the obsolete SVG validation/export tools and their CI jobs.
-- Updated the specialization icon resolver to return no texture until approved Pixel Art PNG icons exist. Russian specialization labels remain visible; no broken SVG resource paths remain.
-- Kept approved concept PNG, source/original PNG snapshots, current production PNG/VFX assets and third-party license/provenance records. These are not SVG.
-- This cleanup does not claim that new Pixel Art art is integrated. The approved transparent tower sprites are packaged in a working-session ZIP but still need to be added as binary Git assets before runtime is switched.
+| Family | Asset status | Runtime status | Remaining gate |
+|---|---|---|---|
+| Soul Altar (necro) | Owner-approved modular bases L1–L3 and base/Reaper/Legion eight-way weapon atlases; PR #376 | runtime enabled; legacy fallback retained | Owner Windows EXE QA, then separate legacy cleanup |
+| Frost Obelisk (frost) | PR #378 candidate pack: 3 bases, 3 eight-way weapon branches, 6 VFX strips, 9/72 contact sheets | runtime disabled; current experimental/Foozle assets unchanged | Owner visual approval at 1×, then separate runtime PR and Windows QA |
+| Bone Ballista (bone / ballista) | Candidate pack in progress: 3 bases, base/siege_bolt/bone_volley 8-way weapon branches, 6 VFX strips, 9/72 contact sheets | runtime disabled; original Foozle assets unchanged | Candidate PR CI, owner visual approval at 1×, then separate runtime PR and Windows QA |
+| Fire Turret (fire) | Existing Foozle source kit | legacy runtime | Pixel Art candidate, owner approval and separate runtime PR |
 
-## Soul Altar modular manifest contract (PR #312)
+## Soul Altar — production details
 
-- `assets/spire/towers/necro/manifest.json` defines the planned production layout and technical metadata; obsolete SVG-layer pointers were removed.
-- `scripts/td/td_modular_tower_assets.gd` loads/validates manifests, maps eight aim directions and resolves base, weapon and VFX paths.
-- `tests/td_modular_tower_assets_smoke.gd` runs in the Godot CI workflow.
-- Manifest status is `contract_only`; `runtime_enabled=false`. The PNG paths are future targets, not files already present. The current live renderer still uses the existing assembled/candidate art.
-- Keep this manifest generic enough to reuse for the other towers. Create editable pixel source, production PNGs and provenance before enabling it.
+- PR #376 merged; root manifest assets/spire/towers/necro/manifest.json is owner_approved_production / runtime_enabled=true.
+- Production PNGs: base/level_1..3.png and weapon/base, weapon/reaper, weapon/legion/weapon_8way.png.
+- Reaper maps to siege; Legion maps to swarm.
+- Existing validated production projectile/impact strips are reused; candidate VFX are not automatically promoted.
+- The original candidate archive and reproducible source tools/generate_necro_modular_candidates.py remain in Git.
+- Legacy assembled sprites/fallback have not been deleted. Manual Windows QA is still required before cleanup.
 
-## Current active gameplay identities
+## Frost Obelisk — candidate details
 
-Defined in `scripts/td/td_tower_stats.gd`:
-- `bone`
-- `fire`
-- `necro`
-- `frost`
+- PR #378 merged; exact-head CI #41583127652 and post-merge Windows Preview #41583281398 succeeded.
+- Manifest assets/spire/towers/frost/manifest.json: review_candidate / runtime_enabled=false.
+- 3 bases; weapon branches base/frost_lance/blizzard; six eight-frame VFX strips.
+- Mapping: siege → frost_lance; swarm → blizzard.
+- Source: tools/generate_frost_modular_candidates.py; renderer: tools/render_frost_modular_preview.py.
+- Existing experimental/Foozle resources remain untouched. No runtime promotion without explicit owner approval.
 
-Asset aliases in `scripts/td/td_tower_visuals.gd`:
-- `bone → ballista`
-- `fire → fire`
-- `necro → pulse` (with experimental/production necro overrides)
-- `frost → spark` (with experimental frost overrides)
+## Bone Ballista — candidate details
 
-Do not treat `spark` and `pulse` folders as independently implemented playable gameplay IDs. Their presence is an asset mapping, not a separate tower implementation.
+- Candidate branch: feat/ballista-modular-pixel-art-candidate.
+- Manifest: assets/spire/towers/ballista/manifest.json; review_candidate / runtime_enabled=false.
+- 3 bases; weapon branches base/siege_bolt/bone_volley; six eight-frame VFX strips.
+- Mapping: siege → siege_bolt (heavy single-target bolt); swarm → bone_volley (three-bolt volley).
+- Gameplay ID remains bone. Current gameplay labels and stats are unchanged.
+- Source: tools/generate_ballista_modular_candidates.py; renderer: tools/render_ballista_modular_preview.py; tests: tests/test_ballista_modular_candidates.py.
+- Existing Foozle source/base/weapon/projectile/impact files remain untouched pending approval and separate runtime integration.
 
-## Existing art families to replace
+## Existing legacy families eligible for later removal
 
-| Family / path | Current role | Migration / deletion rule |
+| Family / path | Current role | Removal gate |
 |---|---|---|
-| `assets/spire/towers/ballista/` | Bone/ballista base, weapon, projectile, impact and icons | Replace with Bone Ballista Pixel Art kit, switch runtime, then delete old family |
-| `assets/spire/towers/fire/` | Fire tower base, weapon, projectile, impact and icons | Replace with Fire Turret Pixel Art kit, switch runtime, then delete old family |
-| `assets/spire/towers/pulse/` | Current necro legacy asset alias | Delete after Soul Altar Pixel Art runtime no longer references it |
-| `assets/spire/towers/spark/` | Current frost legacy asset alias | Delete after Frost Obelisk Pixel Art runtime no longer references it |
-| `assets/spire/towers/necro/experimental/` | Experimental base/weapon PNGs; current fallback/preview mapping | Delete when the complete Pixel Art Soul Altar runtime is switched |
-| `assets/spire/towers/necro/production/` | Original concept-derived, non-pixel candidate PNGs | Replace in runtime with approved Pixel Art; keep originals/source as reference, not as old runtime fallback |
-| `assets/spire/towers/necro/source/layers/`, `source/vector/`, `source/vfx/` | Previous SVG source artwork | Removed in the SVG cleanup PR; no longer used by runtime or CI |
-| `assets/spire/towers/frost/experimental/` | Experimental base/weapon PNGs | Delete after Frost Pixel Art runtime is switched |
-| `assets/spire/towers/frost/source/` | Previous SVG source artwork | SVG files removed in the SVG cleanup PR; remaining non-SVG provenance can be retained if needed |
-| `assets/spire/towers/frost/vfx/` | Current Frost projectile/impact PNGs | Delete after Pixel Art projectile/impact sheets are switched |
-| `assets/spire/towers_atlas.png`, `assets/spire/variants/specialization_icons_atlas.png` | Legacy shared atlases | Scan direct and dynamic references; delete only after no runtime/UI references remain |
-| `assets/spire/towers/*/specializations/*/icon.svg` | Legacy specialization icons | Removed in the SVG cleanup PR; UI text remains until PNG icons are produced |
+| assets/spire/towers/ballista/ original Foozle paths | Current Bone Ballista base, weapon, projectile and impact | After approved replacement is active, all refs are audited, Windows QA passes |
+| assets/spire/towers/fire/ | Current Fire Turret base, weapon, projectile and impact | Same gate after Fire Pixel Art integration |
+| assets/spire/towers/pulse/ | Legacy asset alias for Soul Altar | After runtime no longer references it |
+| assets/spire/towers/spark/ | Legacy asset alias for Frost Obelisk | After Frost runtime no longer references it |
+| assets/spire/towers/necro/experimental/ and production/ | Experimental/legacy Soul Altar resources | After production renderer QA and reference audit |
+| assets/spire/towers/frost/experimental/ and vfx/ | Current Frost fallback art and effects | After Frost Pixel Art runtime QA |
+| assets/spire/towers_atlas.png and shared variant atlases | Legacy shared atlases | After direct and dynamic reference scan |
+| old specialization icon resources | Legacy UI icon art | After replacement PNG icons are committed and UI references are switched |
 
-Current Git tree has no tracked `.svg` files after this cleanup. Recount from the Git tree before future cleanup PRs; never rely on historical counts.
-
-## Already removed
-
-PR #306 removed 17 unreferenced root SVGs; this cleanup removes the remaining 33 SVG files:
-- `assets/backgrounds/`
-- `assets/buildings/`
-- `assets/characters/`
-- `assets/enemies/`
-- `assets/towers/`
-
-Evidence: `docs/art/LEGACY_ASSET_CLEANUP.md`. These are already gone and should not be re-created.
+The old SVG cleanup is complete (PR #314 and prior cleanup PRs). Recount tracked SVGs from the current Git tree before future cleanup; do not recreate removed files.
 
 ## Migration order
 
-1. **Soul Altar Pixel Art pilot:** L1/L2/L3, Reaper, Legion, separate static base and aiming upper weapon (or eight-direction upper poses), unique base/Reaper/Legion projectiles and impacts, idle/attack/build/sell, icons.
-2. **Bone Ballista.**
-3. **Fire Turret.**
-4. **Frost Obelisk.**
-5. **Spark/Pulse gameplay art aliases only as needed by actual runtime identities**; do not add playable IDs from art alone.
-6. **Enemies and bosses.**
-7. **Hero.**
-8. **Fortress/TD world, tiles, paths and environmental props.**
-9. **Dungeon rooms, walls, doors, chests, loot and night effects.**
-10. **UI, menu, HUD, inventory, achievements and icons.**
-11. Final reference scan and removal of remaining legacy sprite atlases and folders.
+1. Soul Altar production integration — complete; owner Windows QA pending.
+2. Frost Obelisk candidate — complete as candidate; owner visual approval and runtime integration pending.
+3. Bone Ballista candidate — in progress; owner visual approval and runtime integration pending.
+4. Fire Turret Pixel Art candidate and integration.
+5. Reconcile Spark/Pulse art identities only against actual runtime gameplay IDs.
+6. Enemies and bosses.
+7. Hero and player VFX.
+8. Fortress/TD world, tiles, paths and environmental props.
+9. Dungeon rooms, walls, doors, chests, loot and night effects.
+10. UI, menu, HUD, inventory, achievements and icons.
+11. Final direct/dynamic reference audit and deletion of superseded sprite atlases/folders.
 
 ## Required per-family checklist
 
-- [ ] Pixel Art is hand-authored at a logical resolution; no pixelation filter on realistic art.
-- [ ] Consistent camera angle, silhouette, palette ramps and outline weight.
-- [ ] Editable source committed (Aseprite/LibreSprite or documented equivalent).
+- [ ] Hand-authored Pixel Art at a logical resolution; no pixelation filter on realistic art.
+- [ ] Consistent camera angle, readable silhouette, palette ramps and outline weight.
+- [ ] Editable source committed (Aseprite/LibreSprite or documented procedural/layered equivalent).
 - [ ] Transparent PNG exports committed.
-- [ ] Manifest records file path, dimensions, frame grid/count, FPS, loop/one-shot, pivot, forward axis, palette, source and license.
-- [ ] Runtime paths switched; no old sprite fallback remains for the migrated family.
+- [ ] Manifest records paths, dimensions, frame count, FPS, loop/one-shot, pivot, forward axis and provenance.
+- [ ] All eight weapon directions are distinct and share a consistent pivot.
+- [ ] Runtime paths switched only after explicit owner approval.
 - [ ] Scene/resource/script/test/tool/workflow references scanned.
-- [ ] Godot 4.4.1 import and `tests/topdown_smoke.gd` pass.
+- [ ] Godot 4.4.1 import and smoke tests pass.
 - [ ] Windows preview/export succeeds.
 - [ ] Owner visually approves the family in the EXE at gameplay 1×.
-- [ ] Old sprite files removed in a separate, auditable cleanup commit; removed paths listed in the cleanup report.
-- [ ] Roadmap, `AI_HANDOFF.md`, `AI_HANDOFF_PIXEL_ART.md` and `PROJECT_STATE.md` updated.
+- [ ] Old sprite files removed in a separate auditable cleanup PR; list removed paths.
+- [ ] ROADMAP, PROJECT_STATE, AI_HANDOFF and AI_HANDOFF_PIXEL_ART updated.
 
 ## Documentation cadence
 
-Update this inventory and the four handoff/roadmap documents after every meaningful asset family migration, asset deletion, merged PR or owner QA result. Always record exact commit/PR, tests, removed paths, and any manual QA still outstanding.
+Update this inventory and all handoff/roadmap documents after every meaningful asset migration, deletion, merged PR or owner QA result. Record exact commit/PR, tests, removed paths and manual QA still outstanding.
