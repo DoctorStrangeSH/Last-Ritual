@@ -41,12 +41,17 @@ static func generate_map(seed_value: int) -> Dictionary:
             path.append(Vector2(route_x_positions[point_index], y))
         paths.append(path)
 
+    # Build sites use their own random stream so route changes never alter
+    # synergy relationships. Each row is a shallow staggered belt, not a
+    # perfectly straight line; neighbouring sites remain within 190px.
+    var slot_rng := RandomNumberGenerator.new()
+    slot_rng.seed = seed_value ^ 0x5F3759DF
     var slot_x: Array[float] = [250.0, 425.0, 600.0, 775.0]
     var slots: Array[Vector2] = []
     for row in range(2):
         for column in range(4):
-            var x := slot_x[column] + rng.randf_range(-6.0, 6.0)
-            var y := (150.0 + rng.randf_range(-4.0, 4.0)) if row == 0 else (438.0 + rng.randf_range(-2.0, 2.0))
+            var x := slot_x[column] + slot_rng.randf_range(-4.0, 4.0)
+            var y := slot_rng.randf_range(145.0, 175.0) if row == 0 else slot_rng.randf_range(430.0, 455.0)
             slots.append(Vector2(x, y))
 
     var result := {
@@ -116,7 +121,11 @@ static func validate_map(map_data: Dictionary) -> bool:
 
     for slot_index in range(slots.size()):
         var site: Vector2 = slots[slot_index]
-        if site.x < 100.0 or site.x > 900.0 or site.y < 110.0 or site.y > 480.0:
+        if site.x < 100.0 or site.x > 900.0:
+            return false
+        if slot_index < 4 and (site.y < 145.0 or site.y > 175.0):
+            return false
+        if slot_index >= 4 and (site.y < 430.0 or site.y > 455.0):
             return false
         for other_index in range(slot_index):
             var other_site: Vector2 = slots[other_index]
