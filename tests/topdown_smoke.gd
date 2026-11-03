@@ -1514,10 +1514,10 @@ func run_tests() -> void:
                     clearance = minf(clearance, slot["pos"].distance_to(a.lerp(b, t)))
                 check(clearance >= 42.0, "Tower slots stay outside road corridor")
         var first_lane: Array = td.paths[0]
-        var first_direction: Vector2 = (first_lane[1] - first_lane[0]).normalized()
-        check((first_lane[3] - first_lane[2]).normalized().distance_to(first_direction) > 0.2, "Upper lane has a meaningful bend")
         var second_lane: Array = td.paths[1]
-        check((second_lane[3] - second_lane[2]).normalized().distance_to((second_lane[1] - second_lane[0]).normalized()) > 0.2, "Lower lane has a meaningful bend")
+        check(absf(first_lane[4].y - first_lane[1].y) > 30.0, "Upper route visibly branches away from the shared approach")
+        check(absf(second_lane[4].y - second_lane[1].y) > 30.0, "Lower route visibly branches away from the shared approach")
+        check(first_lane[8] == second_lane[8], "Assault routes merge before reaching the altar")
         td.enemies.append({"lane": 0, "pos": first_lane[0], "waypoint": 1, "hp": 999, "speed": 85.0, "delay": 0.0})
         td.advance_enemies(8.0)
         check(td.enemies[0]["waypoint"] > 3, "Movement consumes several waypoints per long frame")
