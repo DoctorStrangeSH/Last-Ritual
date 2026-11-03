@@ -2,7 +2,7 @@
 
 Обновлено: 03.11.2026  
 Репозиторий: https://github.com/DoctorStrangeSH/Last-Ritual  
-Main snapshot: `c7a30bee07ec32e9726245c16285f998f7e07c2f` (PR #387–#396 merged). PR #395 exact-head #41654287377 and post-merge #41654581974 (Godot checks + Windows Preview) SUCCESS; docs post-merge #41655117053 pending.
+Main snapshot: `c7a30bee07ec32e9726245c16285f998f7e07c2f` (PR #387–#396 merged). PR #395 exact-head #41654287377 and post-merge #41654581974 (Godot checks + Windows Preview) SUCCESS; docs post-merge #41655117053 SUCCESS.
 
 ## Как продолжить
 
