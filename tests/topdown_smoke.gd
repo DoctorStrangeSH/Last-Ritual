@@ -1515,8 +1515,12 @@ func run_tests() -> void:
                 check(clearance >= 42.0, "Tower slots stay outside road corridor")
         var first_lane: Array = td.paths[0]
         var second_lane: Array = td.paths[1]
-        check(absf(first_lane[4].y - first_lane[1].y) > 30.0, "Upper route visibly branches away from the shared approach")
-        check(absf(second_lane[4].y - second_lane[1].y) > 30.0, "Lower route visibly branches away from the shared approach")
+        var route_min_y := INF
+        var route_max_y := -INF
+        for route in td.paths:
+            route_min_y = minf(route_min_y, float(route[4].y))
+            route_max_y = maxf(route_max_y, float(route[4].y))
+        check(route_max_y - route_min_y >= 50.0, "Assault routes fan out into distinct tactical branches")
         check(first_lane[8] == second_lane[8], "Assault routes merge before reaching the altar")
         td.enemies.append({"lane": 0, "pos": first_lane[0], "waypoint": 1, "hp": 999, "speed": 85.0, "delay": 0.0})
         td.advance_enemies(8.0)
