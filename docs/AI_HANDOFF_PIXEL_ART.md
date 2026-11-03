@@ -66,6 +66,19 @@
 - Existing Foozle base/weapon/projectile/impact files remain untouched. No runtime promotion until explicit owner approval and a separate integration PR.
 - No Aseprite project is claimed; the procedural Python generator is the editable reproducible source.
 
+## Огненная турель — текущий модульный арт-кандидат
+
+- Candidate branch: feat/fire-turret-modular-pixel-art-candidate; PR/CI pending.
+- Root manifest: assets/spire/towers/fire/manifest.json; status=review_candidate, runtime_enabled=false.
+- Gameplay ID remains fire. Existing labels: ИНФЕРНО: ПЛАМЯ (siege), ИСКРЫ: 3 ЦЕЛИ (swarm); branch mapping: siege → inferno, swarm → sparks.
+- 3 bases: candidate/base/level_1..3.png, 128×128 RGBA.
+- Weapon: candidate/weapon/base/weapon_8way.png, inferno/weapon_8way.png, sparks/weapon_8way.png; each atlas is 8×128×128, N, NE, E, SE, S, SW, W, NW.
+- VFX: 8-frame projectile (32×32) and impact (64×64) strips for base/inferno/sparks.
+- Source: tools/generate_fire_turret_modular_candidates.py; renderer: tools/render_fire_turret_modular_preview.py; tests: tests/test_fire_turret_modular_candidates.py.
+- Contact sheets: candidate/review/contact_sheet_9_1x.png, contact_sheet_72_1x.png, contact_sheet_72_2x.png.
+- Original Foozle base/weapon/projectiles/weapon_impact resources remain untouched; no runtime promotion until explicit approval and a separate integration PR.
+- No Aseprite project is claimed; the procedural Python generator is the reproducible editable source.
+
 ## Следующий порядок работ
 
 1. [x] Владелец одобрил Алтарь душ L1–L3 и base/Reaper/Legion 03.11.2026.
@@ -75,8 +88,8 @@
 5. [x] Подготовлен Frost Obelisk modular candidate pack: 3 основания, 3 восьминаправленных оружия, 6 VFX strips и review sheets.
 6. [x] Manifest contract расширен per-tower specialization branches; TD renderer позиционирует weapon по pivot отдельно от base ground anchor.
 7. [x] Добавлены Python/Godot тесты для Frost manifest, восьми направлений, VFX, воспроизводимости и pivot alignment.
-8. [ ] Получить визуальное одобрение Frost и Ballista candidate на 1×.
-9. [ ] Только после одобрения — отдельный Frost runtime PR и Windows QA; сохранить текущий experimental fallback до проверки.
+8. [ ] Получить визуальное одобрение Frost, Ballista и Fire candidate на 1×.
+9. [ ] Только после одобрения — отдельный runtime PR для каждой башни и Windows QA; сохранить текущие fallback assets до проверки.
 10. [ ] Протестировать Алтарь душ в свежем Windows EXE: L1/L2/L3, base/Reaper/Legion, восемь направлений, projectile/impact, save/load.
 11. [ ] Не удалять legacy sprites до отдельного PR с поиском ссылок и успешного ручного QA.
 
