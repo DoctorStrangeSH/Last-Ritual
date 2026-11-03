@@ -1,6 +1,11 @@
 name: Branch hygiene (manual, safe)
 
 on:
+  # Merging a reviewed change to docs/branch_archive.tsv removes exactly those
+  # branches, and only when each SHA is preserved in main or in refs/pull/N/head.
+  push:
+    branches: [main]
+    paths: [docs/branch_archive.tsv]
   workflow_dispatch:
     inputs:
       execute:
@@ -28,7 +33,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Remove reviewed archive-list branches (verified recovery refs only)
+        if: github.event_name == 'push'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ALLOW_BRANCH_DELETE: "true"
+        run: python3 tools/branch_cleanup.py --archive-list docs/branch_archive.tsv --execute --limit 50
       - name: Audit branches and optionally remove exact merged-PR heads
+        if: github.event_name == 'workflow_dispatch'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ALLOW_BRANCH_DELETE: ${{ inputs.execute }}

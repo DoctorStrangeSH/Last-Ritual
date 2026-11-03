@@ -2,7 +2,9 @@
 """Audit and optionally prune remote branches whose exact heads belong to merged PRs.
 
 Dry-run by default. Uses stdlib only and requires GITHUB_TOKEN with repo access.
-Never touches unmerged, unknown, protected, archived or checkpoint branches.
+Default mode never touches unmerged, unknown, protected, archived or checkpoint branches.
+`--archive-list docs/branch_archive.tsv` removes only reviewed branches whose exact
+SHA is preserved in main history or in a GitHub PR ref (refs/pull/N/head).
 """
 import argparse
 import json
@@ -85,8 +87,60 @@ def analyze(branches, pull_requests, repo):
     return candidates, review, preserved
 
 
+def load_archive_list(path):
+    """Read the reviewed TSV of branches approved for removal (comments start with #)."""
+    entries = []
+    with open(path, encoding="utf-8") as fp:
+        rows = [line.rstrip("\n") for line in fp if line.strip() and not line.startswith("#")]
+    header = rows[0].split("\t") if rows else []
+    if header[:3] != ["branch", "sha", "recovery"]:
+        raise ValueError("archive list must start with header: branch, sha, recovery, note")
+    for line in rows[1:]:
+        cells = line.split("\t")
+        if len(cells) < 3:
+            raise ValueError("malformed archive row: " + line)
+        entries.append({"branch": cells[0], "sha": cells[1], "recovery": cells[2], "note": cells[3] if len(cells) > 3 else ""})
+    return entries
+
+
+def verify_archive_entries(entries, branches, pr_head_sha, in_main):
+    """Approve only branches whose commits stay recoverable after deletion.
+
+    pr_head_sha(number) -> head SHA of that PR (or None); in_main(sha) -> bool.
+    A branch is approved when its current SHA equals the reviewed SHA and either
+    that SHA is an ancestor of main, or PR #N still points at exactly that SHA.
+    """
+    by_name = {item["name"]: item for item in branches}
+    approved, rejected = [], []
+    for entry in entries:
+        name, sha, recovery = entry["branch"], entry["sha"], entry["recovery"]
+        current = by_name.get(name)
+        if name == "main":
+            rejected.append({"branch": name, "reason": "main is never removed"})
+        elif current is None:
+            rejected.append({"branch": name, "reason": "already absent"})
+        elif current.get("protected"):
+            rejected.append({"branch": name, "reason": "protected"})
+        elif current.get("commit", {}).get("sha") != sha:
+            rejected.append({"branch": name, "reason": "branch moved since review"})
+        elif recovery == "main":
+            if in_main(sha):
+                approved.append({"branch": name, "sha": sha, "recovery": recovery})
+            else:
+                rejected.append({"branch": name, "reason": "not contained in main"})
+        elif recovery.startswith("pull/") and recovery.endswith("/head") and recovery[5:-5].isdigit():
+            if pr_head_sha(int(recovery[5:-5])) == sha:
+                approved.append({"branch": name, "sha": sha, "recovery": recovery})
+            else:
+                rejected.append({"branch": name, "reason": "PR head does not preserve this SHA"})
+        else:
+            rejected.append({"branch": name, "reason": "unknown recovery " + recovery})
+    return approved, rejected
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--archive-list", help="Reviewed TSV of branches to remove after verifying recovery refs")
     parser.add_argument("--repo", default=os.environ.get("GITHUB_REPOSITORY", "DoctorStrangeSH/Last-Ritual"))
     parser.add_argument("--execute", action="store_true", help="Actually delete verified branches")
     parser.add_argument("--limit", type=int, default=50, help="Max branches deleted per run (1-50)")
@@ -110,7 +164,17 @@ def main():
 
     branches = paged(prefix + "/branches", token)
     prs = paged(prefix + "/pulls?state=all", token)
-    candidates, review, preserved = analyze(branches, prs, repo)
+    if args.archive_list:
+        pr_heads = {pr["number"]: (pr.get("head") or {}).get("sha") for pr in prs}
+
+        def in_main(sha):
+            compare = api("GET", f"{prefix}/compare/{sha}...main", token)
+            return compare.get("status") in ("ahead", "identical")
+
+        candidates, review = verify_archive_entries(load_archive_list(args.archive_list), branches, pr_heads.get, in_main)
+        preserved = []
+    else:
+        candidates, review, preserved = analyze(branches, prs, repo)
     removed, skipped, errors = [], [], []
     if args.execute:
         for candidate in candidates[:args.limit]:
@@ -147,7 +211,7 @@ def main():
         f"## Safe branch cleanup ({report['mode']})\n\n"
         f"- Repository: `{repo}`\n"
         f"- Branches scanned: **{len(branches)}**\n"
-        f"- Exact-HEAD merged-PR candidates: **{len(candidates)}**\n"
+        f"- Verified removal candidates: **{len(candidates)}**\n"
         f"- Requires manual review: **{len(review)}**\n"
         f"- Preserved: **{len(preserved)}**\n"
         f"- Deleted this run: **{len(removed)}**\n"
