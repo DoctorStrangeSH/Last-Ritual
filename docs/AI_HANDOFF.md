@@ -2,8 +2,8 @@
 
 Обновлено: 03.11.2026  
 Репозиторий: https://github.com/DoctorStrangeSH/Last-Ritual  
-Main snapshot: 687473f3cd7a1426a8bf3f2190530d83b3dc7f2a  
-Последний main CI: #41589914814 — SUCCESS. PR #382 (Fire Turret candidate) и #383 (handoff) merged.
+Main snapshot: 35e719e4843326cc6ed512d94feaa964f719c96f  
+Последний main CI: #41605855395 — SUCCESS. PR #384 (enemy roster candidate) merged.
 
 ## Как продолжить
 
@@ -77,17 +77,17 @@ Main snapshot: 687473f3cd7a1426a8bf3f2190530d83b3dc7f2a
 
 ### Враги осады и Страж ритуала — review candidate, отдельная ветка
 
-- Branch: `feat/enemy-roster-pixel-art-candidate`; candidate generation is complete, PR checks are the next gate.
+- PR #384 merged (`35e719e4`); exact-head CI #41605666907 and post-merge Windows Preview #41605855395 SUCCESS.
 - Manifest: `assets/enemies/manifest.json`; `status=review_candidate`, `runtime_enabled=false`.
 - Six visual roles: runner, brute, captain, healer, ranged, boss. Each has 8 distinct facing directions × 4 distinct walk frames at 8 FPS; normal roles are 48×48, Ritual Guardian is 96×96.
 - TD mapping: runner/brute/captain/healer/boss. Night mapping: regular/flanker → runner, ranged → ranged, champion → brute, boss → boss.
 - Source: `tools/generate_enemy_roster_pixel_art.py`; review renderer: `tools/render_enemy_roster_preview.py`; tests: `tests/test_enemy_roster_pixel_art.py`.
-- Review sheets: `assets/enemies/candidate/review/enemy_roster_8way_1x.png`, `enemy_walk_cycles_1x.png`, and matching `_2x.png` sheets.
+- Review sheets: `assets/enemies/candidate/review/enemy_roster_8way_1x.png`, `enemy_walk_cycles_1x.png`, and matching `_2x.png` sheets; all four are published in `windows-preview`.
 - Fixed the previous CI findings: the boss now has four visibly distinct walk poses; its 96px atlas fits all eight cells without corner clipping. Generator, reproducibility and review-sheet tests passed in one-shot generation run #41605211560.
 - This is art-only. Existing vector runtime stays active; no enemy stats, hitboxes, movement, attacks, waves, or saves changed. Do not promote before owner visual approval and a separate runtime PR.
 
 ### Next art work
-- Owner reviews Fire, Frost and Ballista candidate sheets at 1×. CI/contact sheets are not artistic approval.
+- Owner reviews Fire, Frost, Ballista and enemy roster candidate sheets at 1×. CI/contact sheets are not artistic approval.
 - After explicit approval, prepare separate runtime PR per tower, preserving current fallback until Windows QA.
 - Continue world/enemy/UI Pixel Art migration after tower reviews.
 
