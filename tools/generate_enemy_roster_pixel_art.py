@@ -216,7 +216,8 @@ def draw_boss(p:Painter,pal,step:float,bob:float,frame:int):
 def draw_character(role:str,direction_index:int,frame:int)->Image.Image:
     is_boss=role=="boss"
     size=96 if is_boss else 48
-    # Fractional coordinate scaling is snapped to the pixel grid by Painter.point.\n    # It keeps the 96px boss atlas comfortably inside all eight facing cells.\n    scale=1.4 if is_boss else 1.0
+    # Fractional coordinate scaling is snapped to the pixel grid by Painter.point.
+    # It keeps the 96px boss atlas comfortably inside all eight facing cells.\n    scale=1.4 if is_boss else 1.0
     origin=(48.0,48.0) if is_boss else (24.0,26.0)
     direction=DIRECTIONS[direction_index]
     image=Image.new("RGBA",(size,size),TRANSPARENT)
