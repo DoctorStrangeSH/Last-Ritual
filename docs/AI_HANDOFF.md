@@ -6,13 +6,10 @@ Main snapshot: `c7a30bee07ec32e9726245c16285f998f7e07c2f` (PR #387–#396 merged
 
 ## Как продолжить
 
-Перед изменениями прочитать:
-1. AGENTS.md
-2. docs/PROJECT_STATE.md
-3. docs/ROADMAP.md
-4. docs/AI_HANDOFF_PIXEL_ART.md
-5. docs/art/SOUL_ALTAR_ART_NEXT_STEPS.md
-6. docs/DECISIONS.md и соответствующий модульный код/тесты.
+Текущее состояние и историю веток не дублировать здесь: безопасная процедура и аудит 407 веток описаны в `docs/BRANCH_HYGIENE.md`. Уборка не меняет игру и не требует читать все художественные отчёты.
+
+
+Перед изменениями прочитать `AGENTS.md`, `docs/PROJECT_STATE.md`, `docs/ROADMAP.md`. Остальные документы, включая `docs/AI_HANDOFF_PIXEL_ART.md` и `docs/DECISIONS.md`, читать только при работе с соответствующей системой.
 
 Работать только от актуального main. Создавать отдельную ветку и PR. Не коммитить прямо в main. Проверять exact-head CI и post-merge main workflow. Обновлять PROJECT_STATE, ROADMAP и handoff при каждом значимом изменении.
 
