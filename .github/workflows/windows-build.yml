@@ -87,6 +87,7 @@ jobs:
           python -m py_compile tools/render_necro_modular_preview.py tools/render_necro_vfx_contact_sheet.py tools/generate_necro_modular_candidates.py
           python3 -m unittest discover -s tests -p 'test_necro_modular_preview.py' -v
           python3 -m unittest discover -s tests -p 'test_soul_altar_compact_review.py' -v
+          python3 -m unittest discover -s tests -p 'test_soul_altar_full_sheet_integrity.py' -v
           python3 -m unittest discover -s tests -p 'test_necro_modular_vfx.py' -v
           python3 -m unittest discover -s tests -p 'test_necro_weapon_silhouettes.py' -v
           python3 -m unittest discover -s tests -p 'test_necro_base_readability.py' -v
