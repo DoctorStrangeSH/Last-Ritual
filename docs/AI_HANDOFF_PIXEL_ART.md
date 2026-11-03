@@ -81,14 +81,14 @@
 
 ## Враги осады и Страж ритуала — review candidate
 
-- Branch: `feat/enemy-roster-pixel-art-candidate`; candidate pack generated, PR CI is the next gate.
+- PR #384 merged (`35e719e4`); exact-head CI #41605666907 and post-merge Windows Preview #41605855395 SUCCESS.
 - Root manifest: `assets/enemies/manifest.json`; `status=review_candidate`, `runtime_enabled=false`.
 - Six roles: `runner`, `brute`, `captain`, `healer`, `ranged`, `boss`.
 - Every role has 8 distinct facing directions × 4 distinct walk frames at 8 FPS. Normal roles use 48×48 cells; Ritual Guardian uses 96×96.
 - Atlas layout: 4 columns (walk frames) × 8 rows (N, NE, E, SE, S, SW, W, NW).
 - TD mapping: runner/brute/captain/healer/boss. Night mapping: regular/flanker → runner, ranged → ranged, champion → brute, boss → boss. The current runtime remains the existing vector enemy renderer.
 - Reproducible source: `tools/generate_enemy_roster_pixel_art.py`; preview: `tools/render_enemy_roster_preview.py`; tests: `tests/test_enemy_roster_pixel_art.py`.
-- Review sheets: `candidate/review/enemy_roster_8way_1x.png`, `enemy_walk_cycles_1x.png`, and matching `_2x.png` sheets.
+- Review sheets: `candidate/review/enemy_roster_8way_1x.png`, `enemy_walk_cycles_1x.png`, and matching `_2x.png` sheets; all four are published in `windows-preview`.
 - Boss duplicate-frame bug fixed by adding a four-pose mantle/core animation. Boss size/pivot fit was corrected so no atlas-cell corner is touched. CI test asserts all 4 frames differ for all 8 directions and all cells remain transparent at corners.
 - Generation workflow #41605211560 passed all five Python tests and committed the reproducible candidate. The temporary write-enabled workflow is removed before PR.
 - No runtime promotion, no stats/hitbox/movement/attack/wave/save changes. Owner visual approval at 1× and a separate runtime PR are required.
@@ -102,7 +102,7 @@
 5. [x] Подготовлен Frost Obelisk modular candidate pack: 3 основания, 3 восьминаправленных оружия, 6 VFX strips и review sheets.
 6. [x] Manifest contract расширен per-tower specialization branches; TD renderer позиционирует weapon по pivot отдельно от base ground anchor.
 7. [x] Добавлены Python/Godot тесты для Frost manifest, восьми направлений, VFX, воспроизводимости и pivot alignment.
-8. [ ] Получить визуальное одобрение Frost, Ballista и Fire candidate на 1×.
+8. [ ] Получить визуальное одобрение Frost, Ballista, Fire и enemy roster candidate на 1×.
 9. [ ] Только после одобрения — отдельный runtime PR для каждой башни и Windows QA; сохранить текущие fallback assets до проверки.
 10. [ ] Протестировать Алтарь душ в свежем Windows EXE: L1/L2/L3, base/Reaper/Legion, восемь направлений, projectile/impact, save/load.
 11. [ ] Не удалять legacy sprites до отдельного PR с поиском ссылок и успешного ручного QA.

@@ -1,6 +1,6 @@
 # Last Ritual — единая актуальная дорожная карта
 
-**Снимок на 03.11.2026. Main: `687473f3cd7a1426a8bf3f2190530d83b3dc7f2a`.** PR #376–#383 merged; Fire Turret exact-head CI #41589195484 и post-merge Windows Preview #41589363962 SUCCESS.
+**Снимок на 03.11.2026. Main: `35e719e4843326cc6ed512d94feaa964f719c96f`.** PR #376–#384 merged; Enemy Roster exact-head CI #41605666907 и post-merge Windows Preview #41605855395 SUCCESS.
 
 Старые этапы платформера закрыты исторически. Активная разработка — top-down roguelite + Tower Defense.
 
@@ -59,8 +59,9 @@
 - [x] Fire Turret exact-head CI #41589195484 и post-merge Windows Preview #41589363962 SUCCESS; review sheets опубликованы.
 - [ ] Получить художественную приёмку Fire на 1×. Не заменять текущие Foozle assets до отдельного runtime PR и Windows QA.
 - [ ] Отдельно подтвердить игровые ID, механики и баланс Искрового разрядника и Импульсного излучателя; сейчас это design identities, а не два самостоятельных игровых типа.
-- [x] Подготовлен enemy roster review candidate: 6 ролей × 8 направлений × 4 кадра ходьбы; native 1×/2× review sheets. Generator run #41605211560 SUCCESS.
-- [ ] Enemy roster PR CI/merge и post-merge Windows Preview; owner visual approval at 1× before any runtime integration.
+- [x] PR #384 merged: enemy roster review candidate — 6 ролей × 8 направлений × 4 кадра ходьбы; native 1×/2× review sheets.
+- [x] Enemy Roster exact-head CI #41605666907 и post-merge Windows Preview #41605855395 SUCCESS; четыре review sheets опубликованы.
+- [ ] Владелец: художественная приёмка Fire, Frost, Ballista и enemy roster на 1×; только после одобрения отдельные runtime PR.
 - [ ] Перенести единый Pixel Art стиль на героя, землю, стены, TD-маршруты, комнаты, UI, предметы и эффекты.
 - [ ] Провести полный ручной пятидневный playtest: Normal, Hard и Nightmare; победа, поражение, сохранения, повторный забег.
 - [ ] Поэтапно заменить и удалить старые спрайты только после сканирования всех прямых и динамических ссылок, успешного CI и Windows QA.
