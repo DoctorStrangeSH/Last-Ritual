@@ -27,6 +27,14 @@ const TD_MULTIHIT = preload("res://scripts/td/td_multihit.gd")
 const TD_NECRO_SPIRITS = preload("res://scripts/td/td_necro_spirits.gd")
 const TD_NECRO_ATTACK_PROFILE = preload("res://scripts/td/td_necro_attack_profile.gd")
 const TD_FROST_EFFECT = preload("res://scripts/td/td_frost_effect.gd")
+const TD_WAVE_OMENS = preload("res://scripts/td/td_wave_omens.gd")
+const OMEN_BUTTONS := [Rect2(199, 296, 245, 96), Rect2(454, 296, 245, 96), Rect2(709, 296, 245, 96)]
+## Pre-wave threat choice («Знамения угрозы»). Per-wave only; never saved.
+var omen_choice_open := false
+var pending_omen := ""
+var active_omen: Dictionary = {}
+var omen_bounty_total := 0
+var omens_accepted := 0
 var sfx: Node
 var slot_positions: Array = []
 const COSTS = TD_TOWER_STATS.COSTS
@@ -143,7 +151,7 @@ func hero_attack(target: Vector2) -> bool:
     if best["hp"] <= 0:
         enemies.erase(best)
         enemies_defeated += 1
-        coins += 5
+        coins += kill_gold(best)
         sfx.play_effect("kill")
     queue_redraw()
     return true
@@ -377,14 +385,33 @@ func start_wave() -> bool:
     var wave_lanes: Array[int] = wave_lane_assignments(count, wave_number)
     var encounter_extra_hp: int = next_wave_extra_hp
     next_wave_extra_hp = 0
+    active_omen = {}
+    if pending_omen != "":
+        active_omen = TD_WAVE_OMENS.resolve(pending_omen, fortress_map_seed, siege_day, wave_number, paths.size())
+        pending_omen = ""
+        if not active_omen.is_empty():
+            omens_accepted += 1
+    var omen_pace: float = float(active_omen.get("pace", 1.0))
     for i in range(count):
         var role: String = siege_enemy_role(wave_number, i)
-        var day_hp: int = maxi(0, siege_day - 2) * 3
-        var hp := ((7 + wave_number) if role == "brute" else (2 + wave_number if role == "runner" else 3 + wave_number)) + difficulty * 2 + day_hp + encounter_extra_hp
-        var speed := (135.0 if role == "runner" else (55.0 if role == "brute" else 85.0)) * (1.0 + 0.15 * difficulty)
         var lane_id: int = wave_lanes[i]
-        enemies.append({"lane": lane_id, "pos": paths[lane_id][0], "waypoint": 1, "hp": hp, "max_hp": hp, "speed": speed, "role": role, "delay": siege_spawn_delay(wave_number, i, role)})
+        enemies.append(ordinary_siege_enemy(role, lane_id, siege_spawn_delay(wave_number, i, role) * omen_pace, encounter_extra_hp))
         enemies_spawned += 1
+    if not active_omen.is_empty():
+        var omen_lane: int = clampi(int(active_omen["lane"]), 0, paths.size() - 1)
+        var extra_index: int = count
+        for role in ["grunt", "runner", "brute", "healer"]:
+            for k in range(int((active_omen["extra"] as Dictionary).get(role, 0))):
+                var extra_delay: float = siege_spawn_delay(wave_number, extra_index, role) * omen_pace + 0.4
+                if role == "healer":
+                    var healer_hp: int = 8 + wave_number * 2 + difficulty * 2 + maxi(0, siege_day - 3) * 2
+                    enemies.append({"lane": omen_lane, "pos": paths[omen_lane][0], "waypoint": 1, "hp": healer_hp, "max_hp": healer_hp, "speed": 62.0, "role": "healer", "delay": extra_delay, "heal_timer": 1.0, "omen": true})
+                else:
+                    var extra: Dictionary = ordinary_siege_enemy(role, omen_lane, extra_delay, encounter_extra_hp)
+                    extra["omen"] = true
+                    enemies.append(extra)
+                extra_index += 1
+                enemies_spawned += 1
     var budget: Dictionary = wave_enemy_budget(wave_number)
     for support_index in range(int(budget["support"])):
         var lane: int = (support_index + 1) % paths.size()
@@ -402,6 +429,72 @@ func start_wave() -> bool:
         enemies_spawned += 1
     queue_redraw()
     return true
+
+## One ordinary wave enemy. Base formulas are unchanged from the original
+## spawn loop; an accepted omen may add HP (all/brutes) and runner speed.
+func ordinary_siege_enemy(role: String, lane_id: int, delay: float, encounter_extra_hp: int) -> Dictionary:
+    var day_hp: int = maxi(0, siege_day - 2) * 3
+    var hp := ((7 + wave_number) if role == "brute" else (2 + wave_number if role == "runner" else 3 + wave_number)) + difficulty * 2 + day_hp + encounter_extra_hp
+    var speed := (135.0 if role == "runner" else (55.0 if role == "brute" else 85.0)) * (1.0 + 0.15 * difficulty)
+    if not active_omen.is_empty():
+        hp += int(active_omen.get("hp", 0)) + (int(active_omen.get("brute_hp", 0)) if role == "brute" else 0)
+        if role == "runner":
+            speed *= float(active_omen.get("speed", 1.0))
+    return {"lane": lane_id, "pos": paths[lane_id][0], "waypoint": 1, "hp": hp, "max_hp": hp, "speed": speed, "role": role, "delay": delay}
+
+## Gold for one kill. Enemies summoned by an accepted omen carry no kill gold:
+## the omen bounty is their whole reward, so accepting is a real risk.
+func kill_gold(enemy: Dictionary) -> int:
+    return 0 if bool(enemy.get("omen", false)) else 5
+
+## The two scouted threats for the upcoming wave (resolved effects), or [].
+func wave_omen_offers() -> Array[Dictionary]:
+    var result: Array[Dictionary] = []
+    if defense_state != "playing" or not enemies.is_empty() or wave_number >= SIEGE_WAVES or paths.is_empty():
+        return result
+    for omen_id in TD_WAVE_OMENS.offers(fortress_map_seed, siege_day, wave_number + 1):
+        result.append(TD_WAVE_OMENS.resolve(omen_id, fortress_map_seed, siege_day, wave_number + 1, paths.size()))
+    return result
+
+func can_offer_wave_omens() -> bool:
+    return not wave_omen_offers().is_empty() and not can_choose_interwave_event() and not specialization_open and not help_visible
+
+## UI entry point for the wave button: open the threat choice when omens apply.
+func request_wave_start() -> bool:
+    if can_offer_wave_omens():
+        omen_choice_open = true
+        moving_tower = false
+        queue_redraw()
+        return true
+    return start_wave()
+
+## Accept one offered omen ("" declines) and start the wave immediately.
+func choose_wave_omen(omen_id: String) -> bool:
+    if omen_id != "":
+        var offered := false
+        for offer in wave_omen_offers():
+            offered = offered or str(offer["id"]) == omen_id
+        if not offered:
+            return false
+    omen_choice_open = false
+    pending_omen = omen_id
+    if not start_wave():
+        pending_omen = ""
+        return false
+    return true
+
+## Pay the bounty once the omen wave is fully cleared with the altar standing.
+func settle_wave_omen() -> int:
+    if active_omen.is_empty() or not enemies.is_empty() or altar_hp <= 0:
+        return 0
+    var reward: int = int(active_omen["reward"])
+    coins += reward
+    omen_bounty_total += reward
+    boss_feedback_text = "ЗНАМЕНИЕ ВЫДЕРЖАНО: +%d ЗОЛОТА" % reward
+    boss_feedback_time = 1.6
+    active_omen = {}
+    queue_redraw()
+    return reward
 
 func tick_support_enemies(delta: float) -> void:
     for support in enemies:
@@ -612,7 +705,7 @@ func attack_with_towers(delta: float) -> void:
             if hit_target["hp"] <= 0:
                 enemies.erase(hit_target)
                 enemies_defeated += 1
-                coins += 5
+                coins += kill_gold(hit_target)
                 if kind == "necro":
                     coins += necro_kill_bonus
                     necro_kill_streak += 1
@@ -654,7 +747,7 @@ func tick_necro_spirits(delta: float) -> void:
             if target["hp"] <= 0:
                 enemies.erase(target)
                 enemies_defeated += 1
-                coins += 5
+                coins += kill_gold(target)
     queue_redraw()
 
 func apply_burn(enemy: Dictionary) -> void:
@@ -665,7 +758,7 @@ func tick_burning(delta: float) -> void:
         if TD_BURN_EFFECT.advance(enemy, delta):
             enemies.erase(enemy)
             enemies_defeated += 1
-            coins += 5
+            coins += kill_gold(enemy)
             if ember_heart_claimed:
                 ember_bursts.append({"pos": Vector2(enemy["pos"]), "time": EMBER_BURST_DURATION})
                 if ember_bursts.size() > MAX_EMBER_BURSTS:
@@ -674,7 +767,7 @@ func tick_burning(delta: float) -> void:
                 for victim in splash_victims:
                     enemies.erase(victim)
                     enemies_defeated += 1
-                    coins += 5
+                    coins += kill_gold(victim)
 
 func restart_defense() -> void:
     moving_tower = false
@@ -698,6 +791,11 @@ func restart_defense() -> void:
     hero_attack_cooldown = 0.0
     boss_feedback_time = 0.0
     boss_feedback_text = ""
+    omen_choice_open = false
+    pending_omen = ""
+    active_omen = {}
+    omen_bounty_total = 0
+    omens_accepted = 0
     necro_kill_streak = 0
     summoned_spirits.clear()
     selected_type = ""
@@ -744,6 +842,7 @@ func _process(delta: float) -> void:
     tick_burning(delta)
     attack_with_towers(delta)
     tick_necro_spirits(delta)
+    settle_wave_omen()
     update_shot_trails(delta)
     update_ember_bursts(delta)
     queue_redraw()
@@ -1043,6 +1142,67 @@ func draw_tower_tooltip(point: Vector2) -> void:
         cost_label += " • НЕ ХВАТАЕТ"
     draw_fitted_label(origin + Vector2(0, 169), cost_label, 14, 321, Color("#e8cd83") if bool(tip["available"]) else Color("#ed9a89"))
 
+func handle_omen_choice_input(event: InputEvent) -> void:
+    var offers: Array[Dictionary] = wave_omen_offers()
+    var ids: Array[String] = [""]
+    for offer in offers:
+        ids.append(str(offer["id"]))
+    if event is InputEventKey and event.pressed and not event.echo:
+        if event.keycode == KEY_ESCAPE:
+            omen_choice_open = false
+            queue_redraw()
+        elif event.keycode >= KEY_1 and event.keycode <= KEY_3 and event.keycode - KEY_1 < ids.size():
+            choose_wave_omen(ids[event.keycode - KEY_1])
+    elif event is InputEventMouseButton and event.pressed:
+        if event.button_index == MOUSE_BUTTON_RIGHT:
+            omen_choice_open = false
+            queue_redraw()
+        elif event.button_index == MOUSE_BUTTON_LEFT:
+            for i in range(mini(OMEN_BUTTONS.size(), ids.size())):
+                if OMEN_BUTTONS[i].has_point(event.position):
+                    choose_wave_omen(ids[i])
+                    return
+
+func draw_omen_choice() -> void:
+    var offers: Array[Dictionary] = wave_omen_offers()
+    if offers.is_empty():
+        return
+    var names: Array[String] = TD_WAVE_OMENS.lane_names(paths)
+    var pointer: Vector2 = get_global_mouse_position()
+    draw_rect(Rect2(0, 65, 1152, 469), Color(0.015, 0.025, 0.04, 0.55))
+    # Highlight the threatened route of the hovered card first, under the panel.
+    for i in range(1, OMEN_BUTTONS.size()):
+        if i - 1 < offers.size() and OMEN_BUTTONS[i].has_point(pointer) and int(offers[i - 1]["lane"]) < paths.size():
+            var route: Array = paths[int(offers[i - 1]["lane"])]
+            for point_index in range(route.size() - 1):
+                draw_line(route[point_index], route[point_index + 1], Color("#d48bff", 0.9), 7.0)
+    draw_rect(Rect2(184, 214, 785, 192), Color("#1d2a38", 0.97))
+    draw_rect(Rect2(184, 214, 785, 192), Color("#c9a2ff"), false, 2.0)
+    draw_string(ThemeDB.fallback_font, Vector2(206, 246), "ЗНАМЕНИЯ: ВОЛНА %d — ПРИНЯТЬ УГРОЗУ ЗА НАГРАДУ?" % (wave_number + 1), HORIZONTAL_ALIGNMENT_LEFT, -1, 19, Color("#f2e3ff"))
+    draw_string(ThemeDB.fallback_font, Vector2(206, 274), "Клик или 1 / 2 / 3  •  ПКМ / Esc — назад  •  наведи, чтобы увидеть путь", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color("#b9aed0"))
+    for i in range(OMEN_BUTTONS.size()):
+        var card: Rect2 = OMEN_BUTTONS[i]
+        var hovered: bool = card.has_point(pointer)
+        var width: float = card.size.x - 18
+        if i == 0:
+            draw_rect(card, Color("#3a4b55") if hovered else Color("#2e3c45"))
+            draw_rect(card, Color("#9fb3bd"), false, 1.0)
+            draw_fitted_label(card.position + Vector2(9, 22), "1  ОБЫЧНАЯ ВОЛНА", 14, width, Color("#e8f0f2"))
+            draw_fitted_label(card.position + Vector2(9, 44), "Состав как в разведке", 12, width, Color("#c3ced3"))
+            draw_fitted_label(card.position + Vector2(9, 86), "Без награды", 12, width, Color("#9aa8ae"))
+            continue
+        if i - 1 >= offers.size():
+            continue
+        var offer: Dictionary = offers[i - 1]
+        draw_rect(card, Color("#5a3d6e") if hovered else Color("#47325a"))
+        draw_rect(card, Color("#d9b8ff"), false, 2.0 if hovered else 1.0)
+        var lane_name: String = names[int(offer["lane"])] if int(offer["lane"]) < names.size() else ""
+        draw_fitted_label(card.position + Vector2(9, 22), "%d  %s" % [i + 1, str(offer["title"])], 14, width, Color("#ffe2a8"))
+        draw_fitted_label(card.position + Vector2(9, 42), TD_WAVE_OMENS.describe(offer), 12, width, Color.WHITE)
+        draw_fitted_label(card.position + Vector2(9, 59), "Удар: %s путь" % lane_name, 12, width, Color("#e3c9ff"))
+        draw_fitted_label(card.position + Vector2(9, 74), "Совет: %s" % str(offer["hint"]), 11, width, Color("#b9aed0"))
+        draw_fitted_label(card.position + Vector2(9, 90), "НАГРАДА +%d ЗОЛОТА" % int(offer["reward"]), 13, width, Color("#f5d37a"))
+
 func _unhandled_input(event: InputEvent) -> void:
     if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F3:
         performance_overlay_visible = not performance_overlay_visible
@@ -1067,6 +1227,9 @@ func _unhandled_input(event: InputEvent) -> void:
             if HELP_CLOSE_BUTTON.has_point(event.position):
                 toggle_controls_help()
             return
+    if omen_choice_open:
+        handle_omen_choice_input(event)
+        return
     if can_choose_interwave_event():
         if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
             for i in range(EVENT_BUTTONS.size()):
@@ -1121,7 +1284,7 @@ func _unhandled_input(event: InputEvent) -> void:
                 repair_altar()
                 return
             if WAVE_BUTTON.has_point(point):
-                start_wave()
+                request_wave_start()
                 return
             if not selected_tower_info().is_empty() and UPGRADE_BUTTON.has_point(point):
                 upgrade_selected()
@@ -1869,16 +2032,21 @@ func _draw() -> void:
     # Keep it above the bottom controls without obstructing the battle field.
     if enemies.is_empty() and wave_number < SIEGE_WAVES and defense_state == "playing" and not help_visible:
         var scout: Dictionary = next_wave_scouting()
-        var scout_text := "РАЗВЕДКА %d: ЩИТ %d  БЕГУНЫ %d  ЛЕКАРИ %d  КОМАНДИРЫ %d  БОСС %d" % [
+        var scout_text := "РАЗВЕДКА %d: ЩИТ %d · БЕГ %d · ЛЕК %d · КОМ %d · БОСС %d" % [
             int(scout["wave"]), int(scout["brute"]), int(scout["runner"]), int(scout["healer"]), int(scout["captain"]), int(scout["boss"])]
-        draw_rect(Rect2(65, 485, 610, 52), Color("#1c3139", 0.96))
-        draw_fitted_label(Vector2(75, 505), scout_text, 13, 590, Color("#f7d9a0"))
-        draw_fitted_label(Vector2(75, 526), scouting_counter_tip(scout), 12, 590, Color("#b7e5d8"))
+        # Kept left of the repair button (x=485) so the two never overlap.
+        draw_rect(Rect2(65, 474, 410, 56), Color("#1c3139", 0.96))
+        draw_fitted_label(Vector2(75, 495), scout_text, 13, 390, Color("#f7d9a0"))
+        var omens_ahead: bool = not wave_omen_offers().is_empty()
+        var scout_note: String = "ЗНАМЕНИЯ: перед волной можно принять угрозу за золото" if omens_ahead else scouting_counter_tip(scout)
+        draw_fitted_label(Vector2(75, 518), scout_note, 12, 390, Color("#d9b8ff") if omens_ahead else Color("#b7e5d8"))
 
     # Draw the HUD after roads and world sprites, so the map never hides labels.
     draw_rect(Rect2(50, 5, 920, 53), Color("#14242c", 0.94))
     draw_string(ThemeDB.fallback_font, Vector2(66, 42), "АЛТАРЬ %d / 100    ВОЛНА %d / %d    ЗОЛОТО %d" % [altar_hp, wave_number, SIEGE_WAVES, coins], HORIZONTAL_ALIGNMENT_LEFT, 620, 18, Color.WHITE)
     draw_string(ThemeDB.fallback_font, Vector2(705, 42), siege_progress_label(), HORIZONTAL_ALIGNMENT_LEFT, 265, 14, Color("#e8d6a8"))
+    if not active_omen.is_empty():
+        draw_string(ThemeDB.fallback_font, Vector2(705, 56), "ЗНАМЕНИЕ: %s  +%d" % [str(active_omen["title"]), int(active_omen["reward"])], HORIZONTAL_ALIGNMENT_LEFT, 265, 11, Color("#d9b8ff"))
     if selected_slot >= 0 and selected_slot < slots.size() and slots[selected_slot]["tower"] != "":
         draw_rect(TARGET_BUTTON, Color("#385a63"))
         draw_rect(TARGET_BUTTON, Color("#e5c985"), false, 2.0)
@@ -1921,6 +2089,8 @@ func _draw() -> void:
             draw_rect(card, Color("#c9b581"), false, 1.0)
             draw_fitted_label(card.position + Vector2(9, 25), str(council_titles[offer]), 13, card.size.x - 18, Color("#ffe2a8"))
             draw_fitted_label(card.position + Vector2(9, 49), str(council_details[offer]), 12, card.size.x - 18, Color.WHITE)
+    if omen_choice_open:
+        draw_omen_choice()
     if specialization_open and selected_slot >= 0 and selected_slot < slots.size():
         draw_rect(Rect2(0, 65, 1152, 469), Color(0.015, 0.025, 0.04, 0.72))
         # A compact side-by-side comparison, instead of two unexplained path names.

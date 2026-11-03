@@ -30,6 +30,7 @@ const STRATEGIES := {
 var failures := 0
 var hero_budget := 0.0
 var hero_hits := 0
+var omen_mode := "none"
 
 func check(value: bool, description: String) -> void:
     if not value:
@@ -42,7 +43,7 @@ func _initialize() -> void:
     call_deferred("run")
 
 func parse_args() -> Dictionary:
-    var options := {"seeds": 2, "difficulties": [0], "night_coins": 0, "hero": 1.0, "out": "", "strategies": STRATEGIES.keys()}
+    var options := {"seeds": 2, "difficulties": [0], "night_coins": 0, "hero": 1.0, "omens": "none", "out": "", "strategies": STRATEGIES.keys()}
     for raw in OS.get_cmdline_user_args():
         var parts: PackedStringArray = str(raw).trim_prefix("--").split("=", true, 1)
         if parts.size() != 2:
@@ -51,6 +52,7 @@ func parse_args() -> Dictionary:
             "seeds": options["seeds"] = clampi(int(parts[1]), 1, 8)
             "night-coins": options["night_coins"] = maxi(0, int(parts[1]))
             "hero": options["hero"] = clampf(float(parts[1]), 0.0, 1.0)
+            "omens": options["omens"] = "greedy" if parts[1] == "greedy" else "none"
             "out": options["out"] = parts[1]
             "difficulties":
                 var list: Array = []
@@ -171,6 +173,18 @@ func hero_step(game, presence: float) -> void:
     if game.hero_attack(target["pos"]):
         hero_hits += 1
 
+## "greedy" accepts the highest-bounty omen whenever one is offered.
+func start_next_wave(game) -> bool:
+    if omen_mode == "greedy":
+        var offers: Array[Dictionary] = game.wave_omen_offers()
+        if not offers.is_empty() and not game.can_choose_interwave_event():
+            var best: Dictionary = offers[0]
+            for offer in offers:
+                if int(offer["reward"]) > int(best["reward"]):
+                    best = offer
+            return game.choose_wave_omen(str(best["id"]))
+    return game.start_wave()
+
 func fight_wave(game, hero: float) -> float:
     var elapsed := 0.0
     while not game.enemies.is_empty() and game.defense_state == "playing" and elapsed < MAX_WAVE_SECONDS:
@@ -182,6 +196,7 @@ func fight_wave(game, hero: float) -> float:
         game.tick_necro_spirits(STEP)
         if hero > 0.0:
             hero_step(game, hero)
+        game.settle_wave_omen()
         game.shot_trails.clear()
         elapsed += STEP
     return elapsed
@@ -214,7 +229,7 @@ func simulate_run(strategy: Dictionary, difficulty: int, map_seed: int, night_co
         while game.defense_state == "playing" and game.wave_number < WAVES:
             prepare(game, strategy)
             var escaped_before: int = game.enemies_escaped
-            if not game.start_wave():
+            if not start_next_wave(game):
                 break
             for spawned in game.enemies:
                 total_hp += int(spawned["max_hp"])
@@ -235,6 +250,7 @@ func simulate_run(strategy: Dictionary, difficulty: int, map_seed: int, night_co
 
 func run() -> void:
     var options := parse_args()
+    omen_mode = str(options["omens"])
     var rows: Array = []
     var signature := ""
     for difficulty in options["difficulties"]:
@@ -285,7 +301,7 @@ func build_report(rows: Array, options: Dictionary) -> String:
     var lines: PackedStringArray = []
     lines.append("# TD balance simulation")
     lines.append("")
-    lines.append("Seeds (road layouts) per row: %d. Night income per day: %d coins. Hero model: %s. Scripted greedy builds." % [options["seeds"], options["night_coins"], "present %d%% of the time (chases the front enemy, interrupts the boss)" % roundi(float(options["hero"]) * 100.0) if float(options["hero"]) > 0.0 else "off"])
+    lines.append("Seeds (road layouts) per row: %d. Night income per day: %d coins. Omens: %s. Hero model: %s. Scripted greedy builds." % [options["seeds"], options["night_coins"], options["omens"], "present %d%% of the time (chases the front enemy, interrupts the boss)" % roundi(float(options["hero"]) * 100.0) if float(options["hero"]) > 0.0 else "off"])
     lines.append("")
     lines.append("Cells show: share of runs that cleared the day / mean altar HP after the day (of runs that reached it).")
     lines.append("")
