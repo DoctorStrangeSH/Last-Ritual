@@ -181,7 +181,7 @@ def draw_ranged(p:Painter,pal,step:float,bob:float):
 
 
 def draw_boss(p:Painter,pal,step:float,bob:float,frame:int):
-    # A wider, four-position mantle sweep remains visible behind the silhouette at 1x.
+    # A wider four-position mantle sweep remains visible behind the silhouette at 1x.
     cape_sway=(-5.0,-1.0,5.0,1.0)[frame]
     p.polygon([(-13,-7),(-20,-17+cape_sway),(-18,-1+cape_sway),(-12,6)],pal["outline"])
     p.polygon([(-13,-6),(-18,-15+cape_sway),(-16,-2+cape_sway),(-12,4)],pal["cloth_light"])
@@ -302,25 +302,17 @@ def generate_assets(output_root:Path)->list[Path]:
         atlas_for_role(role).save(path,optimize=False)
         written.append(path)
     manifest=output_root/"manifest.json"
-    manifest.write_text(json.dumps(manifest_data(),ensure_ascii=False,indent=2)+"
-",encoding="utf-8")
+    manifest.write_text(json.dumps(manifest_data(),ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
     written.append(manifest)
     source=candidate/"SOURCE.md"
     source.write_text(
-        "# Враги осады — модульный Pixel Art кандидат
-
-"
-        "Статус: **review candidate**, не production. Владелец ещё не принимал набор для runtime.
-
-"
+        "# Враги осады — модульный Pixel Art кандидат\n\n"
+        "Статус: **review candidate**, не production. Владелец ещё не принимал набор для runtime.\n\n"
         "Роли: runner, brute, captain, healer, ranged и boss. Для каждого подготовлены 8 направлений × 4 кадра ходьбы. "
-        "Обычные враги используют кадр 48×48; Страж ритуала — 96×96. Атласы: 4 колонки (кадры) × 8 строк (N, NE, E, SE, S, SW, W, NW).
-
-"
+        "Обычные враги используют кадр 48×48; Страж ритуала — 96×96. Атласы: 4 колонки (кадры) × 8 строк (N, NE, E, SE, S, SW, W, NW).\n\n"
         "Воспроизводимый источник: tools/generate_enemy_roster_pixel_art.py. "
         "Оригинальный векторный рендер игры не меняется; manifest runtime_enabled=false. "
-        "Aseprite-файл не создан и не заявляется.
-",
+        "Aseprite-файл не создан и не заявляется.\n",
         encoding="utf-8")
     written.append(source)
     return written
