@@ -87,7 +87,7 @@ CI не заменяет ручной запуск EXE и визуальную �
 - PR #374 merged: `0d63e80662ca8762a1b3475bb3d5d4e166c7b302`.
 - Exact-head CI #41578037939 SUCCESS: новый `tests/test_soul_altar_full_sheet_integrity.py` проверяет пиксели всех 72 вариантов (L1–L3 × base/Reaper/Legion × восемь направлений) против исходных кандидатных PNG.
 - PR #376 merged (`5a219a3c`); exact-head CI #41579876954 и post-merge Windows workflow #41580061364 SUCCESS; EXE опубликован в windows-preview.
-- Следующий шаг: просмотреть `soul_altar_9_compositions_1x.png` и `soul_altar_modular_contact_sheet_1x.png` из релиза `windows-preview`, записать замечания/одобрение; только после одобрения отдельный PR production integration.
+- Следующий шаг: вручную проверить свежий LastRitual.exe из `windows-preview`; художественное одобрение уже получено, теперь нужен gameplay QA.
 
 ## Production-интеграция Алтаря душ — 03.11.2026
 
@@ -95,4 +95,4 @@ CI не заменяет ручной запуск EXE и визуальную �
 - Временный workflow копирования удалён после успешного выполнения; production assets и candidate archive сохранены отдельно.
 - Root manifest включает runtime только при полном наборе слоёв и проверенных существующих VFX.
 - Обновлены Godot smoke tests и Python promotion gate: теперь они ожидают production-ready manifest и подтверждают, что candidate archive остаётся выключенным.
-- До merge ветки `main` не считать интеграцию опубликованной. Следующий ИИ: проверить PR/CI, исправить тесты при необходимости, дождаться post-merge Windows build, затем вручную проверить EXE.
+- PR #376 merged, post-merge Windows build #41580061364 SUCCESS. Следующий ИИ: помочь владельцу выполнить ручной QA EXE; legacy fallback не удалять до успешного прохождения.
