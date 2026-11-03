@@ -1,5 +1,5 @@
 extends SceneTree
-## Candidate pixel art QA. Candidate may be technically valid but is never approved/runtime-enabled.
+## Archived source QA. Candidate manifest stays disabled; production manifest controls the approved live kit.
 var failures := 0
 
 func check(ok: bool, description: String) -> void:
