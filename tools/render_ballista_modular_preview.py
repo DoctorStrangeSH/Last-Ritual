@@ -7,7 +7,7 @@ from PIL import Image, ImageDraw
 
 ROOT=Path(__file__).resolve().parents[1]
 ART=ROOT/"assets/spire/towers/ballista/candidate"
-BRANCHES=(("base","BASE / ОБЫЧНАЯ"),("siege_bolt","SIEGE BOLT / ОСАДНАЯ"),("bone_volley","BONE VOLLEY / РОЙ"))
+BRANCHES=(("base","BASE"),("siege_bolt","SIEGE BOLT"),("bone_volley","BONE VOLLEY"))
 DIRECTIONS=("N","NE","E","SE","S","SW","W","NW")
 FRAME=(128,128)
 PIVOT=(64,90)
