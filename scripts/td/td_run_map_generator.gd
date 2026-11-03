@@ -7,7 +7,17 @@ const MIN_SLOT_PATH_CLEARANCE := 54.0
 const MIN_SLOT_SPACING := 70.0
 const MAX_SYNERGY_NEIGHBOR_DISTANCE := 190.0
 const ROAD_HALF_WIDTH := 18.5
-const BUILD_SITE_RADIUS := 33.0
+const BUILD_SITE_RADIUS := 30.0
+const MIN_GATE_CLEARANCE := 90.0
+const UI_FORBIDDEN_RECTS := [
+    Rect2(987.0, 10.0, 150.0, 46.0),
+    Rect2(716.0, 76.0, 299.0, 46.0),
+    Rect2(485.0, 474.0, 225.0, 54.0),
+    Rect2(892.0, 474.0, 110.0, 54.0),
+    Rect2(1010.0, 474.0, 110.0, 54.0),
+    Rect2(730.0, 474.0, 155.0, 54.0),
+    Rect2(65.0, 545.0, 170.0, 60.0)
+]
 
 static func generate_map(seed_value: int) -> Dictionary:
     var rng := RandomNumberGenerator.new()
@@ -41,12 +51,16 @@ static func generate_map(seed_value: int) -> Dictionary:
             path.append(Vector2(route_x_positions[point_index], y))
         paths.append(path)
 
-    var slot_x: Array[float] = [250.0, 425.0, 600.0, 775.0]
+    # Keep the four sites in each tactical row synergetic, but shift and
+    # stretch each row independently so the build grid changes substantially.
     var slots: Array[Vector2] = []
     for row in range(2):
+        var row_start_x := rng.randf_range(190.0, 280.0)
+        var row_spacing := rng.randf_range(150.0, 170.0)
+        var row_base_y := (160.0 + rng.randf_range(-5.0, 5.0)) if row == 0 else (438.0 + rng.randf_range(-4.0, 4.0))
         for column in range(4):
-            var x := slot_x[column] + rng.randf_range(-6.0, 6.0)
-            var y := (150.0 + rng.randf_range(-4.0, 4.0)) if row == 0 else (438.0 + rng.randf_range(-2.0, 2.0))
+            var x := row_start_x + row_spacing * column
+            var y := row_base_y + rng.randf_range(-1.0, 1.0)
             slots.append(Vector2(x, y))
 
     var result := {
@@ -64,6 +78,14 @@ static func point_segment_distance(point: Vector2, start: Vector2, finish: Vecto
         return point.distance_to(start)
     var ratio := clampf((point - start).dot(segment) / segment.length_squared(), 0.0, 1.0)
     return point.distance_to(start + segment * ratio)
+
+
+static func point_rect_distance(point: Vector2, rect: Rect2) -> float:
+    var closest := Vector2(
+        clampf(point.x, rect.position.x, rect.end.x),
+        clampf(point.y, rect.position.y, rect.end.y)
+    )
+    return point.distance_to(closest)
 
 
 static func validate_map(map_data: Dictionary) -> bool:
@@ -118,6 +140,11 @@ static func validate_map(map_data: Dictionary) -> bool:
         var site: Vector2 = slots[slot_index]
         if site.x < 100.0 or site.x > 900.0 or site.y < 110.0 or site.y > 480.0:
             return false
+        if site.distance_to(Vector2(65.0, 310.0)) < MIN_GATE_CLEARANCE or site.distance_to(Vector2(1070.0, 310.0)) < MIN_GATE_CLEARANCE:
+            return false
+        for ui_rect in UI_FORBIDDEN_RECTS:
+            if point_rect_distance(site, ui_rect) < BUILD_SITE_RADIUS:
+                return false
         for other_index in range(slot_index):
             var other_site: Vector2 = slots[other_index]
             if site.distance_to(other_site) < MIN_SLOT_SPACING:
