@@ -145,14 +145,14 @@ def main():
         json.dump(report, fp, ensure_ascii=False, indent=2)
     summary = (
         f"## Safe branch cleanup ({report['mode']})\n\n"
-        f"- Repository: \`{repo}\`\n"
+        f"- Repository: `{repo}`\n"
         f"- Branches scanned: **{len(branches)}**\n"
         f"- Exact-HEAD merged-PR candidates: **{len(candidates)}**\n"
         f"- Requires manual review: **{len(review)}**\n"
         f"- Preserved: **{len(preserved)}**\n"
         f"- Deleted this run: **{len(removed)}**\n"
         f"- Skipped/failed: **{len(skipped)}/{len(errors)}**\n"
-        f"- Full JSON: \`{args.report}\`\n"
+        f"- Full JSON: `{args.report}`\n"
     )
     print(summary)
     summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
