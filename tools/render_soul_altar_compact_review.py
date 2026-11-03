@@ -24,7 +24,7 @@ CARD_H = COMPOSITE[1] + LABEL_HEIGHT + GAP
 def render(output: Path = DEFAULT_OUTPUT) -> None:
     board = Image.new("RGB", (MARGIN * 2 + 3 * CARD_W, HEADER + 3 * CARD_H + MARGIN), "#141020")
     draw = ImageDraw.Draw(board)
-    draw.text((MARGIN, 12), "SOUL ALTAR / CANDIDATES / 1X / N / NOT APPROVED", fill="#efdbb3")
+    draw.text((MARGIN, 12), "SOUL ALTAR / OWNER-APPROVED / 1X / N", fill="#efdbb3")
     draw.text((MARGIN, 32), "L1 - L2 - L3 x BASE - REAPER - LEGION", fill="#b99dcc")
     for row, (branch, _) in enumerate(BRANCHES):
         with Image.open(ART / f"weapon/{branch}/weapon_8way.png") as src:
