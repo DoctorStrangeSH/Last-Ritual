@@ -5,6 +5,7 @@ extends SceneTree
 ##       --script res://tools/capture_td_screenshot.gd -- --out=/tmp/td.png --seed=3 --mode=wave --art=1
 ##
 ## --mode=prep|omen|wave  --art=0|1 (force the pixel battlefield on)  --seed=N  --day=N
+## --trophies=id,id  (show night trophies in the HUD)
 ## Builds a small fortress so towers, pads and roads are all visible. Not used by CI.
 
 var frames := 0
@@ -28,6 +29,9 @@ func setup() -> void:
     game.siege_day = int(option("day", "2"))
     if option("art", "0") == "1":
         game.set_battlefield_art_enabled(true)
+    var trophy_list: String = option("trophies", "")
+    if not trophy_list.is_empty():
+        game.apply_run_trophies(Array(trophy_list.split(",", false)))
     game.coins = 400
     for plan in [["necro", 0], ["fire", 2], ["bone", 5], ["frost", 6], ["necro", 3]]:
         game.choose_tower(plan[0])

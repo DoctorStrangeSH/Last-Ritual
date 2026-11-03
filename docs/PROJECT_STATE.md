@@ -12,7 +12,8 @@
 - Рост сложности по дням: здоровье врагов осады × (1 + 0.20 × (день − 1)), день 1 без изменений (`SIEGE_DAY_HP_GROWTH`, тест `tests/td_day_scaling_smoke.gd`).
 - Генерация карты: `scripts/td/td_run_map_generator.gd` — 2–3 маршрута с общим входом/выходом и развилками; площадки по seed с проверкой зазоров; тесты на 256 seed.
 - Перенос крепости между днями: `export_fortress_state()` / `import_fortress_state()`; пятидневный тест `tests/td_fortress_persistence_smoke.gd`; snapshot с чужим seed отклоняется, legacy-snapshot загружается.
-- Ночь: `scripts/topdown_night_prototype.gd`, граф 10 комнат (`scripts/dungeon_floor_graph.gd`).
+- Ночь: `scripts/topdown_night_prototype.gd`, граф 10 комнат (`scripts/dungeon_floor_graph.gd`). Элитная комната всегда с бронированным чемпионом; после победы — выбор 1 из 3 трофеев (2 благословения + 1 проклятие, пока проклятия не разобраны).
+- Трофеи ночи: `scripts/run_trophies.gd` — 8 трофеев на весь забег, эффекты в дневной TD (`has_trophy`), иконки в верхней панели дня с подсказкой. Не сохраняются на диск (забег в памяти). Тест `tests/run_trophies_smoke.gd`, замеры в `docs/BALANCE.md`.
 - Мета-прогресс и достижения: `scripts/meta_progression.gd`. Три сложности.
 - `spark` и `pulse` — только в каталоге дизайна, не боевые типы.
 

@@ -3,6 +3,14 @@ extends Node2D
 const ARENA := Rect2(48.0, 68.0, 1056.0, 520.0)
 const SFX_SCRIPT = preload("res://scripts/procedural_sfx.gd")
 const FLOOR_SCRIPT = preload("res://scripts/dungeon_floor_graph.gd")
+const RUN_TROPHIES = preload("res://scripts/run_trophies.gd")
+## Kept alive for the node's lifetime: a texture loaded only inside _draw() is
+## freed before the frame renders and shows up as a blank white square.
+const TROPHY_ICONS: Texture2D = preload("res://assets/trophies/trophy_icons_8x24.png")
+## Elite rooms award a run-long trophy (see scripts/run_trophies.gd).
+var trophies_owned: Array[String] = []   # owned before this night (from run_loop)
+var trophies_gained: Array[String] = []  # won tonight; run_loop keeps them
+var trophy_offers: Array[String] = []    # non-empty while the trophy pick is open
 var sfx: Node
 const SPEED := 240.0
 const ATTACK_RANGE := 155.0
@@ -68,6 +76,8 @@ var run_state := "playing" # playing, won, lost
 var help_visible := false
 
 func _ready() -> void:
+    # Pixel-art icons (trophy cards) stay crisp when scaled.
+    texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
     sfx = SFX_SCRIPT.new()
     add_child(sfx)
     open_room(0)
@@ -97,6 +107,10 @@ func open_room(index: int, override_variant: int = -1) -> void:
     reward_notice = ""
     reward_notice_time = 0.0
     room_variant = override_variant if override_variant >= 0 else posmod(dungeon_seed + index, ROOM_KINDS.size())
+    trophy_offers.clear()
+    # Elite rooms always fight the armored champion layout (cover matches it).
+    if is_elite_room() and not cleared_rooms.has(room_index):
+        room_variant = 2
     var mirror := 1.0 if posmod(dungeon_seed + room_index, 2) == 0 else -1.0
     build_room_cover()
     if exploration_enabled:
@@ -138,6 +152,9 @@ func open_room(index: int, override_variant: int = -1) -> void:
         reward_notice_time = 3.0
         queue_redraw()
         return
+    if is_elite_room():
+        reward_notice = "ЭЛИТА: ПОБЕДИТЕ ЧЕМПИОНА — ТРОФЕЙ НА ВЕСЬ ЗАБЕГ"
+        reward_notice_time = 3.5
     match room_variant:
         0:
             # Crypt: predictable melee + a ranged shooter with room to learn dodge.
@@ -284,6 +301,8 @@ func attack(target: Vector2) -> bool:
         night_souls += 1
     if enemies.is_empty():
         reward_available = true
+        if is_elite_room():
+            trophy_offers = RUN_TROPHIES.offers(dungeon_seed * 31 + room_index * 7 + 5, trophies_owned + trophies_gained)
     attack_cooldown = 0.20 / attack_speed_multiplier
     queue_redraw()
     return true
@@ -291,8 +310,28 @@ func attack(target: Vector2) -> bool:
 func claim_reward() -> bool:
     return choose_relic("bone")
 
+func is_elite_room() -> bool:
+    return exploration_enabled and not floor_data.is_empty() and room_index < floor_data["rooms"].size() and str(floor_data["rooms"][room_index]["kind"]) == "ЭЛИТА"
+
+## Take one of the elite room's trophies. It lasts for the rest of the run.
+func choose_trophy(id: String) -> bool:
+    if run_state != "playing" or not reward_available or not trophy_offers.has(id):
+        return false
+    reward_available = false
+    trophy_offers.clear()
+    rewards_taken += 1
+    cleared_rooms[room_index] = true
+    trophies_gained.append(id)
+    reward_notice = "ТРОФЕЙ: %s" % RUN_TROPHIES.title(id)
+    reward_notice_time = 2.4
+    sfx.play_effect("relic")
+    queue_redraw()
+    return true
+
 func choose_relic(kind: String) -> bool:
     if run_state != "playing" or not reward_available or not kind in ["bone", "ember", "blood"]:
+        return false
+    if not trophy_offers.is_empty():
         return false
     reward_available = false
     rewards_taken += 1
@@ -486,6 +525,8 @@ func restart_run() -> void:
     route_boon = ""
     rewards_taken = 0
     relics.clear()
+    trophies_gained.clear()
+    trophy_offers.clear()
     attack_damage = 1
     attack_speed_multiplier = 1.0
     attack_cooldown = 0.0
@@ -667,10 +708,44 @@ func click_ui(point: Vector2) -> bool:
                 if ROUTE_RECTS[i].has_point(point):
                     return choose_route(i)
         return false
+    if not trophy_offers.is_empty():
+        for i in range(trophy_offers.size()):
+            if trophy_card_rect(i).has_point(point):
+                return choose_trophy(trophy_offers[i])
+        return false
     for i in range(RELIC_RECTS.size()):
         if RELIC_RECTS[i].has_point(point):
             return choose_relic(RELIC_IDS[i])
     return false
+
+func trophy_card_rect(index: int) -> Rect2:
+    return Rect2(196.0 + index * 260.0, 430.0, 244.0, 104.0)
+
+func draw_trophy_cards() -> void:
+    draw_label("ТРОФЕЙ ЭЛИТЫ — ДЕЙСТВУЕТ ДНЁМ ДО КОНЦА ЗАБЕГА", Vector2(318, 415), 20, Color("#f3d7ad"))
+    var icons: Texture2D = TROPHY_ICONS
+    for i in range(trophy_offers.size()):
+        var id: String = trophy_offers[i]
+        var card: Rect2 = trophy_card_rect(i)
+        var curse: bool = RUN_TROPHIES.is_curse(id)
+        draw_rect(card, Color("#3a1520") if curse else Color("#231d33"))
+        draw_rect(card, Color("#c23a4a") if curse else Color("#d7ba80"), false, 3.0 if card.has_point(get_local_mouse_position()) else 2.0)
+        if icons != null:
+            var frame: float = float(RUN_TROPHIES.icon_index(id) * RUN_TROPHIES.ICON_SIZE)
+            draw_texture_rect_region(icons, Rect2(card.position + Vector2(10, 12), Vector2(48, 48)), Rect2(frame, 0, RUN_TROPHIES.ICON_SIZE, RUN_TROPHIES.ICON_SIZE))
+        draw_string(ThemeDB.fallback_font, card.position + Vector2(66, 28), RUN_TROPHIES.title(id), HORIZONTAL_ALIGNMENT_LEFT, 172, 14, Color("#fff1c8"))
+        draw_string(ThemeDB.fallback_font, card.position + Vector2(66, 48), "ПРОКЛЯТИЕ" if curse else "БЛАГОСЛОВЕНИЕ", HORIZONTAL_ALIGNMENT_LEFT, 172, 11, Color("#ff8a8a") if curse else Color("#9fe0c8"))
+        draw_multiline_string(ThemeDB.fallback_font, card.position + Vector2(10, 76), RUN_TROPHIES.effect(id), HORIZONTAL_ALIGNMENT_LEFT, 226, 12, 2, Color("#e8e2f0"))
+
+func draw_relic_cards() -> void:
+    draw_label("ВЫБЕРИТЕ РЕЛИКВИЮ", Vector2(480, 425), 23)
+    var palette := [Color("#526d9b"), Color("#a16a36"), Color("#863c54")]
+    for i in range(RELIC_RECTS.size()):
+        draw_rect(RELIC_RECTS[i], palette[i])
+        if RELIC_RECTS[i].has_point(get_local_mouse_position()):
+            draw_rect(RELIC_RECTS[i], Color("#fff2c5"), false, 3.0)
+        draw_label(RELIC_TITLES[i], RELIC_RECTS[i].position + Vector2(10, 26), 15)
+        draw_label(RELIC_EFFECTS[i], RELIC_RECTS[i].position + Vector2(10, 50), 12)
 
 func draw_label(value: String, point: Vector2, font_size: int = 18, color: Color = Color.WHITE) -> void:
     draw_string(ThemeDB.fallback_font, point, value, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
@@ -890,14 +965,10 @@ func _draw() -> void:
         draw_circle(Vector2(576, 325), 30.0, Color("#534864"))
         draw_colored_polygon(PackedVector2Array([Vector2(576, 290), Vector2(596, 325), Vector2(576, 360), Vector2(556, 325)]), Color("#efcc91"))
         draw_circle(Vector2(576, 325), 8.0, Color("#fff2c7"))
-        draw_label("ВЫБЕРИТЕ РЕЛИКВИЮ", Vector2(480, 425), 23)
-        var palette := [Color("#526d9b"), Color("#a16a36"), Color("#863c54")]
-        for i in range(RELIC_RECTS.size()):
-            draw_rect(RELIC_RECTS[i], palette[i])
-            if RELIC_RECTS[i].has_point(get_local_mouse_position()):
-                draw_rect(RELIC_RECTS[i], Color("#fff2c5"), false, 3.0)
-            draw_label(RELIC_TITLES[i], RELIC_RECTS[i].position + Vector2(10, 26), 15)
-            draw_label(RELIC_EFFECTS[i], RELIC_RECTS[i].position + Vector2(10, 50), 12)
+        if not trophy_offers.is_empty():
+            draw_trophy_cards()
+        else:
+            draw_relic_cards()
     if shrine_open:
         draw_rect(Rect2(260, 206, 635, 218), Color("#26313e"))
         draw_rect(Rect2(260, 206, 635, 218), Color("#b9a47c"), false, 2.0)

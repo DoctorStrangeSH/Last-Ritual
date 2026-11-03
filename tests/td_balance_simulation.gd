@@ -32,6 +32,8 @@ var hero_budget := 0.0
 var hero_hits := 0
 ## Override for SIEGE_DAY_HP_GROWTH (negative = keep the game's value).
 var day_hp_growth_override := -1.0
+## Night trophies held from day 2 on (as if won in the first night's elite room).
+var sim_trophies: Array = []
 var omen_mode := "none"
 
 func check(value: bool, description: String) -> void:
@@ -45,7 +47,7 @@ func _initialize() -> void:
     call_deferred("run")
 
 func parse_args() -> Dictionary:
-    var options := {"seeds": 2, "difficulties": [0], "night_coins": 0, "hero": 1.0, "day_hp_growth": -1.0, "omens": "none", "out": "", "strategies": STRATEGIES.keys()}
+    var options := {"seeds": 2, "difficulties": [0], "night_coins": 0, "hero": 1.0, "day_hp_growth": -1.0, "trophies": [], "omens": "none", "out": "", "strategies": STRATEGIES.keys()}
     for raw in OS.get_cmdline_user_args():
         var parts: PackedStringArray = str(raw).trim_prefix("--").split("=", true, 1)
         if parts.size() != 2:
@@ -55,6 +57,7 @@ func parse_args() -> Dictionary:
             "night-coins": options["night_coins"] = maxi(0, int(parts[1]))
             "hero": options["hero"] = clampf(float(parts[1]), 0.0, 1.0)
             "day-hp-growth": options["day_hp_growth"] = clampf(float(parts[1]), 0.0, 2.0)
+            "trophies": options["trophies"] = Array(parts[1].split(",", false))
             "omens": options["omens"] = "greedy" if parts[1] == "greedy" else "none"
             "out": options["out"] = parts[1]
             "difficulties":
@@ -200,6 +203,7 @@ func fight_wave(game, hero: float) -> float:
         if hero > 0.0:
             hero_step(game, hero)
         game.settle_wave_omen()
+        game.settle_wave_trophies()
         game.shot_trails.clear()
         elapsed += STEP
     return elapsed
@@ -225,6 +229,7 @@ func simulate_run(strategy: Dictionary, difficulty: int, map_seed: int, night_co
     for day in range(1, DAYS + 1):
         var game = new_game(difficulty, day, map_seed, carried)
         game.coins += night_coins if day > 1 else 0
+        game.apply_run_trophies(sim_trophies if day > 1 else [])
         var leaks_per_wave: Array = []
         var seconds := 0.0
         var start_hp: int = game.altar_hp
@@ -256,6 +261,7 @@ func simulate_run(strategy: Dictionary, difficulty: int, map_seed: int, night_co
 func run() -> void:
     var options := parse_args()
     day_hp_growth_override = float(options["day_hp_growth"])
+    sim_trophies = options["trophies"]
     omen_mode = str(options["omens"])
     var rows: Array = []
     var signature := ""
@@ -307,7 +313,7 @@ func build_report(rows: Array, options: Dictionary) -> String:
     var lines: PackedStringArray = []
     lines.append("# TD balance simulation")
     lines.append("")
-    lines.append("Seeds (road layouts) per row: %d. Night income per day: %d coins. Omens: %s. Hero model: %s. Scripted greedy builds." % [options["seeds"], options["night_coins"], options["omens"], "present %d%% of the time (chases the front enemy, interrupts the boss)" % roundi(float(options["hero"]) * 100.0) if float(options["hero"]) > 0.0 else "off"])
+    lines.append("Seeds (road layouts) per row: %d. Night income per day: %d coins. Omens: %s. Trophies from day 2: %s. Hero model: %s. Scripted greedy builds." % [options["seeds"], options["night_coins"], options["omens"], ", ".join(PackedStringArray(options["trophies"])) if not options["trophies"].is_empty() else "none", "present %d%% of the time (chases the front enemy, interrupts the boss)" % roundi(float(options["hero"]) * 100.0) if float(options["hero"]) > 0.0 else "off"])
     lines.append("")
     lines.append("Cells show: share of runs that cleared the day / mean altar HP after the day (of runs that reached it).")
     lines.append("")

@@ -26,6 +26,8 @@ var run_necro_kill_bonus := 0
 var fortress_state: Dictionary = {}
 var fortress_map_seed := 0
 var pending_night_coins := 0
+## Night trophies won so far this run (elite rooms); applied every morning.
+var run_trophies: Array[String] = []
 var active_game: Node2D
 var last_phase := "day"
 const META_HERO_BUTTON := Rect2(210, 510, 300, 65)
@@ -110,10 +112,12 @@ func start_phase(kind: String) -> bool:
         active_game.fire_synergy_bonus = run_fire_bonus
         active_game.bone_synergy_bonus = run_bone_tower_bonus
         active_game.necro_kill_bonus = run_necro_kill_bonus
+        active_game.apply_run_trophies(run_trophies)
     else:
         active_game.enable_floor_exploration(1000 + phase_count * 101 + difficulty * 13)
         active_game.attack_damage += run_damage_bonus + meta.hero_level
         active_game.attack_speed_multiplier += run_speed_bonus
+        active_game.trophies_owned = run_trophies.duplicate()
     phase = kind
     queue_redraw()
     return true
@@ -146,6 +150,9 @@ func finish_phase(won: bool) -> void:
             fortress_state = active_game.export_fortress_state()
         elif won and phase == "night":
             pending_night_coins += int(active_game.night_souls) * 5
+            for trophy in active_game.trophies_gained:
+                if not run_trophies.has(trophy):
+                    run_trophies.append(trophy)
         active_game.queue_free()
         active_game = null
     if not won:
@@ -267,6 +274,7 @@ func reset_run() -> void:
     fortress_state.clear()
     fortress_map_seed = 0
     pending_night_coins = 0
+    run_trophies.clear()
     queue_redraw()
 
 func _draw() -> void:
