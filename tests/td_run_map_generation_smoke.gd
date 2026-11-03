@@ -25,11 +25,25 @@ func run_tests() -> void:
     check(generator.validate_map(first), "Generated map passes geometric validation")
     check(first["slots"].size() == 8, "Every run has eight build sites")
     check(first["paths"].size() in [2, 3], "Run map has two or three assault lanes")
+    for lane_index in range(1, first["paths"].size()):
+        var lane: Array = first["paths"][lane_index]
+        var reference_lane: Array = first["paths"][0]
+        for shared_index in [0, 1, 8, 9]:
+            check(lane[shared_index] == reference_lane[shared_index], "Assault routes share entrance and exit geometry")
+        for branch_index in range(2, 8):
+            var branch_point: Vector2 = lane[branch_index]
+            var reference_point: Vector2 = reference_lane[branch_index]
+            check(absf(branch_point.y - reference_point.y) >= 38.0, "Forked corridors remain separated")
 
     var unique_signatures: Dictionary = {}
     for seed_value in range(256):
         var generated: Dictionary = generator.generate_map(seed_value)
         check(generator.validate_map(generated), "Seed %d map passes geometry checks" % seed_value)
+        for row in range(2):
+            for column in range(3):
+                var left_site: Vector2 = generated["slots"][row * 4 + column]
+                var right_site: Vector2 = generated["slots"][row * 4 + column + 1]
+                check(left_site.distance_to(right_site) <= 190.0, "Seed %d preserves tower synergy adjacency" % seed_value)
         unique_signatures[str(generated)] = true
     check(unique_signatures.size() >= 250, "Different run seeds produce meaningfully different maps")
 
