@@ -81,14 +81,22 @@ class EnemyRosterPixelArtTests(unittest.TestCase):
     def test_review_sheets_render_with_expected_dimensions(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
-            overview = root / "enemy_roster_8way_2x.png"
-            cycles = root / "enemy_walk_cycles_2x.png"
-            renderer.render_overview(overview)
-            renderer.render_walk_cycles(cycles)
-            with Image.open(overview) as image:
-                self.assertEqual(image.size, (892, 884))
-            with Image.open(cycles) as image:
-                self.assertEqual(image.size, (460, 884))
+            overview_1x = root / "enemy_roster_8way_1x.png"
+            cycles_1x = root / "enemy_walk_cycles_1x.png"
+            overview_2x = root / "enemy_roster_8way_2x.png"
+            cycles_2x = root / "enemy_walk_cycles_2x.png"
+            renderer.render_overview(overview_1x, scale=1)
+            renderer.render_walk_cycles(cycles_1x, scale=1)
+            renderer.render_overview(overview_2x, scale=2)
+            renderer.render_walk_cycles(cycles_2x, scale=2)
+            for path in (overview_1x, overview_2x):
+                with Image.open(path) as image:
+                    self.assertEqual(image.size, (892, 884))
+            for path in (cycles_1x, cycles_2x):
+                with Image.open(path) as image:
+                    self.assertEqual(image.size, (460, 884))
+            with Image.open(overview_1x) as native, Image.open(overview_2x) as enlarged:
+                self.assertNotEqual(native.tobytes(), enlarged.tobytes())
 
 
 if __name__ == "__main__":
