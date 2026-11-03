@@ -48,7 +48,7 @@ jobs:
           for path in files:
               with Image.open(path) as im:
                   im = im.convert("RGBA")
-                  expected = (128,128) if "/base/" in str(path) else (1024,128)
+                  expected = (128,128) if path.relative_to(root).parts[0] == "base" else (1024,128)
                   assert im.size == expected, (path, im.size, expected)
                   assert im.getchannel("A").getbbox(), f"empty alpha: {path}"
                   for corner in ((0,0),(im.width-1,0),(0,im.height-1),(im.width-1,im.height-1)):
