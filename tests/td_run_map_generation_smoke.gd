@@ -39,6 +39,11 @@ func run_tests() -> void:
     for seed_value in range(256):
         var generated: Dictionary = generator.generate_map(seed_value)
         check(generator.validate_map(generated), "Seed %d map passes geometry checks" % seed_value)
+        for row in range(2):
+            for column in range(3):
+                var left_site: Vector2 = generated["slots"][row * 4 + column]
+                var right_site: Vector2 = generated["slots"][row * 4 + column + 1]
+                check(left_site.distance_to(right_site) <= 190.0, "Seed %d preserves tower synergy adjacency" % seed_value)
         unique_signatures[str(generated)] = true
     check(unique_signatures.size() >= 250, "Different run seeds produce meaningfully different maps")
 
