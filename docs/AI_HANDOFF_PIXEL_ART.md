@@ -1,6 +1,6 @@
 # Pixel Art Handoff — Last Ritual
 
-Снимок: 02.11.2026. Это текущая инструкция, не журнал всех исторических PR. Решения и история — в docs/DECISIONS.md и GitHub PR.
+Снимок: 03.11.2026. Это текущая инструкция, не журнал всех исторических PR. Решения и история — в docs/DECISIONS.md и GitHub PR.
 
 ## Подтверждённое направление владельца
 
@@ -27,36 +27,40 @@
 
 | Часть | Состояние |
 |---|---|
-| Основания L1–L3 | Candidate v4 (PR #363 merged): шпили L1–L3, золотые скобы и укрупнённые фиолетовые руны; художественная оценка 1× ещё нужна |
-| Base weapon | Candidate v4; гранёный фиолетовый кристалл и золочёная корона; 8 направлений, PR #357 merged, визуальная приёмка ожидается |
-| Reaper weapon | Candidate v5 (PR #367 merged): подчёркнутая режущая кромка и компактная подсветка наконечника, 8 направлений, приёмка 1× ожидается |
-| Legion weapon | Candidate v5: три черепа с уменьшенным визуальным шумом (PR #365 merged), художественная приёмка 1× не проведена |
+| Основания L1–L3 | Владелец одобрил; production PNG созданы, 128×128 RGBA |
+| Base weapon | Владелец одобрил; production atlas 8×128×128 создан |
+| Reaper weapon | Владелец одобрил; production atlas 8×128×128 создан; runtime branch `siege` |
+| Legion weapon | Владелец одобрил; production atlas 8×128×128 создан; runtime branch `swarm` |
 | Projectile/impact | 6 candidate атласов, по 8 кадров для base/Reaper/Legion |
 | Preview | 72 композиции, контактные листы 1× и 2×, отдельный Windows EXE |
-| Production | Модульный renderer выключен; текущая игра использует цельные спрайты и production fallback |
+| Production | Root manifest включает модульный renderer на интеграционной ветке; CI/Windows QA pending; legacy fallback сохранён |
 
 Последняя арт-итерация: PR #357 merged (base weapon v4), squash main `b4e3c128a4ba6fb86d294a2aff37c71b37a39d68`. Проблема повреждённого PNG решена регенерацией из исходника; временный workflow удалён. Exact-head CI #41476104817 SUCCESS. Предыдущая уборка PR #358 merged, main CI #41474757990 SUCCESS.
 
 ## Следующий порядок работ
 
-1. [x] Base weapon v4: заменён «брусок» на кристаллическую призму/руническую корону, 8 уникальных силуэтов и технические проверки пройдены (PR #357). Художественная оценка 1× ещё не подтверждена.
-2. [x] Основания L1–L3 candidate v3: добавлены более высокие силуэтные детали, PR #360 merged, exact-head CI #41477386582 SUCCESS. Ручная приёмка 1× всё ещё ожидается.
-3. [x] Контраст золота и фиолетовых рун в основаниях обновлён в candidate (PR #363 merged, exact-head CI #41481076084 SUCCESS); следующий шаг — ручная оценка 1× и упрощение специализаций. Материальная палитра остальных башен не утверждена. 3–5 тонов на материал, тёмная обводка, контролируемые фиолетовые руны и светящиеся акценты.
-4. Пересмотреть Reaper/Legion по читаемости на 1×; убрать шум и неясные детали.
-5. Показать полный контактный лист и Art Preview владельцу. Зафиксировать feedback отдельно.
-6. Только после художественной приёмки создать production PNG по шести обязательным путям, включить manifest/runtime, пройти Godot CI, Windows export и ручной игровой QA.
+1. [x] Владелец одобрил L1–L3 и base/Reaper/Legion 03.11.2026.
+2. [x] Скопировать шесть одобренных base/weapon PNG в production paths, сохранить source archive и подтвердить идентичность SHA.
+3. [x] Включить root manifest на интеграционной ветке; candidate manifest оставить disabled.
+4. [x] Переиспользовать шесть существующих production VFX strips; candidate VFX не включать.
+5. [x] Обновить Godot smoke tests и Python promotion gate для runtime-enabled production kit.
+6. [ ] Проверить exact-head CI PR и post-merge main Windows workflow.
+7. [ ] Протестировать Windows EXE: L1/L2/L3, base/Reaper/Legion, восемь направлений, projectile/impact, save/load.
+8. [ ] Не удалять legacy sprites до отдельного PR с поиском всех ссылок и подтверждённого QA.
 
-## Production gate
+## Production gate — текущий статус
 
-Сейчас отсутствуют:
-- assets/spire/towers/necro/base/level_1.png
-- assets/spire/towers/necro/base/level_2.png
-- assets/spire/towers/necro/base/level_3.png
-- assets/spire/towers/necro/weapon/base/weapon_8way.png
-- assets/spire/towers/necro/weapon/reaper/weapon_8way.png
-- assets/spire/towers/necro/weapon/legion/weapon_8way.png
+На интеграционной ветке все шесть обязательных файлов присутствуют:
+- `assets/spire/towers/necro/base/level_1.png`
+- `assets/spire/towers/necro/base/level_2.png`
+- `assets/spire/towers/necro/base/level_3.png`
+- `assets/spire/towers/necro/weapon/base/weapon_8way.png`
+- `assets/spire/towers/necro/weapon/reaper/weapon_8way.png`
+- `assets/spire/towers/necro/weapon/legion/weapon_8way.png`
 
-Эти пути проверяются scripts/td/td_modular_tower_assets.gd. Шесть VFX atlas уже существуют в candidate. runtime_ready остаётся false, пока не будет полного набора. Candidate art не заменяет production files.
+Root manifest: `status=owner_approved_production`, `runtime_enabled=true`. Candidate manifest: `status=approved_source_archive`, `runtime_enabled=false`. Candidate PNGs remain preserved. Production reuses the existing six validated VFX strips; candidate VFX are not promoted. Aseprite project does not exist; do not fabricate one. The reproducible source is `tools/generate_necro_modular_candidates.py`.
+
+До merge PR в main считать production integration веткой разработки, не опубликованным релизом. После merge дождаться Windows export и провести ручной QA.
 
 ## Контрольные листы и preview
 
