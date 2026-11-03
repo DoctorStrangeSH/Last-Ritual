@@ -2,14 +2,16 @@
 
 Графику и Pixel Art migration временно не развивать. Приоритет — TD Roguelike gameplay. PR #387 добавил первую рабочую seed-based генерацию кривых маршрутов и меняющихся площадок; дальше нужно довести топологию до развилок и завершить полную геометрическую/save validation.
 
-На main `a29bc17fad2c31c09ead247d24b6d1e8f14d1a0f` (PR #387) `scripts/td/td_run_map_generator.gd` детерминированно генерирует две/три изогнутые линии и восемь площадок. `scripts/topdown_td_prototype.gd` применяет их через `set_fortress_map_seed()`. `run_loop.gd` задаёт seed до импорта fortress state; ID площадок 0–7 и координаты повторяются на всех днях этого забега. Exact-head CI #41650546960 SUCCESS; post-merge #41650910386 checks SUCCESS, Windows Preview pending.
+На main `41584b119bc294c89fb6edfcdd85e7ce7f248568` после PR #387 `scripts/td/td_run_map_generator.gd` детерминированно генерирует две/три изогнутые линии и восемь площадок. `scripts/topdown_td_prototype.gd` применяет их через `set_fortress_map_seed()`. `run_loop.gd` задаёт seed до импорта fortress state; ID площадок 0–7 и координаты повторяются на всех днях забега. Post-merge workflow #41651477278 (Godot checks + Windows Preview) SUCCESS.
+
+В текущей ветке `feature/td-branching-route-topology` генератор обновлён до MAP_VERSION 2: общий вход, 2/3 ветви маршрута и общий участок слияния перед алтарём. Изменение сохраняет `enemy["lane"]`, стабильные индексы waypoint и текущий формат fortress snapshot. Тесты topology добавлены, CI ещё ожидается.
 
 Очередь: (1) настоящие развилки/слияния и более широкий набор площадок, (2) полная проверка геометрии относительно дорог, ворот, границ и UI, (3) сохранение специализаций и проверка старых snapshots, (4) тактические ветвления волн и разведка, (5) связка дневной обороны с ночными наградами и более продолжительным roguelike-прогрессом. Подробные критерии — в `docs/ROADMAP.md` и `docs/AI_HANDOFF.md`.
 
 # Last Ritual — текущий снимок проекта
 
 Дата: 03.11.2026  
-HEAD main: `a29bc17fad2c31c09ead247d24b6d1e8f14d1a0f` (PR #387 merged). Exact-head CI #41650546960 — SUCCESS; post-merge #41650910386 checks SUCCESS, Windows Preview pending.
+HEAD main: `41584b119bc294c89fb6edfcdd85e7ce7f248568` (PR #387 merged). Post-merge workflow #41651477278 — SUCCESS (Godot checks + Windows Preview).
 
 ## Запускаемая игра
 
