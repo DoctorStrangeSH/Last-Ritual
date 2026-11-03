@@ -94,6 +94,8 @@ jobs:
           python3 -m unittest discover -s tests -p 'test_necro_weapon_silhouettes.py' -v
           python tools/generate_battlefield_pixel_art.py --verify
           python3 -m unittest discover -s tests -p 'test_battlefield_pixel_art.py' -v
+          python tools/generate_trophy_icons.py --verify
+          python3 -m unittest discover -s tests -p 'test_trophy_icons.py' -v
           python3 -m unittest discover -s tests -p 'test_necro_base_readability.py' -v
           python3 -m unittest discover -s tests -p 'test_soul_altar_candidate_promotion_gate.py' -v
           python3 -m unittest discover -s tests -p 'test_necro_vfx_contact_sheet.py' -v
@@ -161,6 +163,8 @@ jobs:
         run: tools/run_godot_test.sh ./Godot_v4.4.1-stable_linux.x86_64 res://tests/td_wave_omens_smoke.gd
       - name: TD day scaling smoke
         run: tools/run_godot_test.sh ./Godot_v4.4.1-stable_linux.x86_64 res://tests/td_day_scaling_smoke.gd
+      - name: Night trophies smoke
+        run: tools/run_godot_test.sh ./Godot_v4.4.1-stable_linux.x86_64 res://tests/run_trophies_smoke.gd
       - name: TD balance simulator (smoke config, deterministic)
         run: tools/run_godot_test.sh ./Godot_v4.4.1-stable_linux.x86_64 res://tests/td_balance_simulation.gd
 

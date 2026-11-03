@@ -29,6 +29,12 @@ const TD_NECRO_ATTACK_PROFILE = preload("res://scripts/td/td_necro_attack_profil
 const TD_FROST_EFFECT = preload("res://scripts/td/td_frost_effect.gd")
 const TD_WAVE_OMENS = preload("res://scripts/td/td_wave_omens.gd")
 const TD_BATTLEFIELD_ART = preload("res://scripts/td/td_battlefield_art.gd")
+const RUN_TROPHIES = preload("res://scripts/run_trophies.gd")
+## Night trophies owned this run (set by run_loop each morning). Never saved.
+var run_trophies: Array[String] = []
+var phoenix_ash_spent := false
+var trophy_wave_paid := 0
+var trophy_satchel_total := 0
 ## Pixel-art battlefield (assets/battlefield). Off until the manifest enables it.
 var battlefield_manifest: Dictionary = {}
 var battlefield_art_enabled := false
@@ -202,6 +208,8 @@ func upcoming_wave_summary() -> String:
 func repair_altar() -> bool:
     # Repair is a preparation action; never allow mid-wave or after victory/defeat.
     if defense_state != "playing" or not enemies.is_empty() or wave_number >= SIEGE_WAVES:
+        return false
+    if has_trophy("blood_millstone"):
         return false
     if altar_hp <= 0 or altar_hp >= 100 or coins < REPAIR_COST:
         return false
@@ -498,6 +506,45 @@ func choose_wave_omen(omen_id: String) -> bool:
         return false
     return true
 
+func has_trophy(id: String) -> bool:
+    return run_trophies.has(id)
+
+## Called by run_loop once each morning, after the fortress is restored and
+## the day's coins are added: stores the run's trophies and applies the
+## morning effects (Warden Stone heal, Cursed Idol gold).
+func apply_run_trophies(trophies: Array) -> void:
+    run_trophies = RUN_TROPHIES.sanitize(trophies)
+    phoenix_ash_spent = false
+    trophy_wave_paid = wave_number
+    trophy_satchel_total = 0
+    if has_trophy("warden_stone") and altar_hp > 0:
+        altar_hp = mini(100, altar_hp + RUN_TROPHIES.WARDEN_HEAL)
+    if has_trophy("cursed_idol"):
+        coins += RUN_TROPHIES.IDOL_GOLD
+    queue_redraw()
+
+## Attack range including the Grave Lantern trophy; used by combat and UI.
+func tower_range(kind: String) -> float:
+    if not TOWER_RANGE.has(kind):
+        return 0.0
+    return float(TOWER_RANGE[kind]) * (RUN_TROPHIES.LANTERN_RANGE if has_trophy("grave_lantern") else 1.0)
+
+func tower_ranges() -> Dictionary:
+    var ranges := {}
+    for kind in TOWER_RANGE.keys():
+        ranges[kind] = tower_range(kind)
+    return ranges
+
+## Looter's Satchel pays once per cleared wave (altar still standing).
+func settle_wave_trophies() -> int:
+    if not has_trophy("looter_satchel") or wave_number <= trophy_wave_paid or not enemies.is_empty() or altar_hp <= 0:
+        return 0
+    trophy_wave_paid = wave_number
+    coins += RUN_TROPHIES.SATCHEL_GOLD
+    trophy_satchel_total += RUN_TROPHIES.SATCHEL_GOLD
+    queue_redraw()
+    return RUN_TROPHIES.SATCHEL_GOLD
+
 ## Pay the bounty once the omen wave is fully cleared with the altar standing.
 func settle_wave_omen() -> int:
     if active_omen.is_empty() or not enemies.is_empty() or altar_hp <= 0:
@@ -542,7 +589,8 @@ func siege_captain_speed_multiplier(enemy: Dictionary) -> float:
 
 func enemy_movement_multiplier(enemy: Dictionary) -> float:
     # One authoritative movement rule for frost and captain morale.
-    return siege_captain_speed_multiplier(enemy) * TD_FROST_EFFECT.multiplier(enemy)
+    var idol: float = RUN_TROPHIES.IDOL_SPEED if has_trophy("cursed_idol") else 1.0
+    return siege_captain_speed_multiplier(enemy) * TD_FROST_EFFECT.multiplier(enemy) * idol
 
 func advance_enemies(delta: float) -> void:
     for enemy in enemies.duplicate():
@@ -571,6 +619,11 @@ func advance_enemies(delta: float) -> void:
         if waypoint >= path.size():
             enemies.erase(enemy)
             enemies_escaped += 1
+            if has_trophy("phoenix_ash") and not phoenix_ash_spent:
+                phoenix_ash_spent = true
+                boss_feedback_text = "ПЕПЕЛ ФЕНИКСА ЗАЩИТИЛ АЛТАРЬ"
+                boss_feedback_time = 1.6
+                continue
             altar_hp = maxi(0, altar_hp - 10)
             if altar_hp == 0:
                 defense_state = "lost"
@@ -657,12 +710,15 @@ func tower_synergy_damage(slot_id: int, enemy: Dictionary) -> int:
             thermal_shock_bonus = 1
     var eternal_frost_bonus: int = 1 if eternal_frost_claimed and float(enemy.get("frost_time", 0.0)) > 0.0 else 0
     var blood_pact_bonus: int = 1 if blood_pact_claimed else 0
-    return int(bonus["flat"]) + (int(bonus["burning"]) if float(enemy.get("burn_time", 0.0)) > 0.0 else 0) + frost_pierce_bonus + thermal_shock_bonus + eternal_frost_bonus + blood_pact_bonus
+    var trophy_bonus: int = RUN_TROPHIES.MILLSTONE_BONUS if has_trophy("blood_millstone") else 0
+    if has_trophy("warlord_skull") and ["captain", "boss"].has(str(enemy.get("role", ""))):
+        trophy_bonus += RUN_TROPHIES.WARLORD_BONUS
+    return trophy_bonus + int(bonus["flat"]) + (int(bonus["burning"]) if float(enemy.get("burn_time", 0.0)) > 0.0 else 0) + frost_pierce_bonus + thermal_shock_bonus + eternal_frost_bonus + blood_pact_bonus
 
 func choose_tower_target(slot_id: int) -> Dictionary:
     if slot_id < 0 or slot_id >= slots.size():
         return {}
-    return TD_TARGETING.choose(slots[slot_id], enemies, TOWER_RANGE)
+    return TD_TARGETING.choose(slots[slot_id], enemies, tower_ranges())
 
 func cycle_target_priority() -> bool:
     if selected_slot < 0 or selected_slot >= slots.size() or slots[selected_slot]["tower"] == "":
@@ -689,7 +745,7 @@ func attack_with_towers(delta: float) -> void:
         var necro_profile: Dictionary = TD_NECRO_ATTACK_PROFILE.for_specialization(str(tower.get("specialization", ""))) if kind == "necro" else {}
         if kind == "necro":
             tower_aim_targets[slot_id] = Vector2(target["pos"])
-        var hit_targets: Array = TD_MULTIHIT.targets(tower, target, enemies, float(TOWER_RANGE[kind]))
+        var hit_targets: Array = TD_MULTIHIT.targets(tower, target, enemies, tower_range(kind))
         if kind == "fire":
             hit_targets = TD_FIRE_SPLASH.add_splash_targets(hit_targets, enemies, target)
         var damage: int = TD_TOWER_DAMAGE.direct_damage(kind, int(tower["level"]), str(tower.get("specialization", "")), fire_synergy_bonus, bone_synergy_bonus)
@@ -724,7 +780,7 @@ func attack_with_towers(delta: float) -> void:
                 if kind == "necro":
                     coins += necro_kill_bonus
                     necro_kill_streak += 1
-                    var spirit_threshold: int = int(necro_profile["kill_streak_threshold"])
+                    var spirit_threshold: int = maxi(1, int(necro_profile["kill_streak_threshold"]) - (1 if has_trophy("soul_lantern") else 0))
                     if necro_kill_streak >= spirit_threshold:
                         necro_kill_streak = 0
                         spawn_necro_spirit(tower["pos"], bool(necro_profile["empowered_spirit"]), has_adjacent_tower(slot_id, "frost"))
@@ -785,6 +841,9 @@ func tick_burning(delta: float) -> void:
                     coins += kill_gold(victim)
 
 func restart_defense() -> void:
+    phoenix_ash_spent = false
+    trophy_wave_paid = 0
+    trophy_satchel_total = 0
     moving_tower = false
     specialization_open = false
     specialization_pending_slot = -1
@@ -858,6 +917,7 @@ func _process(delta: float) -> void:
     attack_with_towers(delta)
     tick_necro_spirits(delta)
     settle_wave_omen()
+    settle_wave_trophies()
     update_shot_trails(delta)
     update_ember_bursts(delta)
     queue_redraw()
@@ -1077,11 +1137,11 @@ func tower_range_preview() -> Dictionary:
         if kind == "" and selected_type != "" and not moving_tower:
             kind = selected_type
         if TOWER_RANGE.has(kind):
-            return {"pos": slots[id]["pos"], "range": float(TOWER_RANGE[kind]), "kind": kind}
+            return {"pos": slots[id]["pos"], "range": tower_range(kind), "kind": kind}
     if selected_slot >= 0 and selected_slot < slots.size():
         var selected_kind: String = str(slots[selected_slot]["tower"])
         if TOWER_RANGE.has(selected_kind):
-            return {"pos": slots[selected_slot]["pos"], "range": float(TOWER_RANGE[selected_kind]), "kind": selected_kind}
+            return {"pos": slots[selected_slot]["pos"], "range": tower_range(selected_kind), "kind": selected_kind}
     return {}
 
 func tower_shop_rect(index: int) -> Rect2:
@@ -1810,7 +1870,7 @@ func tower_info_for_slot(slot_id: int) -> Dictionary:
     var synergy: Dictionary = tower_synergy_preview(slot_id)
     var explanation: Dictionary = TD_TOWER_TOOLTIPS.shop_info(kind)
     var attack_delay: float = 0.45 if str(tower.get("specialization", "")) == "swarm" else 0.8
-    return {"range": int(TOWER_RANGE[kind]), "attack_delay": attack_delay, "effect": str(explanation.get("effect", "")), "kind": kind, "level": int(tower["level"]), "damage": damage, "priority": str(tower.get("target_priority", "nearest")), "specialization": str(tower.get("specialization", "")), "links": tower_synergy_links(slot_id).size(), "synergy_flat": int(synergy["flat"]), "synergy_burning": int(synergy["burning"]), "upgrade_cost": upgrade_cost}
+    return {"range": int(tower_range(kind)), "attack_delay": attack_delay, "effect": str(explanation.get("effect", "")), "kind": kind, "level": int(tower["level"]), "damage": damage, "priority": str(tower.get("target_priority", "nearest")), "specialization": str(tower.get("specialization", "")), "links": tower_synergy_links(slot_id).size(), "synergy_flat": int(synergy["flat"]), "synergy_burning": int(synergy["burning"]), "upgrade_cost": upgrade_cost}
 
 
 func selected_tower_info() -> Dictionary:
@@ -1895,6 +1955,42 @@ func draw_performance_overlay() -> void:
     draw_string(ThemeDB.fallback_font, Vector2(910, 421), "КАДР: %.1f / ПИК %.1f мс" % [float(stats["frame_ms"]), float(stats["peak_frame_ms"])], HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#f7d5a2"))
     draw_string(ThemeDB.fallback_font, Vector2(910, 445), "ПИК ВРАГОВ: %d" % int(stats["peak_enemies"]), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color("#f7d5a2"))
 
+## Trophy icons in the top bar, right of the resources line.
+const TROPHY_BAR_ORIGIN := Vector2(500, 17)
+const TROPHY_BAR_STEP := 26.0
+
+func trophy_icon_rect(index: int) -> Rect2:
+    return Rect2(TROPHY_BAR_ORIGIN + Vector2(TROPHY_BAR_STEP * index, 0), Vector2(24, 24))
+
+func trophy_at(point: Vector2) -> String:
+    for i in range(run_trophies.size()):
+        if trophy_icon_rect(i).grow(1.0).has_point(point):
+            return run_trophies[i]
+    return ""
+
+func draw_trophy_bar() -> void:
+    var icons: Texture2D = cached_tower_texture(RUN_TROPHIES.ICON_PATH)
+    for i in range(run_trophies.size()):
+        var rect: Rect2 = trophy_icon_rect(i)
+        var id: String = run_trophies[i]
+        draw_rect(rect.grow(1.0), Color("#5a1f2a") if RUN_TROPHIES.is_curse(id) else Color("#2c2238"))
+        if icons != null:
+            var frame: float = float(RUN_TROPHIES.icon_index(id) * RUN_TROPHIES.ICON_SIZE)
+            draw_texture_rect_region(icons, rect, Rect2(frame, 0, RUN_TROPHIES.ICON_SIZE, RUN_TROPHIES.ICON_SIZE))
+        if id == "phoenix_ash" and phoenix_ash_spent:
+            draw_rect(rect, Color(0.05, 0.05, 0.08, 0.6))
+
+func draw_trophy_tooltip(point: Vector2) -> void:
+    var id: String = trophy_at(point)
+    if id.is_empty():
+        return
+    var panel := Rect2(clampf(point.x - 20.0, 8.0, 1152.0 - 368.0), 64.0, 360.0, 58.0)
+    draw_rect(panel, Color("#1a1626", 0.97))
+    draw_rect(panel, Color("#c23a4a") if RUN_TROPHIES.is_curse(id) else Color("#d7ba80"), false, 2.0)
+    var heading: String = RUN_TROPHIES.title(id) + ("  · ПРОКЛЯТИЕ" if RUN_TROPHIES.is_curse(id) else "  · ТРОФЕЙ НОЧИ")
+    draw_string(ThemeDB.fallback_font, panel.position + Vector2(10, 22), heading, HORIZONTAL_ALIGNMENT_LEFT, 340, 15, Color("#f3d7ad"))
+    draw_string(ThemeDB.fallback_font, panel.position + Vector2(10, 45), RUN_TROPHIES.effect(id), HORIZONTAL_ALIGNMENT_LEFT, 340, 13, Color("#e8e2f0"))
+
 func _draw() -> void:
     draw_fortress_ground()
     if defense_state != "playing":
@@ -1902,13 +1998,13 @@ func _draw() -> void:
         draw_string(ThemeDB.fallback_font, Vector2(485, 301), "ПОБЕДА" if defense_state == "won" else "АЛТАРЬ ПАЛ", HORIZONTAL_ALIGNMENT_LEFT, -1, 28, Color.WHITE)
         draw_rect(RESTART_BUTTON, Color("#8ca9bc"))
         draw_string(ThemeDB.fallback_font, Vector2(480, 386), "НАЧАТЬ ЗАНОВО", HORIZONTAL_ALIGNMENT_LEFT, -1, 20, Color.WHITE)
-    var repair_ready: bool = defense_state == "playing" and enemies.is_empty() and wave_number < SIEGE_WAVES and altar_hp > 0 and altar_hp < 100 and coins >= REPAIR_COST
+    var repair_ready: bool = not has_trophy("blood_millstone") and defense_state == "playing" and enemies.is_empty() and wave_number < SIEGE_WAVES and altar_hp > 0 and altar_hp < 100 and coins >= REPAIR_COST
     var can_move: bool = selected_slot >= 0 and selected_slot < slots.size() and slots[selected_slot]["tower"] != "" and defense_state == "playing" and enemies.is_empty() and wave_number < SIEGE_WAVES
     if can_move:
         draw_rect(MOVE_BUTTON, Color("#ac8b52") if moving_tower else Color("#486f80"))
         draw_string(ThemeDB.fallback_font, MOVE_BUTTON.position + Vector2(8, 32), "ВЫБЕРИ МЕСТО" if moving_tower else "ПЕРЕНЕСТИ", HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color("#fff1c9"))
     draw_rect(REPAIR_BUTTON, Color("#527b75") if repair_ready else Color("#454b54"))
-    draw_string(ThemeDB.fallback_font, REPAIR_BUTTON.position + Vector2(12, 33), "РЕМОНТ +20 / 25 ЗОЛ.", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#fff1ce") if repair_ready else Color("#abb2b5"))
+    draw_string(ThemeDB.fallback_font, REPAIR_BUTTON.position + Vector2(12, 33), "РЕМОНТ ЗАКРЫТ ЖЕРНОВОМ" if has_trophy("blood_millstone") else "РЕМОНТ +20 / 25 ЗОЛ.", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("#fff1ce") if repair_ready else Color("#abb2b5"))
     draw_rect(WAVE_BUTTON, Color("#487d6b") if enemies.is_empty() and wave_number < SIEGE_WAVES and altar_hp > 0 else Color("#454b54"))
     draw_string(ThemeDB.fallback_font, Vector2(78, 581), "НАЧАТЬ ВОЛНУ", HORIZONTAL_ALIGNMENT_LEFT, -1, 19, Color.WHITE)
     if enemies.is_empty() and defense_state == "playing":
@@ -2156,10 +2252,12 @@ func _draw() -> void:
         draw_string(ThemeDB.fallback_font, Vector2(326, 490), "Игра на паузе — H или «Продолжить»", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color("#d5c592"))
         draw_rect(HELP_CLOSE_BUTTON, Color("#527d70"))
         draw_string(ThemeDB.fallback_font, HELP_CLOSE_BUTTON.position + Vector2(11.0, 29.0), "ПРОДОЛЖИТЬ", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
+    draw_trophy_bar()
     if not help_visible:
         var pointer: Vector2 = get_global_mouse_position()
         draw_tower_tooltip(pointer)
         draw_hovered_tower_info(pointer)
+        draw_trophy_tooltip(pointer)
     if can_choose_interwave_event():
         draw_rect(Rect2(184, 205, 785, 186), Color("#1d3038", 0.97))
         draw_rect(Rect2(184, 205, 785, 186), Color("#d7ba80"), false, 2.0)

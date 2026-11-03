@@ -150,3 +150,11 @@ Motion Preview: 1/2/3 — уровень; B/R/L — ветка; NumPad — ру�
 - Рендер: `scripts/td/td_battlefield_art.gd` + ветки `draw_pixel_battlefield_*` в `scripts/topdown_td_prototype.gd`; при выключенном manifest рисуется прежний процедурный фон. Декорации раскладываются по seed вне дорог и площадок.
 - Скриншоты до/после: `candidate/review/td_{before,after}_{prep,wave}.png`; снимать `tools/capture_td_screenshot.gd` (нужен xvfb + opengl3, не headless).
 - Любая перерисовка — снова кандидат: новые PNG показать владельцу до слияния.
+
+## Иконки трофеев ночи — в игре
+
+- `assets/trophies/trophy_icons_8x24.png`: 8 иконок 24×24 в порядке `scripts/run_trophies.gd` ORDER (череп с короной, могильный фонарь, сума, камень с руной-оберегом, пепел феникса, фонарь душ, проклятый идол, кровавый жернов). Палитра — общая с полем боя, обводка ink.
+- Source: `tools/generate_trophy_icons.py` (`--verify`); тест `tests/test_trophy_icons.py` (воспроизводимость, порядок = каталог, прозрачные углы, обводка).
+- Используются днём (верхняя панель, 1×) и ночью (карточки, 2×, nearest). Ночная сцена держит текстуру константой `TROPHY_ICONS`: текстура, загруженная только внутри `_draw()`, освобождается до отрисовки и выглядит белым квадратом.
+- Скриншоты: `tools/capture_night_trophies.gd`, `tools/capture_td_screenshot.gd --trophies=...` (xvfb + opengl3).
+
