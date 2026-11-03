@@ -33,7 +33,7 @@
 | Legion weapon | Владелец одобрил; production atlas 8×128×128 создан; runtime branch `swarm` |
 | Projectile/impact | 6 candidate атласов, по 8 кадров для base/Reaper/Legion |
 | Preview | 72 композиции, контактные листы 1× и 2×, отдельный Windows EXE |
-| Production | Root manifest включает модульный renderer на интеграционной ветке; CI/Windows QA pending; legacy fallback сохранён |
+| Production | Модульный renderer включён в main; post-merge Windows Preview #41580061364 SUCCESS; legacy fallback сохранён; ручной QA pending |
 
 Последняя арт-итерация: PR #357 merged (base weapon v4), squash main `b4e3c128a4ba6fb86d294a2aff37c71b37a39d68`. Проблема повреждённого PNG решена регенерацией из исходника; временный workflow удалён. Exact-head CI #41476104817 SUCCESS. Предыдущая уборка PR #358 merged, main CI #41474757990 SUCCESS.
 
@@ -60,7 +60,7 @@
 
 Root manifest: `status=owner_approved_production`, `runtime_enabled=true`. Candidate manifest: `status=approved_source_archive`, `runtime_enabled=false`. Candidate PNGs remain preserved. Production reuses the existing six validated VFX strips; candidate VFX are not promoted. Aseprite project does not exist; do not fabricate one. The reproducible source is `tools/generate_necro_modular_candidates.py`.
 
-Production integration PR #376 открыт. До его merge в main считать это веткой разработки, не опубликованным релизом. После merge дождаться Windows export и провести ручной QA.
+PR #376 merged (`5a219a3c`); exact-head CI #41579876954 SUCCESS, post-merge main/Windows export #41580061364 SUCCESS. Свежий LastRitual.exe опубликован в windows-preview. Следующий шаг — ручной QA владельца; CI не заменяет игру.
 
 ## Контрольные листы и preview
 
