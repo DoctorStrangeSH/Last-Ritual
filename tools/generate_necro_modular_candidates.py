@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Rebuild the Soul Altar modular and animated VFX candidate PNGs with a pixel grid.
+"""Rebuild the Soul Altar modular source archive and review-only animated VFX PNGs.
 
-This is the editable reproducible source for the rough candidate, NOT approved
-Soul Altar production artwork. Pillow is required; --verify never changes files.
+The base and weapon geometry was owner-approved for production on 2026-11-03;
+its exact source exports remain under candidate/. VFX strips remain review-only.
+Pillow is required; --verify never changes files.
 """
 from __future__ import annotations
 import argparse
