@@ -2,7 +2,7 @@
 
 Обновлено: 03.11.2026  
 Репозиторий: https://github.com/DoctorStrangeSH/Last-Ritual  
-Main snapshot: `b78d299ca0aa8aa5c36dc3098068b4a8c0818a87` (PR #387–#389 gameplay and PR #391 docs merged). PR #389 exact-head CI #41652362559 and post-merge #41652792964 — SUCCESS; docs post-merge #41653573389 pending.
+Main snapshot: `b78d299ca0aa8aa5c36dc3098068b4a8c0818a87` (PR #387–#389 gameplay and PR #391 docs merged). PR #389 exact-head CI #41652362559 and post-merge #41652792964 — SUCCESS; docs post-merge #41653573389 SUCCESS.
 
 ## Как продолжить
 
