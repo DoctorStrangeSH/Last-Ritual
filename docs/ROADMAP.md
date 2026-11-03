@@ -59,8 +59,9 @@ PR #387–#398 merged. PR #395 exact-head #41654287377 + post-merge #41654581974
 ## 3a. Пиксель-арт поля боя
 
 - [x] Кандидат нарисован генератором `tools/generate_battlefield_pixel_art.py`, рендер подключён за флагом manifest, тесты в CI.
-- [ ] Приёмка владельцем по скриншотам `assets/battlefield/candidate/review/` и в EXE.
-- [ ] Runtime PR: `runtime_enabled=true`.
+- [x] Владелец одобрил по скриншотам (04.11.2026).
+- [x] Runtime PR: `runtime_enabled=true`.
+- [ ] Ручная проверка в Windows EXE.
 
 ## 4. Следующие крупные этапы
 

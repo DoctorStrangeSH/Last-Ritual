@@ -19,11 +19,12 @@ func run_tests() -> void:
     var manifest: Dictionary = ART.load_manifest()
     check(not manifest.is_empty(), "Battlefield manifest loads")
     check(ART.missing_textures(manifest).is_empty(), "Every battlefield texture referenced by the manifest exists")
-    check(str(manifest.get("status", "")) == "review_candidate" and not bool(manifest.get("runtime_enabled", true)), "Candidate art stays disabled until owner approval")
-    check(not ART.runtime_ready(manifest), "Runtime gate is closed while runtime_enabled=false")
+    check(str(manifest.get("status", "")) == "owner_approved_production" and bool(manifest.get("runtime_enabled", false)), "Owner-approved battlefield art is enabled (04.11.2026)")
+    check(ART.runtime_ready(manifest), "Runtime gate is open with a complete texture set")
     var forced: Dictionary = manifest.duplicate(true)
-    forced["runtime_enabled"] = true
-    check(ART.runtime_ready(forced), "Gate opens once enabled with a complete texture set")
+    var closed: Dictionary = manifest.duplicate(true)
+    closed["runtime_enabled"] = false
+    check(not ART.runtime_ready(closed), "Gate closes again when runtime_enabled=false")
     var broken: Dictionary = forced.duplicate(true)
     broken["textures"]["road"] = "missing.png"
     check(not ART.runtime_ready(broken) and ART.missing_textures(broken) == ["road"], "A missing texture keeps the gate closed and is reported")
@@ -64,7 +65,7 @@ func run_tests() -> void:
     var scene: PackedScene = load("res://scenes/topdown_td_prototype.tscn")
     var game = scene.instantiate()
     root.add_child(game)
-    check(not game.battlefield_art_enabled, "Live game keeps the procedural battlefield while the candidate is disabled")
+    check(game.battlefield_art_enabled and game.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "Live game draws the approved pixel battlefield by default")
     game.set_battlefield_art_enabled(true)
     check(game.battlefield_art_enabled and game.texture_repeat == CanvasItem.TEXTURE_REPEAT_ENABLED and game.texture_filter == CanvasItem.TEXTURE_FILTER_NEAREST, "Preview toggle enables crisp, tiling pixel art")
     check(game.battlefield_props.size() >= 8, "Scene computes props for its seeded map")
