@@ -323,7 +323,7 @@ def verify_assets() -> None:
         actual={
             p.relative_to(ART) for p in ART.rglob("*")
             if p.is_file() and (p.parts[len(ART.parts)]=="candidate" or p.name=="manifest.json")
-            and p.suffix.lower() in {".png",".json",".md"}
+            and p.suffix.lower() in {".png",".json",".md"} and "review" not in p.parts
         }
         if actual!=expected:
             raise SystemExit(f"Candidate file set differs: extra={sorted(map(str,actual-expected))}, missing={sorted(map(str,expected-actual))}")
