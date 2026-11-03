@@ -54,7 +54,7 @@
 - [ ] **Этап E — roguelike длительность и вариативность.** Связать ночные награды, временные благословения/проклятия, мета-прогресс и дневную оборону; увеличить число содержательных решений и длительность забега, не растягивая искусственно ожидание.
 - [ ] **Этап F — баланс и playtest.** Проверить пять дней, Normal/Hard/Nightmare, экономику башен, синергии, сложность и варианты генерации на реальном Windows EXE.
 
-PR #387–#396 merged. PR #395 exact-head CI #41654287377 и post-merge #41654581974 (Godot checks + Windows Preview) SUCCESS. PR #396 docs-only post-merge #41655117053 pending. Текущая ветка `feature/td-five-day-fortress-persistence-v2` добавляет пятидневную проверку состояния крепости; exact-head CI ещё ожидается. Не отмечать A–C завершёнными до ручного QA и save compatibility.
+PR #387–#396 merged. PR #395 exact-head CI #41654287377 и post-merge #41654581974 (Godot checks + Windows Preview) SUCCESS. PR #396 docs-only post-merge #41655117053 SUCCESS. Текущая ветка `feature/td-five-day-fortress-persistence-v2` добавляет пятидневную проверку состояния крепости; exact-head CI ещё ожидается. Не отмечать A–C завершёнными до ручного QA и save compatibility.
 
 ## 4. Следующие крупные этапы
 
