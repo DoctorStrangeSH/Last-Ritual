@@ -2,7 +2,7 @@
 
 Обновлено: 03.11.2026  
 Репозиторий: https://github.com/DoctorStrangeSH/Last-Ritual  
-Main snapshot: `c372d377b6cd615bfc9d76dbe07403df4d98fe52` (PR #387 gameplay, #388 docs and #389 forked routes merged). PR #389 exact-head CI #41652362559 — SUCCESS; post-merge workflow #41652792964 pending.
+Main snapshot: `b78d299ca0aa8aa5c36dc3098068b4a8c0818a87` (PR #387–#391 merged). Main workflow #41653573389: Godot checks SUCCESS, Windows Preview pending.
 
 ## Как продолжить
 
@@ -48,9 +48,10 @@ Main snapshot: `c372d377b6cd615bfc9d76dbe07403df4d98fe52` (PR #387 gameplay, #38
 - Восемь площадок остаются стабильными по ID 0–7 в пределах забега. Соседние площадки каждого ряда гарантированно находятся в пределах 190 px — текущего радиуса синергий башен; валидатор и тесты защищают это правило для 256 seed.
 - `run_loop.gd` задаёт seed до импорта состояния крепости. `export_fortress_state()` сохраняет постройки по ID и `map_seed`; `import_fortress_state()` отклоняет snapshot от другого seed. Smoke tests проверяют 256 seed, топологию fork/merge, геометрию, строительство, улучшение и перенос башни; полный `topdown_smoke.gd` проверяет боевые синергии.
 - PR #387 merged (`a29bc17f`), PR #388 docs-only merged (`41584b11`), PR #389 fork/merge routes merged (`c372d377`). Exact-head CI #41652362559 SUCCESS; post-merge #41652792964 pending.
-- Ограничения: площадки пока распределяются в двух рядах, а не по более широкой карте; полная проверка зон UI/ворот/границ, сохранение специализаций и обратная совместимость legacy snapshots ещё впереди.
+- Ограничения: площадки пока распределяются в двух поясах; текущая ветка `feature/td-variable-build-sites-v2` превращает их в staggered belts с индивидуальными seed-based Y offsets и отдельным RNG stream, сохраняя 190px synergy radius. UI/gate exclusion zones, дополнительные site-layout профили и save compatibility для специализаций/legacy snapshots ещё впереди.
+- PR #390 закрыт как дубликат топологии PR #389; PR #393 закрыт, чтобы пересоздать site-placement ветку от актуального main. Не возобновлять эти PR.
 
-Следующий шаг — расширить генерацию строительных площадок (не только фиксированные две линии), добавить явные запретные UI/gate zones в геометрическую валидацию и проверить перенос специализаций, приоритетов и legacy snapshots. Не переходить к волновой стратегии, пока критерии A–C из ROADMAP не закрыты.
+Следующий шаг — завершить staggered site placement, добавить явные запретные UI/gate zones в геометрическую валидацию и проверить перенос специализаций, приоритетов и legacy snapshots. Не переходить к волновой стратегии, пока критерии A–C из ROADMAP не закрыты.
 
 После карты — стратегические ветвления волн/маршрутов, разведка следующей волны, значимые inter-wave решения, более длинная кривая сложности и связка дневных решений с ночными наградами. Не увеличивать длительность простым растягиванием таймеров.
 
