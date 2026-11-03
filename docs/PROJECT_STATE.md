@@ -82,3 +82,10 @@ CI не заменяет ручной запуск EXE и визуальную �
 ## Следующее действие
 
 Попросить владельца оценить 9-композиционный лист на 1× и полный лист 72 направлений. При замечаниях — один art PR на одну проблему; при одобрении — отдельный PR для production integration с Windows QA. Не менять баланс и сохранения в арт-PR.
+
+## Проверка полного художественного листа — 03.11.2026
+
+- PR #374 merged: `0d63e80662ca8762a1b3475bb3d5d4e166c7b302`.
+- Exact-head CI #41578037939 SUCCESS: новый `tests/test_soul_altar_full_sheet_integrity.py` проверяет пиксели всех 72 вариантов (L1–L3 × base/Reaper/Legion × восемь направлений) против исходных кандидатных PNG.
+- Production manifest не переключать: `runtime_enabled=false`, шесть production PNG отсутствуют; ручная художественная приёмка владельца ещё не получена.
+- Следующий шаг: просмотреть `soul_altar_9_compositions_1x.png` и `soul_altar_modular_contact_sheet_1x.png` из релиза `windows-preview`, записать замечания/одобрение; только после одобрения отдельный PR production integration.
