@@ -1,155 +1,68 @@
 # AI HANDOFF — Last Ritual
 
-Обновлено: 03.11.2026  
-Репозиторий: https://github.com/DoctorStrangeSH/Last-Ritual  
-Main snapshot: `c7a30bee07ec32e9726245c16285f998f7e07c2f` (PR #387–#396 merged). PR #395 exact-head #41654287377 and post-merge #41654581974 (Godot checks + Windows Preview) SUCCESS; docs post-merge #41655117053 SUCCESS.
+Точка продолжения для следующего ИИ. Короткий **текущий** снимок, не хроника: история — в GitHub PR и `docs/DECISIONS.md`.
 
-## Как продолжить
+Обновлено: 03.11.2026. Репозиторий: https://github.com/DoctorStrangeSH/Last-Ritual. Godot 4.4.1.
 
-Текущее состояние и историю веток не дублировать здесь: безопасная процедура и аудит 407 веток описаны в `docs/BRANCH_HYGIENE.md`. Уборка не меняет игру и не требует читать все художественные отчёты.
+## 1. Сначала проверь (2 минуты)
 
+1. `main` — единственная ветка (см. `docs/BRANCH_HYGIENE.md`). Открытых PR быть не должно, кроме твоих.
+2. Последний workflow **Godot checks and Windows preview** на `main` — SUCCESS.
+3. Если документ противоречит коду или CI — прав код/CI; исправь документ в своём PR.
 
-Перед изменениями прочитать `AGENTS.md`, `docs/PROJECT_STATE.md`, `docs/ROADMAP.md`. Остальные документы, включая `docs/AI_HANDOFF_PIXEL_ART.md` и `docs/DECISIONS.md`, читать только при работе с соответствующей системой.
+## 2. Что это за игра
 
-Работать только от актуального main. Создавать отдельную ветку и PR. Не коммитить прямо в main. Проверять exact-head CI и post-merge main workflow. Обновлять PROJECT_STATE, ROADMAP и handoff при каждом значимом изменении.
+Top-down roguelite + Tower Defense. Пять дней и пять ночей за забег, переходы автоматические.
+- **День** (`scenes/topdown_td_prototype.tscn`, `scripts/topdown_td_prototype.gd` ≈2000 строк): 6 волн, 8 площадок, 4 башни (`bone`, `fire`, `necro`, `frost`), прокачка L1→L2 (20)→L3 (40)→специализация (60), продажа/перенос/ремонт, герой (WASD + ЛКМ), приоритет целей, синергии соседних башен, совет после 3-й волны.
+- **Ночь** (`scenes/topdown_night_prototype.tscn`): граф из 10 комнат, бои, награды, магазин, босс.
+- **Связка** (`scripts/run_loop.gd`): seed карты на весь забег, перенос крепости между днями (`export/import_fortress_state`), монеты за души ночи, мета-прогресс (`scripts/meta_progression.gd`).
+- Карта дня генерируется по seed: 2–3 изогнутых маршрута с общим входом/выходом и развилками (`scripts/td/td_run_map_generator.gd`), площадки сдвигаются по seed с проверкой зазоров.
+- Мелкие чистые модули TD — в `scripts/td/` (stats, damage, targeting, multihit, armor, frost, fire splash, spirits, synergy, tooltips, visuals, modular assets).
 
-## Видение владельца
+## 3. Решения владельца (не нарушать)
 
-- Только top-down roguelike + Tower Defense. Старый платформенный прототип не возвращать.
-- Днём — стратегическая защита крепости; ночью — исследование комнат и бои в духе Isaac.
-- Пять дней/ночей, автоматические переходы, новые карты на каждый забег.
-- Длинные, вариативные и стратегические забеги; не сводить игру к короткому прототипу.
-- Мрачный детальный Pixel Art для всей игры, единая перспектива и читаемые силуэты.
-- Русский UI и понятные мышиные взаимодействия.
-- Башни улучшаются L1→L2→L3, четвёртый шаг — выбор специализации.
-- Приоритет качества: не включать черновой арт в production ради формального прогресса.
+- Только top-down. Старый платформер не возвращать (снимок `c750d54` в истории `main`).
+- Единый детальный тёмно-фэнтезийный **пиксель-арт**: золото, фиолетовая магия, черепа; читаемые силуэты на 1×. Пиксель-арт рисуется кодом-генератором (Python/Pillow) — это и есть «исходник»; Aseprite-файлов нет и не выдумывать.
+- Алтарь душ (`necro`) — эталон стиля. Его модульный арт **утверждён и включён в игру** (PR #376): неподвижное основание L1–L3 + оружие с 8 направлениями (base / Жнец=`siege` / Легион=`swarm`).
+- Новый арт сначала идёт кандидатом (`candidate/`, `runtime_enabled=false`), затем владелец смотрит листы 1×/Art Preview EXE, и только после явного «одобряю» — отдельный runtime PR.
+- Русский UI, управление мышью.
+- 03.11 владелец сначала заморозил графику ради геймплея, затем (вечер 03.11) попросил и графику, и геймплей, и чтобы ИИ **рисовал сам**. Обе линии активны.
 
-## Проверенное текущее состояние
+## 4. Состояние арта
 
-- Main scene: scenes/run_loop.tscn.
-- Day TD: scenes/topdown_td_prototype.tscn; шесть волн, восемь площадок, строительство/улучшение/продажа/ремонт, герой и приоритет целей.
-- Night: scenes/topdown_night_prototype.tscn; комнаты, двери, враги, награды, магазины, босс, рывок.
-- Campaign: пять циклов дня/ночи; переходы автоматические.
-- Meta: scripts/meta_progression.gd.
-- Магазин сейчас имеет четыре игровых башни: bone/fire/necro/frost.
-- Каталог дополнительно содержит spark/pulse, но их самостоятельная боевая интеграция не завершена.
-- Tower helpers находятся в scripts/td/. Основные TD/night scripts всё ещё крупные Node2D scripts; не считать архитектуру полностью компонентной.
+| Набор | Где | Статус |
+|---|---|---|
+| Алтарь душ (база + 8-way оружие) | `assets/spire/towers/necro/` | В игре, ждёт ручного Windows QA |
+| Ледяной обелиск | `assets/spire/towers/frost/candidate/` | Кандидат (#378), ждёт приёмки |
+| Костяная баллиста | `assets/spire/towers/ballista/candidate/` | Кандидат (#380), ждёт приёмки |
+| Огненная турель | `assets/spire/towers/fire/candidate/` | Кандидат (#382), ждёт приёмки |
+| Враги (6 ролей × 8 направлений × 4 кадра) | `assets/enemies/candidate/` | Кандидат (#384), ждёт приёмки |
+| Земля, дороги, площадки, крепость, герой, UI | рисуются процедурно в `_draw()` | Пиксель-арта ещё нет |
 
-## Приоритет разработки по последнему решению владельца (03.11.2026)
+Детали арта: `docs/AI_HANDOFF_PIXEL_ART.md`, стиль: `docs/art/PIXEL_ART_STYLE_GUIDE.md`.
 
-**Графику временно заморозить. Следующая основная работа — игровой процесс TD Roguelike.** Не начинать новые арт-паки, runtime art migration или замену спрайтов, пока владелец явно не вернёт этот приоритет.
+## 5. Очередь работ
 
-Наблюдаемая текущая реализация:
-- `scripts/run_loop.gd` создаёт новый `fortress_map_seed` при `start_run()` и передаёт его в дневную сцену при каждом `start_phase()`.
-- `scripts/td/td_run_map_generator.gd` в main генерирует две/три кривые линии с общим входом и выходом; в средней части маршруты расходятся на отдельные коридоры и снова сходятся. Профиль изгибов воспроизводим по seed.
-- Восемь площадок остаются стабильными по ID 0–7 в пределах забега. Соседние площадки каждого ряда гарантированно находятся в пределах 190 px — текущего радиуса синергий башен; валидатор и тесты защищают это правило для 256 seed.
-- `run_loop.gd` задаёт seed до импорта состояния крепости. `export_fortress_state()` сохраняет постройки по ID и `map_seed`; `import_fortress_state()` отклоняет snapshot от другого seed. Smoke tests проверяют 256 seed, топологию fork/merge, геометрию, строительство, улучшение и перенос башни; полный `topdown_smoke.gd` проверяет боевые синергии.
-- PR #387 (`a29bc17f`), #388 (`41584b11`), #389 (`c372d377`), #391 (`b78d299c`), #395 (`47ec4143`) и #396 (`c7a30bee`, docs) merged. PR #395 exact-head #41654287377 and post-merge #41654581974 SUCCESS; docs-only post-merge #41655117053 pending.
-- В main площадки смещаются и растягиваются по seed независимо для каждого ряда; соседние позиции остаются в пределах 190 px, радиус площадки проверяется относительно дорог, входа/выхода и фиксированных UI hitboxes.
-- Текущая ветка `feature/td-five-day-fortress-persistence-v2` добавляет отдельный smoke test: четыре tower IDs и специализации/приоритеты переносятся через пять дневных сцен; wrong-seed snapshot отвергается без частичной мутации; legacy snapshot без `map_seed`/`target_priority` остаётся загружаемым. Exact-head CI ожидается.
+Порядок и критерии — `docs/ROADMAP.md`. Кратко:
+1. Геймплей TD: стратегические волны (разведка и выбор угрозы), баланс по симуляции, ночные награды ↔ дневная оборона.
+2. Арт: пиксель-арт поля боя (земля, дороги, площадки, алтарь крепости), затем приёмка кандидатов башен/врагов и их runtime PR.
+3. Ручной Windows QA владельцем (`docs/QA_PLAYTEST.md`).
 
-Следующий шаг — завершить пятидневную save validation и затем проверить фактическую читаемость площадок на Windows. Не переходить к волновой стратегии, пока критерии A–C из ROADMAP не закрыты.
+## 6. Как работать
 
-После карты — стратегические ветвления волн/маршрутов, разведка следующей волны, значимые inter-wave решения, более длинная кривая сложности и связка дневных решений с ночными наградами. Не увеличивать длительность простым растягиванием таймеров.
+- Правила — `AGENTS.md`. Одна цель — одна ветка — один PR; squash merge только при зелёном CI; ветки удаляются автоматически.
+- Локально: Godot 4.4.1 скачивается с GitHub releases (как в `.github/workflows/windows-build.yml`).
+  - `godot --headless --path . --editor --quit` (импорт), затем `godot --headless --path . --script res://tests/topdown_smoke.gd`.
+  - Python-тесты: `python3 -m unittest discover -s tests -p 'test_*.py'`.
+- Генераторы арта при обычном запуске перезаписывают все PNG своего набора; `--verify` ничего не меняет. Не коммить случайно пересозданные файлы.
+- Не менять баланс/цены/сохранения в арт-PR; не менять формат сохранений без версии и миграции.
+- Ни CI, ни контактный лист не равны визуальной приёмке или проверке баланса.
 
-## Текущий художественный этап: модульный Pixel Art
+## 7. Ограничения среды ИИ (Claude Code в облаке)
 
-### Алтарь душ — production integration завершена
-- PR #376 merged; root manifest assets/spire/towers/necro/manifest.json: owner_approved_production / runtime_enabled=true.
-- Владелец одобрил L1–L3 и base/Reaper/Legion 8-way оружие 03.11.2026.
-- Production base и weapon PNG совпадают с утверждённым source archive; существующие production VFX переиспользуются.
-- Старые цельные sprites/fallback сохранены до ручного Windows QA. Не удалять до reference audit.
+- Пуш тегов и удаление веток напрямую запрещены прокси; ветки удаляет workflow `branch-hygiene.yml` по списку `docs/branch_archive.tsv`.
+- GitHub GraphQL недоступен — используй REST (`gh api repos/...`).
 
-### Ледяной обелиск — candidate-only
-- PR #378 merged; exact-head CI #41583127652 и post-merge Windows Preview #41583281398 SUCCESS.
-- Root manifest: assets/spire/towers/frost/manifest.json; review_candidate / runtime_enabled=false.
-- 3 bases, base/Frost Lance/Blizzard 8-way weapons, 6 VFX strips.
-- Mapping: siege → frost_lance; swarm → blizzard.
-- Source: tools/generate_frost_modular_candidates.py; preview: tools/render_frost_modular_preview.py.
-- Owner visual approval is still pending. Do not enable runtime; preserve current experimental fallback.
+## 8. Формат отчёта владельцу
 
-### Костяная баллиста — candidate-only, текущая ветка
-- PR #380 merged; exact-head CI #41585101342 and post-merge Windows Preview #41585253951 SUCCESS.
-- Root manifest: assets/spire/towers/ballista/manifest.json; review_candidate / runtime_enabled=false.
-- 3 bases, base/siege_bolt/bone_volley 8-way weapon atlases, 6 VFX strips.
-- Mapping: siege → siege_bolt (heavy single target), swarm → bone_volley (three-bolt volley).
-- Gameplay ID stays bone; asset folder is ballista. No stats, balance, save IDs or live Foozle PNGs changed.
-- Source: tools/generate_ballista_modular_candidates.py; preview: tools/render_ballista_modular_preview.py; tests: tests/test_ballista_modular_candidates.py.
-- Review sheets: candidate/review/contact_sheet_9_1x.png, contact_sheet_72_1x.png, contact_sheet_72_2x.png; published in windows-preview.
-- Candidate remains disabled pending owner visual approval and a separate runtime PR.
-
-### Огненная турель — текущий candidate branch
-- PR #382 merged; exact-head CI #41589195484 and post-merge Windows Preview #41589363962 SUCCESS.
-- Root manifest: assets/spire/towers/fire/manifest.json; review_candidate / runtime_enabled=false.
-- 3 bases, base/inferno/sparks 8-way weapon atlases, 6 VFX strips (8 frames each).
-- Mapping: siege → inferno (heavy flame cannon/explosive impact); swarm → sparks (three-spark volley). Existing UI labels remain unchanged.
-- Gameplay ID stays fire. No combat values, save IDs, legacy Foozle PNGs or live runtime paths changed.
-- Source: tools/generate_fire_turret_modular_candidates.py; preview: tools/render_fire_turret_modular_preview.py; tests: tests/test_fire_turret_modular_candidates.py.
-- Review sheets: assets/spire/towers/fire/candidate/review/contact_sheet_9_1x.png, contact_sheet_72_1x.png, contact_sheet_72_2x.png; published in windows-preview.
-- Candidate is not owner-approved. Preserve all current original fire assets and do not enable runtime.
-
-### Враги осады и Страж ритуала — review candidate, отдельная ветка
-
-- PR #384 merged (`35e719e4`); exact-head CI #41605666907 and post-merge Windows Preview #41605855395 SUCCESS.
-- Manifest: `assets/enemies/manifest.json`; `status=review_candidate`, `runtime_enabled=false`.
-- Six visual roles: runner, brute, captain, healer, ranged, boss. Each has 8 distinct facing directions × 4 distinct walk frames at 8 FPS; normal roles are 48×48, Ritual Guardian is 96×96.
-- TD mapping: runner/brute/captain/healer/boss. Night mapping: regular/flanker → runner, ranged → ranged, champion → brute, boss → boss.
-- Source: `tools/generate_enemy_roster_pixel_art.py`; review renderer: `tools/render_enemy_roster_preview.py`; tests: `tests/test_enemy_roster_pixel_art.py`.
-- Review sheets: `assets/enemies/candidate/review/enemy_roster_8way_1x.png`, `enemy_walk_cycles_1x.png`, and matching `_2x.png` sheets; all four are published in `windows-preview`.
-- Fixed the previous CI findings: the boss now has four visibly distinct walk poses; its 96px atlas fits all eight cells without corner clipping. Generator, reproducibility and review-sheet tests passed in one-shot generation run #41605211560.
-- This is art-only. Existing vector runtime stays active; no enemy stats, hitboxes, movement, attacks, waves, or saves changed. Do not promote before owner visual approval and a separate runtime PR.
-
-### Deferred art work — paused by owner
-- Owner review of Fire, Frost, Ballista and enemy roster is deferred. CI/contact sheets are not artistic approval.
-- After explicit approval, prepare separate runtime PR per tower, preserving current fallback until Windows QA.
-- Continue world/enemy/UI Pixel Art migration after tower reviews.
-
-## Ограничения и безопасность
-
-- Не включать модульный runtime, пока отсутствуют все шесть production PNG и владелец не принял полный набор в Windows.
-- Не считать контактный лист, smoke test или CI художественным одобрением.
-- Не менять боевые характеристики, цены, сохранения или UI в арт-only PR.
-- Не вращать всю башню: основание неподвижно, оружие имеет 8 hand-authored направлений.
-- Не удалять старые PNG/SVG/атласы без поиска прямых и динамических ссылок.
-- Не придумывать Aseprite-исходники. Источник candidate PNG — Python/Pillow generator.
-- Не менять legacy gameplay IDs и save schema без отдельной миграции и тестов.
-
-## Проверки и сборка
-
-Godot: 4.4.1 Standard. Главный workflow: .github/workflows/windows-build.yml.
-
-Локальные команды:
-- godot --headless --path . --editor --quit
-- godot --headless --path . --script res://tests/topdown_smoke.gd
-- godot --headless --path . --script res://tests/td_modular_tower_assets_smoke.gd
-- python tools/generate_necro_modular_candidates.py --verify
-- python -m unittest discover -s tests -p 'test_necro_weapon_silhouettes.py' -v
-- python -m unittest discover -s tests -p 'test_necro_modular_preview.py' -v
-- python -m unittest discover -s tests -p 'test_necro_modular_vfx.py' -v
-
-Важно: обычный запуск generator перезаписывает все 12 candidate PNG. Если изменён только один атлас, проверь diff и не коммить случайно пересозданные файлы. Отличия Pillow могут влиять на байты. Запуск --verify ничего не изменяет.
-
-Motion Preview:
-- 1/2/3 — уровень основания;
-- B/R/L — base/Reaper/Legion;
-- NumPad 8/9/6/3/2/1/4/7 — зафиксировать направление;
-- A — автоматическое наведение;
-- H — направляющие;
-- F — выстрел и анимация попадания;
-- Z — масштаб 1×/2×/2.5×/4×.
-
-Windows Release: https://github.com/DoctorStrangeSH/Last-Ritual/releases/tag/windows-preview
-
-## PR-аудит и открытые запросы
-
-Проверена история PR #1–#355 по списку, заголовкам, статусам и датам; последние изменения #354/#355 проверены подробно. Не утверждать, что каждый исторический diff и каждый старый комментарий перечитан построчно.
-
-- #355 — merged, документация после #354.
-- #354 — merged, Reaper/Legion weapon v4 candidate.
-- #295 — единственный оставленный открытым Draft review snapshot Frost Obelisk. Не включать эти PNG в production без отдельной художественной приёмки.
-- #289 закрыт как superseded более поздними Soul Altar assets; ветка остаётся в истории.
-- Других открытых Issues на момент аудита не найдено.
-
-## Формат следующего отчёта владельцу
-
-Указать: что сделано, номер PR и commit, exact-head CI, post-merge CI, что проверено автоматически, что осталось проверить вручную и один следующий шаг.
+Что сделано · PR и коммит · CI (PR и main) · что проверено автоматически · что проверить вручную · следующий шаг.

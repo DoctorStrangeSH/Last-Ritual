@@ -17,4 +17,4 @@
 
 **Legacy-сопоставление:** old gameplay `bone→ballista`, `fire→fire`, `necro→pulse`, `frost→spark` (ТОЛЬКО графика). При введении шести типов отдельно согласовать новые ID, цены, апгрейды, урон, UI и тесты; миграция ранних сохранений по решению владельца необязательна.
 
-**Канонические референсы:** `docs/SIX_TOWER_SPECIALIZATION_ART.md` и 12 `icon.svg` в `assets/spire/towers/<id>/specializations/<branch>/`. Большие сгенерированные UI-концепты из чата — направление оформления, НЕ готовые прозрачные текстуры.
+**Канонические референсы:** `docs/archive/SIX_TOWER_SPECIALIZATION_ART.md` (исторический) и 12 `icon.svg` в `assets/spire/towers/<id>/specializations/<branch>/`. Большие сгенерированные UI-концепты из чата — направление оформления, НЕ готовые прозрачные текстуры.

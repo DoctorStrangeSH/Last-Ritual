@@ -1,6 +1,6 @@
 # Архитектура Last Ritual
 
-Актуально на 02.11.2026. Godot 4.4.1, main scene — scenes/run_loop.tscn.
+Актуально на 03.11.2026. Godot 4.4.1, main scene — scenes/run_loop.tscn.
 
 ## Точки входа
 
@@ -20,11 +20,7 @@
 
 Игровые ID магазина: bone, fire, necro, frost. Каталог дизайна содержит ещё spark и pulse, но их боевые системы не подключены отдельно. Не менять legacy IDs, структуру сохранений и asset aliases без тестов и миграции.
 
-Для Алтаря душ:
-- цельные approved sprites и production fallback используются текущим рендером;
-- модульный renderer загружает manifest и включается только через runtime_ready;
-- candidate art лежит отдельно в assets/spire/towers/necro/candidate;
-- candidate runtime выключен, пока не созданы шесть обязательных production base/weapon файлов и владелец не одобрил набор.
+Модульный арт башен описывается manifest-файлом `assets/spire/towers/<tower>/manifest.json` и загружается `scripts/td/td_modular_tower_assets.gd`; рендер включает его только при `runtime_ready()` (полный набор слоёв, `runtime_enabled=true`). Сейчас включён только Алтарь душ; остальные наборы лежат в `candidate/` с `runtime_enabled=false`.
 
 ## Тестирование и сборка
 
