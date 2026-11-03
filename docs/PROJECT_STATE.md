@@ -2,7 +2,7 @@
 
 Дата: 03.11.2026  
 База main перед production-интеграцией: `9a4bda8bb9b8582b74124db68e6af3e491205909`.  
-Текущая рабочая ветка: `feat/approved-soul-altar-modular-production` (PR и финальный CI ожидаются).
+Текущая рабочая ветка: `feat/approved-soul-altar-modular-production`, PR #376 открыт; exact-head CI ожидается.
 
 ## Запускаемая игра
 
