@@ -1,0 +1,201 @@
+{
+  "schema_version": 1,
+  "id": "fire",
+  "display_name": "Огненная турель",
+  "status": "review_candidate",
+  "runtime_enabled": false,
+  "camera": "top_down_3_quarter",
+  "canvas": {
+    "width": 128,
+    "height": 128,
+    "pivot": [
+      64,
+      90
+    ],
+    "ground_anchor": [
+      64,
+      118
+    ]
+  },
+  "direction_order": [
+    "north",
+    "north_east",
+    "east",
+    "south_east",
+    "south",
+    "south_west",
+    "west",
+    "north_west"
+  ],
+  "specialization_branches": {
+    "siege": "inferno",
+    "swarm": "sparks"
+  },
+  "specialization_labels": {
+    "siege": "ИНФЕРНО: ПЛАМЯ",
+    "swarm": "ИСКРЫ: 3 ЦЕЛИ"
+  },
+  "base": {
+    "levels": {
+      "1": "candidate/base/level_1.png",
+      "2": "candidate/base/level_2.png",
+      "3": "candidate/base/level_3.png"
+    },
+    "frame_size": [
+      128,
+      128
+    ],
+    "anchor": "ground_anchor"
+  },
+  "weapon": {
+    "base": {
+      "path": "candidate/weapon/base/weapon_8way.png",
+      "frame_size": [
+        128,
+        128
+      ],
+      "frame_count": 8,
+      "direction_order": [
+        "north",
+        "north_east",
+        "east",
+        "south_east",
+        "south",
+        "south_west",
+        "west",
+        "north_west"
+      ],
+      "pivot": [
+        64,
+        90
+      ],
+      "forward_direction": "north"
+    },
+    "inferno": {
+      "path": "candidate/weapon/inferno/weapon_8way.png",
+      "frame_size": [
+        128,
+        128
+      ],
+      "frame_count": 8,
+      "direction_order": [
+        "north",
+        "north_east",
+        "east",
+        "south_east",
+        "south",
+        "south_west",
+        "west",
+        "north_west"
+      ],
+      "pivot": [
+        64,
+        90
+      ],
+      "forward_direction": "north"
+    },
+    "sparks": {
+      "path": "candidate/weapon/sparks/weapon_8way.png",
+      "frame_size": [
+        128,
+        128
+      ],
+      "frame_count": 8,
+      "direction_order": [
+        "north",
+        "north_east",
+        "east",
+        "south_east",
+        "south",
+        "south_west",
+        "west",
+        "north_west"
+      ],
+      "pivot": [
+        64,
+        90
+      ],
+      "forward_direction": "north"
+    }
+  },
+  "projectiles": {
+    "base": {
+      "path": "candidate/vfx/base_projectile_8f.png",
+      "frame_size": [
+        32,
+        32
+      ],
+      "frame_count": 8,
+      "fps": 24,
+      "loop": true,
+      "forward_axis": "+X"
+    },
+    "inferno": {
+      "path": "candidate/vfx/inferno_projectile_8f.png",
+      "frame_size": [
+        32,
+        32
+      ],
+      "frame_count": 8,
+      "fps": 24,
+      "loop": true,
+      "forward_axis": "+X"
+    },
+    "sparks": {
+      "path": "candidate/vfx/sparks_projectile_8f.png",
+      "frame_size": [
+        32,
+        32
+      ],
+      "frame_count": 8,
+      "fps": 24,
+      "loop": true,
+      "forward_axis": "+X"
+    }
+  },
+  "impacts": {
+    "base": {
+      "path": "candidate/vfx/base_impact_8f.png",
+      "frame_size": [
+        64,
+        64
+      ],
+      "frame_count": 8,
+      "fps": 24,
+      "loop": false
+    },
+    "inferno": {
+      "path": "candidate/vfx/inferno_impact_8f.png",
+      "frame_size": [
+        64,
+        64
+      ],
+      "frame_count": 8,
+      "fps": 24,
+      "loop": false
+    },
+    "sparks": {
+      "path": "candidate/vfx/sparks_impact_8f.png",
+      "frame_size": [
+        64,
+        64
+      ],
+      "frame_count": 8,
+      "fps": 24,
+      "loop": false
+    }
+  },
+  "source": {
+    "editable_project": "tools/generate_fire_turret_modular_candidates.py",
+    "provenance": "candidate/SOURCE.md",
+    "editable_project_status": "procedural_source_is_tools/generate_fire_turret_modular_candidates.py"
+  },
+  "notes": [
+    "Review-only Pixel Art candidate; owner approval is required before production use.",
+    "runtime_enabled is false; original Foozle fire assets and live gameplay are unchanged.",
+    "siege maps to inferno (heavy flame cannon and explosive impact); swarm maps to sparks (three-target spark volley).",
+    "All eight weapon poses are individually rasterized from directional geometry and share one pivot.",
+    "The reproducible editable source is tools/generate_fire_turret_modular_candidates.py; no Aseprite project is claimed.",
+    "Gameplay ID remains fire. Do not migrate saves, change combat values or replace legacy source PNGs in this art-only candidate."
+  ]
+}
