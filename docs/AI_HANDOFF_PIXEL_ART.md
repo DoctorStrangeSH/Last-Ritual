@@ -79,6 +79,20 @@
 - Original Foozle base/weapon/projectiles/weapon_impact resources remain untouched; no runtime promotion until explicit approval and a separate integration PR.
 - No Aseprite project is claimed; the procedural Python generator is the reproducible editable source.
 
+## Враги осады и Страж ритуала — review candidate
+
+- Branch: `feat/enemy-roster-pixel-art-candidate`; candidate pack generated, PR CI is the next gate.
+- Root manifest: `assets/enemies/manifest.json`; `status=review_candidate`, `runtime_enabled=false`.
+- Six roles: `runner`, `brute`, `captain`, `healer`, `ranged`, `boss`.
+- Every role has 8 distinct facing directions × 4 distinct walk frames at 8 FPS. Normal roles use 48×48 cells; Ritual Guardian uses 96×96.
+- Atlas layout: 4 columns (walk frames) × 8 rows (N, NE, E, SE, S, SW, W, NW).
+- TD mapping: runner/brute/captain/healer/boss. Night mapping: regular/flanker → runner, ranged → ranged, champion → brute, boss → boss. The current runtime remains the existing vector enemy renderer.
+- Reproducible source: `tools/generate_enemy_roster_pixel_art.py`; preview: `tools/render_enemy_roster_preview.py`; tests: `tests/test_enemy_roster_pixel_art.py`.
+- Review sheets: `candidate/review/enemy_roster_8way_1x.png`, `enemy_walk_cycles_1x.png`, and matching `_2x.png` sheets.
+- Boss duplicate-frame bug fixed by adding a four-pose mantle/core animation. Boss size/pivot fit was corrected so no atlas-cell corner is touched. CI test asserts all 4 frames differ for all 8 directions and all cells remain transparent at corners.
+- Generation workflow #41605211560 passed all five Python tests and committed the reproducible candidate. The temporary write-enabled workflow is removed before PR.
+- No runtime promotion, no stats/hitbox/movement/attack/wave/save changes. Owner visual approval at 1× and a separate runtime PR are required.
+
 ## Следующий порядок работ
 
 1. [x] Владелец одобрил Алтарь душ L1–L3 и base/Reaper/Legion 03.11.2026.
