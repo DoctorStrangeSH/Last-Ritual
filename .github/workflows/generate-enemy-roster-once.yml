@@ -1,0 +1,35 @@
+name: Generate enemy roster review candidates (one-shot)
+on:
+  push:
+    branches: [feat/enemy-roster-pixel-art-candidate]
+    paths:
+      - .github/workflows/generate-enemy-roster-once.yml
+      - tools/generate_enemy_roster_pixel_art.py
+      - tools/render_enemy_roster_preview.py
+      - tests/test_enemy_roster_pixel_art.py
+permissions:
+  contents: write
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/enemy-roster-pixel-art-candidate
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Pillow
+        run: python -m pip install Pillow
+      - name: Generate reproducible enemy roster candidates and review sheets
+        run: |
+          set -euo pipefail
+          python -m py_compile tools/generate_enemy_roster_pixel_art.py tools/render_enemy_roster_preview.py
+          python tools/generate_enemy_roster_pixel_art.py --write
+          python tools/render_enemy_roster_preview.py --only both \
+            --overview assets/enemies/candidate/review/enemy_roster_8way_2x.png \
+            --walk-cycles assets/enemies/candidate/review/enemy_walk_cycles_2x.png
+          python -m unittest discover -s tests -p 'test_enemy_roster_pixel_art.py' -v
+          git add assets/enemies/manifest.json assets/enemies/candidate
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'Generate enemy roster modular Pixel Art review candidates'
+          git push origin HEAD:feat/enemy-roster-pixel-art-candidate
