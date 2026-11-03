@@ -215,7 +215,7 @@ def draw_character(role:str,direction_index:int,frame:int)->Image.Image:
     pal=palette(role)
     step=(-2.0,0.0,2.0,0.0)[frame]
     bob=(0.0,0.8,0.0,-0.8)[frame]
-    ground_y=82 if is_boss else 41
+    ground_y=72 if is_boss else 41
     d.ellipse((size*.18,ground_y-3*scale,size*.82,ground_y+3*scale),fill=rgb("#17151b",105))
     p=Painter(d,(origin[0],origin[1]+bob*scale),direction,scale)
 
@@ -259,7 +259,7 @@ def manifest_data()->dict:
             "frame_size":[size,size],"columns":4,"rows":8,"frame_count":32,
             "fps":8,"loop":True,"animation":"walk",
             "direction_order":DIRECTION_ORDER,
-            "pivot":[size//2,82 if role=="boss" else 41],
+            "pivot":[size//2,70 if role=="boss" else 41],
         }
     return {
         "schema_version":1,"id":"enemy_roster","display_name":"Враги осады и Страж ритуала",
