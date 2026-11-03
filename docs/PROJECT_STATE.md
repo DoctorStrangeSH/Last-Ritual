@@ -19,8 +19,9 @@
 ## Графика в игре
 
 - Алтарь душ: модульный пиксель-арт (основание L1–L3 + 8-way оружие base/Жнец/Легион), manifest `assets/spire/towers/necro/manifest.json` — `owner_approved_production`, `runtime_enabled=true`. Старые цельные спрайты остаются fallback до Windows QA.
-- Остальные башни — исходные Foozle PNG; враги, земля, дороги, крепость, герой и UI рисуются процедурно в `_draw()`.
-- Кандидаты пиксель-арта (не в игре): Frost, Ballista, Fire, враги, поле боя (`assets/battlefield/`, рендер подключён за флагом manifest `runtime_enabled=false`) — см. `docs/AI_HANDOFF_PIXEL_ART.md`.
+- Поле боя (земля, дороги, площадки, алтарь крепости, ворота, стена, декорации): пиксель-арт `assets/battlefield/`, одобрен владельцем 04.11.2026, `runtime_enabled=true`; процедурный фон — fallback при отсутствии текстуры.
+- Остальные башни — исходные Foozle PNG; враги, герой и UI рисуются процедурно в `_draw()`.
+- Кандидаты пиксель-арта (не в игре): Frost, Ballista, Fire, враги — см. `docs/AI_HANDOFF_PIXEL_ART.md`.
 
 ## CI и сборки
 

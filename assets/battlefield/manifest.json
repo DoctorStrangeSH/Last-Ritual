@@ -2,8 +2,9 @@
   "schema_version": 1,
   "id": "battlefield",
   "display_name": "Поле боя крепости",
-  "status": "review_candidate",
-  "runtime_enabled": false,
+  "status": "owner_approved_production",
+  "approved": "2026-11-04 (owner, chat: «Одобряю поле боя»)",
+  "runtime_enabled": true,
   "source": "tools/generate_battlefield_pixel_art.py",
   "root": "res://assets/battlefield/candidate/",
   "textures": {
@@ -18,5 +19,5 @@
   },
   "tiles": {"ground": 256, "road": 64},
   "anchors": {"pad": [31.5, 33.5], "altar_ground": [63.5, 104], "prop_ground": [16, 27]},
-  "notes": "Hand-authored pixel art drawn by tools/generate_battlefield_pixel_art.py. Enable runtime only after owner visual approval."
+  "notes": "Hand-authored pixel art drawn by tools/generate_battlefield_pixel_art.py. Owner-approved and enabled; files stay under candidate/ because the generator writes there. Previous procedural drawing remains as fallback when a texture is missing."
 }
