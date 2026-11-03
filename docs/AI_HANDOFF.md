@@ -1,9 +1,9 @@
 # AI HANDOFF — Last Ritual
 
-Обновлено: 02.11.2026  
+Обновлено: 03.11.2026  
 Репозиторий: https://github.com/DoctorStrangeSH/Last-Ritual  
-Текущий main: 587304e2a82b1979fff91394fd638e39c2452f89  
-Последний main CI: #41438238070 — SUCCESS.
+Main snapshot: 96d25c3785958eba5a2d1fe490512025ee92a19f  
+Последний main CI: #41583706343 — SUCCESS. Активная ветка кандидата: feat/ballista-modular-pixel-art-candidate.
 
 ## Как продолжить
 
@@ -39,15 +39,37 @@
 - Каталог дополнительно содержит spark/pulse, но их самостоятельная боевая интеграция не завершена.
 - Tower helpers находятся в scripts/td/. Основные TD/night scripts всё ещё крупные Node2D scripts; не считать архитектуру полностью компонентной.
 
-## Текущий художественный этап: Алтарь душ
+## Текущий художественный этап: модульный Pixel Art башен
 
-Candidate-арт находится в assets/spire/towers/necro/candidate/. Воспроизводимый источник — tools/generate_necro_modular_candidates.py. Набор содержит три основания L1–L3, три 8-way оружейных атласа и шесть VFX атласов.
+### Алтарь душ — production integration завершена
+- PR #376 merged; root manifest assets/spire/towers/necro/manifest.json: owner_approved_production / runtime_enabled=true.
+- Владелец одобрил L1–L3 и base/Reaper/Legion 8-way оружие 03.11.2026.
+- Production base и weapon PNG совпадают с утверждённым source archive; существующие production VFX переиспользуются.
+- Старые цельные sprites/fallback сохранены до ручного Windows QA. Не удалять до reference audit.
 
-PR #354 добавил силуэты Жнеца и Легиона v4. PR #355 записал успешный результат. Последний CI для PR #354: #41437657879 SUCCESS; main после PR #354: #41437819641 SUCCESS; актуальный main после PR #355: #41438238070 SUCCESS.
+### Ледяной обелиск — candidate-only
+- PR #378 merged; exact-head CI #41583127652 и post-merge Windows Preview #41583281398 SUCCESS.
+- Root manifest: assets/spire/towers/frost/manifest.json; review_candidate / runtime_enabled=false.
+- 3 bases, base/Frost Lance/Blizzard 8-way weapons, 6 VFX strips.
+- Mapping: siege → frost_lance; swarm → blizzard.
+- Source: tools/generate_frost_modular_candidates.py; preview: tools/render_frost_modular_preview.py.
+- Owner visual approval is still pending. Do not enable runtime; preserve current experimental fallback.
 
-Production manifest остаётся runtime_enabled=false. Боевой renderer продолжает использовать цельные утверждённые спрайты/production fallback. Кандидатные слои не подключены к игре.
+### Костяная баллиста — candidate-only, текущая ветка
+- Branch: feat/ballista-modular-pixel-art-candidate.
+- Root manifest: assets/spire/towers/ballista/manifest.json; review_candidate / runtime_enabled=false.
+- 3 bases, base/siege_bolt/bone_volley 8-way weapon atlases, 6 VFX strips.
+- Mapping: siege → siege_bolt (heavy single target), swarm → bone_volley (three-bolt volley).
+- Gameplay ID stays bone; asset folder is ballista. No stats, balance, save IDs or live Foozle PNGs changed.
+- Source: tools/generate_ballista_modular_candidates.py; preview: tools/render_ballista_modular_preview.py; tests: tests/test_ballista_modular_candidates.py.
+- Review sheets: candidate/review/contact_sheet_9_1x.png, contact_sheet_72_1x.png, contact_sheet_72_2x.png.
+- Candidate remains disabled pending owner visual approval and a separate runtime PR.
 
-Следующий шаг по плану: base weapon v4 — заменить слабый силуэт золотого бруска на выразительную призму/руническую корону. Затем переработать основания L1–L3 и общую палитру. Детали — docs/art/SOUL_ALTAR_ART_NEXT_STEPS.md.
+### Next art work
+- Complete exact-head CI for the Ballista candidate PR, merge only after checks pass.
+- Owner reviews Frost and Ballista at 1×. CI/contact sheets are not artistic approval.
+- After explicit approval, prepare separate runtime PR per tower, preserving current fallback until Windows QA.
+- Fire Turret Pixel Art candidate follows Ballista; then enemies/world/UI.
 
 ## Ограничения и безопасность
 
