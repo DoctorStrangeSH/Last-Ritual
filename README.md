@@ -71,3 +71,5 @@
 - [Pixel Art и Алтарь душ](docs/AI_HANDOFF_PIXEL_ART.md)
 - [Архитектура](docs/ARCHITECTURE.md)
 - [Ручной QA](docs/QA_PLAYTEST.md)
+- [Ветки и восстановление](docs/BRANCH_HYGIENE.md)
+- [Архив старых документов](docs/archive/README.md)
