@@ -37,9 +37,28 @@
 
 Последняя арт-итерация: PR #357 merged (base weapon v4), squash main `b4e3c128a4ba6fb86d294a2aff37c71b37a39d68`. Проблема повреждённого PNG решена регенерацией из исходника; временный workflow удалён. Exact-head CI #41476104817 SUCCESS. Предыдущая уборка PR #358 merged, main CI #41474757990 SUCCESS.
 
+## Ледяной обелиск — следующий арт-кандидат
+
+- Ветка кандидата: `feat/frost-obelisk-modular-pixel-art-candidate` (PR создаётся после exact-head CI).
+- Root manifest: `assets/spire/towers/frost/manifest.json`; `status=review_candidate`, `runtime_enabled=false`. Не включать до явного одобрения владельца.
+- 3 основания: `candidate/base/level_1..3.png`, 128×128 RGBA.
+- Оружие: `candidate/weapon/base/weapon_8way.png`, `frost_lance/weapon_8way.png`, `blizzard/weapon_8way.png`; каждый атлас 8×128×128, порядок N, NE, E, SE, S, SW, W, NW.
+- VFX: по 8 кадров projectile (32×32) и impact (64×64) для base/Frost Lance/Blizzard.
+- Mapping: `siege → frost_lance` («МОРОЗ: СИЛЬНЕЕ»), `swarm → blizzard` («МЕТЕЛЬ: БЫСТРЕЕ»). Игровые ID остаются `frost`, специализации — `siege`/`swarm`.
+- Reproducible source: `tools/generate_frost_modular_candidates.py`; renderer: `tools/render_frost_modular_preview.py`; candidate source notes: `assets/spire/towers/frost/candidate/SOURCE.md`.
+- Review sheets: `candidate/review/contact_sheet_9_1x.png`, `contact_sheet_72_1x.png`, `contact_sheet_72_2x.png`.
+- Existing `experimental/` Frost art and `vfx/` remain untouched. `FROST_EXPERIMENTAL_ART=true` still selects the existing experimental set; the new modular candidate is not used by the live game.
+- Shared manifest contract supports per-tower `specialization_branches`; legacy Soul Altar defaults remain `siege → reaper`, `swarm → legion`.
+- TD renderer now positions base via `ground_anchor` and weapon via its manifest `pivot`; the review composition uses the same alignment rule.
+- No Aseprite project or SVG source is claimed. The procedural Python generator is the editable source.
+
 ## Следующий порядок работ
 
 1. [x] Владелец одобрил L1–L3 и base/Reaper/Legion 03.11.2026.
+2. [x] Алтарь душ production integration PR #376 merged; CI #41579876954 и Windows Preview #41580061364 SUCCESS.
+3. [x] Frost Obelisk candidate art pack, custom specialization mapping, pivot-aware renderer and regression tests prepared; runtime remains disabled.
+4. [ ] Получить визуальное одобрение Frost candidate на 1×.
+5. [ ] Только после одобрения — отдельный Frost runtime PR и Windows QA.
 2. [x] Скопировать шесть одобренных base/weapon PNG в production paths, сохранить source archive и подтвердить идентичность SHA.
 3. [x] Включить root manifest в main; candidate manifest оставить disabled.
 4. [x] Переиспользовать шесть существующих production VFX strips; candidate VFX не включать.
