@@ -1,8 +1,7 @@
 # Last Ritual — текущий снимок проекта
 
 Дата: 03.11.2026  
-База main перед production-интеграцией: `9a4bda8bb9b8582b74124db68e6af3e491205909`.  
-Текущая рабочая ветка: `feat/approved-soul-altar-modular-production`, PR #376 открыт; exact-head CI ожидается.
+HEAD main: `5a219a3ca17c85c3727766fa5042674fdc7bc18e` (PR #376 merged). Post-merge workflow #41580061364 — SUCCESS; Windows export опубликован.
 
 ## Запускаемая игра
 
@@ -25,8 +24,8 @@
 ## Алтарь душ — фактический статус
 
 - Владелец явно одобрил основание L1–L3 и три восьминаправленных оружейных атласа (base, Жнец, Легион) 03.11.2026.
-- На интеграционной ветке шесть production PNG скопированы из approved source archive без изменения байтов; SHA blob каждой пары candidate/production совпадает.
-- Root production manifest переведён в `status=owner_approved_production`, `runtime_enabled=true`; candidate manifest сохранён как `approved_source_archive` и остаётся runtime-disabled.
+- В main шесть production PNG скопированы из approved source archive без изменения байтов; SHA blob каждой пары candidate/production совпадает.
+- Root production manifest в main имеет `status=owner_approved_production`, `runtime_enabled=true`; candidate manifest сохранён как `approved_source_archive` и остаётся runtime-disabled.
 - Существующие шесть production projectile/impact strips переиспользуются и проверяются. Новые candidate VFX не продвигаются этим PR.
 - `scripts/topdown_td_prototype.gd` уже включает модульный рендер автоматически через `runtime_ready(manifest)`; gameplay, tower IDs, баланс и формат сохранений не менялись.
 - Reaper соответствует specialization `siege`, Legion — `swarm`; основание неподвижно, оружие выбирает одну из восьми поз.
@@ -61,34 +60,34 @@ CI не заменяет ручной запуск EXE и визуальную �
 
 - PR #372 merged (`e6f9ae202ed4259c47173e70409f262f9487f3ab`), exact-head CI #41575959537 SUCCESS.
 - `tests/test_soul_altar_compact_review.py` сверяет все девять кадров 1× с соответствующими кандидатными основаниями и северной позой оружия; workflow запускает тест автоматически.
-- Основная ветка после merge требует отдельной post-merge проверки; ручная художественная приёмка владельца не проведена.
-- Production manifest остаётся `runtime_enabled=false`; запрещено включать модульный арт до явного одобрения.
+- На момент записи этого исторического пункта production integration ещё не была выполнена; сейчас PR #376 merged и post-merge CI #41580061364 SUCCESS.
+- На момент записи production manifest был выключен; после одобрения владельца PR #376 включил его в main.
 
 ## Незакрытые риски
 
-- Exact-head CI и post-merge Windows export новой production-интеграции ещё должны завершиться.
+- PR #376 exact-head CI #41579876954 SUCCESS; post-merge main/Windows export #41580061364 SUCCESS.
 - Нужен ручной игровой QA в Windows EXE: размещение, уровни L1–L3, смена специализаций, восемь направлений и эффекты выстрела/попадания.
 - Полная миграция всех башен, врагов, окружения и UI на Pixel Art не завершена.
 - Самостоятельные gameplay ID spark/pulse ещё не интегрированы.
 - Нужен повторный ручной playtest актуальной Windows-сборки после последних изменений.
 
-## Актуальный контрольный пункт после PR #370
+## Исторический контрольный пункт после PR #370 (до одобрения и интеграции)
 
 - PR #369: компактный лист `soul_altar_9_compositions_1x.png` опубликован в `windows-preview`, main workflow #41506868156 SUCCESS.
 - PR #370: автоматический запрет случайного продвижения candidate-арта в production, exact-head CI #41507365642 SUCCESS, merged `9ec0683855e1fa342938c7768caf8a251711d0eb`.
 - Специализации: base weapon v4 (#357), Legion v5 (#365), Reaper v5 (#367); основания L1–L3 с контрастными рунами (#363).
-- Художественная приёмка владельца получена 03.11.2026; интеграция выполняется отдельным PR. На main до merge production runtime остаётся выключен.
+- Художественная приёмка владельца получена 03.11.2026; модульный renderer включён в main после PR #376.
 
 ## Следующее действие
 
-Попросить владельца оценить 9-композиционный лист на 1× и полный лист 72 направлений. При замечаниях — один art PR на одну проблему; при одобрении — отдельный PR для production integration с Windows QA. Не менять баланс и сохранения в арт-PR.
+Попросить владельца запустить свежий LastRitual.exe из windows-preview и проверить Алтарь душ в TD: L1→L2→L3, Reaper/Legion, восемь направлений, выстрел/попадание, центрирование и save/load. При дефектах — отдельные fix PR; не удалять legacy fallback до успешного QA.
 
 ## Проверка полного художественного листа — 03.11.2026
 
 - PR #374 merged: `0d63e80662ca8762a1b3475bb3d5d4e166c7b302`.
 - Exact-head CI #41578037939 SUCCESS: новый `tests/test_soul_altar_full_sheet_integrity.py` проверяет пиксели всех 72 вариантов (L1–L3 × base/Reaper/Legion × восемь направлений) против исходных кандидатных PNG.
-- После одобрения владельца production integration начата отдельной веткой; финальный CI/Windows QA ожидается.
-- Следующий шаг: просмотреть `soul_altar_9_compositions_1x.png` и `soul_altar_modular_contact_sheet_1x.png` из релиза `windows-preview`, записать замечания/одобрение; только после одобрения отдельный PR production integration.
+- PR #376 merged (`5a219a3c`); exact-head CI #41579876954 и post-merge Windows workflow #41580061364 SUCCESS; EXE опубликован в windows-preview.
+- Следующий шаг: вручную проверить свежий LastRitual.exe из `windows-preview`; художественное одобрение уже получено, теперь нужен gameplay QA.
 
 ## Production-интеграция Алтаря душ — 03.11.2026
 
@@ -96,4 +95,4 @@ CI не заменяет ручной запуск EXE и визуальную �
 - Временный workflow копирования удалён после успешного выполнения; production assets и candidate archive сохранены отдельно.
 - Root manifest включает runtime только при полном наборе слоёв и проверенных существующих VFX.
 - Обновлены Godot smoke tests и Python promotion gate: теперь они ожидают production-ready manifest и подтверждают, что candidate archive остаётся выключенным.
-- До merge ветки `main` не считать интеграцию опубликованной. Следующий ИИ: проверить PR/CI, исправить тесты при необходимости, дождаться post-merge Windows build, затем вручную проверить EXE.
+- PR #376 merged, post-merge Windows build #41580061364 SUCCESS. Следующий ИИ: помочь владельцу выполнить ручной QA EXE; legacy fallback не удалять до успешного прохождения.
