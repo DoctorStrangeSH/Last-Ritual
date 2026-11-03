@@ -5,6 +5,7 @@ const MAP_VERSION := 1
 const SLOT_COUNT := 8
 const MIN_SLOT_PATH_CLEARANCE := 54.0
 const MIN_SLOT_SPACING := 70.0
+const MAX_SYNERGY_NEIGHBOR_DISTANCE := 190.0
 const ROAD_HALF_WIDTH := 18.5
 const BUILD_SITE_RADIUS := 33.0
 
@@ -44,8 +45,8 @@ static func generate_map(seed_value: int) -> Dictionary:
     var slots: Array[Vector2] = []
     for row in range(2):
         for column in range(4):
-            var x := slot_x[column] + rng.randf_range(-24.0, 24.0)
-            var y := (150.0 + rng.randf_range(-8.0, 8.0)) if row == 0 else (438.0 + rng.randf_range(-4.0, 4.0))
+            var x := slot_x[column] + rng.randf_range(-6.0, 6.0)
+            var y := (150.0 + rng.randf_range(-4.0, 4.0)) if row == 0 else (438.0 + rng.randf_range(-2.0, 2.0))
             slots.append(Vector2(x, y))
 
     var result := {
@@ -102,6 +103,15 @@ static func validate_map(map_data: Dictionary) -> bool:
                 return false
         for branch_index in range(2, 8):
             if Vector2(lane[branch_index]).y <= Vector2(reference_lane[branch_index]).y:
+                return false
+
+    # Preserve the existing 190px tower-synergy radius: neighbouring
+    # sites in each row must remain mutually adjacent on every run seed.
+    for row in range(2):
+        for column in range(3):
+            var left_index := row * 4 + column
+            var right_index := left_index + 1
+            if Vector2(slots[left_index]).distance_to(Vector2(slots[right_index])) > MAX_SYNERGY_NEIGHBOR_DISTANCE:
                 return false
 
     for slot_index in range(slots.size()):
