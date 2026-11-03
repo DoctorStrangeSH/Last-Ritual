@@ -31,7 +31,9 @@ func run_tests() -> void:
         for shared_index in [0, 1, 8, 9]:
             check(lane[shared_index] == reference_lane[shared_index], "Assault routes share entrance and exit geometry")
         for branch_index in range(2, 8):
-            check(absf(lane[branch_index].y - reference_lane[branch_index].y) >= 38.0, "Forked corridors remain separated")
+            var branch_point: Vector2 = lane[branch_index]
+            var reference_point: Vector2 = reference_lane[branch_index]
+            check(absf(branch_point.y - reference_point.y) >= 38.0, "Forked corridors remain separated")
 
     var unique_signatures: Dictionary = {}
     for seed_value in range(256):
