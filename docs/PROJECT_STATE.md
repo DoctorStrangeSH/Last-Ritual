@@ -1,7 +1,7 @@
 # Last Ritual — текущий снимок проекта
 
 Дата: 03.11.2026  
-HEAD main: `e1300d21b6bab9c112653a700d361a24f1ef5268` (PR #376–#382 merged). Post-merge workflow #41589363962 — SUCCESS; Windows export and Fire review sheets опубликованы.
+HEAD main: `687473f3cd7a1426a8bf3f2190530d83b3dc7f2a` (PR #376–#383 merged). Post-merge workflow #41589914814 — SUCCESS; Windows export and Fire review sheets опубликованы.
 
 ## Запускаемая игра
 
@@ -64,6 +64,17 @@ HEAD main: `e1300d21b6bab9c112653a700d361a24f1ef5268` (PR #376–#382 merged). P
 - Review sheets: 9 композиций 1×, 72 позы 1×/2× в assets/spire/towers/fire/candidate/review/; опубликованы в windows-preview как fire_turret_9_compositions_1x.png, fire_turret_modular_contact_sheet_1x.png и fire_turret_modular_contact_sheet.png.
 - Gameplay ID остаётся fire; stats, damage, cooldown, economy, saves и исходные Foozle PNG не менялись.
 - Новый набор не включён в runtime и не считается одобренным. Оригинальные assets/spire/towers/fire/base, weapon, projectiles и weapon_impact сохранены.
+
+## Враги осады и Страж ритуала — review candidate (отдельная ветка)
+
+- Branch: `feat/enemy-roster-pixel-art-candidate`; six-role candidate pack generated; PR CI pending.
+- Manifest: `assets/enemies/manifest.json`, `review_candidate` / `runtime_enabled=false`.
+- Six roles: runner, brute, captain, healer, ranged, boss. Each atlas contains 8 directions × 4 walk frames at 8 FPS; regular enemies 48×48, boss 96×96.
+- Mapping: TD runner/brute/captain/healer/boss; night regular/flanker→runner, ranged→ranged, champion→brute, boss→boss.
+- Source/preview/tests: `tools/generate_enemy_roster_pixel_art.py`, `tools/render_enemy_roster_preview.py`, `tests/test_enemy_roster_pixel_art.py`.
+- Review sheets: native 1× and enlarged 2× overview and walk-cycle sheets under `assets/enemies/candidate/review/`.
+- Generator run #41605211560 passed; previous duplicate boss frame and edge-clipping issues are fixed.
+- Existing vector enemy renderer remains live. No gameplay stats, hitboxes, movement, attacks, waves or saves changed. Owner visual approval and separate runtime integration remain mandatory.
 
 ## Текущие инструменты просмотра
 
