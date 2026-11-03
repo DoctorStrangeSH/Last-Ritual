@@ -107,6 +107,11 @@ func run_tests() -> void:
 		check(base_layers.get("base_path", "") == "res://assets/spire/towers/necro/base/level_1.png", "Base layer resolves by upgrade level")
 		check(base_layers.get("weapon_frame", -1) == 2 and base_layers.get("weapon_direction", "") == "east", "Weapon layer resolves the eight-way aim frame")
 		check(base_layers.get("pivot", Vector2.ZERO) == Vector2(64, 90), "All tower layers share the documented pivot")
+		var base_rect: Rect2 = contract.layer_display_rect(Vector2(280, 190), Vector2i(128, 128), Vector2(64, 118), 120.0)
+		var weapon_rect: Rect2 = contract.layer_display_rect(Vector2(280, 190), Vector2i(128, 128), base_layers["pivot"], 120.0)
+		check(base_rect.position == Vector2(220, 79.375), "Base layer aligns its ground anchor to the build pad")
+		check(weapon_rect.position == Vector2(220, 105.625), "Weapon layer aligns its authored pivot independently of the base anchor")
+		check(contract.layer_display_rect(Vector2.ZERO, Vector2i.ZERO, Vector2.ZERO).size == Vector2.ZERO, "Invalid modular layer dimensions are rejected")
 
 		var reaper_layers: Dictionary = contract.resolve_tower_layers(manifest, 3, "siege", Vector2.ZERO, Vector2.UP)
 		check(reaper_layers.get("branch", "") == "reaper" and reaper_layers.get("weapon_frame", -1) == 0, "Reaper uses its own upper weapon and north pose")
