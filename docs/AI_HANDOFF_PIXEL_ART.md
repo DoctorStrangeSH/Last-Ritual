@@ -54,7 +54,7 @@
 
 ## Костяная баллиста — следующий модульный арт-кандидат
 
-- Candidate branch: `feat/ballista-modular-pixel-art-candidate`; PR готовится отдельно от runtime.
+- PR #380 merged (`5f34cc1c`); exact-head CI #41585101342 and post-merge Windows Preview #41585253951 SUCCESS.
 - Root manifest: `assets/spire/towers/ballista/manifest.json`; `status=review_candidate`, `runtime_enabled=false`.
 - Gameplay ID остаётся `bone`; asset folder ID — `ballista`. Не переименовывать сохранения и не менять баланс.
 - 3 основания: `candidate/base/level_1..3.png`, 128×128 RGBA.
@@ -62,7 +62,7 @@
 - Mapping: `siege → siege_bolt` (тяжёлый одиночный болт), `swarm → bone_volley` (три быстрых болта). Это сохраняет текущие специализации; никаких combat values не менялось.
 - VFX: по 8 кадров projectile (32×32) и impact (64×64) для base/siege_bolt/bone_volley.
 - Source: `tools/generate_ballista_modular_candidates.py`; renderer: `tools/render_ballista_modular_preview.py`; tests: `tests/test_ballista_modular_candidates.py`.
-- Contact sheets: `candidate/review/contact_sheet_9_1x.png`, `contact_sheet_72_1x.png`, `contact_sheet_72_2x.png`.
+- Contact sheets: `candidate/review/contact_sheet_9_1x.png`, `contact_sheet_72_1x.png`, `contact_sheet_72_2x.png`; also published in `windows-preview` as `ballista_9_compositions_1x.png`, `ballista_modular_contact_sheet_1x.png`, `ballista_modular_contact_sheet.png`.
 - Existing Foozle base/weapon/projectile/impact files remain untouched. No runtime promotion until explicit owner approval and a separate integration PR.
 - No Aseprite project is claimed; the procedural Python generator is the editable reproducible source.
 
