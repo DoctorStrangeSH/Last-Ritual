@@ -196,16 +196,19 @@ func run_tests() -> void:
         first_day.coins = 100
         first_day.select_slot(0)
         check(first_day.upgrade_selected(), "Upgrade permanent tower")
+        check(first_day.cycle_target_priority() and first_day.slots[0]["target_priority"] == "support", "Tower target priority can be changed before saving")
         first_day.altar_hp = 79
         var saved_fortress: Dictionary = first_day.export_fortress_state()
         var next_day = persistent_td_scene.instantiate()
         root.add_child(next_day)
         check(next_day.import_fortress_state(saved_fortress), "Fortress state restores on next day")
         check(next_day.slots[0]["tower"] == "bone" and int(next_day.slots[0]["level"]) == 2, "Tower and upgrade persist")
+        check(next_day.slots[0]["target_priority"] == "support", "Tower target priority persists between days")
         check(next_day.coins == 80 and next_day.altar_hp == 79, "Treasury and altar health persist")
         var bad_state := saved_fortress.duplicate(true)
         bad_state["buildings"][0]["tower"] = "invalid"
         check(not next_day.import_fortress_state(bad_state), "Invalid tower snapshot is rejected")
+        check(next_day.slots[0]["tower"] == "bone" and next_day.slots[0]["target_priority"] == "support", "Rejected snapshot does not partially overwrite the live fortress")
         first_day.queue_free()
         next_day.queue_free()
     var spec_scene = load("res://scenes/topdown_td_prototype.tscn")
@@ -231,11 +234,30 @@ func run_tests() -> void:
 
         check(spec_game.choose_specialization("siege"), "Player can choose siege specialization")
         check(spec_game.slots[0]["specialization"] == "siege", "Specialization stored on tower")
+        check(spec_game.cycle_target_priority() and spec_game.cycle_target_priority() and spec_game.slots[0]["target_priority"] == "front", "Specialized tower can save the front-targeting priority")
         var spec_snapshot: Dictionary = spec_game.export_fortress_state()
         var spec_next = spec_scene.instantiate()
         root.add_child(spec_next)
         check(spec_next.import_fortress_state(spec_snapshot), "Specialization persists across day scenes")
         check(spec_next.slots[0]["specialization"] == "siege" and int(spec_next.slots[0]["level"]) == 3, "Restored tower keeps specialization at base level three")
+        check(spec_next.slots[0]["target_priority"] == "front", "Specialized tower keeps its target priority")
+        var mismatched_seed_snapshot: Dictionary = spec_snapshot.duplicate(true)
+        mismatched_seed_snapshot["map_seed"] = int(spec_game.fortress_map_seed) + 1
+        check(not spec_next.import_fortress_state(mismatched_seed_snapshot), "Snapshot from another run seed is rejected")
+        check(spec_next.slots[0]["specialization"] == "siege" and spec_next.slots[0]["target_priority"] == "front", "Wrong-seed snapshot leaves current fortress untouched")
+        var bad_priority_snapshot: Dictionary = spec_snapshot.duplicate(true)
+        bad_priority_snapshot["buildings"][0]["target_priority"] = "invalid"
+        check(not spec_next.import_fortress_state(bad_priority_snapshot), "Unknown tower target priority is rejected")
+        var old_schema_snapshot: Dictionary = spec_snapshot.duplicate(true)
+        old_schema_snapshot.erase("map_seed")
+        for building in old_schema_snapshot["buildings"]:
+            building.erase("specialization")
+            building.erase("target_priority")
+        var old_schema_scene = spec_scene.instantiate()
+        root.add_child(old_schema_scene)
+        check(old_schema_scene.import_fortress_state(old_schema_snapshot), "Legacy snapshot without map seed and optional tower fields remains loadable")
+        check(old_schema_scene.slots[0]["specialization"] == "" and old_schema_scene.slots[0]["target_priority"] == "nearest", "Legacy snapshot receives safe default specialization and target priority")
+        old_schema_scene.queue_free()
         var legacy_snapshot: Dictionary = spec_snapshot.duplicate(true)
         legacy_snapshot["buildings"][0]["level"] = 2
         var migrated_scene = spec_scene.instantiate()
