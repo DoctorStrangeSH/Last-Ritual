@@ -13,30 +13,31 @@ static func generate_map(seed_value: int) -> Dictionary:
     rng.seed = seed_value
 
     var lane_count := 2 if posmod(seed_value, 2) == 0 else 3
-    var lane_bases: Array = [270.0, 355.0]
+    var lane_offsets: Array[float] = [-50.0, 50.0]
     if lane_count == 3:
-        lane_bases = [235.0, 295.0, 355.0]
+        lane_offsets = [-55.0, 0.0, 55.0]
 
-    # All lanes share the same broad bends, preserving a readable parallel
-    # corridor while the seed selects a different curve and horizontal drift.
+    # Every route shares an entrance and exit, then forks into distinct
+    # corridors before merging back. Seed chooses a readable bend profile.
     var bend_patterns: Array = [
-        [0.0, 18.0, -8.0, -18.0, 9.0, 20.0, -12.0, -17.0, 10.0, 0.0],
-        [0.0, -16.0, 12.0, 19.0, -10.0, -18.0, 14.0, 16.0, -12.0, 0.0],
-        [0.0, 20.0, 12.0, -14.0, -20.0, -6.0, 18.0, 12.0, -16.0, 0.0]
+        [0.0, 0.0, 18.0, -16.0, -18.0, 15.0, 18.0, -15.0, 0.0, 0.0],
+        [0.0, 0.0, -18.0, 16.0, 18.0, -15.0, -18.0, 15.0, 0.0, 0.0],
+        [0.0, 0.0, 20.0, -15.0, -18.0, 15.0, 18.0, -15.0, 0.0, 0.0]
     ]
     var bend_pattern: Array = bend_patterns[rng.randi_range(0, bend_patterns.size() - 1)]
     var bend_scale := rng.randf_range(0.88, 1.0)
-    var x_positions: Array[float] = [65.0, 165.0, 270.0, 375.0, 480.0, 590.0, 700.0, 815.0, 930.0, 1070.0]
+    var route_x_positions: Array[float] = [65.0, 165.0, 270.0, 375.0, 480.0, 590.0, 700.0, 815.0, 930.0, 1070.0]
+    for point_index in range(2, route_x_positions.size() - 2):
+        route_x_positions[point_index] += rng.randf_range(-12.0, 12.0)
+
     var paths: Array = []
     for lane_index in range(lane_count):
         var path: Array[Vector2] = []
-        var base_y := float(lane_bases[lane_index])
-        for point_index in range(x_positions.size()):
-            var x := x_positions[point_index]
-            if point_index > 0 and point_index < x_positions.size() - 1:
-                x += rng.randf_range(-12.0, 12.0)
-            var y := base_y + float(bend_pattern[point_index]) * bend_scale
-            path.append(Vector2(x, y))
+        for point_index in range(route_x_positions.size()):
+            var y := 310.0
+            if point_index >= 2 and point_index <= 7:
+                y += lane_offsets[lane_index] + float(bend_pattern[point_index]) * bend_scale
+            path.append(Vector2(route_x_positions[point_index], y))
         paths.append(path)
 
     var slot_x: Array[float] = [250.0, 425.0, 600.0, 775.0]
@@ -86,10 +87,22 @@ static func validate_map(map_data: Dictionary) -> bool:
                 var previous_point: Vector2 = path[point_index - 1]
                 if point.x <= previous_point.x:
                     return false
-            if lane_index > 0:
+            if lane_index > 0 and point_index >= 2 and point_index <= 7:
                 var previous_lane_point: Vector2 = paths[lane_index - 1][point_index]
                 if point.y - previous_lane_point.y < 38.0:
                     return false
+
+    # Routes must share two entrance and two exit waypoints, while the
+    # middle section remains ordered and separated (no crossing corridors).
+    for lane_index in range(1, paths.size()):
+        var lane: Array = paths[lane_index]
+        var reference_lane: Array = paths[0]
+        for shared_index in [0, 1, 8, 9]:
+            if Vector2(lane[shared_index]) != Vector2(reference_lane[shared_index]):
+                return false
+        for branch_index in range(2, 8):
+            if Vector2(lane[branch_index]).y <= Vector2(reference_lane[branch_index]).y:
+                return false
 
     for slot_index in range(slots.size()):
         var site: Vector2 = slots[slot_index]
