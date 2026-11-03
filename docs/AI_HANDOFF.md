@@ -2,8 +2,8 @@
 
 Обновлено: 03.11.2026  
 Репозиторий: https://github.com/DoctorStrangeSH/Last-Ritual  
-Main snapshot: 5f34cc1c3b1a4662b19241ac2f2976a3ef3416c6  
-Последний main CI: #41585253951 — SUCCESS. PR #380 (Ballista candidate) merged.
+Main snapshot: b583e6d24d15f855900c4eec237757a2c13ea065  
+Последний main CI: #41585682430 — SUCCESS. PR #380 (Ballista candidate) и #381 (handoff) merged. Активная ветка: feat/fire-turret-modular-pixel-art-candidate.
 
 ## Как продолжить
 
@@ -65,11 +65,20 @@ Main snapshot: 5f34cc1c3b1a4662b19241ac2f2976a3ef3416c6
 - Review sheets: candidate/review/contact_sheet_9_1x.png, contact_sheet_72_1x.png, contact_sheet_72_2x.png; published in windows-preview.
 - Candidate remains disabled pending owner visual approval and a separate runtime PR.
 
+### Огненная турель — текущий candidate branch
+- Branch: feat/fire-turret-modular-pixel-art-candidate; candidate pack generated, PR/CI pending.
+- Root manifest: assets/spire/towers/fire/manifest.json; review_candidate / runtime_enabled=false.
+- 3 bases, base/inferno/sparks 8-way weapon atlases, 6 VFX strips (8 frames each).
+- Mapping: siege → inferno (heavy flame cannon/explosive impact); swarm → sparks (three-spark volley). Existing UI labels remain unchanged.
+- Gameplay ID stays fire. No combat values, save IDs, legacy Foozle PNGs or live runtime paths changed.
+- Source: tools/generate_fire_turret_modular_candidates.py; preview: tools/render_fire_turret_modular_preview.py; tests: tests/test_fire_turret_modular_candidates.py.
+- Review sheets: assets/spire/towers/fire/candidate/review/contact_sheet_9_1x.png, contact_sheet_72_1x.png, contact_sheet_72_2x.png.
+- Candidate is not owner-approved. Preserve all current original fire assets and do not enable runtime.
+
 ### Next art work
-- Complete exact-head CI for the Ballista candidate PR, merge only after checks pass.
-- Owner reviews Frost and Ballista at 1×. CI/contact sheets are not artistic approval.
-- After explicit approval, prepare separate runtime PR per tower, preserving current fallback until Windows QA.
-- Fire Turret Pixel Art candidate follows Ballista; then enemies/world/UI.
+- Complete Fire candidate exact-head CI and post-merge Windows Preview; owner reviews 1× sheet.
+- Then create separate runtime PR only after explicit owner approval. Preserve Foozle fallback until manual Windows QA.
+- Next: confirm owner approval and runtime gates for Frost/Ballista; then continue world/enemy/UI migration.
 
 ## Ограничения и безопасность
 
