@@ -13,9 +13,9 @@ static func generate_map(seed_value: int) -> Dictionary:
     rng.seed = seed_value
 
     var lane_count := 2 if posmod(seed_value, 2) == 0 else 3
-    var lane_offsets: Array[float] = [-50.0, 50.0]
+    var lane_offsets: Array[float] = [-45.0, 45.0]
     if lane_count == 3:
-        lane_offsets = [-55.0, 0.0, 55.0]
+        lane_offsets = [-45.0, 0.0, 45.0]
 
     # Every route shares an entrance and exit, then forks into distinct
     # corridors before merging back. Seed chooses a readable bend profile.
