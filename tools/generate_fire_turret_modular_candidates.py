@@ -164,7 +164,7 @@ def weapon_frame(branch: str, direction_index: int) -> Image.Image:
     image=Image.new("RGBA",(128,128),c("transparent"))
     d=ImageDraw.Draw(image)
     origin=(64.0,90.0)
-    direction=DIRECTIONS[direction_index]
+    direction=(DIRECTIONS[direction_index][0]*0.76,DIRECTIONS[direction_index][1]*0.76)
     poly(d,[op(origin,direction,-12,-15),op(origin,direction,8,-18),
             op(origin,direction,17,-9),op(origin,direction,17,9),
             op(origin,direction,8,18),op(origin,direction,-12,15)],c("outline"))
@@ -204,7 +204,7 @@ def weapon_frame(branch: str, direction_index: int) -> Image.Image:
         line(d,op(origin,direction,33,-5),op(origin,direction,40,-4),c("gold"),2)
         for across in (-5,5):
             diamond(d,*op(origin,direction,24,across),3,4,c("gold"),c("outline"))
-        draw_fire_orb(d,origin,direction,48,0,7,True)
+        draw_fire_orb(d,origin,direction,42,0,5.5,True)
     else:
         for across in (-8,0,8):
             poly(d,[op(origin,direction,28,across-3),op(origin,direction,38,across-2),
