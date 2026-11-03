@@ -32,7 +32,7 @@
 - [x] Root manifest обновлён на `owner_approved_production` / `runtime_enabled=true` на интеграционной ветке.
 - [x] Существующие production VFX переиспользуются; candidate VFX остаются вне runtime.
 - [x] Добавлены/обновлены тесты manifest, alpha, 8-way и включённого runtime; старые цельные спрайты оставлены как fallback.
-- [ ] Exact-head CI PR и post-merge main workflow должны пройти.
+- [ ] PR #376: exact-head CI и post-merge main workflow должны пройти.
 - [ ] Windows EXE QA: L1→L2→L3, выбор base/Reaper/Legion, восемь направлений, projectile/impact, сохранение/загрузка.
 - [ ] Только после успешного QA рассмотреть удаление legacy assets отдельным PR после полного поиска ссылок.
 
