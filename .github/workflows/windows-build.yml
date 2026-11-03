@@ -153,6 +153,8 @@ jobs:
         run: tools/run_godot_test.sh ./Godot_v4.4.1-stable_linux.x86_64 res://tests/td_fortress_persistence_smoke.gd
       - name: Run top-down smoke tests
         run: tools/run_godot_test.sh ./Godot_v4.4.1-stable_linux.x86_64 res://tests/topdown_smoke.gd
+      - name: TD wave omens smoke
+        run: tools/run_godot_test.sh ./Godot_v4.4.1-stable_linux.x86_64 res://tests/td_wave_omens_smoke.gd
       - name: TD balance simulator (smoke config, deterministic)
         run: tools/run_godot_test.sh ./Godot_v4.4.1-stable_linux.x86_64 res://tests/td_balance_simulation.gd
 
