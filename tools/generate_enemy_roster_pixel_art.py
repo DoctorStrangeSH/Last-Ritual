@@ -180,7 +180,10 @@ def draw_ranged(p:Painter,pal,step:float,bob:float):
         p.line((-11,-11+offset),(-15,-14+offset),pal["accent"],1)
 
 
-def draw_boss(p:Painter,pal,step:float,bob:float):
+def draw_boss(p:Painter,pal,step:float,bob:float,frame:int):
+    cape_sway=(-2.0,0.0,2.0,0.0)[frame]
+    p.polygon([(-13,-7),(-20,-17+cape_sway),(-18,-1+cape_sway),(-12,6)],pal["outline"])
+    p.polygon([(-13,-6),(-18,-15+cape_sway),(-16,-2+cape_sway),(-12,4)],pal["cloth_light"])
     p.polygon([(-24,-14),(-17,-25),(-6,-28),(12,-23),(23,-12),(22,13),(12,27),(-15,25),(-25,10)],pal["outline"])
     p.polygon([(-21,-13),(-15,-22),(-5,-24),(10,-20),(19,-10),(18,11),(10,22),(-13,21),(-22,8)],pal["cloth"])
     p.polygon([(-17,-17),(-9,-23),(1,-21),(-2,-7),(-15,-4)],pal["cloth_light"])
@@ -231,7 +234,7 @@ def draw_character(role:str,direction_index:int,frame:int)->Image.Image:
     elif role=="ranged":
         draw_ranged(p,pal,step,bob)
     elif role=="boss":
-        draw_boss(p,pal,step,bob)
+        draw_boss(p,pal,step,bob,frame)
 
     # Small facing glint is authored per direction; no full-sprite rotation is used.
     if role=="boss":
