@@ -72,7 +72,7 @@ jobs:
       - name: Compile verified Soul Altar Git importer
         run: python -m py_compile tools/import_necro_git_bundle.py
       - name: Reject invalid Soul Altar Pixel Art atlases
-        run: timeout 120s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --script res://tests/soul_altar_art_gate.gd
+        run: tools/run_godot_test.sh ./Godot_v4.4.1-stable_linux.x86_64 res://tests/soul_altar_art_gate.gd
       - name: Validate standalone Soul Altar preview exporter
         run: |
           python -m py_compile tools/export_soul_altar_preview.py
@@ -81,7 +81,7 @@ jobs:
       - name: Compile Soul Altar review frame exporter
         run: python -m py_compile tools/export_soul_altar_review_frames.py
       - name: Validate assembled Soul Altar Pixel Art review source
-        run: timeout 120s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --script res://tests/soul_altar_assembled_review_smoke.gd
+        run: tools/run_godot_test.sh ./Godot_v4.4.1-stable_linux.x86_64 res://tests/soul_altar_assembled_review_smoke.gd
       - name: Verify reproducible modular Pixel Art source
         run: |
           python -m pip install Pillow
@@ -142,17 +142,17 @@ jobs:
           python -c "from PIL import Image; im=Image.open('build/enemy_roster_8way_2x.png'); assert im.size == (892, 884), im.size"
           python -c "from PIL import Image; im=Image.open('build/enemy_walk_cycles_2x.png'); assert im.size == (460, 884), im.size"
       - name: Validate candidate Soul Altar modular Pixel Art
-        run: timeout 120s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --script res://tests/soul_altar_modular_candidate_smoke.gd
+        run: tools/run_godot_test.sh ./Godot_v4.4.1-stable_linux.x86_64 res://tests/soul_altar_modular_candidate_smoke.gd
       - name: Run isolated Soul Altar modular motion preview smoke tests
-        run: timeout 120s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --script res://tests/soul_altar_modular_motion_preview_smoke.gd
+        run: tools/run_godot_test.sh ./Godot_v4.4.1-stable_linux.x86_64 res://tests/soul_altar_modular_motion_preview_smoke.gd
       - name: Run modular tower asset contract tests
-        run: timeout 120s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --script res://tests/td_modular_tower_assets_smoke.gd
+        run: tools/run_godot_test.sh ./Godot_v4.4.1-stable_linux.x86_64 res://tests/td_modular_tower_assets_smoke.gd
       - name: Run deterministic TD run-map generation tests
-        run: timeout 120s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --script res://tests/td_run_map_generation_smoke.gd
+        run: tools/run_godot_test.sh ./Godot_v4.4.1-stable_linux.x86_64 res://tests/td_run_map_generation_smoke.gd
       - name: Run five-day fortress persistence tests
-        run: timeout 120s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --script res://tests/td_fortress_persistence_smoke.gd
+        run: tools/run_godot_test.sh ./Godot_v4.4.1-stable_linux.x86_64 res://tests/td_fortress_persistence_smoke.gd
       - name: Run top-down smoke tests
-        run: timeout 120s ./Godot_v4.4.1-stable_linux.x86_64 --headless --path . --script res://tests/topdown_smoke.gd
+        run: tools/run_godot_test.sh ./Godot_v4.4.1-stable_linux.x86_64 res://tests/topdown_smoke.gd
 
   windows-preview:
     # Export templates and EXE are never downloaded/built for PRs.

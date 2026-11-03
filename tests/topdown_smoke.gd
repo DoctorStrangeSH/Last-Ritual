@@ -938,9 +938,9 @@ func run_tests() -> void:
     if specialization_balance_scene != null:
         var control_game = specialization_balance_scene.instantiate()
         root.add_child(control_game)
-        var active_captain := {"role": "captain", "pos": Vector2.ZERO, "delay": 0.0, "hp": 24}
-        var controlled_grunt := {"role": "grunt", "pos": Vector2(30, 0), "delay": 0.0}
-        var controlled_boss := {"role": "boss", "pos": Vector2(40, 0), "delay": 0.0}
+        var active_captain := {"role": "captain", "pos": Vector2.ZERO, "delay": 0.0, "hp": 24, "max_hp": 24}
+        var controlled_grunt := {"role": "grunt", "pos": Vector2(30, 0), "delay": 0.0, "hp": 5, "max_hp": 5}
+        var controlled_boss := {"role": "boss", "pos": Vector2(40, 0), "delay": 0.0, "hp": 55, "max_hp": 55}
         control_game.enemies.clear()
         control_game.enemies.append(active_captain)
         control_game.enemies.append(controlled_grunt)
@@ -1015,7 +1015,7 @@ func run_tests() -> void:
         var lifecycle_game = specialization_balance_scene.instantiate()
         root.add_child(lifecycle_game)
         for index in range(100):
-            lifecycle_game.shot_trails.append({"time": 0.18, "kind": "fire", "id": index})
+            lifecycle_game.shot_trails.append({"time": 0.18, "kind": "fire", "id": index, "from": Vector2(100, 100), "to": Vector2(140, 100)})
         lifecycle_game.update_shot_trails(0.05)
         check(lifecycle_game.shot_trails.size() == 64, "Dense fights retain at most 64 temporary shot trails")
         check(int(lifecycle_game.shot_trails[0]["id"]) == 36 and int(lifecycle_game.shot_trails[-1]["id"]) == 99, "Newest traces are retained when trimming")
@@ -1028,7 +1028,7 @@ func run_tests() -> void:
         check(not debug_game.performance_overlay_visible, "Performance overlay starts hidden")
         debug_game.shot_trails.clear()
         for index in range(35):
-            debug_game.shot_trails.append({"time": 0.18, "kind": "fire"})
+            debug_game.shot_trails.append({"time": 0.18, "kind": "fire", "from": Vector2(100, 100), "to": Vector2(140, 100)})
         var snapshot: Dictionary = debug_game.performance_snapshot()
         check(int(snapshot["trails_stored"]) == 35 and int(snapshot["trails_visible"]) == 28, "Performance overlay reports rendered and stored traces separately")
         check(int(snapshot["enemies"]) == debug_game.enemies.size() and int(snapshot["spirits"]) == debug_game.summoned_spirits.size(), "Performance overlay counts active enemies and spirits")
@@ -1324,7 +1324,7 @@ func run_tests() -> void:
         check(not repairs.repair_altar(), "Cannot repair fully healed altar")
         repairs.altar_hp = 40
         repairs.coins = 100
-        repairs.enemies.append({"role": "grunt"})
+        repairs.enemies.append({"role": "grunt", "pos": Vector2(-200, -200), "hp": 1, "max_hp": 1, "delay": 99.0, "lane": 0, "waypoint": 1, "speed": 0.0})
         check(not repairs.repair_altar(), "Cannot repair during active enemy wave")
         repairs.enemies.clear()
         repairs.wave_number = 6
@@ -1352,7 +1352,7 @@ func run_tests() -> void:
         root.add_child(following_day)
         check(following_day.import_fortress_state(transfer), "Relocated layout survives day transition")
         check(following_day.slots[4]["tower"] == "fire" and following_day.slots[0]["tower"] == "", "Tower stays in relocated slot")
-        layout.enemies.append({"role": "grunt"})
+        layout.enemies.append({"role": "grunt", "pos": Vector2(-200, -200), "hp": 1, "max_hp": 1, "delay": 99.0, "lane": 0, "waypoint": 1, "speed": 0.0})
         check(not layout.relocate_tower(4, 5), "Cannot move tower during attack")
         layout.queue_free()
         following_day.queue_free()
@@ -2646,8 +2646,8 @@ func run_tests() -> void:
             var siege: int = audit_damage.direct_damage(school, level, "siege", 0, 0)
             var swarm: int = audit_damage.direct_damage(school, level, "swarm", 0, 0)
             check(plain == base * level, "Hit audit: %s level %d scales direct hit" % [school, level])
-            check(siege == plain + 2, "Hit audit: %s siege gives two hit damage" % [school, level])
-            check(swarm == maxi(1, plain - 1), "Hit audit: %s swarm trades hit damage for tempo" % [school, level])
+            check(siege == plain + 2, "Hit audit: %s level %d siege gives two hit damage" % [school, level])
+            check(swarm == maxi(1, plain - 1), "Hit audit: %s level %d swarm trades hit damage for tempo" % [school, level])
             var invested: int = gold + (20 if level >= 2 else 0) + (40 if level >= 3 else 0)
             check(invested >= gold and invested > 0, "Hit audit: %s level %d invested coins positive" % [school, level])
     check(audit_damage.direct_damage("bone", 1, "", 0, 1) == 3, "Bone affinity adds to direct hit")
