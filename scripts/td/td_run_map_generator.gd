@@ -17,7 +17,7 @@ static func generate_map(seed_value: int) -> Dictionary:
     var amplitude := 14.0
     if lane_count == 3:
         lane_bases = [235.0, 295.0, 355.0]
-        amplitude = 8.0
+        amplitude = 10.0
 
     var x_positions: Array[float] = [65.0, 165.0, 270.0, 375.0, 480.0, 590.0, 700.0, 815.0, 930.0, 1070.0]
     var paths: Array = []
@@ -68,7 +68,9 @@ static func validate_map(map_data: Dictionary) -> bool:
         var path: Array = paths[lane_index]
         if path.size() != 10:
             return false
-        if not is_equal_approx(Vector2(path[0]).x, 65.0) or not is_equal_approx(Vector2(path[path.size() - 1]).x, 1070.0):
+        var first_point: Vector2 = path[0]
+        var last_point: Vector2 = path[path.size() - 1]
+        if not is_equal_approx(first_point.x, 65.0) or not is_equal_approx(last_point.x, 1070.0):
             return false
         for point_index in range(path.size()):
             var point: Vector2 = path[point_index]
@@ -78,7 +80,7 @@ static func validate_map(map_data: Dictionary) -> bool:
                 return false
             if lane_index > 0:
                 var previous_lane_point: Vector2 = paths[lane_index - 1][point_index]
-                if point.y - previous_lane_point.y < 42.0:
+                if point.y - previous_lane_point.y < 38.0:
                     return false
 
     for slot_index in range(slots.size()):
@@ -86,7 +88,8 @@ static func validate_map(map_data: Dictionary) -> bool:
         if site.x < 100.0 or site.x > 900.0 or site.y < 110.0 or site.y > 480.0:
             return false
         for other_index in range(slot_index):
-            if site.distance_to(Vector2(slots[other_index])) < MIN_SLOT_SPACING:
+            var other_site: Vector2 = slots[other_index]
+            if site.distance_to(other_site) < MIN_SLOT_SPACING:
                 return false
         for path in paths:
             for segment_index in range(path.size() - 1):
