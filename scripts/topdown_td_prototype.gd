@@ -28,7 +28,7 @@ const TD_NECRO_SPIRITS = preload("res://scripts/td/td_necro_spirits.gd")
 const TD_NECRO_ATTACK_PROFILE = preload("res://scripts/td/td_necro_attack_profile.gd")
 const TD_FROST_EFFECT = preload("res://scripts/td/td_frost_effect.gd")
 var sfx: Node
-const SLOT_POSITIONS := [Vector2(280, 190), Vector2(430, 190), Vector2(590, 190), Vector2(750, 190), Vector2(280, 440), Vector2(430, 440), Vector2(590, 440), Vector2(750, 440)]
+var slot_positions: Array = []
 const COSTS = TD_TOWER_STATS.COSTS
 const WAVE_BUTTON := Rect2(65, 545, 170, 60)
 const REPAIR_BUTTON := Rect2(485, 474, 225, 54)
@@ -62,15 +62,17 @@ var bone_synergy_bonus := 0
 var necro_kill_bonus := 0
 var necro_kill_streak := 0
 var summoned_spirits: Array[Dictionary] = []
-const TD_PATH_LAYOUTS = preload("res://scripts/td/td_path_layouts.gd")
-# Compatibility: active fortress uses the original layout until run-level
-# seed persistence and slot-layout validation are integrated in stage 179.
+const TD_RUN_MAP_GENERATOR = preload("res://scripts/td/td_run_map_generator.gd")
 var fortress_map_seed := 0
-var paths: Array = TD_PATH_LAYOUTS.layout_for_seed(0)
+var paths: Array = []
 
 func set_fortress_map_seed(seed_value: int) -> void:
     fortress_map_seed = seed_value
-    paths = TD_PATH_LAYOUTS.layout_for_seed(seed_value)
+    var generated_map: Dictionary = TD_RUN_MAP_GENERATOR.generate_map(seed_value)
+    paths = generated_map["paths"]
+    slot_positions = generated_map["slots"]
+    for slot_index in range(mini(slots.size(), slot_positions.size())):
+        slots[slot_index]["pos"] = slot_positions[slot_index]
     queue_redraw()
 var enemies: Array[Dictionary] = []
 var wave_number := 0
@@ -752,8 +754,9 @@ func _ready() -> void:
     modular_necro_enabled = MODULAR_ASSETS.runtime_ready(modular_necro_manifest)
     sfx = SFX_SCRIPT.new()
     add_child(sfx)
-    for i in range(SLOT_POSITIONS.size()):
-        slots.append({"id": i, "pos": SLOT_POSITIONS[i], "tower": "", "level": 0, "specialization": "", "target_priority": "nearest"})
+    set_fortress_map_seed(fortress_map_seed)
+    for i in range(slot_positions.size()):
+        slots.append({"id": i, "pos": slot_positions[i], "tower": "", "level": 0, "specialization": "", "target_priority": "nearest"})
     queue_redraw()
 
 func export_fortress_state() -> Dictionary:
@@ -864,7 +867,7 @@ func relocate_tower(source_id: int, destination_id: int) -> bool:
     slots[destination_id] = building
     slots[destination_id]["id"] = destination_id
     slots[destination_id]["pos"] = destination_pos
-    slots[source_id] = {"id": source_id, "pos": SLOT_POSITIONS[source_id], "tower": "", "level": 0, "specialization": "", "target_priority": "nearest"}
+    slots[source_id] = {"id": source_id, "pos": slot_positions[source_id], "tower": "", "level": 0, "specialization": "", "target_priority": "nearest"}
     tower_cooldowns.erase(source_id)
     tower_cooldowns[destination_id] = 0.0
     selected_slot = destination_id
