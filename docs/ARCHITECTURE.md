@@ -32,6 +32,8 @@
 
 Ключевые smoke tests:
 - tests/topdown_smoke.gd
+- tests/td_run_map_generation_smoke.gd
+- tests/td_fortress_persistence_smoke.gd (five-day fortress transfer coverage)
 - tests/td_modular_tower_assets_smoke.gd
 - tests/soul_altar_art_gate.gd
 - tests/soul_altar_assembled_review_smoke.gd
