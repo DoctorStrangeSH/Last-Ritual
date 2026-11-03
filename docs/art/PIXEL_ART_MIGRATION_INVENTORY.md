@@ -1,7 +1,7 @@
 # Pixel Art Migration Inventory & Legacy Sprite Removal Plan
 
 **Updated: 03.11.2026 — current main snapshot.**  
-Main: 5f34cc1c3b1a4662b19241ac2f2976a3ef3416c6. Soul Altar production art is integrated by PR #376; Frost modular art is candidate-only (PR #378); Ballista modular art is candidate-only (PR #380).
+Main: b583e6d24d15f855900c4eec237757a2c13ea065. Soul Altar production art is integrated by PR #376; Frost modular art is candidate-only (PR #378); Ballista modular art is candidate-only (PR #380). Fire Turret candidate is in a separate PR branch.
 
 This is the authoritative working inventory for replacing old sprite families and then removing them safely. It does not claim that the complete game has already migrated to Pixel Art.
 
@@ -26,7 +26,7 @@ Do not rename gameplay IDs or migrate save data during art-only PRs. Do not trea
 | Soul Altar (necro) | Owner-approved modular bases L1–L3 and base/Reaper/Legion eight-way weapon atlases; PR #376 | runtime enabled; legacy fallback retained | Owner Windows EXE QA, then separate legacy cleanup |
 | Frost Obelisk (frost) | PR #378 candidate pack: 3 bases, 3 eight-way weapon branches, 6 VFX strips, 9/72 contact sheets | runtime disabled; current experimental/Foozle assets unchanged | Owner visual approval at 1×, then separate runtime PR and Windows QA |
 | Bone Ballista (bone / ballista) | Candidate pack in progress: 3 bases, base/siege_bolt/bone_volley 8-way weapon branches, 6 VFX strips, 9/72 contact sheets | runtime disabled; original Foozle assets unchanged | Candidate PR CI, owner visual approval at 1×, then separate runtime PR and Windows QA |
-| Fire Turret (fire) | Existing Foozle source kit | legacy runtime | Pixel Art candidate, owner approval and separate runtime PR |
+| Fire Turret (fire) | New modular candidate pack prepared in feat/fire-turret-modular-pixel-art-candidate: 3 bases, base/inferno/sparks 8-way weapons, 6 VFX strips, 9/72 contact sheets | runtime disabled; original Foozle assets unchanged | Exact-head CI, owner visual approval at 1×, separate runtime PR and Windows QA |
 
 ## Soul Altar — production details
 
@@ -56,6 +56,16 @@ Do not rename gameplay IDs or migrate save data during art-only PRs. Do not trea
 - Source: tools/generate_ballista_modular_candidates.py; renderer: tools/render_ballista_modular_preview.py; tests: tests/test_ballista_modular_candidates.py.
 - Existing Foozle source/base/weapon/projectile/impact files remain untouched pending approval and separate runtime integration.
 
+## Fire Turret — candidate details
+
+- Candidate branch: feat/fire-turret-modular-pixel-art-candidate; PR/CI pending.
+- Manifest: assets/spire/towers/fire/manifest.json; review_candidate / runtime_enabled=false.
+- 3 bases; weapon branches base/inferno/sparks; six eight-frame VFX strips.
+- Mapping: siege → inferno (heavy flame cannon/explosive impact); swarm → sparks (three-spark volley). Existing gameplay ID and labels are unchanged.
+- Source: tools/generate_fire_turret_modular_candidates.py; renderer: tools/render_fire_turret_modular_preview.py; tests: tests/test_fire_turret_modular_candidates.py.
+- Review sheets: candidate/review/contact_sheet_9_1x.png, contact_sheet_72_1x.png, contact_sheet_72_2x.png.
+- All original Foozle base/weapon/projectiles/weapon_impact files remain untouched. No runtime promotion without owner approval and a separate integration PR.
+
 ## Existing legacy families eligible for later removal
 
 | Family / path | Current role | Removal gate |
@@ -75,8 +85,8 @@ The old SVG cleanup is complete (PR #314 and prior cleanup PRs). Recount tracked
 
 1. Soul Altar production integration — complete; owner Windows QA pending.
 2. Frost Obelisk candidate — complete as candidate; owner visual approval and runtime integration pending.
-3. Bone Ballista candidate — in progress; owner visual approval and runtime integration pending.
-4. Fire Turret Pixel Art candidate and integration.
+3. Bone Ballista candidate — complete as candidate; owner visual approval and runtime integration pending.
+4. Fire Turret candidate — prepared in active PR; owner visual approval and runtime integration pending.
 5. Reconcile Spark/Pulse art identities only against actual runtime gameplay IDs.
 6. Enemies and bosses.
 7. Hero and player VFX.
