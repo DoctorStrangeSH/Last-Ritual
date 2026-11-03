@@ -181,7 +181,8 @@ def draw_ranged(p:Painter,pal,step:float,bob:float):
 
 
 def draw_boss(p:Painter,pal,step:float,bob:float,frame:int):
-    # A wider, four-position mantle sweep remains visible behind the silhouette at 1x.\n    cape_sway=(-5.0,-1.0,5.0,1.0)[frame]
+    # A wider, four-position mantle sweep remains visible behind the silhouette at 1x.
+    cape_sway=(-5.0,-1.0,5.0,1.0)[frame]
     p.polygon([(-13,-7),(-20,-17+cape_sway),(-18,-1+cape_sway),(-12,6)],pal["outline"])
     p.polygon([(-13,-6),(-18,-15+cape_sway),(-16,-2+cape_sway),(-12,4)],pal["cloth_light"])
     p.polygon([(-24,-14),(-17,-25),(-6,-28),(12,-23),(23,-12),(22,13),(12,27),(-15,25),(-25,10)],pal["outline"])
@@ -201,7 +202,12 @@ def draw_boss(p:Painter,pal,step:float,bob:float,frame:int):
     p.circle(18,4,2.2,pal["eye"])
     p.polygon([(-7,-2),(2,-9),(11,-4),(13,8),(5,16),(-7,12)],pal["outline"])
     p.polygon([(-5,-1),(2,-6),(8,-2),(10,7),(4,12),(-5,9)],pal["core"])
-    # The ritual core breathes through four distinct shapes, preventing a false\n    # four-frame walk cycle where the boss collapses to only three unique poses.\n    core_offsets=((0,-1),(1,0),(0,1),(-1,0))\n    core_x,core_y=core_offsets[frame]\n    p.diamond(3+core_x,3+core_y,3,5+frame,pal["metal_light"])\n    p.circle(3+core_x,3+core_y,1.0+frame*.35,pal["core"])
+    # The ritual core breathes through four distinct shapes, preventing a false
+    # four-frame walk cycle where the boss collapses to only three unique poses.
+    core_offsets=((0,-1),(1,0),(0,1),(-1,0))
+    core_x,core_y=core_offsets[frame]
+    p.diamond(3+core_x,3+core_y,3,5+frame,pal["metal_light"])
+    p.circle(3+core_x,3+core_y,1.0+frame*.35,pal["core"])
     p.line((-4,17),(8,17),pal["metal_light"],2)
     p.line((-12,-18),(-18,-29),pal["outline"],4)
     p.line((-11,-18),(-18,-28),pal["metal_light"],2)
@@ -296,17 +302,25 @@ def generate_assets(output_root:Path)->list[Path]:
         atlas_for_role(role).save(path,optimize=False)
         written.append(path)
     manifest=output_root/"manifest.json"
-    manifest.write_text(json.dumps(manifest_data(),ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+    manifest.write_text(json.dumps(manifest_data(),ensure_ascii=False,indent=2)+"
+",encoding="utf-8")
     written.append(manifest)
     source=candidate/"SOURCE.md"
     source.write_text(
-        "# Враги осады — модульный Pixel Art кандидат\n\n"
-        "Статус: **review candidate**, не production. Владелец ещё не принимал набор для runtime.\n\n"
+        "# Враги осады — модульный Pixel Art кандидат
+
+"
+        "Статус: **review candidate**, не production. Владелец ещё не принимал набор для runtime.
+
+"
         "Роли: runner, brute, captain, healer, ranged и boss. Для каждого подготовлены 8 направлений × 4 кадра ходьбы. "
-        "Обычные враги используют кадр 48×48; Страж ритуала — 96×96. Атласы: 4 колонки (кадры) × 8 строк (N, NE, E, SE, S, SW, W, NW).\n\n"
+        "Обычные враги используют кадр 48×48; Страж ритуала — 96×96. Атласы: 4 колонки (кадры) × 8 строк (N, NE, E, SE, S, SW, W, NW).
+
+"
         "Воспроизводимый источник: tools/generate_enemy_roster_pixel_art.py. "
         "Оригинальный векторный рендер игры не меняется; manifest runtime_enabled=false. "
-        "Aseprite-файл не создан и не заявляется.\n",
+        "Aseprite-файл не создан и не заявляется.
+",
         encoding="utf-8")
     written.append(source)
     return written
