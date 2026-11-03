@@ -48,8 +48,7 @@ static func generate_map(seed_value: int) -> Dictionary:
     for row in range(2):
         for column in range(4):
             var x := slot_x[column] + rng.randf_range(-24.0, 24.0)
-            var y := (150.0 + rng.randf_range(-8.0, 8.0)) if row == 0 else (438.0 + rng.randf_range(-4.0, 4.0)
-            )
+            var y := 150.0 + rng.randf_range(-8.0, 8.0) if row == 0 else 438.0 + rng.randf_range(-4.0, 4.0)
             slots.append(Vector2(x, y))
 
     return {
