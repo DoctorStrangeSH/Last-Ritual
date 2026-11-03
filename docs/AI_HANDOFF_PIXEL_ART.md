@@ -60,7 +60,7 @@
 
 Root manifest: `status=owner_approved_production`, `runtime_enabled=true`. Candidate manifest: `status=approved_source_archive`, `runtime_enabled=false`. Candidate PNGs remain preserved. Production reuses the existing six validated VFX strips; candidate VFX are not promoted. Aseprite project does not exist; do not fabricate one. The reproducible source is `tools/generate_necro_modular_candidates.py`.
 
-До merge PR в main считать production integration веткой разработки, не опубликованным релизом. После merge дождаться Windows export и провести ручной QA.
+Production integration PR #376 открыт. До его merge в main считать это веткой разработки, не опубликованным релизом. После merge дождаться Windows export и провести ручной QA.
 
 ## Контрольные листы и preview
 
