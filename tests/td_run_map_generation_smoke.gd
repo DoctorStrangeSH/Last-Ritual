@@ -36,9 +36,14 @@ func run_tests() -> void:
             check(absf(branch_point.y - reference_point.y) >= 38.0, "Forked corridors remain separated")
 
     var unique_signatures: Dictionary = {}
+    var min_first_site_x := INF
+    var max_first_site_x := -INF
     for seed_value in range(256):
         var generated: Dictionary = generator.generate_map(seed_value)
-        check(generator.validate_map(generated), "Seed %d map passes geometry checks" % seed_value)
+        check(generator.validate_map(generated), "Seed %d map respects road, gate, UI and site geometry" % seed_value)
+        var first_site: Vector2 = generated["slots"][0]
+        min_first_site_x = minf(min_first_site_x, first_site.x)
+        max_first_site_x = maxf(max_first_site_x, first_site.x)
         for row in range(2):
             for column in range(3):
                 var left_site: Vector2 = generated["slots"][row * 4 + column]
@@ -46,6 +51,7 @@ func run_tests() -> void:
                 check(left_site.distance_to(right_site) <= 190.0, "Seed %d preserves tower synergy adjacency" % seed_value)
         unique_signatures[str(generated)] = true
     check(unique_signatures.size() >= 250, "Different run seeds produce meaningfully different maps")
+    check(max_first_site_x - min_first_site_x >= 60.0, "Build-site grid shifts substantially across run seeds")
 
     var changed: Dictionary = generator.generate_map(43)
     check(first["paths"] != changed["paths"], "Adjacent run seeds can produce different route geometry")
