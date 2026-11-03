@@ -76,8 +76,10 @@ static func validate_map(map_data: Dictionary) -> bool:
             var point: Vector2 = path[point_index]
             if point.y < 200.0 or point.y > 400.0:
                 return false
-            if point_index > 0 and point.x <= Vector2(path[point_index - 1]).x:
-                return false
+            if point_index > 0:
+                var previous_point: Vector2 = path[point_index - 1]
+                if point.x <= previous_point.x:
+                    return false
             if lane_index > 0:
                 var previous_lane_point: Vector2 = paths[lane_index - 1][point_index]
                 if point.y - previous_lane_point.y < 38.0:
