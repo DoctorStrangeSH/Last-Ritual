@@ -1,0 +1,60 @@
+name: Promote owner-approved Soul Altar layers (one-shot)
+on:
+  push:
+    branches: [feat/approved-soul-altar-modular-production]
+    paths:
+      - .github/workflows/promote-soul-altar-once.yml
+permissions:
+  contents: write
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/approved-soul-altar-modular-production
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install Pillow
+      - name: Verify reproducible approved source
+        run: python tools/generate_necro_modular_candidates.py --verify
+      - name: Copy the six approved layers without altering the archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p assets/spire/towers/necro/base
+          mkdir -p assets/spire/towers/necro/weapon/base
+          mkdir -p assets/spire/towers/necro/weapon/reaper
+          mkdir -p assets/spire/towers/necro/weapon/legion
+          for file in \
+            base/level_1.png base/level_2.png base/level_3.png \
+            weapon/base/weapon_8way.png \
+            weapon/reaper/weapon_8way.png \
+            weapon/legion/weapon_8way.png; do
+            source="assets/spire/towers/necro/candidate/$file"
+            target="assets/spire/towers/necro/$file"
+            test -s "$source"
+            test ! -e "$target"
+            cp "$source" "$target"
+            cmp "$source" "$target"
+          done
+          python - <<'PY'
+          from pathlib import Path
+          from PIL import Image
+          root = Path("assets/spire/towers/necro")
+          files = [root / f"base/level_{i}.png" for i in (1,2,3)]
+          files += [root / f"weapon/{branch}/weapon_8way.png" for branch in ("base","reaper","legion")]
+          for path in files:
+              with Image.open(path) as im:
+                  im = im.convert("RGBA")
+                  expected = (128,128) if "/base/" in str(path) else (1024,128)
+                  assert im.size == expected, (path, im.size, expected)
+                  assert im.getchannel("A").getbbox(), f"empty alpha: {path}"
+                  for corner in ((0,0),(im.width-1,0),(0,im.height-1),(im.width-1,im.height-1)):
+                      assert im.getpixel(corner)[3] == 0, (path, corner)
+          print("Six owner-approved production layers pass dimensions and alpha checks.")
+          PY
+          git add assets/spire/towers/necro/base/level_1.png assets/spire/towers/necro/base/level_2.png assets/spire/towers/necro/base/level_3.png assets/spire/towers/necro/weapon/base/weapon_8way.png assets/spire/towers/necro/weapon/reaper/weapon_8way.png assets/spire/towers/necro/weapon/legion/weapon_8way.png
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'Promote owner-approved Soul Altar base and weapon art'
+          git push origin HEAD:feat/approved-soul-altar-modular-production
