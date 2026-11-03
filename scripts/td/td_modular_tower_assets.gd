@@ -47,10 +47,28 @@ static func direction_index(origin: Vector2, target: Vector2) -> int:
 static func direction_name(index: int) -> String:
 	return str(DIRECTION_ORDER[posmod(index, DIRECTION_ORDER.size())])
 
-static func specialization_key(specialization: String) -> String:
+static func specialization_key(specialization: String, manifest: Dictionary = {}) -> String:
 	if specialization.is_empty():
 		return "base"
-	return str(SPECIALIZATION_BRANCH.get(specialization, ""))
+	var mapping: Dictionary = manifest.get("specialization_branches", SPECIALIZATION_BRANCH)
+	return str(mapping.get(specialization, ""))
+
+static func branch_names(manifest: Dictionary) -> Array[String]:
+	var names: Array[String] = ["base"]
+	var mapping: Dictionary = manifest.get("specialization_branches", SPECIALIZATION_BRANCH)
+	for specialization in ["siege", "swarm"]:
+		var branch := str(mapping.get(specialization, ""))
+		if not branch.is_empty() and not names.has(branch):
+			names.append(branch)
+	return names
+
+static func _safe_branch_key(branch: String) -> bool:
+	if branch.is_empty() or branch == "." or branch == "..":
+		return false
+	for character in branch:
+		if not ((character >= "a" and character <= "z") or (character >= "0" and character <= "9") or character == "_"):
+			return false
+	return true
 
 static func validate_manifest(manifest: Dictionary) -> Dictionary:
 	var errors: Array[String] = []
@@ -68,6 +86,21 @@ static func validate_manifest(manifest: Dictionary) -> Dictionary:
 	if typeof(pivot) != TYPE_ARRAY or pivot.size() != 2:
 		errors.append("Canvas pivot must contain x and y")
 
+	var specialization_branches: Variant = manifest.get("specialization_branches", SPECIALIZATION_BRANCH)
+	if typeof(specialization_branches) != TYPE_DICTIONARY:
+		errors.append("specialization_branches must be a dictionary")
+	else:
+		var used_branches: Array[String] = ["base"]
+		for specialization in ["siege", "swarm"]:
+			var branch_name := str(specialization_branches.get(specialization, ""))
+			if not _safe_branch_key(branch_name):
+				errors.append("Missing or unsafe branch for specialization " + specialization)
+			elif used_branches.has(branch_name):
+				errors.append("Specialization branches must be unique and cannot reuse base")
+			else:
+				used_branches.append(branch_name)
+
+	var branches := branch_names(manifest)
 	var base: Dictionary = manifest.get("base", {})
 	var levels: Dictionary = base.get("levels", {})
 	for level in ["1", "2", "3"]:
@@ -75,21 +108,21 @@ static func validate_manifest(manifest: Dictionary) -> Dictionary:
 			errors.append("Missing or unsafe base path for level " + level)
 
 	var weapon: Dictionary = manifest.get("weapon", {})
-	for branch in ["base", "reaper", "legion"]:
+	for branch in branches:
 		var entry: Dictionary = weapon.get(branch, {})
 		_validate_sheet(entry, "weapon/" + branch, 8, false, errors)
 		if entry.get("direction_order", []) != DIRECTION_ORDER:
 			errors.append("weapon/" + branch + " direction_order must be the canonical eight directions")
 
 	var projectiles: Dictionary = manifest.get("projectiles", {})
-	for branch in ["base", "reaper", "legion"]:
+	for branch in branches:
 		var entry: Dictionary = projectiles.get(branch, {})
 		_validate_sheet(entry, "projectiles/" + branch, 8, true, errors)
 		if str(entry.get("forward_axis", "")) != "+X":
 			errors.append("projectiles/" + branch + " must declare +X as its forward axis")
 
 	var impacts: Dictionary = manifest.get("impacts", {})
-	for branch in ["base", "reaper", "legion"]:
+	for branch in branches:
 		var entry: Dictionary = impacts.get(branch, {})
 		_validate_sheet(entry, "impacts/" + branch, 8, true, errors)
 
@@ -120,7 +153,7 @@ static func _safe_relative_path(path: String) -> bool:
 static func resolve_tower_layers(manifest: Dictionary, level: int, specialization: String, origin: Vector2, target: Vector2) -> Dictionary:
 	if level < 1 or level > 3 or not bool(validate_manifest(manifest).get("valid", false)):
 		return {}
-	var branch := specialization_key(specialization)
+	var branch := specialization_key(specialization, manifest)
 	if branch.is_empty():
 		return {}
 	var root := "res://assets/spire/towers/%s/" % str(manifest.get("id", ""))
@@ -177,7 +210,7 @@ static func missing_runtime_art(manifest: Dictionary) -> Array[String]:
 		if not _transparent_png_ready(base_path, base_size, 1):
 			missing.append(base_path)
 	for category in ["weapon", "projectiles", "impacts"]:
-		for branch in ["base", "reaper", "legion"]:
+		for branch in branch_names(manifest):
 			var entry: Dictionary = manifest.get(category, {}).get(branch, {})
 			var dims: Array = entry.get("frame_size", [0, 0])
 			var path: String = root + str(entry.get("path", ""))
@@ -205,7 +238,7 @@ static func runtime_ready(manifest: Dictionary) -> bool:
 			return false
 	for group_name in ["weapon", "projectiles", "impacts"]:
 		var group: Dictionary = manifest.get(group_name, {})
-		for branch in ["base", "reaper", "legion"]:
+		for branch in branch_names(manifest):
 			var entry: Dictionary = group.get(branch, {})
 			var dimensions: Array = entry.get("frame_size", [])
 			if dimensions.size() != 2:
