@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "id": "battlefield",
+  "display_name": "Поле боя крепости",
+  "status": "review_candidate",
+  "runtime_enabled": false,
+  "source": "tools/generate_battlefield_pixel_art.py",
+  "root": "res://assets/battlefield/candidate/",
+  "textures": {
+    "ground": "ground_256.png",
+    "road": "road_64.png",
+    "pad_empty": "pad_empty_64.png",
+    "pad_built": "pad_built_64.png",
+    "altar": "altar_128.png",
+    "props": "props_8x32.png",
+    "gate": "gate_48x64.png",
+    "wall": "wall_48x66.png"
+  },
+  "tiles": {"ground": 256, "road": 64},
+  "anchors": {"pad": [31.5, 33.5], "altar_ground": [63.5, 104], "prop_ground": [16, 27]},
+  "notes": "Hand-authored pixel art drawn by tools/generate_battlefield_pixel_art.py. Enable runtime only after owner visual approval."
+}

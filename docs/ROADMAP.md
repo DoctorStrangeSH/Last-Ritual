@@ -56,6 +56,12 @@
 
 PR #387–#398 merged. PR #395 exact-head #41654287377 + post-merge #41654581974 SUCCESS; PR #398 exact-head #41655821104 + post-merge #41656123633 SUCCESS. Автоматизированная пятидневная save validation завершена; ручной Windows QA карты и пользовательских legacy saves остаётся открытым. Не отмечать A–C полностью завершёнными до ручной проверки.
 
+## 3a. Пиксель-арт поля боя
+
+- [x] Кандидат нарисован генератором `tools/generate_battlefield_pixel_art.py`, рендер подключён за флагом manifest, тесты в CI.
+- [ ] Приёмка владельцем по скриншотам `assets/battlefield/candidate/review/` и в EXE.
+- [ ] Runtime PR: `runtime_enabled=true`.
+
 ## 4. Следующие крупные этапы
 
 - [x] PR #378 merged: модульный Pixel Art candidate pack Ледяного обелиска — 3 основания, 3 восьминаправленных оружейных атласа, 6 VFX strips и листы 9/72 композиций; production runtime выключен.
