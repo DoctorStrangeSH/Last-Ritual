@@ -1,7 +1,7 @@
 # Pixel Art Migration Inventory & Legacy Sprite Removal Plan
 
-**Updated: 03.11.2026 — main snapshot before Ballista candidate PR.**  
-Main: 96d25c3785958eba5a2d1fe490512025ee92a19f. Soul Altar production art is integrated by PR #376; Frost modular art is candidate-only (PR #378). Ballista modular art is being prepared in a separate candidate PR.
+**Updated: 03.11.2026 — current main snapshot.**  
+Main: 5f34cc1c3b1a4662b19241ac2f2976a3ef3416c6. Soul Altar production art is integrated by PR #376; Frost modular art is candidate-only (PR #378); Ballista modular art is candidate-only (PR #380).
 
 This is the authoritative working inventory for replacing old sprite families and then removing them safely. It does not claim that the complete game has already migrated to Pixel Art.
 
@@ -48,7 +48,7 @@ Do not rename gameplay IDs or migrate save data during art-only PRs. Do not trea
 
 ## Bone Ballista — candidate details
 
-- Candidate branch: feat/ballista-modular-pixel-art-candidate.
+- PR #380 merged; exact-head CI #41585101342 and post-merge Windows Preview #41585253951 SUCCESS. Contact sheets are published in the windows-preview release.
 - Manifest: assets/spire/towers/ballista/manifest.json; review_candidate / runtime_enabled=false.
 - 3 bases; weapon branches base/siege_bolt/bone_volley; six eight-frame VFX strips.
 - Mapping: siege → siege_bolt (heavy single-target bolt); swarm → bone_volley (three-bolt volley).
