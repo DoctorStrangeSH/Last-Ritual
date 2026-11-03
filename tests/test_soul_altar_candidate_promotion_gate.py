@@ -1,8 +1,4 @@
-"""Guard Soul Altar candidate-only status until explicit art approval.
-
-Technical CI must never silently promote review art into the live game.
-These checks intentionally require a deliberate follow-up PR to change.
-"""
+"""Verify the explicit owner-approved Soul Altar production promotion."""
 import json
 import unittest
 from pathlib import Path
@@ -14,29 +10,42 @@ BRANCHES = ("base", "reaper", "legion")
 
 
 class CandidatePromotionGateTests(unittest.TestCase):
-    def test_candidate_manifest_requires_manual_approval(self):
+    def test_candidate_manifest_is_preserved_as_disabled_source_archive(self):
         manifest = json.loads((CANDIDATE / "manifest.json").read_text(encoding="utf-8"))
-        self.assertEqual(manifest["status"], "candidate_for_review")
+        self.assertEqual(manifest["status"], "approved_source_archive")
         self.assertIs(manifest["runtime_enabled"], False)
         self.assertEqual(manifest["id"], "necro")
-        self.assertEqual(tuple(manifest["weapon"].keys()), BRANCHES)
         for branch in BRANCHES:
             self.assertTrue(manifest["weapon"][branch]["path"].startswith("candidate/"))
 
-    def test_production_manifest_is_not_enabled_without_six_authored_files(self):
+    def test_production_manifest_is_enabled_only_with_six_approved_pngs(self):
         manifest = json.loads((ART / "manifest.json").read_text(encoding="utf-8"))
-        self.assertIs(manifest["runtime_enabled"], False)
+        self.assertEqual(manifest["status"], "owner_approved_production")
+        self.assertIs(manifest["runtime_enabled"], True)
         required = [ART / f"base/level_{level}.png" for level in (1, 2, 3)]
         required.extend(ART / f"weapon/{branch}/weapon_8way.png" for branch in BRANCHES)
-        self.assertFalse(any(path.is_file() for path in required),
-                         "Candidate assets must not be copied to production without art signoff")
+        self.assertTrue(all(path.is_file() for path in required))
+        self.assertEqual(manifest["base"]["levels"]["1"], "base/level_1.png")
+        for branch in BRANCHES:
+            self.assertFalse(manifest["weapon"][branch]["path"].startswith("candidate/"))
+
+    def test_production_reuses_existing_vfx_and_does_not_promote_candidate_vfx(self):
+        manifest = json.loads((ART / "manifest.json").read_text(encoding="utf-8"))
+        candidate = json.loads((CANDIDATE / "manifest.json").read_text(encoding="utf-8"))
+        for branch in BRANCHES:
+            for section in ("projectiles", "impacts"):
+                production_path = ART / manifest[section][branch]["path"]
+                candidate_path = ART / candidate[section][branch]["path"]
+                self.assertTrue(production_path.is_file())
+                self.assertTrue(candidate_path.is_file())
+                self.assertFalse(manifest[section][branch]["path"].startswith("candidate/"))
 
     def test_review_sheet_is_not_a_runtime_texture(self):
         renderer = ROOT / "tools/render_soul_altar_compact_review.py"
         self.assertTrue(renderer.is_file())
         source = renderer.read_text(encoding="utf-8")
         self.assertIn("build/soul_altar_9_compositions_1x.png", source)
-        self.assertNotIn("ART / \"manifest.json\"", source)
+        self.assertNotIn('ART / "manifest.json"', source)
 
 
 if __name__ == "__main__":
