@@ -152,6 +152,15 @@ static func _validate_sheet(entry: Dictionary, label: String, expected_frames: i
 static func _safe_relative_path(path: String) -> bool:
 	return not path.is_empty() and not path.begins_with("/") and not path.contains("..") and not path.contains("\\")
 
+## Position a layer so its authored anchor/pivot lands on the tower's ground point.
+## Base uses canvas.ground_anchor; the rotating weapon uses its own manifest pivot.
+static func layer_display_rect(ground_position: Vector2, canvas_size: Vector2i, layer_anchor: Vector2, target_height: float = 120.0) -> Rect2:
+	if canvas_size.x <= 0 or canvas_size.y <= 0 or target_height <= 0.0:
+		return Rect2()
+	var scale_factor := target_height / float(canvas_size.y)
+	var size := Vector2(canvas_size) * scale_factor
+	return Rect2(ground_position - layer_anchor * scale_factor, size)
+
 static func resolve_tower_layers(manifest: Dictionary, level: int, specialization: String, origin: Vector2, target: Vector2) -> Dictionary:
 	if level < 1 or level > 3 or not bool(validate_manifest(manifest).get("valid", false)):
 		return {}
