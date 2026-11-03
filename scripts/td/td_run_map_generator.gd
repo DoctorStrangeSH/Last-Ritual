@@ -14,23 +14,29 @@ static func generate_map(seed_value: int) -> Dictionary:
 
     var lane_count := 2 if posmod(seed_value, 2) == 0 else 3
     var lane_bases: Array = [270.0, 355.0]
-    var amplitude := 14.0
     if lane_count == 3:
         lane_bases = [235.0, 295.0, 355.0]
-        amplitude = 10.0
 
+    # All lanes share the same broad bends, preserving a readable parallel
+    # corridor while the seed selects a different curve and horizontal drift.
+    var bend_patterns: Array = [
+        [0.0, 18.0, -8.0, -18.0, 9.0, 20.0, -12.0, -17.0, 10.0, 0.0],
+        [0.0, -16.0, 12.0, 19.0, -10.0, -18.0, 14.0, 16.0, -12.0, 0.0],
+        [0.0, 20.0, 12.0, -14.0, -20.0, -6.0, 18.0, 12.0, -16.0, 0.0]
+    ]
+    var bend_pattern: Array = bend_patterns[rng.randi_range(0, bend_patterns.size() - 1)]
+    var bend_scale := rng.randf_range(0.88, 1.0)
     var x_positions: Array[float] = [65.0, 165.0, 270.0, 375.0, 480.0, 590.0, 700.0, 815.0, 930.0, 1070.0]
     var paths: Array = []
     for lane_index in range(lane_count):
         var path: Array[Vector2] = []
         var base_y := float(lane_bases[lane_index])
-        var current_y := base_y
         for point_index in range(x_positions.size()):
             var x := x_positions[point_index]
             if point_index > 0 and point_index < x_positions.size() - 1:
-                current_y = clampf(current_y + rng.randf_range(-amplitude, amplitude), base_y - amplitude, base_y + amplitude)
                 x += rng.randf_range(-12.0, 12.0)
-            path.append(Vector2(x, current_y))
+            var y := base_y + float(bend_pattern[point_index]) * bend_scale
+            path.append(Vector2(x, y))
         paths.append(path)
 
     var slot_x: Array[float] = [250.0, 425.0, 600.0, 775.0]
