@@ -1,6 +1,6 @@
 # Last Ritual — единая актуальная дорожная карта
 
-**Снимок на 03.11.2026. Main: `41584b119bc294c89fb6edfcdd85e7ce7f248568`.** PR #387 gameplay and PR #388 handoff merged; post-merge workflows #41650910386 and #41651477278 SUCCESS.
+**Снимок на 03.11.2026. Main: `c372d377b6cd615bfc9d76dbe07403df4d98fe52`.** PR #387–#389 merged; exact-head #41652362559 and post-merge #41652792964 SUCCESS.
 
 Старые этапы платформера закрыты исторически. Активная разработка — top-down roguelite + Tower Defense.
 
