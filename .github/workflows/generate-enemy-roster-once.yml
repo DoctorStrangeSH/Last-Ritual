@@ -26,7 +26,10 @@ jobs:
           set -euo pipefail
           python -m py_compile tools/generate_enemy_roster_pixel_art.py tools/render_enemy_roster_preview.py
           python tools/generate_enemy_roster_pixel_art.py --write
-          python tools/render_enemy_roster_preview.py --only both \
+          python tools/render_enemy_roster_preview.py --only both --scale 1 \
+            --overview assets/enemies/candidate/review/enemy_roster_8way_1x.png \
+            --walk-cycles assets/enemies/candidate/review/enemy_walk_cycles_1x.png
+          python tools/render_enemy_roster_preview.py --only both --scale 2 \
             --overview assets/enemies/candidate/review/enemy_roster_8way_2x.png \
             --walk-cycles assets/enemies/candidate/review/enemy_walk_cycles_2x.png
           python -m unittest discover -s tests -p 'test_enemy_roster_pixel_art.py' -v
