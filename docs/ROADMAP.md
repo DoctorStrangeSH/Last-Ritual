@@ -1,6 +1,6 @@
 # Last Ritual — единая актуальная дорожная карта
 
-**Снимок на 03.11.2026. Main: `96d25c3785958eba5a2d1fe490512025ee92a19f`.** PR #376 (Soul Altar production), #377 (handoff docs), #378 (Frost candidate) и #379 (post-merge handoff) merged. Frost exact-head CI #41583127652 и post-merge Windows Preview #41583281398 SUCCESS.
+**Снимок на 03.11.2026. Main: `5f34cc1c3b1a4662b19241ac2f2976a3ef3416c6`.** PR #376–#380 merged; Ballista exact-head CI #41585101342 и post-merge Windows Preview #41585253951 SUCCESS.
 
 Старые этапы платформера закрыты исторически. Активная разработка — top-down roguelite + Tower Defense.
 
@@ -52,7 +52,7 @@
 - [x] Общий TD renderer учитывает отдельные ground anchor основания и pivot оружия; добавлены Godot/Python регрессионные тесты.
 - [ ] Владелец: визуальная приёмка Ледяного обелиска на 1× (силуэт L1–L3, Мороз, Метель, 8 направлений и VFX); листы опубликованы в windows-preview.
 - [ ] После одобрения — отдельный runtime PR Frost с сохранением текущего экспериментального fallback и ручным Windows QA.
-- [x] Подготовлен Ballista modular Pixel Art candidate pack (PR в работе): 3 основания, base/siege/swarm 8-way оружие и 6 VFX strips; runtime выключен.
+- [x] PR #380 merged: Ballista modular Pixel Art candidate pack — 3 основания, base/siege_bolt/bone_volley 8-way оружие и 6 VFX strips; runtime выключен. Review sheets опубликованы в windows-preview.
 - [ ] Художественная приёмка Frost и Ballista на 1×; оба candidate pack остаются вне runtime.
 - [ ] После одобрения Frost — отдельный runtime PR; после одобрения Ballista — отдельный runtime PR. Не менять игровые ID `bone`/`frost` и не удалять Foozle fallback до ручного Windows QA.
 - [ ] Отдельно подтвердить игровые ID, механики и баланс Искрового разрядника и Импульсного излучателя; сейчас это design identities, а не два самостоятельных игровых типа.
