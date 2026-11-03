@@ -45,7 +45,7 @@ func run_tests() -> void:
         first_day.set_fortress_map_seed(run_seed)
         check(first_day.paths == generator.generate_map(run_seed)["paths"], "TD scene applies generated route geometry")
         var slot_positions: Array = generator.generate_map(run_seed)["slots"]
-        var sites_match := first_day.slots.size() == slot_positions.size()
+        var sites_match: bool = first_day.slots.size() == slot_positions.size()
         for index in range(mini(first_day.slots.size(), slot_positions.size())):
             if first_day.slots[index]["pos"] != slot_positions[index]:
                 sites_match = false
@@ -67,7 +67,7 @@ func run_tests() -> void:
         var other_day = td_scene.instantiate()
         root.add_child(other_day)
         other_day.set_fortress_map_seed(run_seed)
-        check(other_day.slots[0]["pos"] == next_day.slots[0]["pos"], "All five day scenes resolve the same run seed to the same site")
+        check(other_day.slots[0]["pos"] == next_day.slots[0]["pos"], "A later day scene resolves the same run seed to the same site")
         other_day.set_fortress_map_seed(run_seed + 1)
         check(other_day.slots[0]["pos"] != next_day.slots[0]["pos"], "A new run seed relocates build sites")
 
