@@ -2,8 +2,8 @@
 
 Обновлено: 03.11.2026  
 Репозиторий: https://github.com/DoctorStrangeSH/Last-Ritual  
-Main snapshot: e1300d21b6bab9c112653a700d361a24f1ef5268  
-Последний main CI: #41589363962 — SUCCESS. PR #382 (Fire Turret candidate) merged.
+Main snapshot: 687473f3cd7a1426a8bf3f2190530d83b3dc7f2a  
+Последний main CI: #41589914814 — SUCCESS. PR #382 (Fire Turret candidate) и #383 (handoff) merged.
 
 ## Как продолжить
 
@@ -39,7 +39,7 @@ Main snapshot: e1300d21b6bab9c112653a700d361a24f1ef5268
 - Каталог дополнительно содержит spark/pulse, но их самостоятельная боевая интеграция не завершена.
 - Tower helpers находятся в scripts/td/. Основные TD/night scripts всё ещё крупные Node2D scripts; не считать архитектуру полностью компонентной.
 
-## Текущий художественный этап: модульный Pixel Art башен
+## Текущий художественный этап: модульный Pixel Art
 
 ### Алтарь душ — production integration завершена
 - PR #376 merged; root manifest assets/spire/towers/necro/manifest.json: owner_approved_production / runtime_enabled=true.
@@ -74,6 +74,17 @@ Main snapshot: e1300d21b6bab9c112653a700d361a24f1ef5268
 - Source: tools/generate_fire_turret_modular_candidates.py; preview: tools/render_fire_turret_modular_preview.py; tests: tests/test_fire_turret_modular_candidates.py.
 - Review sheets: assets/spire/towers/fire/candidate/review/contact_sheet_9_1x.png, contact_sheet_72_1x.png, contact_sheet_72_2x.png; published in windows-preview.
 - Candidate is not owner-approved. Preserve all current original fire assets and do not enable runtime.
+
+### Враги осады и Страж ритуала — review candidate, отдельная ветка
+
+- Branch: `feat/enemy-roster-pixel-art-candidate`; candidate generation is complete, PR checks are the next gate.
+- Manifest: `assets/enemies/manifest.json`; `status=review_candidate`, `runtime_enabled=false`.
+- Six visual roles: runner, brute, captain, healer, ranged, boss. Each has 8 distinct facing directions × 4 distinct walk frames at 8 FPS; normal roles are 48×48, Ritual Guardian is 96×96.
+- TD mapping: runner/brute/captain/healer/boss. Night mapping: regular/flanker → runner, ranged → ranged, champion → brute, boss → boss.
+- Source: `tools/generate_enemy_roster_pixel_art.py`; review renderer: `tools/render_enemy_roster_preview.py`; tests: `tests/test_enemy_roster_pixel_art.py`.
+- Review sheets: `assets/enemies/candidate/review/enemy_roster_8way_1x.png`, `enemy_walk_cycles_1x.png`, and matching `_2x.png` sheets.
+- Fixed the previous CI findings: the boss now has four visibly distinct walk poses; its 96px atlas fits all eight cells without corner clipping. Generator, reproducibility and review-sheet tests passed in one-shot generation run #41605211560.
+- This is art-only. Existing vector runtime stays active; no enemy stats, hitboxes, movement, attacks, waves, or saves changed. Do not promote before owner visual approval and a separate runtime PR.
 
 ### Next art work
 - Owner reviews Fire, Frost and Ballista candidate sheets at 1×. CI/contact sheets are not artistic approval.

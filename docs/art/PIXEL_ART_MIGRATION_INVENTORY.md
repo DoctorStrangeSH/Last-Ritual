@@ -1,7 +1,7 @@
 # Pixel Art Migration Inventory & Legacy Sprite Removal Plan
 
 **Updated: 03.11.2026 — current main snapshot.**  
-Main: e1300d21b6bab9c112653a700d361a24f1ef5268. Soul Altar production art is integrated by PR #376; Frost modular art is candidate-only (PR #378); Ballista modular art is candidate-only (PR #380); Fire Turret modular art is candidate-only (PR #382).
+Main: 687473f3cd7a1426a8bf3f2190530d83b3dc7f2a. Soul Altar production art is integrated by PR #376; Frost modular art is candidate-only (PR #378); Ballista modular art is candidate-only (PR #380); Fire Turret modular art is candidate-only (PR #382).
 
 This is the authoritative working inventory for replacing old sprite families and then removing them safely. It does not claim that the complete game has already migrated to Pixel Art.
 
@@ -27,6 +27,7 @@ Do not rename gameplay IDs or migrate save data during art-only PRs. Do not trea
 | Frost Obelisk (frost) | PR #378 candidate pack: 3 bases, 3 eight-way weapon branches, 6 VFX strips, 9/72 contact sheets | runtime disabled; current experimental/Foozle assets unchanged | Owner visual approval at 1×, then separate runtime PR and Windows QA |
 | Bone Ballista (bone / ballista) | Candidate pack in progress: 3 bases, base/siege_bolt/bone_volley 8-way weapon branches, 6 VFX strips, 9/72 contact sheets | runtime disabled; original Foozle assets unchanged | Candidate PR CI, owner visual approval at 1×, then separate runtime PR and Windows QA |
 | Fire Turret (fire) | PR #382 candidate pack: 3 bases, base/inferno/sparks 8-way weapons, 6 VFX strips, 9/72 contact sheets | runtime disabled; original Foozle assets unchanged | Exact-head CI #41589195484 and post-merge Windows Preview #41589363962 SUCCESS; owner visual approval at 1×, separate runtime PR and Windows QA |
+| Enemy roster | Candidate branch: 6 roles, each 8-way × 4-frame walk atlas; native 1×/2× review sheets | existing vector renderer remains live; manifest runtime disabled | PR CI/merge, owner visual approval at 1×, then separate runtime PR and Windows QA |
 
 ## Soul Altar — production details
 
@@ -66,6 +67,18 @@ Do not rename gameplay IDs or migrate save data during art-only PRs. Do not trea
 - Review sheets: candidate/review/contact_sheet_9_1x.png, contact_sheet_72_1x.png, contact_sheet_72_2x.png.
 - All original Foozle base/weapon/projectiles/weapon_impact files remain untouched. No runtime promotion without owner approval and a separate integration PR.
 
+## Enemy roster — candidate details
+
+- Branch: `feat/enemy-roster-pixel-art-candidate`; review-only, pending PR CI.
+- Manifest: `assets/enemies/manifest.json`; `review_candidate` / `runtime_enabled=false`.
+- Six roles: runner, brute, captain, healer, ranged, boss; 8 distinct directions × 4 walk frames at 8 FPS.
+- Normal role frame size 48×48; Ritual Guardian frame size 96×96. Atlas layout: 4 columns × 8 direction rows.
+- Mapping: TD runner/brute/captain/healer/boss; night regular/flanker→runner, ranged→ranged, champion→brute, boss→boss.
+- Source: `tools/generate_enemy_roster_pixel_art.py`; renderer: `tools/render_enemy_roster_preview.py`; tests: `tests/test_enemy_roster_pixel_art.py`.
+- Review: `assets/enemies/candidate/review/enemy_roster_8way_1x.png`, `enemy_walk_cycles_1x.png`, and corresponding `_2x.png` sheets.
+- Generator workflow #41605211560 SUCCESS. The previous repeated boss frame and edge-clipping issues are fixed; all atlas cells are checked for transparency and frame uniqueness.
+- Existing vector runtime and all gameplay parameters remain unchanged. No runtime integration until owner approval and a separate PR.
+
 ## Existing legacy families eligible for later removal
 
 | Family / path | Current role | Removal gate |
@@ -86,9 +99,9 @@ The old SVG cleanup is complete (PR #314 and prior cleanup PRs). Recount tracked
 1. Soul Altar production integration — complete; owner Windows QA pending.
 2. Frost Obelisk candidate — complete as candidate; owner visual approval and runtime integration pending.
 3. Bone Ballista candidate — complete as candidate; owner visual approval and runtime integration pending.
-4. Fire Turret candidate — prepared in active PR; owner visual approval and runtime integration pending.
-5. Reconcile Spark/Pulse art identities only against actual runtime gameplay IDs.
-6. Enemies and bosses.
+4. Fire Turret candidate — complete as candidate; owner visual approval and runtime integration pending.
+5. Enemy roster candidate — generated; PR CI/merge and owner visual approval pending.
+6. Reconcile Spark/Pulse art identities only against actual runtime gameplay IDs.
 7. Hero and player VFX.
 8. Fortress/TD world, tiles, paths and environmental props.
 9. Dungeon rooms, walls, doors, chests, loot and night effects.

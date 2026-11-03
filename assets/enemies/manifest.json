@@ -1,0 +1,209 @@
+{
+  "schema_version": 1,
+  "id": "enemy_roster",
+  "display_name": "Враги осады и Страж ритуала",
+  "status": "review_candidate",
+  "runtime_enabled": false,
+  "direction_order": [
+    "north",
+    "north_east",
+    "east",
+    "south_east",
+    "south",
+    "south_west",
+    "west",
+    "north_west"
+  ],
+  "role_mapping": {
+    "td": {
+      "runner": "runner",
+      "brute": "brute",
+      "captain": "captain",
+      "healer": "healer",
+      "boss": "boss"
+    },
+    "night": {
+      "regular": "runner",
+      "flanker": "runner",
+      "ranged": "ranged",
+      "champion": "brute",
+      "boss": "boss"
+    }
+  },
+  "enemies": {
+    "runner": {
+      "path": "candidate/runner/walk_8way_4f.png",
+      "frame_size": [
+        48,
+        48
+      ],
+      "columns": 4,
+      "rows": 8,
+      "frame_count": 32,
+      "fps": 8,
+      "loop": true,
+      "animation": "walk",
+      "direction_order": [
+        "north",
+        "north_east",
+        "east",
+        "south_east",
+        "south",
+        "south_west",
+        "west",
+        "north_west"
+      ],
+      "pivot": [
+        24,
+        41
+      ]
+    },
+    "brute": {
+      "path": "candidate/brute/walk_8way_4f.png",
+      "frame_size": [
+        48,
+        48
+      ],
+      "columns": 4,
+      "rows": 8,
+      "frame_count": 32,
+      "fps": 8,
+      "loop": true,
+      "animation": "walk",
+      "direction_order": [
+        "north",
+        "north_east",
+        "east",
+        "south_east",
+        "south",
+        "south_west",
+        "west",
+        "north_west"
+      ],
+      "pivot": [
+        24,
+        41
+      ]
+    },
+    "captain": {
+      "path": "candidate/captain/walk_8way_4f.png",
+      "frame_size": [
+        48,
+        48
+      ],
+      "columns": 4,
+      "rows": 8,
+      "frame_count": 32,
+      "fps": 8,
+      "loop": true,
+      "animation": "walk",
+      "direction_order": [
+        "north",
+        "north_east",
+        "east",
+        "south_east",
+        "south",
+        "south_west",
+        "west",
+        "north_west"
+      ],
+      "pivot": [
+        24,
+        41
+      ]
+    },
+    "healer": {
+      "path": "candidate/healer/walk_8way_4f.png",
+      "frame_size": [
+        48,
+        48
+      ],
+      "columns": 4,
+      "rows": 8,
+      "frame_count": 32,
+      "fps": 8,
+      "loop": true,
+      "animation": "walk",
+      "direction_order": [
+        "north",
+        "north_east",
+        "east",
+        "south_east",
+        "south",
+        "south_west",
+        "west",
+        "north_west"
+      ],
+      "pivot": [
+        24,
+        41
+      ]
+    },
+    "ranged": {
+      "path": "candidate/ranged/walk_8way_4f.png",
+      "frame_size": [
+        48,
+        48
+      ],
+      "columns": 4,
+      "rows": 8,
+      "frame_count": 32,
+      "fps": 8,
+      "loop": true,
+      "animation": "walk",
+      "direction_order": [
+        "north",
+        "north_east",
+        "east",
+        "south_east",
+        "south",
+        "south_west",
+        "west",
+        "north_west"
+      ],
+      "pivot": [
+        24,
+        41
+      ]
+    },
+    "boss": {
+      "path": "candidate/boss/walk_8way_4f.png",
+      "frame_size": [
+        96,
+        96
+      ],
+      "columns": 4,
+      "rows": 8,
+      "frame_count": 32,
+      "fps": 8,
+      "loop": true,
+      "animation": "walk",
+      "direction_order": [
+        "north",
+        "north_east",
+        "east",
+        "south_east",
+        "south",
+        "south_west",
+        "west",
+        "north_west"
+      ],
+      "pivot": [
+        48,
+        72
+      ]
+    }
+  },
+  "source": {
+    "editable_project": "tools/generate_enemy_roster_pixel_art.py",
+    "provenance": "candidate/SOURCE.md",
+    "editable_project_status": "procedural_source_is_tools/generate_enemy_roster_pixel_art.py"
+  },
+  "notes": [
+    "Review-only enemy Pixel Art candidate. The current game still uses its existing vector enemy renderer.",
+    "runtime_enabled is false; this PR does not change enemy stats, hitboxes, movement, attacks, waves or saves.",
+    "Each role has 8 hand-authored facing poses and a 4-frame walk loop; frames are stored as 4 columns x 8 direction rows.",
+    "Night roles regular/flanker share runner art; champion uses brute art. A later gameplay-art pass may split these visual identities.",
+    "The procedural Python generator is the editable reproducible source; no Aseprite project is claimed."
+  ]
+}
