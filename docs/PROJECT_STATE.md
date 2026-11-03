@@ -1,15 +1,15 @@
 ## Текущий приоритет разработки (решение владельца, 03.11.2026)
 
-Графику и Pixel Art migration временно не развивать. Приоритет — TD Roguelike gameplay. PR #387 добавил seed-based кривые маршруты и площадки; PR #389 объединил маршруты с общими входом/выходом и разветвлением в средней части. Ветка `feature/td-build-site-layouts-rebased` расширяет вариативность площадок и проверяет UI/gate clearance; полная save compatibility ещё впереди.
+Графику и Pixel Art migration временно не развивать. Приоритет — TD Roguelike gameplay. PR #387/#389 добавили seed-based fork/merge маршруты; PR #395 расширил смещение/шаг строительных рядов и добавил UI/gate/road clearance. Следующий этап — строгая проверка переноса состояния крепости через все пять дней.
 
-На main `b78d299ca0aa8aa5c36dc3098068b4a8c0818a87` PR #387–#389 gameplay и PR #391 docs объединены. Генератор создаёт две/три изогнутые ветви с общим входом/выходом и восемь площадок; соседние площадки остаются в пределах 190 px. Ветка `feature/td-build-site-layouts-rebased` добавляет переменный сдвиг/шаг рядов и проверку UI/gate clearance. Exact-head #41652362559 и post-merge #41652792964 SUCCESS; docs post-merge #41653573389 SUCCESS.
+На main `47ec4143b6f252d583c93edd5579cd1dd4391a6d` PR #387–#395 объединены. Генератор создаёт две/три изогнутые ветви с общим входом/выходом и восемь площадок; соседние площадки остаются в пределах 190 px. PR #395 добавил переменный сдвиг/шаг рядов и проверку UI/gate/road clearance. Exact-head #41654287377 и post-merge #41654581974 (Godot checks + Windows Preview) SUCCESS.
 
-Очередь: (1) расширить вариативность площадок за пределы двух фиксированных рядов, (2) полная проверка геометрии относительно дорог, ворот, границ и UI, (3) сохранение специализаций и проверка старых snapshots, (4) тактические ветвления волн и разведка, (5) связка дневной обороны с ночными наградами и более продолжительным roguelike-прогрессом. Подробные критерии — в `docs/ROADMAP.md` и `docs/AI_HANDOFF.md`.
+Ветка `feature/td-five-day-fortress-persistence` добавляет пятидневный тест сохранения четырёх типов башен, специализаций, приоритетов и ресурсов, отклонение snapshot с другим seed без частичной мутации и загрузку legacy snapshot без map_seed/target_priority. Exact-head CI ожидается. Очередь: (1) завершить save compatibility tests и ручной Windows QA карты, (2) тактические ветвления волн и разведка, (3) связка дневной обороны с ночными наградами и более продолжительным roguelike-прогрессом. Подробные критерии — в `docs/ROADMAP.md` и `docs/AI_HANDOFF.md`.
 
 # Last Ritual — текущий снимок проекта
 
 Дата: 03.11.2026  
-HEAD main: `b78d299ca0aa8aa5c36dc3098068b4a8c0818a87` (PR #387–#389 gameplay + PR #391 docs merged). Main workflow #41653573389 pending.
+HEAD main: `47ec4143b6f252d583c93edd5579cd1dd4391a6d` (PR #387–#395 merged). Post-merge workflow #41654581974 SUCCESS (Godot checks + Windows Preview).
 
 ## Запускаемая игра
 
