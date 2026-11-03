@@ -1,57 +1,34 @@
-# Repository hygiene — branches and AI context
+# Repository hygiene — branches
 
-Audit: 2026-11-03, before cleanup. Default branch: `main`.
+## Current policy (since 2026-11-03)
 
-## Baseline
+- **`main` is the only long-lived branch.** Work happens in short PR branches; GitHub deletes them automatically after merge (`delete_branch_on_merge=true`).
+- Nothing is stored only in a branch. Old work is recoverable from either `main` history or the PR ref GitHub keeps forever (`refs/pull/<N>/head`).
+- Release tags: `windows-preview` (rolling Windows build), `soul-altar-approved-rgba-v1` (approved art archive).
 
-| Classification | Branches |
-| --- | ---: |
-| Total | 407 |
-| `main` | 1 |
-| Branches associated with merged PRs | 365 |
-| Branches whose PRs were closed without merging | 33 |
-| Branches without matching PRs | 8 |
+## Recovering an archived branch
 
-No open PRs at audit time. The repo setting `delete_branch_on_merge` was **false**. Classification is an inventory, **not** permission to blindly remove all 365 heads: a branch might have moved since its PR merged. The executable audit cross-checks the PR's exact HEAD SHA, target `main`, matching repository, and current branch SHA before deletion.
+Every removed branch is listed with its exact SHA in [`branch_archive.tsv`](branch_archive.tsv).
 
-## Safe cleanup procedure
+```sh
+# recovery = pull/N/head
+git fetch origin pull/316/head:feat/soul-altar-approved-pixel-art-runtime
+# recovery = main  (commit is already part of main history)
+git branch archive/classic-before-topdown-2026-10-29 c750d54c96296c2371300b12de2e42ca74097ae1
+```
 
-1. Merge this PR after CI succeeds; do **not** delete branches before the cleanup tool exists on `main`.
-2. In GitHub **Actions → Branch hygiene (manual, safe) → Run workflow**, leave **execute unchecked**. Inspect the job summary and `branch-hygiene-report` artifact.
-3. Review `eligible_branches`, `review_required` and `preserved`. The action always leaves `main`, protected refs, `archive/*`, `checkpoint/*`, unknown branches and closed-without-merge PR heads untouched.
-4. If the report is acceptable, rerun with **execute checked** and limit **10**, then repeat in batches of at most 50. Every execution fetches the fresh branch/PR inventory and rechecks each HEAD; unexpected changes are skipped.
-5. Enable **Settings → General → Pull Requests → Automatically delete head branches** to prevent future accumulation. This repository setting cannot be changed by the installed GitHub connector.
-6. Verify branch counts, `main`, PR status and Windows CI. Do not mix this cleanup with gameplay/art changes.
+Notable entries: the classic platformer snapshot `archive/classic-before-topdown-2026-10-29` (`c750d54`) and `checkpoint/v0.9` (`5cf1db0`) are both contained in `main` history.
 
-For CLI-only environments: `GITHUB_TOKEN=... python3 tools/branch_cleanup.py` is dry-run by default. Deletion additionally requires `ALLOW_BRANCH_DELETE=true python3 tools/branch_cleanup.py --execute --limit 10`. Use a token with Contents write and PR read. No Python dependencies beyond the standard library.
+## How branches are removed
 
-### Review separately (do not bulk-delete)
+1. Add rows (`branch`, exact 40-char `sha`, `recovery`, note) to `docs/branch_archive.tsv` in a PR. `recovery` must be `main` or `pull/N/head`. A branch without a PR gets a PR opened and closed first (see #401–#403) so GitHub pins its commits.
+2. CI runs `tests/test_branch_cleanup.py`, which validates the file format.
+3. After merge, the **Branch hygiene** workflow (push trigger on that file) runs `tools/branch_cleanup.py --archive-list docs/branch_archive.tsv --execute`. Each branch is deleted only if its current SHA still equals the listed SHA **and** the SHA is an ancestor of `main` or equals PR #N's head. Anything else is skipped and reported.
+4. Dry run locally: `GITHUB_TOKEN=... python3 tools/branch_cleanup.py --archive-list docs/branch_archive.tsv`.
 
-The 8 no-PR branches observed:
-`archive/classic-before-topdown-2026-10-29`,
-`checkpoint/v0.9`,
-`docs/record-soul-altar-animated-vfx`,
-`docs/soul-altar-production-handoff`,
-`feat/soul-altar-approved-pixel-atlas`,
-`feature/td2-synergy-visualization`,
-`feature/v5-mouse-help-controls`,
-`tests/td-fortress-snapshot-compatibility`.
+The manual `workflow_dispatch` mode (merged-PR heads only, dry-run by default) is still available for routine pruning.
 
-The 33 closed-unmerged PR branches may hold abandoned, superseded or genuinely unique changes. Don't delete them automatically; compare against current `main` and examine their PR context first.
+## History
 
-## AI context policy
-
-**Canonical files:**
-- `AGENTS.md` — workflow and safety rules (read first).
-- `docs/AI_HANDOFF.md` — current focus, known blocker and next PR.
-- `docs/PROJECT_STATE.md` — verified playable state, CI and remaining QA.
-- `docs/ROADMAP.md` — authoritative ordered plan.
-- `docs/ARCHITECTURE.md`, `docs/GAME_DESIGN.md`, `docs/DECISIONS.md` — consult as required by the task.
-
-**Rules:**
-- The source code, PR status and exact-head CI override stale document claims.
-- Keep `AI_HANDOFF` and `PROJECT_STATE` focused on **current** reality. Do not append per-PR chronicles; the GitHub history already stores them.
-- Detail for paused art work belongs in existing art docs, read only when working on art. Avoid reading all 42 `docs/` files for every gameplay change.
-- Keep a small `AI_HANDOFF` section linking to task-specific technical notes; do not duplicate them.
-- Do not mass-delete or rename docs until references from scripts, workflows, manifests and other documentation have been checked; archive obsolete notes in a separate small PR.
-- Never confuse **deleting a branch** with deleting repo history: merged PR changes persist in `main`, while unmerged branch-only commits can eventually become unreachable.
+- 2026-11-03 (#400): 365 merged-PR branches removed with the exact-HEAD audit; 41 left for review.
+- 2026-11-03: the remaining 41 (5 contained in `main`, 36 closed-unmerged or PR-less, all superseded by later merged work) archived via `branch_archive.tsv`.

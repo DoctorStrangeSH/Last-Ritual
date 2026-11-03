@@ -1,0 +1,47 @@
+# Remaining branches approved for removal on 2026-11-03.
+# The cleanup workflow deletes a branch ONLY if its current SHA still equals `sha`
+# AND its commits are preserved: recovery=main -> sha is an ancestor of main;
+# recovery=pull/N/head -> PR #N head SHA equals `sha` (GitHub keeps PR refs forever).
+# Restore a branch: git fetch origin <recovery>:<branch>   (for recovery=main: git branch <branch> <sha>)
+branch	sha	recovery	note
+archive/classic-before-topdown-2026-10-29	c750d54c96296c2371300b12de2e42ca74097ae1	main	fully contained in main
+art/frost-png-preview-88932a1cf8d8	042633f4b998ebd98bb8a2ba4d96adf7bf640f74	pull/295/head	closed unmerged: Art review: 11 Frost Obelisk PNGs preserved in Git
+art/necro-png-preview-a466342bf7f0	444d4dff07af311de8f0ddaf1876a6821b6537c8	pull/289/head	closed unmerged: Art review: Soul Altar tower and 8-frame VFX PNG snapshots (14 images)
+art/necro-png-preview-b8e23166b51d	60e91f454e24296f5d43cdecd83c61d2438ecccc	pull/286/head	closed unmerged: Art review: 12 generated Soul Altar PNGs preserved in Git
+checkpoint/v0.9	5cf1db0f807bded626e8a638149f222b159ffe07	main	fully contained in main
+docs/record-soul-altar-animated-vfx	9b279f1be7c5e8315ab47777fb562699363b2138	main	fully contained in main
+docs/soul-altar-production-handoff	5a219a3ca17c85c3727766fa5042674fdc7bc18e	main	fully contained in main
+docs/t2-coverage-reconciliation	cac62439eb9e6b7793ba1f55fc9eb642807295d2	pull/50/head	closed unmerged: T2: зафиксировать покрытие сохранений без повторных тестов
+feat/soul-altar-approved-pixel-art-runtime	38c17405d387a3b173e1ec4527aa836aa910a354	pull/316/head	closed unmerged: Art: integrate the approved Soul Altar Pixel Art atlas in-game
+feat/soul-altar-approved-pixel-atlas	6ec11906b4569dfebb28bd7372f88b7b9770dc40	main	fully contained in main
+feature/g1-fortress-routes-ru	20e85f88ec406a51cb4770f0325bc65bcf4a8e94	pull/103/head	closed unmerged: G1: извилистые маршруты крепости и начало русской локализации
+feature/g3-dungeon-floor-graph	c2b8e19a50ddc14c3f05f89e264d465b47962c55	pull/112/head	closed unmerged: G3: генератор связного ночного этажа из 10 комнат и проверки доступности
+feature/g4-dungeon-minimap	4428cbda6e09fc88b4bdd584ea1a5b84326cb3e0	pull/117/head	closed unmerged: G4: мини-карта открытых комнат ночного этажа
+feature/g4-hidden-cache-door	b693477b079f7721e3948f5124b576270054d493	pull/125/head	closed unmerged: G4: поиск скрытых проходов к тайникам подземелья
+feature/g4-interactive-shrine	b7de07feaf16aedc3651f1593352feb036031039	pull/123/head	closed unmerged: G4: интерактивный алтарь с выбором награды, риска или отказа
+feature/g4-physical-room-travel	e9c1216ba89399e4b7db289abd88fac348dbe4c7	pull/115/head	closed unmerged: G4: физические переходы между 10 ночными комнатами и возвращение назад
+feature/g5-night-stone-rooms	fb321f81542f8e24ea51ba8d871b8a189458f382	pull/108/head	closed unmerged: G5: каменный пол, стены, факелы и дверная арка ночного подземелья
+feature/g6-russian-hub	623bd5898e3a553a4a31471d206435c017ef9f37	pull/110/head	closed unmerged: G6: русский интерфейс хаба, наград и результатов забега
+feature/performance-peaks-217	84b6c8dc0533f38f5e1bab325cbbaf70f83444c4	pull/217/head	closed unmerged: Этап 217: пик времени кадра и нагрузки в F3-диагностике
+feature/rc64-bone-bastion	1d758e20ee7e19459563c807dcc804cf5a78bf22	pull/3/head	closed unmerged: RC64: Костяной бастион — синергия некроманта
+feature/rc65-shadow-cleave	6b886d4f7f0c12e9adacbfdb96786d22d362eac4	pull/5/head	closed unmerged: RC65: Теневой рассекатель — ночная атака по ПКМ
+feature/s6-title-menu-hover	b4c669c87ebadbe1646551948dc17cf9b73e226c	pull/42/head	closed unmerged: S6: подсветка главного меню при наведении мыши
+feature/td2-day-siege-scenarios	a1f00210f5e670969828bf8ea588d7c479e38e30	pull/143/head	closed unmerged: TD2: три разных сценария дневной осады с разведкой угроз
+feature/td2-fortress-atmosphere	f8428ec81487c50ea40775705d69c8ab2d787701	pull/155/head	closed unmerged: TD2: более атмосферная крепость и хорошо видимый алтарь
+feature/td2-school-abilities	eb686fb5d52bce6623d6385fc96c684b93d9315d	pull/134/head	closed unmerged: TD2: огонь и некромантия получают разные боевые специализации
+feature/td2-synergy-visualization	1fb229e74d17d79fc2b21eb4914a6c36a9f0c989	pull/401/head	closed unmerged: archive PR #401; superseded in main
+feature/td2-tower-inspector	3aacb689667ed3c225249a2e6cd32daa0cf9a695	pull/147/head	closed unmerged: TD2: компактная карточка выбранной башни со статистикой
+feature/td2-tower-specializations	548d77af989dac60e2a69ed6ebe8bd95f065c5d2	pull/131/head	closed unmerged: TD2: первые специализации башен — Баллиста или Рой
+feature/td2-tower-synergy	c4827877193ff3851d8e0d65d03a1667bf39d114	pull/135/head	closed unmerged: TD2: первая синергия расстановки башен — огонь, кости и некромантия
+feature/td2-type-specific-specializations	708170ca2867a0f9597880fc5bc3304327169078	pull/133/head	closed unmerged: TD2: отдельные названия путей для костей, огня и некромантии
+feature/td-branching-route-topology	fdf8d29ac52edac4e7ddf7b866e60007d2e29de4	pull/390/head	closed unmerged: TD: add split-and-merge assault route topology
+feature/td-build-site-layouts	0ac0d8591a544359dfda1e1d484ec3558a87765e	pull/392/head	closed unmerged: TD: diversify build sites and validate UI/gate clearance
+feature/td-five-day-fortress-persistence	8dc44b92e29c0af4bc52dbb0b107b988b08c2df5	pull/397/head	closed unmerged: TD: verify fortress state across the complete five-day run
+feature/td-variable-build-sites	221cbfe2142560ddc5abe6a4bf0615b990326eef	pull/393/head	closed unmerged: TD: vary build-site placement while preserving synergies
+feature/td-variable-build-sites-v2	efb9cb6febabb37f6c82b06e5f2bd3b430d7af72	pull/394/head	closed unmerged: TD: stagger build sites across each generated run
+feature/v5-mouse-help-controls	a0448e2b8252a853cca95f068c270d7f883f656e	pull/402/head	closed unmerged: archive PR #402; superseded in main
+fix/automatic-day-night-menu	1e23c5f219db2d82c83b08e653dca5c7d5a69a4b	pull/148/head	closed unmerged: UX: понятное главное меню и автоматическая смена дня и ночи
+fix/sprite-sheet-frame-bounds-276	52d23c01df9563071c9402b8452ff67389b0ffa5	pull/277/head	closed unmerged: Fix: validate sprite sheet frame bounds before drawing tower art
+fix/sprite-sheet-frame-bounds-277	2ac9bd4fa4c57d99fa15c915c23ded528225b237	pull/279/head	closed unmerged: Fix: validate sprite sheet frame bounds before drawing tower art
+fix/td2-specialization-modal	afc88ce15f6b7e8e1acafa68008ee453ac90ae17	pull/145/head	closed unmerged: TD2: исправление перекрытого окна выбора специализации
+tests/td-fortress-snapshot-compatibility	12d6832fb5f5a2cc194b99b00304156a139fe76a	pull/403/head	closed unmerged: archive PR #403; superseded in main
