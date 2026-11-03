@@ -2,8 +2,8 @@
 
 Обновлено: 03.11.2026  
 Репозиторий: https://github.com/DoctorStrangeSH/Last-Ritual  
-Main snapshot: 5a824ab0be9b9e07a178161d601694df7b5aa1c5  
-Последний main CI: #41605855395 — SUCCESS. PR #385 (документация enemy roster) merged.
+Main snapshot: 277b95dc56597775d20555c9c1b3e9c688fdce39  
+Последний main CI: #41630081283 — SUCCESS. PR #386 (gameplay-first roadmap) merged as `277b95dc`.
 
 ## Как продолжить
 
@@ -45,9 +45,10 @@ Main snapshot: 5a824ab0be9b9e07a178161d601694df7b5aa1c5
 
 Наблюдаемая текущая реализация:
 - `scripts/run_loop.gd` создаёт новый `fortress_map_seed` при `start_run()` и передаёт его в дневную сцену при каждом `start_phase()`.
-- `scripts/td/td_path_layouts.gd` содержит 8 заранее заданных вариантов путей; `layout_for_seed()` выбирает вариант по `posmod(seed, layout_count)`. Это вариативность из каталога, а не полноценная генерация.
-- `scripts/topdown_td_prototype.gd` использует эти пути, но `SLOT_POSITIONS` пока остаётся фиксированным массивом из восьми координат. `set_fortress_map_seed()` не меняет площадки строительства.
-- `export_fortress_state()` сохраняет башни по ID площадки; `import_fortress_state()` ожидает совпадающие позиции. При изменении площадок необходимо сохранить стабильную идентичность площадок в рамках одного забега и корректно переносить постройки между пятью днями.
+- Реализуется `scripts/td/td_run_map_generator.gd`: детерминированная генерация двух/трёх извилистых линий наступления и восьми строительных площадок из одного seed.
+- `scripts/topdown_td_prototype.gd` подключает генератор через `set_fortress_map_seed()`; площадки получают стабильные ID 0–7 и позиции, воспроизводимые для одного seed.
+- `export_fortress_state()` продолжает хранить постройки по стабильным индексам; `import_fortress_state()` проверяет `map_seed`. Важное условие: `run_loop.gd` задаёт seed до импорта крепости, поэтому башни восстанавливаются на тех же позициях между днями.
+- PR #386 принят и объединён; игровой этап идёт отдельной веткой `feature/seeded-td-run-map`. Код пока не считать завершённым до exact-head CI.
 
 Следующая задача: спроектировать и реализовать seed-based генерацию связанного набора «маршруты + площадки» на новый забег. Требования: извилистые читаемые маршруты с несколькими тактическими коридорами/развилками; 8+ допустимых строительных площадок, расположенных по-разному от забега к забегу; отсутствие пересечения площадок с дорогами, UI и воротами; одинаковый seed воспроизводит карту; карта не меняется между днями одного забега; постройки сохраняются на тех же площадках весь забег. Добавить тесты на воспроизводимость, разнообразие seed, валидность геометрии и перенос состояния.
 
@@ -100,8 +101,8 @@ Main snapshot: 5a824ab0be9b9e07a178161d601694df7b5aa1c5
 - Fixed the previous CI findings: the boss now has four visibly distinct walk poses; its 96px atlas fits all eight cells without corner clipping. Generator, reproducibility and review-sheet tests passed in one-shot generation run #41605211560.
 - This is art-only. Existing vector runtime stays active; no enemy stats, hitboxes, movement, attacks, waves, or saves changed. Do not promote before owner visual approval and a separate runtime PR.
 
-### Next art work
-- Owner reviews Fire, Frost, Ballista and enemy roster candidate sheets at 1×. CI/contact sheets are not artistic approval.
+### Deferred art work — paused by owner
+- Owner review of Fire, Frost, Ballista and enemy roster is deferred. CI/contact sheets are not artistic approval.
 - After explicit approval, prepare separate runtime PR per tower, preserving current fallback until Windows QA.
 - Continue world/enemy/UI Pixel Art migration after tower reviews.
 
