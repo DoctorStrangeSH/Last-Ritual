@@ -25,6 +25,13 @@ func run_tests() -> void:
     check(generator.validate_map(first), "Generated map passes geometric validation")
     check(first["slots"].size() == 8, "Every run has eight build sites")
     check(first["paths"].size() in [2, 3], "Run map has two or three assault lanes")
+    for lane_index in range(1, first["paths"].size()):
+        var lane: Array = first["paths"][lane_index]
+        var reference_lane: Array = first["paths"][0]
+        for shared_index in [0, 1, 8, 9]:
+            check(lane[shared_index] == reference_lane[shared_index], "Assault routes share entrance and exit geometry")
+        for branch_index in range(2, 8):
+            check(absf(lane[branch_index].y - reference_lane[branch_index].y) >= 38.0, "Forked corridors remain separated")
 
     var unique_signatures: Dictionary = {}
     for seed_value in range(256):
