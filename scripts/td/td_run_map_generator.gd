@@ -121,7 +121,11 @@ static func validate_map(map_data: Dictionary) -> bool:
 
     for slot_index in range(slots.size()):
         var site: Vector2 = slots[slot_index]
-        if site.x < 100.0 or site.x > 900.0 or site.y < 110.0 or site.y > 480.0:
+        if site.x < 100.0 or site.x > 900.0:
+            return false
+        if slot_index < 4 and (site.y < 145.0 or site.y > 175.0):
+            return false
+        if slot_index >= 4 and (site.y < 430.0 or site.y > 455.0):
             return false
         for other_index in range(slot_index):
             var other_site: Vector2 = slots[other_index]
