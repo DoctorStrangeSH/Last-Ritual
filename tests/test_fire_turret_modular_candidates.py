@@ -67,7 +67,7 @@ class FireTurretModularCandidateTests(unittest.TestCase):
                 for index in range(8):
                     frame = strip.crop((index * cell[0], 0, (index + 1) * cell[0], cell[1]))
                     self.assertGreater(sum(1 for a in frame.getchannel("A").getdata() if a > 0), 8)
-                    self.assertEqual([frame.getpixel(p)[3] for p in ((0, 0), (cell[0]-1, 0), (0, cell[1]-1), (cell[0]-1, cell[1]-1)], [0] * 4)
+                    self.assertEqual([frame.getpixel(p)[3] for p in ((0, 0), (cell[0]-1, 0), (0, cell[1]-1), (cell[0]-1, cell[1]-1))], [0] * 4)
                     fingerprints.add(frame.tobytes())
                 self.assertEqual(len(fingerprints), 8, f"{branch} {kind} repeats an animation frame")
 
