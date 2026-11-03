@@ -41,16 +41,16 @@
 
 1. [x] Владелец одобрил L1–L3 и base/Reaper/Legion 03.11.2026.
 2. [x] Скопировать шесть одобренных base/weapon PNG в production paths, сохранить source archive и подтвердить идентичность SHA.
-3. [x] Включить root manifest на интеграционной ветке; candidate manifest оставить disabled.
+3. [x] Включить root manifest в main; candidate manifest оставить disabled.
 4. [x] Переиспользовать шесть существующих production VFX strips; candidate VFX не включать.
 5. [x] Обновить Godot smoke tests и Python promotion gate для runtime-enabled production kit.
-6. [ ] Проверить exact-head CI PR и post-merge main Windows workflow.
+6. [x] PR #376 merged; exact-head CI #41579876954 и post-merge Windows workflow #41580061364 SUCCESS; EXE опубликован.
 7. [ ] Протестировать Windows EXE: L1/L2/L3, base/Reaper/Legion, восемь направлений, projectile/impact, save/load.
 8. [ ] Не удалять legacy sprites до отдельного PR с поиском всех ссылок и подтверждённого QA.
 
-## Production gate — текущий статус
+## Production gate — завершён
 
-На интеграционной ветке все шесть обязательных файлов присутствуют:
+В main все шесть обязательных файлов присутствуют:
 - `assets/spire/towers/necro/base/level_1.png`
 - `assets/spire/towers/necro/base/level_2.png`
 - `assets/spire/towers/necro/base/level_3.png`
