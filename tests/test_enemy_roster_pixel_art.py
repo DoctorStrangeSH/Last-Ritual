@@ -48,9 +48,13 @@ class EnemyRosterPixelArtTests(unittest.TestCase):
                     cell = atlas.crop((frame * size, direction * size,
                                        (frame + 1) * size, (direction + 1) * size))
                     self.assertGreater(sum(1 for alpha in cell.getchannel("A").getdata() if alpha > 0), 20)
-                    self.assertEqual([cell.getpixel(p)[3] for p in (
-                        (0, 0), (size - 1, 0), (0, size - 1), (size - 1, size - 1)
-                    )], [0] * 4)
+                    self.assertEqual(
+                        [cell.getpixel(p)[3] for p in (
+                            (0, 0), (size - 1, 0), (0, size - 1), (size - 1, size - 1)
+                        )],
+                        [0] * 4,
+                        f"{role} direction {direction} frame {frame} touches atlas-cell corner",
+                    )
                     directional_frames.append(cell.tobytes())
                 self.assertEqual(len(set(directional_frames)), 4, f"{role} direction {direction} repeats walk frames")
             first_frames = {
