@@ -25,6 +25,20 @@ func run_tests() -> void:
     check(generator.validate_map(first), "Generated map passes geometric validation")
     check(first["slots"].size() == 8, "Every run has eight build sites")
     check(first["paths"].size() in [2, 3], "Run map has two or three assault lanes")
+    var upper_site_min_y := INF
+    var upper_site_max_y := -INF
+    var lower_site_min_y := INF
+    var lower_site_max_y := -INF
+    for site_index in range(first["slots"].size()):
+        var site: Vector2 = first["slots"][site_index]
+        if site_index < 4:
+            upper_site_min_y = minf(upper_site_min_y, site.y)
+            upper_site_max_y = maxf(upper_site_max_y, site.y)
+        else:
+            lower_site_min_y = minf(lower_site_min_y, site.y)
+            lower_site_max_y = maxf(lower_site_max_y, site.y)
+    check(upper_site_max_y - upper_site_min_y > 1.0, "Upper build sites form a seed-varied staggered belt")
+    check(lower_site_max_y - lower_site_min_y > 1.0, "Lower build sites form a seed-varied staggered belt")
     for lane_index in range(1, first["paths"].size()):
         var lane: Array = first["paths"][lane_index]
         var reference_lane: Array = first["paths"][0]
