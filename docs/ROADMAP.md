@@ -1,6 +1,6 @@
 # Last Ritual — единая актуальная дорожная карта
 
-**Снимок на 03.11.2026. Main: `5f34cc1c3b1a4662b19241ac2f2976a3ef3416c6`.** PR #376–#380 merged; Ballista exact-head CI #41585101342 и post-merge Windows Preview #41585253951 SUCCESS.
+**Снимок на 03.11.2026. Main: `b583e6d24d15f855900c4eec237757a2c13ea065`.** PR #376–#381 merged; Ballista post-merge Windows Preview #41585682430 SUCCESS. Следующий candidate PR: Fire Turret.
 
 Старые этапы платформера закрыты исторически. Активная разработка — top-down roguelite + Tower Defense.
 
@@ -55,6 +55,8 @@
 - [x] PR #380 merged: Ballista modular Pixel Art candidate pack — 3 основания, base/siege_bolt/bone_volley 8-way оружие и 6 VFX strips; runtime выключен. Review sheets опубликованы в windows-preview.
 - [ ] Художественная приёмка Frost и Ballista на 1×; оба candidate pack остаются вне runtime.
 - [ ] После одобрения Frost — отдельный runtime PR; после одобрения Ballista — отдельный runtime PR. Не менять игровые ID `bone`/`frost` и не удалять Foozle fallback до ручного Windows QA.
+- [x] Подготовлен Fire Turret modular Pixel Art candidate pack в ветке `feat/fire-turret-modular-pixel-art-candidate`: 3 основания, base/inferno/sparks 8-way оружие, 6 VFX strips и 9/72 review sheets; runtime выключен.
+- [ ] Fire Turret candidate: exact-head CI и post-merge Windows Preview; получить художественную приёмку на 1×. Не заменять текущие Foozle assets до отдельного runtime PR и Windows QA.
 - [ ] Отдельно подтвердить игровые ID, механики и баланс Искрового разрядника и Импульсного излучателя; сейчас это design identities, а не два самостоятельных игровых типа.
 - [ ] Перенести единый Pixel Art стиль на врагов, героя, босса, землю, стены, TD-маршруты, комнаты, UI, предметы и эффекты.
 - [ ] Провести полный ручной пятидневный playtest: Normal, Hard и Nightmare; победа, поражение, сохранения, повторный забег.
