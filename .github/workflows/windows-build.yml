@@ -159,6 +159,8 @@ jobs:
         run: tools/run_godot_test.sh ./Godot_v4.4.1-stable_linux.x86_64 res://tests/td_battlefield_art_smoke.gd
       - name: TD wave omens smoke
         run: tools/run_godot_test.sh ./Godot_v4.4.1-stable_linux.x86_64 res://tests/td_wave_omens_smoke.gd
+      - name: TD day scaling smoke
+        run: tools/run_godot_test.sh ./Godot_v4.4.1-stable_linux.x86_64 res://tests/td_day_scaling_smoke.gd
       - name: TD balance simulator (smoke config, deterministic)
         run: tools/run_godot_test.sh ./Godot_v4.4.1-stable_linux.x86_64 res://tests/td_balance_simulation.gd
 

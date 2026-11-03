@@ -30,6 +30,8 @@ const STRATEGIES := {
 var failures := 0
 var hero_budget := 0.0
 var hero_hits := 0
+## Override for SIEGE_DAY_HP_GROWTH (negative = keep the game's value).
+var day_hp_growth_override := -1.0
 var omen_mode := "none"
 
 func check(value: bool, description: String) -> void:
@@ -43,7 +45,7 @@ func _initialize() -> void:
     call_deferred("run")
 
 func parse_args() -> Dictionary:
-    var options := {"seeds": 2, "difficulties": [0], "night_coins": 0, "hero": 1.0, "omens": "none", "out": "", "strategies": STRATEGIES.keys()}
+    var options := {"seeds": 2, "difficulties": [0], "night_coins": 0, "hero": 1.0, "day_hp_growth": -1.0, "omens": "none", "out": "", "strategies": STRATEGIES.keys()}
     for raw in OS.get_cmdline_user_args():
         var parts: PackedStringArray = str(raw).trim_prefix("--").split("=", true, 1)
         if parts.size() != 2:
@@ -52,6 +54,7 @@ func parse_args() -> Dictionary:
             "seeds": options["seeds"] = clampi(int(parts[1]), 1, 8)
             "night-coins": options["night_coins"] = maxi(0, int(parts[1]))
             "hero": options["hero"] = clampf(float(parts[1]), 0.0, 1.0)
+            "day-hp-growth": options["day_hp_growth"] = clampf(float(parts[1]), 0.0, 2.0)
             "omens": options["omens"] = "greedy" if parts[1] == "greedy" else "none"
             "out": options["out"] = parts[1]
             "difficulties":
@@ -208,6 +211,8 @@ func new_game(difficulty: int, day: int, map_seed: int, carried: Dictionary):
     game.set_process_unhandled_input(false)
     game.difficulty = difficulty
     game.siege_day = day
+    if day_hp_growth_override >= 0.0:
+        game.siege_day_hp_growth = day_hp_growth_override
     game.set_fortress_map_seed(map_seed)
     if not carried.is_empty():
         game.import_fortress_state(carried)
@@ -250,6 +255,7 @@ func simulate_run(strategy: Dictionary, difficulty: int, map_seed: int, night_co
 
 func run() -> void:
     var options := parse_args()
+    day_hp_growth_override = float(options["day_hp_growth"])
     omen_mode = str(options["omens"])
     var rows: Array = []
     var signature := ""

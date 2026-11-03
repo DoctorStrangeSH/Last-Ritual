@@ -410,7 +410,7 @@ func start_wave() -> bool:
             for k in range(int((active_omen["extra"] as Dictionary).get(role, 0))):
                 var extra_delay: float = siege_spawn_delay(wave_number, extra_index, role) * omen_pace + 0.4
                 if role == "healer":
-                    var healer_hp: int = 8 + wave_number * 2 + difficulty * 2 + maxi(0, siege_day - 3) * 2
+                    var healer_hp: int = siege_day_hp(8 + wave_number * 2 + difficulty * 2 + maxi(0, siege_day - 3) * 2)
                     enemies.append({"lane": omen_lane, "pos": paths[omen_lane][0], "waypoint": 1, "hp": healer_hp, "max_hp": healer_hp, "speed": 62.0, "role": "healer", "delay": extra_delay, "heal_timer": 1.0, "omen": true})
                 else:
                     var extra: Dictionary = ordinary_siege_enemy(role, omen_lane, extra_delay, encounter_extra_hp)
@@ -421,26 +421,35 @@ func start_wave() -> bool:
     var budget: Dictionary = wave_enemy_budget(wave_number)
     for support_index in range(int(budget["support"])):
         var lane: int = (support_index + 1) % paths.size()
-        var support_hp: int = 8 + wave_number * 2 + difficulty * 2 + maxi(0, siege_day - 3) * 2
+        var support_hp: int = siege_day_hp(8 + wave_number * 2 + difficulty * 2 + maxi(0, siege_day - 3) * 2)
         enemies.append({"lane": lane, "pos": paths[lane][0], "waypoint": 1, "hp": support_hp, "max_hp": support_hp, "speed": 62.0, "role": "healer", "delay": 1.5 + support_index * 0.8, "heal_timer": 1.0})
         enemies_spawned += 1
     if int(budget["captain"]) > 0:
-        var captain_hp: int = 24 + difficulty * 6 + maxi(0, siege_day - 3) * 6
+        var captain_hp: int = siege_day_hp(24 + difficulty * 6 + maxi(0, siege_day - 3) * 6)
         var captain_lane: int = 1 % paths.size() if siege_day >= 4 and int(budget["support"]) > 0 else 0
         enemies.append({"lane": captain_lane, "pos": paths[captain_lane][0], "waypoint": 1, "hp": captain_hp, "max_hp": captain_hp, "speed": 65.0, "role": "captain", "delay": 2.0})
         enemies_spawned += 1
     if int(budget["boss"]) > 0:
-        var boss_hp: int = 55 + difficulty * 15 + (20 if siege_day >= 3 else 0) + maxi(0, siege_day - 3) * 17
+        var boss_hp: int = siege_day_hp(55 + difficulty * 15 + (20 if siege_day >= 3 else 0) + maxi(0, siege_day - 3) * 17)
         enemies.append({"lane": 0, "pos": paths[0][0], "waypoint": 1, "hp": boss_hp, "max_hp": boss_hp, "speed": 28.0 * (1.0 + 0.15 * difficulty), "role": "boss", "delay": 3.0, "boss_charge": 0.0, "boss_warning": false, "interrupt_hits": 0})
         enemies_spawned += 1
     queue_redraw()
     return true
 
+## Later days scale every siege enemy's health so the carried-over fortress
+## keeps meeting resistance. Day 1 is unchanged (scale 1.0). Tuned with
+## tests/td_balance_simulation.gd — see docs/BALANCE.md before changing it.
+const SIEGE_DAY_HP_GROWTH := 0.20
+var siege_day_hp_growth := SIEGE_DAY_HP_GROWTH
+
+func siege_day_hp(base_hp: int) -> int:
+    return maxi(1, roundi(float(base_hp) * (1.0 + siege_day_hp_growth * float(maxi(0, siege_day - 1)))))
+
 ## One ordinary wave enemy. Base formulas are unchanged from the original
 ## spawn loop; an accepted omen may add HP (all/brutes) and runner speed.
 func ordinary_siege_enemy(role: String, lane_id: int, delay: float, encounter_extra_hp: int) -> Dictionary:
     var day_hp: int = maxi(0, siege_day - 2) * 3
-    var hp := ((7 + wave_number) if role == "brute" else (2 + wave_number if role == "runner" else 3 + wave_number)) + difficulty * 2 + day_hp + encounter_extra_hp
+    var hp := siege_day_hp(((7 + wave_number) if role == "brute" else (2 + wave_number if role == "runner" else 3 + wave_number)) + difficulty * 2 + day_hp) + encounter_extra_hp
     var speed := (135.0 if role == "runner" else (55.0 if role == "brute" else 85.0)) * (1.0 + 0.15 * difficulty)
     if not active_omen.is_empty():
         hp += int(active_omen.get("hp", 0)) + (int(active_omen.get("brute_hp", 0)) if role == "brute" else 0)
