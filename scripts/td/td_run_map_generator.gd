@@ -43,12 +43,17 @@ static func generate_map(seed_value: int) -> Dictionary:
             path.append(Vector2(x_positions[point_index], y))
         paths.append(path)
 
-    var slot_x: Array[float] = [250.0, 425.0, 600.0, 775.0]
+    # Keep same-row sites inside the existing 190px synergy radius. Use an
+    # independent RNG stream so changing route geometry cannot reshuffle
+    # tower-neighbour relationships unpredictably.
+    var slot_rng := RandomNumberGenerator.new()
+    slot_rng.seed = seed_value ^ 0x5F3759DF
+    var slot_x: Array[float] = [280.0, 430.0, 590.0, 750.0]
     var slots: Array[Vector2] = []
     for row in range(2):
         for column in range(4):
-            var x := slot_x[column] + rng.randf_range(-24.0, 24.0)
-            var y := 150.0 + rng.randf_range(-8.0, 8.0) if row == 0 else 438.0 + rng.randf_range(-4.0, 4.0)
+            var x := slot_x[column] + slot_rng.randf_range(-5.0, 5.0)
+            var y := 150.0 + slot_rng.randf_range(-2.0, 2.0) if row == 0 else 438.0 + slot_rng.randf_range(-2.0, 2.0)
             slots.append(Vector2(x, y))
 
     return {
