@@ -24,7 +24,17 @@ func run_tests() -> void:
     check(first == repeated, "Same run seed reproduces paths and build sites exactly")
     check(generator.validate_map(first), "Generated map passes geometric validation")
     check(first["slots"].size() == 8, "Every run has eight build sites")
-    check(first["paths"].size() in [2, 3], "Run map has two or three assault lanes")
+    check(first["paths"].size() in [2, 3], "Run map has two or three assault routes")
+    var topology: Dictionary = first["topology"]
+    var first_route: Array = first["paths"][0]
+    var second_route: Array = first["paths"][1]
+    check(first_route[0] == second_route[0] and first_route[1] == second_route[1], "Routes share a common approach before the split")
+    check(first_route[8] == second_route[8] and first_route[9] == second_route[9], "Routes merge into a common approach before the altar")
+    check(first_route[2] != second_route[2] and first_route[7] != second_route[7], "Routes visibly diverge between branch and merge")
+    check(int(topology["branch_index"]) == 2 and int(topology["merge_index"]) == 8, "Topology exposes stable split and merge indices")
+    if first["paths"].size() == 3:
+        var third_route: Array = first["paths"][2]
+        check(third_route[2] != first_route[2] and third_route[2] != second_route[2], "Three-route maps provide a distinct middle branch")
 
     var unique_signatures: Dictionary = {}
     for seed_value in range(256):
