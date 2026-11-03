@@ -52,6 +52,20 @@
 - TD renderer now positions base via `ground_anchor` and weapon via its manifest `pivot`; the review composition uses the same alignment rule.
 - No Aseprite project or SVG source is claimed. The procedural Python generator is the editable source.
 
+## Костяная баллиста — следующий модульный арт-кандидат
+
+- Candidate branch: `feat/ballista-modular-pixel-art-candidate`; PR готовится отдельно от runtime.
+- Root manifest: `assets/spire/towers/ballista/manifest.json`; `status=review_candidate`, `runtime_enabled=false`.
+- Gameplay ID остаётся `bone`; asset folder ID — `ballista`. Не переименовывать сохранения и не менять баланс.
+- 3 основания: `candidate/base/level_1..3.png`, 128×128 RGBA.
+- Оружие: `candidate/weapon/base/weapon_8way.png`, `siege_bolt/weapon_8way.png`, `bone_volley/weapon_8way.png`; каждый атлас 8×128×128, порядок N, NE, E, SE, S, SW, W, NW.
+- Mapping: `siege → siege_bolt` (тяжёлый одиночный болт), `swarm → bone_volley` (три быстрых болта). Это сохраняет текущие специализации; никаких combat values не менялось.
+- VFX: по 8 кадров projectile (32×32) и impact (64×64) для base/siege_bolt/bone_volley.
+- Source: `tools/generate_ballista_modular_candidates.py`; renderer: `tools/render_ballista_modular_preview.py`; tests: `tests/test_ballista_modular_candidates.py`.
+- Contact sheets: `candidate/review/contact_sheet_9_1x.png`, `contact_sheet_72_1x.png`, `contact_sheet_72_2x.png`.
+- Existing Foozle base/weapon/projectile/impact files remain untouched. No runtime promotion until explicit owner approval and a separate integration PR.
+- No Aseprite project is claimed; the procedural Python generator is the editable reproducible source.
+
 ## Следующий порядок работ
 
 1. [x] Владелец одобрил Алтарь душ L1–L3 и base/Reaper/Legion 03.11.2026.
@@ -61,7 +75,7 @@
 5. [x] Подготовлен Frost Obelisk modular candidate pack: 3 основания, 3 восьминаправленных оружия, 6 VFX strips и review sheets.
 6. [x] Manifest contract расширен per-tower specialization branches; TD renderer позиционирует weapon по pivot отдельно от base ground anchor.
 7. [x] Добавлены Python/Godot тесты для Frost manifest, восьми направлений, VFX, воспроизводимости и pivot alignment.
-8. [ ] Получить визуальное одобрение Frost candidate на 1×.
+8. [ ] Получить визуальное одобрение Frost и Ballista candidate на 1×.
 9. [ ] Только после одобрения — отдельный Frost runtime PR и Windows QA; сохранить текущий experimental fallback до проверки.
 10. [ ] Протестировать Алтарь душ в свежем Windows EXE: L1/L2/L3, base/Reaper/Legion, восемь направлений, projectile/impact, save/load.
 11. [ ] Не удалять legacy sprites до отдельного PR с поиском ссылок и успешного ручного QA.
