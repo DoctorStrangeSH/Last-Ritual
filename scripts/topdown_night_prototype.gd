@@ -8,6 +8,8 @@ const NIGHT_EVENTS = preload("res://scripts/night_events.gd")
 const EVENT_ICONS: Texture2D = preload("res://assets/night/event_icons_4x48.png")
 ## Which event the open СОБЫТИЕ room shows; event_override forces one (tests/tools).
 var event_kind := "altar"
+var phoenix_saved := false   # Phoenix Ash already cheated death tonight
+var night_kills := 0         # kills tonight (Soul Lantern heals every Nth)
 var event_override := ""
 ## Kept alive for the node's lifetime: a texture loaded only inside _draw() is
 ## freed before the frame renders and shows up as a blank white square.
@@ -53,8 +55,8 @@ const ROOM_TACTICS := ["СКЛЕП: РАЗНЫЕ ВРАГИ", "ЗАСАДА: Б�
 const ROUTE_RECTS := [Rect2(66.0, 490.0, 245.0, 65.0), Rect2(327.0, 490.0, 245.0, 65.0), Rect2(588.0, 490.0, 245.0, 65.0), Rect2(849.0, 490.0, 245.0, 65.0)]
 ## Dark Merchant: [0] +1 damage, [1] +20 HP, [2] leave; plus two trophy deals.
 const SHOP_RECTS := [Rect2(352.0, 214.0, 176.0, 50.0), Rect2(538.0, 214.0, 176.0, 50.0), Rect2(724.0, 214.0, 150.0, 50.0)]
-const MERCHANT_DEAL_RECTS := [Rect2(352.0, 278.0, 256.0, 106.0), Rect2(618.0, 278.0, 256.0, 106.0)]
-const MERCHANT_PANEL := Rect2(232.0, 152.0, 660.0, 248.0)
+const MERCHANT_DEAL_RECTS := [Rect2(352.0, 278.0, 256.0, 126.0), Rect2(618.0, 278.0, 256.0, 126.0)]
+const MERCHANT_PANEL := Rect2(232.0, 152.0, 660.0, 268.0)
 ## A blessing trophy costs souls (each soul is 5 gold at dawn); a curse pays souls.
 const MERCHANT_TROPHY_PRICE := 8
 const MERCHANT_CURSE_SOULS := 5
@@ -146,7 +148,7 @@ func open_room(index: int, override_variant: int = -1) -> void:
             queue_redraw()
             return
         if room_kind == "СОКРОВИЩНИЦА":
-            player_hp = mini(100, player_hp + 25)
+            heal_player(25)
             night_souls += 3
             cleared_rooms[room_index] = true
             reward_notice = "СОКРОВИЩНИЦА: +25 ЗДОРОВЬЯ И +3 ДУШИ"
@@ -299,12 +301,16 @@ func attack(target: Vector2) -> bool:
     for i in range(enemies.size()):
         var p: Vector2 = enemies[i]["pos"]
         var dist := player_pos.distance_to(p)
-        if dist <= ATTACK_RANGE and p.distance_to(target) < 55.0 and dist < nearest and not cover_blocks_line(player_pos, p):
+        if dist <= attack_range() and p.distance_to(target) < 55.0 and dist < nearest and not cover_blocks_line(player_pos, p):
             nearest = dist
             hit = i
     if hit == -1:
         return false
-    var effective_damage: int = maxi(1, attack_damage - (CHAMPION_ARMOR if enemies[hit].get("role", "") in ["champion", "boss"] else 0))
+    var armored: bool = enemies[hit].get("role", "") in ["champion", "boss"]
+    var millstone: int = RUN_TROPHIES.NIGHT_MILLSTONE_BONUS if night_trophy("blood_millstone") else 0
+    # The Warlord Skull bites after armour, so it matters even with 1 base damage.
+    var warlord: int = RUN_TROPHIES.NIGHT_WARLORD_BONUS if armored and night_trophy("warlord_skull") else 0
+    var effective_damage: int = maxi(1, attack_damage + millstone - (CHAMPION_ARMOR if armored else 0)) + warlord
     enemies[hit]["hp"] -= effective_damage
     sfx.play_effect("hit")
     enemies[hit]["hit_flash"] = 0.12
@@ -314,8 +320,14 @@ func attack(target: Vector2) -> bool:
         sfx.play_effect("kill")
         enemies.remove_at(hit)
         night_souls += 1
+        night_kills += 1
+        if night_trophy("soul_lantern") and night_kills % RUN_TROPHIES.NIGHT_SOUL_LANTERN_KILLS == 0:
+            heal_player(RUN_TROPHIES.NIGHT_SOUL_LANTERN_HEAL)
+            floating_combat_texts.append({"pos": player_pos + Vector2(0, -40), "text": "ФОНАРЬ ДУШ", "time": 0.9, "color": Color("#9fe0c8")})
     if enemies.is_empty():
         reward_available = true
+        if night_trophy("looter_satchel"):
+            night_souls += RUN_TROPHIES.NIGHT_SATCHEL_SOULS
         if is_elite_room():
             trophy_offers = RUN_TROPHIES.offers(dungeon_seed * 31 + room_index * 7 + 5, trophies_owned + trophies_gained)
     attack_cooldown = 0.20 / attack_speed_multiplier
@@ -324,6 +336,19 @@ func attack(target: Vector2) -> bool:
 
 func claim_reward() -> bool:
     return choose_relic("bone")
+
+## Trophies held by the run tonight: owned before the night or won tonight.
+func night_trophy(id: String) -> bool:
+    return trophies_owned.has(id) or trophies_gained.has(id)
+
+func attack_range() -> float:
+    return ATTACK_RANGE * (RUN_TROPHIES.NIGHT_LANTERN_RANGE if night_trophy("grave_lantern") else 1.0)
+
+## All healing goes through here so the Blood Millstone can halve it.
+func heal_player(amount: int) -> void:
+    if night_trophy("blood_millstone"):
+        amount = int(ceil(amount / 2.0))
+    player_hp = mini(100, player_hp + amount)
 
 func is_elite_room() -> bool:
     return exploration_enabled and not floor_data.is_empty() and room_index < floor_data["rooms"].size() and str(floor_data["rooms"][room_index]["kind"]) == "ЭЛИТА"
@@ -406,7 +431,7 @@ func choose_shrine_blessing(choice: int) -> bool:
                 route_boon = "МОГИЛА: +%d ДУШ — МЕРТВЕЦЫ ВОССТАЛИ!" % NIGHT_EVENTS.GRAVE_SOULS
                 finish = false  # the room clears like a fight (relic pick after the ambush)
             elif choice == 1:
-                player_hp = mini(100, player_hp + 10)
+                heal_player(10)
                 route_boon = "МОГИЛА: МОЛИТВА, +10 ЗДОРОВЬЯ"
             else:
                 route_boon = "МОГИЛА: ВЫ УШЛИ"
@@ -417,7 +442,7 @@ func choose_shrine_blessing(choice: int) -> bool:
                 route_boon = "ФОНТАН: −%d ЗДОРОВЬЯ, +%d ДУШ" % [NIGHT_EVENTS.FOUNTAIN_DRINK_HP, NIGHT_EVENTS.FOUNTAIN_DRINK_SOULS]
             elif choice == 1:
                 night_souls -= NIGHT_EVENTS.FOUNTAIN_BATHE_COST
-                player_hp = mini(100, player_hp + NIGHT_EVENTS.FOUNTAIN_BATHE_HP)
+                heal_player(NIGHT_EVENTS.FOUNTAIN_BATHE_HP)
                 route_boon = "ФОНТАН: +%d ЗДОРОВЬЯ" % NIGHT_EVENTS.FOUNTAIN_BATHE_HP
             else:
                 route_boon = "ФОНТАН: ВЫ УШЛИ"
@@ -432,7 +457,7 @@ func choose_shrine_blessing(choice: int) -> bool:
                 route_boon = "ЗЕРКАЛО: ВЫ ОТВЕРНУЛИСЬ"
         _:
             if choice == 0:
-                player_hp = mini(100, player_hp + 15)
+                heal_player(15)
                 route_boon = "АЛТАРЬ: +15 ЗДОРОВЬЯ"
             elif choice == 1:
                 player_hp -= 10
@@ -555,7 +580,7 @@ func choose_route(choice: int) -> bool:
     var variant := posmod(dungeon_seed + room_index + 1 + choice, ROOM_KINDS.size())
     if choice == 0:
         # Treasury route: recover health before the next encounter.
-        player_hp = mini(100, player_hp + 18)
+        heal_player(18)
         route_boon = "TREASURE: +18 HP"
     elif choice == 1:
         # Risk route: trade health for run-long damage and fight an elite room.
@@ -629,7 +654,7 @@ func buy_shop_offer(choice: int) -> bool:
         attack_damage += 1
         route_boon = "MERCHANT: +1 DAMAGE"
     else:
-        player_hp = mini(100, player_hp + 20)
+        heal_player(20)
         route_boon = "MERCHANT: +20 HP"
     queue_redraw()
     return true
@@ -662,6 +687,8 @@ func restart_run() -> void:
     relics.clear()
     trophies_gained.clear()
     trophy_offers.clear()
+    phoenix_saved = false
+    night_kills = 0
     attack_damage = 1
     attack_speed_multiplier = 1.0
     attack_cooldown = 0.0
@@ -679,7 +706,14 @@ func restart_run() -> void:
 func take_damage(amount: int) -> void:
     if run_state != "playing" or invulnerable_time > 0.0 or amount <= 0:
         return
+    if night_trophy("warden_stone"):
+        amount = maxi(1, amount - RUN_TROPHIES.NIGHT_WARDEN_BLOCK)
     player_hp = maxi(0, player_hp - amount)
+    if player_hp == 0 and night_trophy("phoenix_ash") and not phoenix_saved:
+        phoenix_saved = true
+        player_hp = 1
+        reward_notice = "ПЕПЕЛ ФЕНИКСА: ВЫ ВОССТАЛИ!"
+        reward_notice_time = 2.4
     sfx.play_effect("damage")
     player_hit_flash = 0.22
     floating_combat_texts.append({"pos": player_pos + Vector2(0, -26), "text": "-%d HP" % amount, "time": 0.8, "color": Color("#ff7c91")})
@@ -731,7 +765,7 @@ func _process(delta: float) -> void:
             hostile_shots.erase(shot)
     for enemy in enemies:
         var pos: Vector2 = enemy["pos"]
-        var step: Vector2 = (player_pos - pos).normalized() * float(enemy["speed"]) * delta
+        var step: Vector2 = (player_pos - pos).normalized() * float(enemy["speed"]) * delta * (RUN_TROPHIES.NIGHT_IDOL_SPEED if night_trophy("cursed_idol") else 1.0)
         if enemy["ranged"] and player_pos.distance_to(pos) < 230.0:
             step = Vector2.ZERO
         if not enemy["ranged"] and float(enemy.get("melee_warning", 0.0)) > 0.0:
@@ -858,10 +892,10 @@ func click_ui(point: Vector2) -> bool:
     return false
 
 func trophy_card_rect(index: int) -> Rect2:
-    return Rect2(196.0 + index * 260.0, 430.0, 244.0, 104.0)
+    return Rect2(196.0 + index * 260.0, 402.0, 244.0, 128.0)
 
 func draw_trophy_cards() -> void:
-    draw_label("ТРОФЕЙ ЭЛИТЫ — ДЕЙСТВУЕТ ДНЁМ ДО КОНЦА ЗАБЕГА", Vector2(318, 415), 20, Color("#f3d7ad"))
+    draw_label("ТРОФЕЙ ЭЛИТЫ — ДНЁМ И НОЧЬЮ ДО КОНЦА ЗАБЕГА", Vector2(322, 388), 20, Color("#f3d7ad"))
     var icons: Texture2D = TROPHY_ICONS
     for i in range(trophy_offers.size()):
         var id: String = trophy_offers[i]
@@ -875,6 +909,7 @@ func draw_trophy_cards() -> void:
         draw_string(ThemeDB.fallback_font, card.position + Vector2(66, 28), RUN_TROPHIES.title(id), HORIZONTAL_ALIGNMENT_LEFT, 172, 14, Color("#fff1c8"))
         draw_string(ThemeDB.fallback_font, card.position + Vector2(66, 48), "ПРОКЛЯТИЕ" if curse else "БЛАГОСЛОВЕНИЕ", HORIZONTAL_ALIGNMENT_LEFT, 172, 11, Color("#ff8a8a") if curse else Color("#9fe0c8"))
         draw_multiline_string(ThemeDB.fallback_font, card.position + Vector2(10, 76), RUN_TROPHIES.effect(id), HORIZONTAL_ALIGNMENT_LEFT, 226, 12, 2, Color("#e8e2f0"))
+        draw_multiline_string(ThemeDB.fallback_font, card.position + Vector2(10, 108), RUN_TROPHIES.night_effect(id), HORIZONTAL_ALIGNMENT_LEFT, 226, 11, 2, Color("#a9c8ff"))
 
 func draw_merchant() -> void:
     var pointer := get_local_mouse_position()
@@ -906,6 +941,7 @@ func draw_merchant_deal(index: int, id: String, price_text: String, affordable: 
     draw_string(ThemeDB.fallback_font, card.position + Vector2(64, 26), RUN_TROPHIES.title(id), HORIZONTAL_ALIGNMENT_LEFT, 186, 14, Color("#fff1c8"))
     draw_string(ThemeDB.fallback_font, card.position + Vector2(64, 48), price_text, HORIZONTAL_ALIGNMENT_LEFT, 186, 12, (Color("#ff8a8a") if curse else Color("#9fe0c8")) if affordable else Color("#77738a"))
     draw_multiline_string(ThemeDB.fallback_font, card.position + Vector2(8, 76), RUN_TROPHIES.effect(id), HORIZONTAL_ALIGNMENT_LEFT, 240, 12, 2, Color("#e8e2f0"))
+    draw_multiline_string(ThemeDB.fallback_font, card.position + Vector2(8, 108), RUN_TROPHIES.night_effect(id), HORIZONTAL_ALIGNMENT_LEFT, 240, 11, 2, Color("#a9c8ff"))
 
 func draw_night_event() -> void:
     var panel := Rect2(232.0, 182.0, 690.0, 230.0)
@@ -924,6 +960,16 @@ func draw_night_event() -> void:
         if ready and SHRINE_BUTTONS[i].has_point(pointer):
             draw_rect(SHRINE_BUTTONS[i], Color("#fff2c5"), false, 2.0)
         draw_multiline_string(ThemeDB.fallback_font, SHRINE_BUTTONS[i].position + Vector2(10, 26), str(labels[i]) if i < labels.size() else "", HORIZONTAL_ALIGNMENT_LEFT, SHRINE_BUTTONS[i].size.x - 16, 14, 2, Color.WHITE if ready else Color("#77738a"))
+
+## Trophies active tonight, small icons under the HUD (greyed: Phoenix spent).
+func draw_night_trophy_row() -> void:
+    var held: Array[String] = RUN_TROPHIES.sanitize(trophies_owned + trophies_gained)
+    for i in range(held.size()):
+        var rect := Rect2(640.0 + i * 26.0, 47.0, 24.0, 24.0)
+        draw_rect(rect.grow(1.0), Color("#5a1f2a") if RUN_TROPHIES.is_curse(held[i]) else Color("#2c2238"))
+        draw_texture_rect_region(TROPHY_ICONS, rect, Rect2(float(RUN_TROPHIES.icon_index(held[i]) * RUN_TROPHIES.ICON_SIZE), 0, RUN_TROPHIES.ICON_SIZE, RUN_TROPHIES.ICON_SIZE))
+        if held[i] == "phoenix_ash" and phoenix_saved:
+            draw_rect(rect, Color(0.05, 0.05, 0.08, 0.6))
 
 func draw_relic_cards() -> void:
     draw_label("ВЫБЕРИТЕ РЕЛИКВИЮ", Vector2(480, 425), 23)
@@ -1209,6 +1255,7 @@ func _draw() -> void:
         for direction in door_neighbors():
             var door_point: Vector2 = DOOR_POINTS[direction]
             draw_crypt_door_marker(door_point, door_available())
+    draw_night_trophy_row()
     draw_rect(DASH_BUTTON, Color("#497b80") if dash_cooldown <= 0.0 and run_state == "playing" and not reward_available and not shop_open else Color("#353c46"))
     draw_label("РЫВОК / ПРОБЕЛ" if dash_cooldown <= 0.0 else "РЫВОК %.1f С" % dash_cooldown, DASH_BUTTON.position + Vector2(14, 26), 16, Color("#fff2c5"))
     draw_rect(HELP_BUTTON, Color("#526d9b") if help_visible else Color("#343b47"))
