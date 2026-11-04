@@ -106,6 +106,8 @@ func start_phase(kind: String) -> bool:
         active_game.set_fortress_map_seed(fortress_map_seed)
         if not fortress_state.is_empty():
             active_game.import_fortress_state(fortress_state)
+        else:
+            active_game.coins += active_game.FIRST_DAY_TREASURY_BONUS
         active_game.coins += pending_night_coins
         pending_night_coins = 0
         active_game.coins += run_gold_bonus + meta.treasury_level * 10

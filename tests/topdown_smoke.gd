@@ -1610,7 +1610,7 @@ func run_tests() -> void:
         check(td.hero_pos.x > 400, "TD defender hero moves")
         td.hero_pos = Vector2(400, 350)
         td.enemies.clear()
-        td.enemies.append({"lane": 0, "pos": Vector2(420, 350), "waypoint": 1, "hp": 2, "delay": 0.0})
+        td.enemies.append({"lane": 0, "pos": Vector2(420, 350), "waypoint": 1, "hp": td.HERO_DAMAGE, "delay": 0.0})
         td.hero_attack_cooldown = 0.0
         var hero_kills_before: int = td.enemies_defeated
         check(td.hero_attack(Vector2(420, 350)), "TD hero attacks selected enemy")
@@ -1920,7 +1920,7 @@ func run_tests() -> void:
         marathon.meta.phases_cleared = 0
         marathon.meta.claimed_achievement_rewards.clear()
         check(marathon.set_difficulty(1) and marathon.start_run(), "Full run starts at Hard difficulty")
-        check(marathon.active_game.coins == 170, "Day one receives treasury bonus once")
+        check(marathon.active_game.coins == 170 + marathon.active_game.FIRST_DAY_TREASURY_BONUS, "Day one receives treasury and first-morning bonus once")
         var marathon_seed: int = marathon.fortress_map_seed
         var marathon_paths: Array = marathon.active_game.paths.duplicate(true)
         check(marathon.active_game.fortress_map_seed == marathon_seed, "Run seed matches first day")
