@@ -34,6 +34,7 @@ func run() -> void:
     catalogue()
     day_effects()
     night_pick()
+    dark_merchant()
     run_loop_carry()
     print("RUN TROPHIES RESULT: ", "PASS" if failures == 0 else "FAIL")
     quit(1 if failures > 0 else 0)
@@ -227,3 +228,43 @@ func run_loop_carry() -> void:
     drop(run)
     if FileAccess.file_exists("user://last_ritual_meta_trophies_smoke.json"):
         DirAccess.remove_absolute(ProjectSettings.globalize_path("user://last_ritual_meta_trophies_smoke.json"))
+
+func merchant_night(owned: Array):
+    var night = NIGHT_SCENE.instantiate()
+    root.add_child(night)
+    night.set_process(false)
+    night.enable_floor_exploration(1101)
+    night.trophies_owned.assign(owned)
+    for room in night.floor_data["rooms"]:
+        if str(room["kind"]) == "МАГАЗИН":
+            night.open_room(int(room["id"]))
+            break
+    return night
+
+func dark_merchant() -> void:
+    var night = merchant_night(["warden_stone"])
+    check(night.shop_open and night.MERCHANT_SPRITE != null and night.MERCHANT_SPRITE.get_size() == Vector2(48, 48), "Dark Merchant opens with its pixel sprite")
+    var blessing: String = night.merchant_trophy
+    var curse: String = night.merchant_curse
+    check(TROPHIES.is_valid(blessing) and not TROPHIES.is_curse(blessing) and blessing != "warden_stone", "Merchant sells an unowned blessing")
+    check(TROPHIES.is_curse(curse), "Merchant offers a curse deal")
+    night.night_souls = night.MERCHANT_TROPHY_PRICE - 1
+    check(not night.buy_merchant_trophy() and night.trophies_gained.is_empty(), "A trophy cannot be bought without enough souls")
+    night.night_souls = night.MERCHANT_TROPHY_PRICE + 1
+    check(night.click_ui(night.MERCHANT_DEAL_RECTS[0].get_center()) and night.night_souls == 1 and night.trophies_gained == [blessing], "Buying the trophy costs its soul price")
+    check(not night.buy_merchant_trophy() and night.merchant_trophy == "", "The merchant sells each trophy once")
+    check(night.click_ui(night.MERCHANT_DEAL_RECTS[1].get_center()) and night.night_souls == 1 + night.MERCHANT_CURSE_SOULS and night.trophies_gained == [blessing, curse], "The dark deal gives a curse and souls")
+    check(not night.accept_dark_deal(), "The dark deal can be taken once")
+    check(night.buy_shop_offer(0) and night.attack_damage == 2, "Old merchant goods still work")
+    check(night.click_ui(night.SHOP_RECTS[2].get_center()) and not night.shop_open, "Leaving the merchant still works")
+    drop(night)
+    night = merchant_night(TROPHIES.ORDER)
+    check(night.shop_open and night.merchant_trophy == "" and night.merchant_curse == "", "Merchant has no trophy deals once the run owns everything")
+    check(not night.buy_merchant_trophy() and not night.accept_dark_deal(), "Empty deals cannot be taken")
+    drop(night)
+    night = merchant_night([])
+    var other = merchant_night([])
+    check(night.merchant_trophy == other.merchant_trophy and night.merchant_curse == other.merchant_curse, "Merchant stock is deterministic for a seed")
+    drop(night)
+    drop(other)
+
