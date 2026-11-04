@@ -10,6 +10,7 @@
 - **Знамения угрозы** (`scripts/td/td_wave_omens.gd`): перед волнами 2–5 кнопка «НАЧАТЬ ВОЛНУ» открывает выбор — обычная волна или одна из двух угроз (налётчики, железный кулак, фанатики, орда, авангард) на объявленном пути за награду после зачистки. Враги знамений не дают золота за убийство. Не сохраняется (действует на одну волну). Тест: `tests/td_wave_omens_smoke.gd`.
 - Симулятор баланса: `tests/td_balance_simulation.gd`, замеры в `docs/BALANCE.md`.
 - Герой днём: 1 урон обычным, 2 капитанам и боссу, удар раз в 0,28 с (`HERO_DAMAGE`/`HERO_HEAVY_DAMAGE`/`HERO_COOLDOWN`); первое утро забега +35 золота (`FIRST_DAY_TREASURY_BONUS`). Доля урона героя ~20%. Тест `tests/td_hero_role_smoke.gd`.
+- Ветки башен: Раскол льда (+1 урона за уровень по замороженным, Мороз ×2) и Жатва Жнеца (+6 к единственной душе) — `FROST_SHATTER_PER_LEVEL`, `REAPER_BONUS`, тест `tests/td_branch_identity_smoke.gd`.
 - Рост сложности по дням: здоровье врагов осады × (1 + 0.20 × (день − 1)), день 1 без изменений (`SIEGE_DAY_HP_GROWTH`, тест `tests/td_day_scaling_smoke.gd`).
 - Генерация карты: `scripts/td/td_run_map_generator.gd` — 2–3 маршрута с общим входом/выходом и развилками; площадки по seed с проверкой зазоров; тесты на 256 seed.
 - Перенос крепости между днями: `export_fortress_state()` / `import_fortress_state()`; пятидневный тест `tests/td_fortress_persistence_smoke.gd`; snapshot с чужим seed отклоняется, legacy-snapshot загружается.

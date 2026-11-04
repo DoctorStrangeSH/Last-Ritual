@@ -136,6 +136,14 @@ var hero_damage_dealt := 0
 ## Extra treasury on the first morning of a run (added by run_loop), so the
 ## first towers can carry the defense now that the hero hits lighter.
 const FIRST_DAY_TREASURY_BONUS := 35
+## Branch identity tuning (docs/BALANCE.md):
+## Frost "Shatter" — a frost hit on an already chilled enemy deals +N per tower
+## level (Frostbite, the deep-freeze path, shatters twice as hard).
+## Reaper "Harvest" — the Reaper's single soul hits much harder than Legion's three.
+const FROST_SHATTER_PER_LEVEL := 1
+const REAPER_BONUS := 6
+var frost_shatter_per_level := FROST_SHATTER_PER_LEVEL
+var reaper_bonus := REAPER_BONUS
 var hero_pos := Vector2(560.0, 420.0)
 var hero_attack_cooldown := 0.0
 var boss_feedback_time := 0.0
@@ -781,6 +789,10 @@ func attack_with_towers(delta: float) -> void:
                 shot_record["time"] = 0.32
             shot_trails.append(shot_record)
             var raw_hit: int = damage + tower_synergy_damage(slot_id, hit_target)
+            if kind == "frost" and float(hit_target.get("frost_time", 0.0)) > 0.0:
+                raw_hit += frost_shatter_bonus(tower)
+            if kind == "necro" and str(tower.get("specialization", "")) == "siege":
+                raw_hit += reaper_bonus
             hit_target["hp"] -= TD_ENEMY_ARMOR.tower_hit_damage(str(hit_target.get("role", "")), kind, siege_day, raw_hit)
             if kind == "frost" and hit_target["hp"] > 0:
                 TD_FROST_EFFECT.apply(hit_target, 2.0, 0.4 if tower.get("specialization", "") == "siege" else (0.20 if tower.get("specialization", "") == "swarm" else 0.25))
@@ -805,6 +817,10 @@ func attack_with_towers(delta: float) -> void:
         else:
             tower_cooldowns[slot_id] = 0.45 if tower.get("specialization", "") == "swarm" else 0.8
     queue_redraw()
+
+func frost_shatter_bonus(tower: Dictionary) -> int:
+    var per_level: int = frost_shatter_per_level * (2 if str(tower.get("specialization", "")) == "siege" else 1)
+    return per_level * int(tower.get("level", 1))
 
 func spawn_necro_spirit(origin: Vector2, empowered: bool = false, frost_link: bool = false) -> void:
     if summoned_spirits.size() >= 2:

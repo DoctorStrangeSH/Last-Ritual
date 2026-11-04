@@ -25,6 +25,7 @@ const STRATEGIES := {
     "fire_sparks": {"order": ["fire"], "spec": {"fire": "swarm"}},
     "bone_ballista": {"order": ["bone"], "spec": {"bone": "siege"}},
     "frost_blizzard": {"order": ["frost"], "spec": {"frost": "swarm"}},
+    "frost_frostbite": {"order": ["frost"], "spec": {"frost": "siege"}},
 }
 
 var failures := 0
@@ -36,6 +37,7 @@ var day_hp_growth_override := -1.0
 var sim_trophies: Array = []
 var sim_hero_tuning: Array = []
 var sim_day1_coins := 0
+var sim_tower_tuning: Array = []
 var omen_mode := "none"
 
 func check(value: bool, description: String) -> void:
@@ -49,7 +51,7 @@ func _initialize() -> void:
     call_deferred("run")
 
 func parse_args() -> Dictionary:
-    var options := {"seeds": 2, "difficulties": [0], "night_coins": 0, "hero": 1.0, "day_hp_growth": -1.0, "trophies": [], "hero_tuning": [], "day1_coins": -1, "omens": "none", "out": "", "strategies": STRATEGIES.keys()}
+    var options := {"seeds": 2, "difficulties": [0], "night_coins": 0, "hero": 1.0, "day_hp_growth": -1.0, "trophies": [], "hero_tuning": [], "day1_coins": -1, "tower_tuning": [], "omens": "none", "out": "", "strategies": STRATEGIES.keys()}
     for raw in OS.get_cmdline_user_args():
         var parts: PackedStringArray = str(raw).trim_prefix("--").split("=", true, 1)
         if parts.size() != 2:
@@ -61,6 +63,11 @@ func parse_args() -> Dictionary:
             "day-hp-growth": options["day_hp_growth"] = clampf(float(parts[1]), 0.0, 2.0)
             "trophies": options["trophies"] = Array(parts[1].split(",", false))
             "day1-coins": options["day1_coins"] = int(parts[1])
+            "tower-tuning":
+                # frost_shatter_per_level,reaper_bonus — e.g. 1,3
+                var tbits: PackedStringArray = parts[1].split(",")
+                if tbits.size() == 2:
+                    options["tower_tuning"] = [int(tbits[0]), int(tbits[1])]
             "hero-tuning":
                 # damage,heavy_damage,cooldown — e.g. 1,2,0.36
                 var bits: PackedStringArray = parts[1].split(",")
@@ -223,6 +230,9 @@ func new_game(difficulty: int, day: int, map_seed: int, carried: Dictionary):
     game.set_process_unhandled_input(false)
     game.difficulty = difficulty
     game.siege_day = day
+    if sim_tower_tuning.size() == 2:
+        game.frost_shatter_per_level = int(sim_tower_tuning[0])
+        game.reaper_bonus = int(sim_tower_tuning[1])
     if sim_hero_tuning.size() == 3:
         game.hero_damage = int(sim_hero_tuning[0])
         game.hero_heavy_damage = int(sim_hero_tuning[1])
@@ -277,6 +287,7 @@ func run() -> void:
     sim_trophies = options["trophies"]
     sim_hero_tuning = options["hero_tuning"]
     sim_day1_coins = int(options["day1_coins"])
+    sim_tower_tuning = options["tower_tuning"]
     omen_mode = str(options["omens"])
     var rows: Array = []
     var signature := ""
