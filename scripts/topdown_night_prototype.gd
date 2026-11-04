@@ -46,7 +46,16 @@ const SHRINE_BUTTONS := [Rect2(300, 323, 170, 60), Rect2(491, 323, 170, 60), Rec
 const ROOM_KINDS := ["CRYPT", "AMBUSH", "ELITE"]
 const ROOM_TACTICS := ["СКЛЕП: РАЗНЫЕ ВРАГИ", "ЗАСАДА: БЫСТРЫЕ ВРАГИ", "ЭЛИТА: БРОНИРОВАННЫЙ ВРАГ"]
 const ROUTE_RECTS := [Rect2(66.0, 490.0, 245.0, 65.0), Rect2(327.0, 490.0, 245.0, 65.0), Rect2(588.0, 490.0, 245.0, 65.0), Rect2(849.0, 490.0, 245.0, 65.0)]
-const SHOP_RECTS := [Rect2(340.0, 320.0, 155.0, 60.0), Rect2(500.0, 320.0, 155.0, 60.0), Rect2(660.0, 320.0, 155.0, 60.0)]
+## Dark Merchant: [0] +1 damage, [1] +20 HP, [2] leave; plus two trophy deals.
+const SHOP_RECTS := [Rect2(352.0, 214.0, 176.0, 50.0), Rect2(538.0, 214.0, 176.0, 50.0), Rect2(724.0, 214.0, 150.0, 50.0)]
+const MERCHANT_DEAL_RECTS := [Rect2(352.0, 278.0, 256.0, 106.0), Rect2(618.0, 278.0, 256.0, 106.0)]
+const MERCHANT_PANEL := Rect2(232.0, 152.0, 660.0, 248.0)
+## A blessing trophy costs souls (each soul is 5 gold at dawn); a curse pays souls.
+const MERCHANT_TROPHY_PRICE := 8
+const MERCHANT_CURSE_SOULS := 5
+const MERCHANT_SPRITE: Texture2D = preload("res://assets/night/dark_merchant_48.png")
+var merchant_trophy := ""  # blessing for sale ("" = sold out / none left)
+var merchant_curse := ""   # curse deal on offer
 const HELP_BUTTON := Rect2(984.0, 10.0, 153.0, 46.0)
 const HELP_CLOSE_BUTTON := Rect2(688.0, 441.0, 135.0, 48.0)
 const DASH_BUTTON := Rect2(60.0, 600.0, 170.0, 38.0)
@@ -139,8 +148,8 @@ func open_room(index: int, override_variant: int = -1) -> void:
             queue_redraw()
             return
         if room_kind == "МАГАЗИН":
-            shop_open = true
-            reward_notice = "ТОРГОВЕЦ: ПОКУПКИ ЗА ДУШИ"
+            open_merchant()
+            reward_notice = "ТОРГОВЕЦ ТЬМЫ: ДУШИ СЕЙЧАС ИЛИ ЗОЛОТО НА РАССВЕТЕ"
             reward_notice_time = 3.5
             queue_redraw()
             return
@@ -478,11 +487,48 @@ func choose_route(choice: int) -> bool:
         variant = 1
         route_boon = "CURSED ALTAR: -20 HP / +35% SPEED"
     else:
-        shop_open = true
+        open_merchant()
         route_boon = "MERCHANT: SPEND SOULS OR LEAVE"
         queue_redraw()
         return true
     open_room(room_index + 1, variant)
+    return true
+
+## Opens the Dark Merchant with one blessing for souls and one curse deal,
+## drawn from trophies the run does not own yet.
+func open_merchant() -> void:
+    shop_open = true
+    merchant_trophy = ""
+    merchant_curse = ""
+    for id in RUN_TROPHIES.offers(dungeon_seed * 53 + room_index * 11 + 3, trophies_owned + trophies_gained):
+        if RUN_TROPHIES.is_curse(id):
+            if merchant_curse.is_empty():
+                merchant_curse = id
+        elif merchant_trophy.is_empty():
+            merchant_trophy = id
+
+func buy_merchant_trophy() -> bool:
+    if not shop_open or run_state != "playing" or merchant_trophy.is_empty() or night_souls < MERCHANT_TROPHY_PRICE:
+        return false
+    night_souls -= MERCHANT_TROPHY_PRICE
+    trophies_gained.append(merchant_trophy)
+    reward_notice = "КУПЛЕН ТРОФЕЙ: %s" % RUN_TROPHIES.title(merchant_trophy)
+    reward_notice_time = 2.4
+    merchant_trophy = ""
+    sfx.play_effect("relic")
+    queue_redraw()
+    return true
+
+func accept_dark_deal() -> bool:
+    if not shop_open or run_state != "playing" or merchant_curse.is_empty():
+        return false
+    trophies_gained.append(merchant_curse)
+    night_souls += MERCHANT_CURSE_SOULS
+    reward_notice = "СДЕЛКА С ТЬМОЙ: %s, +%d ДУШ" % [RUN_TROPHIES.title(merchant_curse), MERCHANT_CURSE_SOULS]
+    reward_notice_time = 2.6
+    merchant_curse = ""
+    sfx.play_effect("relic")
+    queue_redraw()
     return true
 
 func buy_shop_offer(choice: int) -> bool:
@@ -522,6 +568,8 @@ func restart_run() -> void:
     player_hp = 100
     night_souls = 0
     shop_open = false
+    merchant_trophy = ""
+    merchant_curse = ""
     route_boon = ""
     rewards_taken = 0
     relics.clear()
@@ -698,6 +746,10 @@ func click_ui(point: Vector2) -> bool:
                 return choose_shrine_blessing(i)
         return true
     if shop_open:
+        if MERCHANT_DEAL_RECTS[0].has_point(point):
+            return buy_merchant_trophy()
+        if MERCHANT_DEAL_RECTS[1].has_point(point):
+            return accept_dark_deal()
         for i in range(SHOP_RECTS.size()):
             if SHOP_RECTS[i].has_point(point):
                 return leave_shop() if i == 2 else buy_shop_offer(i)
@@ -736,6 +788,37 @@ func draw_trophy_cards() -> void:
         draw_string(ThemeDB.fallback_font, card.position + Vector2(66, 28), RUN_TROPHIES.title(id), HORIZONTAL_ALIGNMENT_LEFT, 172, 14, Color("#fff1c8"))
         draw_string(ThemeDB.fallback_font, card.position + Vector2(66, 48), "ПРОКЛЯТИЕ" if curse else "БЛАГОСЛОВЕНИЕ", HORIZONTAL_ALIGNMENT_LEFT, 172, 11, Color("#ff8a8a") if curse else Color("#9fe0c8"))
         draw_multiline_string(ThemeDB.fallback_font, card.position + Vector2(10, 76), RUN_TROPHIES.effect(id), HORIZONTAL_ALIGNMENT_LEFT, 226, 12, 2, Color("#e8e2f0"))
+
+func draw_merchant() -> void:
+    var pointer := get_local_mouse_position()
+    draw_rect(MERCHANT_PANEL, Color("#191524", 0.97))
+    draw_rect(MERCHANT_PANEL, Color("#d7ba80"), false, 2.0)
+    draw_texture_rect(MERCHANT_SPRITE, Rect2(MERCHANT_PANEL.position + Vector2(14, 92), Vector2(96, 96)), false)
+    draw_label("ТОРГОВЕЦ ТЬМЫ", MERCHANT_PANEL.position + Vector2(18, 36), 22, Color("#f3d7ad"))
+    draw_label("ДУШИ: %d   (на рассвете каждая = 5 золота)" % night_souls, MERCHANT_PANEL.position + Vector2(240, 36), 15, Color("#cfc6e0"))
+    var labels := ["+1 УРОН · 2 ДУШИ", "+20 ОЗ · 1 ДУША", "УЙТИ"]
+    for i in range(SHOP_RECTS.size()):
+        var affordable: bool = i == 2 or night_souls >= (2 if i == 0 else 1)
+        draw_rect(SHOP_RECTS[i], (Color("#3b5d58") if affordable else Color("#2c2a36")) if i < 2 else Color("#4d3a48"))
+        if SHOP_RECTS[i].has_point(pointer):
+            draw_rect(SHOP_RECTS[i], Color("#fff2c5"), false, 2.0)
+        draw_string(ThemeDB.fallback_font, SHOP_RECTS[i].position + Vector2(10, 31), labels[i], HORIZONTAL_ALIGNMENT_LEFT, SHOP_RECTS[i].size.x - 16, 14, Color.WHITE if affordable else Color("#77738a"))
+    draw_merchant_deal(0, merchant_trophy, "КУПИТЬ ЗА %d ДУШ" % MERCHANT_TROPHY_PRICE, night_souls >= MERCHANT_TROPHY_PRICE, pointer)
+    draw_merchant_deal(1, merchant_curse, "СДЕЛКА: +%d ДУШ" % MERCHANT_CURSE_SOULS, true, pointer)
+
+func draw_merchant_deal(index: int, id: String, price_text: String, affordable: bool, pointer: Vector2) -> void:
+    var card: Rect2 = MERCHANT_DEAL_RECTS[index]
+    var curse: bool = index == 1
+    draw_rect(card, Color("#3a1520") if curse else Color("#231d33"))
+    draw_rect(card, Color("#c23a4a") if curse else Color("#d7ba80"), false, 3.0 if card.has_point(pointer) and not id.is_empty() else 1.5)
+    if id.is_empty():
+        draw_string(ThemeDB.fallback_font, card.position + Vector2(12, 58), "ПРОДАНО" if curse == false else "СДЕЛКА ЗАКЛЮЧЕНА", HORIZONTAL_ALIGNMENT_LEFT, 232, 15, Color("#77738a"))
+        return
+    var frame: float = float(RUN_TROPHIES.icon_index(id) * RUN_TROPHIES.ICON_SIZE)
+    draw_texture_rect_region(TROPHY_ICONS, Rect2(card.position + Vector2(8, 10), Vector2(48, 48)), Rect2(frame, 0, RUN_TROPHIES.ICON_SIZE, RUN_TROPHIES.ICON_SIZE))
+    draw_string(ThemeDB.fallback_font, card.position + Vector2(64, 26), RUN_TROPHIES.title(id), HORIZONTAL_ALIGNMENT_LEFT, 186, 14, Color("#fff1c8"))
+    draw_string(ThemeDB.fallback_font, card.position + Vector2(64, 48), price_text, HORIZONTAL_ALIGNMENT_LEFT, 186, 12, (Color("#ff8a8a") if curse else Color("#9fe0c8")) if affordable else Color("#77738a"))
+    draw_multiline_string(ThemeDB.fallback_font, card.position + Vector2(8, 76), RUN_TROPHIES.effect(id), HORIZONTAL_ALIGNMENT_LEFT, 240, 12, 2, Color("#e8e2f0"))
 
 func draw_relic_cards() -> void:
     draw_label("ВЫБЕРИТЕ РЕЛИКВИЮ", Vector2(480, 425), 23)
@@ -979,14 +1062,7 @@ func _draw() -> void:
             draw_rect(SHRINE_BUTTONS[i], Color("#497568") if i == 0 else Color("#8a4e5e") if i == 1 else Color("#5d6074"))
             draw_label(options[i], SHRINE_BUTTONS[i].position + Vector2(8, 35), 16)
     if shop_open:
-        draw_rect(Rect2(285.0, 205.0, 570.0, 220.0), Color("#263b45"))
-        draw_rect(Rect2(285.0, 205.0, 570.0, 220.0), Color("#a6bcaa"), false, 2.0)
-        draw_circle(Vector2(578, 284), 16.0, Color("#e5cc97"))
-        draw_rect(Rect2(565, 273, 26, 19), Color("#56716a"))
-        draw_label("СТРАНСТВУЮЩИЙ ТОРГОВЕЦ — ДУШИ %d" % night_souls, Vector2(359, 255), 23)
-        for i in range(SHOP_RECTS.size()):
-            draw_rect(SHOP_RECTS[i], Color("#4e8373") if i < 2 else Color("#775e6d"))
-            draw_label("+1 УРОН / 2" if i == 0 else "+20 ЗДОРОВЬЯ / 1" if i == 1 else "УЙТИ", SHOP_RECTS[i].position + Vector2(10, 37), 17)
+        draw_merchant()
     if door_available() and not exploration_enabled:
         draw_label("ВЫБЕРИТЕ ПУТЬ", Vector2(450, 473), 22)
         for i in range(ROUTE_RECTS.size()):

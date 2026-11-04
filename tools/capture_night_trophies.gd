@@ -1,5 +1,5 @@
 extends SceneTree
-## Dev tool: render the night elite-room trophy pick to PNG (needs xvfb + opengl3).
+## Dev tool: render the night elite-room trophy pick (or --room=merchant) to PNG (needs xvfb + opengl3).
 ##
 ##   xvfb-run -a -s "-screen 0 1280x800x24" godot --rendering-driver opengl3 --path . \
 ##       --script res://tools/capture_night_trophies.gd -- --out=/tmp/night.png --seed=1203
@@ -23,6 +23,14 @@ func setup() -> void:
     root.add_child(night)
     night.set_process(false)
     night.enable_floor_exploration(int(option("seed", "1203")))
+    if option("room", "elite") == "merchant":
+        night.night_souls = int(option("souls", "12"))
+        for room in night.floor_data["rooms"]:
+            if str(room["kind"]) == "МАГАЗИН":
+                night.open_room(int(room["id"]))
+                break
+        night.reward_notice_time = 0.0
+        return
     for room in night.floor_data["rooms"]:
         if str(room["kind"]) == "ЭЛИТА":
             night.open_room(int(room["id"]))

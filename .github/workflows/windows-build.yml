@@ -96,6 +96,8 @@ jobs:
           python3 -m unittest discover -s tests -p 'test_battlefield_pixel_art.py' -v
           python tools/generate_trophy_icons.py --verify
           python3 -m unittest discover -s tests -p 'test_trophy_icons.py' -v
+          python tools/generate_night_merchant.py --verify
+          python3 -m unittest discover -s tests -p 'test_night_merchant.py' -v
           python3 -m unittest discover -s tests -p 'test_necro_base_readability.py' -v
           python3 -m unittest discover -s tests -p 'test_soul_altar_candidate_promotion_gate.py' -v
           python3 -m unittest discover -s tests -p 'test_necro_vfx_contact_sheet.py' -v

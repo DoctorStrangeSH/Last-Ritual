@@ -158,3 +158,8 @@ Motion Preview: 1/2/3 — уровень; B/R/L — ветка; NumPad — ру�
 - Используются днём (верхняя панель, 1×) и ночью (карточки, 2×, nearest). Ночная сцена держит текстуру константой `TROPHY_ICONS`: текстура, загруженная только внутри `_draw()`, освобождается до отрисовки и выглядит белым квадратом.
 - Скриншоты: `tools/capture_night_trophies.gd`, `tools/capture_td_screenshot.gd --trophies=...` (xvfb + opengl3).
 
+## Торговец тьмы (ночь) — в игре
+
+- `assets/night/dark_merchant_48.png` 48×48: фигура в фиолетовом капюшоне с золотой каймой, горящие глаза, посох с фонарём душ, мешок и череп на поясе. Рисуется 2× (nearest) в окне торговца.
+- Source: `tools/generate_night_merchant.py` (`--verify`), тест `tests/test_night_merchant.py`. Скриншот: `tools/capture_night_trophies.gd --room=merchant`.
+
