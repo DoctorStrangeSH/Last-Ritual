@@ -35,6 +35,7 @@ func run() -> void:
     day_effects()
     night_pick()
     dark_merchant()
+    night_effects()
     run_loop_carry()
     print("RUN TROPHIES RESULT: ", "PASS" if failures == 0 else "FAIL")
     quit(1 if failures > 0 else 0)
@@ -267,4 +268,98 @@ func dark_merchant() -> void:
     check(night.merchant_trophy == other.merchant_trophy and night.merchant_curse == other.merchant_curse, "Merchant stock is deterministic for a seed")
     drop(night)
     drop(other)
+
+## A night in an ordinary fight room holding `owned` trophies.
+func night_with(owned: Array):
+    var night = NIGHT_SCENE.instantiate()
+    root.add_child(night)
+    night.set_process(false)
+    night.enable_floor_exploration(1101)
+    night.trophies_owned.assign(owned)
+    for room in night.floor_data["rooms"]:
+        if str(room["kind"]) == "БОЙ":
+            night.open_room(int(room["id"]))
+            break
+    return night
+
+func hit_once(night, role: String, hp: int = 50) -> int:
+    night.enemies.clear()
+    night.spawn_enemy(night.player_pos + Vector2(40, 0), hp, 0.0, false, role)
+    night.enemies.append({"pos": Vector2(2000, 2000), "hp": 99, "max_hp": 99, "speed": 0.0, "ranged": false, "role": "regular"})
+    var before: int = int(night.enemies[0]["hp"])
+    night.attack_cooldown = 0.0
+    night.attack(night.enemies[0]["pos"])
+    return before - int(night.enemies[0]["hp"])
+
+func night_effects() -> void:
+    for id in TROPHIES.ORDER:
+        check(TROPHIES.night_effect(id).begins_with("Ночью:"), "Trophy has a night effect: " + id)
+    var plain = night_with([])
+    var night = night_with(["warlord_skull"])
+    check(hit_once(night, "champion") == hit_once(plain, "champion") + 1, "Warlord Skull: +1 hero damage vs champions at night")
+    check(hit_once(night, "regular") == hit_once(plain, "regular"), "Warlord Skull ignores ordinary night enemies")
+    drop(night)
+    night = night_with(["blood_millstone"])
+    check(hit_once(night, "regular") == hit_once(plain, "regular") + 1, "Blood Millstone: +1 hero damage at night")
+    night.player_hp = 50
+    night.heal_player(20)
+    check(night.player_hp == 60, "Blood Millstone halves night healing")
+    drop(night)
+    night = night_with(["grave_lantern"])
+    check(is_equal_approx(night.attack_range(), plain.attack_range() * TROPHIES.NIGHT_LANTERN_RANGE), "Grave Lantern extends the hero's night reach")
+    night.enemies.clear()
+    night.spawn_enemy(night.player_pos + Vector2(165, 0), 50, 0.0, false)
+    night.attack_cooldown = 0.0
+    check(night.attack(night.enemies[0]["pos"]), "Lantern lets the hero hit just beyond the normal reach")
+    drop(night)
+    night = night_with(["warden_stone"])
+    night.player_hp = 50
+    night.take_damage(8)
+    check(night.player_hp == 44, "Warden Stone blocks 2 night damage")
+    night.invulnerable_time = 0.0
+    night.take_damage(2)
+    check(night.player_hp == 43, "Warden Stone never blocks below 1 damage")
+    drop(night)
+    night = night_with(["phoenix_ash"])
+    night.player_hp = 5
+    night.take_damage(20)
+    check(night.player_hp == 1 and night.run_state == "playing" and night.phoenix_saved, "Phoenix Ash cheats death once a night")
+    night.invulnerable_time = 0.0
+    night.take_damage(20)
+    check(night.run_state == "lost", "Phoenix Ash saves only once")
+    drop(night)
+    night = night_with(["soul_lantern"])
+    night.player_hp = 50
+    for i in range(TROPHIES.NIGHT_SOUL_LANTERN_KILLS):
+        hit_once(night, "regular", 1)
+    check(night.player_hp == 50 + TROPHIES.NIGHT_SOUL_LANTERN_HEAL, "Soul Lantern heals on every 4th night kill")
+    drop(night)
+    night = night_with(["looter_satchel"])
+    plain.enemies.clear()
+    night.enemies.clear()
+    for g in [night, plain]:
+        g.night_souls = 0
+        g.spawn_enemy(g.player_pos + Vector2(40, 0), 1, 0.0, false)
+        g.attack_cooldown = 0.0
+        g.attack(g.enemies[0]["pos"])
+    check(night.night_souls == plain.night_souls + TROPHIES.NIGHT_SATCHEL_SOULS, "Looter's Satchel: +1 soul per cleared room")
+    drop(night)
+    night = night_with(["cursed_idol"])
+    var steps := []
+    for g in [night, plain]:
+        g.enemies.clear()
+        g.hostile_shots.clear()
+        var start: Vector2 = g.player_pos + Vector2(0, -150)
+        g.spawn_enemy(start, 50, 100.0, false)
+        g.help_visible = false  # the first-launch help pauses the night
+        g._process(0.1)
+        steps.append(start.distance_to(g.enemies[0]["pos"]))
+    check(float(steps[0]) > float(steps[1]) * 1.05, "Cursed Idol makes night enemies faster (%.1f vs %.1f px)" % [steps[0], steps[1]])
+    drop(night)
+    # Trophies won tonight already count tonight.
+    night = night_with([])
+    night.trophies_gained.append("warden_stone")
+    check(night.night_trophy("warden_stone"), "A trophy won tonight works immediately")
+    drop(night)
+    drop(plain)
 

@@ -1984,12 +1984,13 @@ func draw_trophy_tooltip(point: Vector2) -> void:
     var id: String = trophy_at(point)
     if id.is_empty():
         return
-    var panel := Rect2(clampf(point.x - 20.0, 8.0, 1152.0 - 368.0), 64.0, 360.0, 58.0)
+    var panel := Rect2(clampf(point.x - 20.0, 8.0, 1152.0 - 368.0), 64.0, 360.0, 78.0)
     draw_rect(panel, Color("#1a1626", 0.97))
     draw_rect(panel, Color("#c23a4a") if RUN_TROPHIES.is_curse(id) else Color("#d7ba80"), false, 2.0)
     var heading: String = RUN_TROPHIES.title(id) + ("  · ПРОКЛЯТИЕ" if RUN_TROPHIES.is_curse(id) else "  · ТРОФЕЙ НОЧИ")
     draw_string(ThemeDB.fallback_font, panel.position + Vector2(10, 22), heading, HORIZONTAL_ALIGNMENT_LEFT, 340, 15, Color("#f3d7ad"))
     draw_string(ThemeDB.fallback_font, panel.position + Vector2(10, 45), RUN_TROPHIES.effect(id), HORIZONTAL_ALIGNMENT_LEFT, 340, 13, Color("#e8e2f0"))
+    draw_string(ThemeDB.fallback_font, panel.position + Vector2(10, 66), RUN_TROPHIES.night_effect(id), HORIZONTAL_ALIGNMENT_LEFT, 340, 12, Color("#a9c8ff"))
 
 func _draw() -> void:
     draw_fortress_ground()
