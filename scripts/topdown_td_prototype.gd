@@ -122,6 +122,20 @@ const TOWER_RANGE = TD_TOWER_STATS.RANGES
 const TOWER_DAMAGE = TD_TOWER_STATS.DAMAGES
 const HERO_SPEED := 215.0
 const HERO_ATTACK_RANGE := 150.0
+## Hero strike tuning (see docs/BALANCE.md): the hero is an elite hunter and
+## boss interrupter, the towers carry the defense. Captains and the boss take
+## the heavy hit, so interrupting the boss stays two strikes.
+const HERO_DAMAGE := 1
+const HERO_HEAVY_DAMAGE := 2
+const HERO_COOLDOWN := 0.28
+var hero_damage := HERO_DAMAGE
+var hero_heavy_damage := HERO_HEAVY_DAMAGE
+var hero_cooldown := HERO_COOLDOWN
+## Damage the hero actually dealt this day (no overkill) — balance metric.
+var hero_damage_dealt := 0
+## Extra treasury on the first morning of a run (added by run_loop), so the
+## first towers can carry the defense now that the hero hits lighter.
+const FIRST_DAY_TREASURY_BONUS := 35
 var hero_pos := Vector2(560.0, 420.0)
 var hero_attack_cooldown := 0.0
 var boss_feedback_time := 0.0
@@ -148,7 +162,9 @@ func hero_attack(target: Vector2) -> bool:
     if best.is_empty():
         return false
     shot_trails.append({"from": hero_pos, "to": best["pos"], "time": 0.18, "kind": "hero"})
-    best["hp"] -= 2
+    var strike: int = hero_heavy_damage if ["captain", "boss"].has(str(best.get("role", ""))) else hero_damage
+    hero_damage_dealt += mini(strike, maxi(0, int(best["hp"])))
+    best["hp"] -= strike
     sfx.play_effect("hit")
     if best.get("role", "") == "boss" and best.get("boss_warning", false) and best["hp"] > 0:
         best["interrupt_hits"] = int(best.get("interrupt_hits", 0)) + 1
@@ -159,7 +175,7 @@ func hero_attack(target: Vector2) -> bool:
             boss_feedback_text = "АТАКА ПРЕРВАНА!"
             sfx.play_effect("interrupt")
             boss_feedback_time = 1.4
-    hero_attack_cooldown = 0.28
+    hero_attack_cooldown = hero_cooldown
     if best["hp"] <= 0:
         enemies.erase(best)
         enemies_defeated += 1
@@ -841,6 +857,7 @@ func tick_burning(delta: float) -> void:
                     coins += kill_gold(victim)
 
 func restart_defense() -> void:
+    hero_damage_dealt = 0
     phoenix_ash_spent = false
     trophy_wave_paid = 0
     trophy_satchel_total = 0

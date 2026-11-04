@@ -167,6 +167,8 @@ jobs:
         run: tools/run_godot_test.sh ./Godot_v4.4.1-stable_linux.x86_64 res://tests/td_wave_omens_smoke.gd
       - name: TD day scaling smoke
         run: tools/run_godot_test.sh ./Godot_v4.4.1-stable_linux.x86_64 res://tests/td_day_scaling_smoke.gd
+      - name: TD hero role smoke
+        run: tools/run_godot_test.sh ./Godot_v4.4.1-stable_linux.x86_64 res://tests/td_hero_role_smoke.gd
       - name: Night floor variety smoke
         run: tools/run_godot_test.sh ./Godot_v4.4.1-stable_linux.x86_64 res://tests/dungeon_floor_variety_smoke.gd
       - name: Night events smoke
