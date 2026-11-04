@@ -4,6 +4,11 @@ const ARENA := Rect2(48.0, 68.0, 1056.0, 520.0)
 const SFX_SCRIPT = preload("res://scripts/procedural_sfx.gd")
 const FLOOR_SCRIPT = preload("res://scripts/dungeon_floor_graph.gd")
 const RUN_TROPHIES = preload("res://scripts/run_trophies.gd")
+const NIGHT_EVENTS = preload("res://scripts/night_events.gd")
+const EVENT_ICONS: Texture2D = preload("res://assets/night/event_icons_4x48.png")
+## Which event the open СОБЫТИЕ room shows; event_override forces one (tests/tools).
+var event_kind := "altar"
+var event_override := ""
 ## Kept alive for the node's lifetime: a texture loaded only inside _draw() is
 ## freed before the frame renders and shows up as a blank white square.
 const TROPHY_ICONS: Texture2D = preload("res://assets/trophies/trophy_icons_8x24.png")
@@ -42,7 +47,7 @@ var route_boon := ""
 var night_souls := 0
 var shop_open := false
 var shrine_open := false
-const SHRINE_BUTTONS := [Rect2(300, 323, 170, 60), Rect2(491, 323, 170, 60), Rect2(682, 323, 170, 60)]
+const SHRINE_BUTTONS := [Rect2(254, 322, 212, 64), Rect2(476, 322, 212, 64), Rect2(698, 322, 202, 64)]
 const ROOM_KINDS := ["CRYPT", "AMBUSH", "ELITE"]
 const ROOM_TACTICS := ["СКЛЕП: РАЗНЫЕ ВРАГИ", "ЗАСАДА: БЫСТРЫЕ ВРАГИ", "ЭЛИТА: БРОНИРОВАННЫЙ ВРАГ"]
 const ROUTE_RECTS := [Rect2(66.0, 490.0, 245.0, 65.0), Rect2(327.0, 490.0, 245.0, 65.0), Rect2(588.0, 490.0, 245.0, 65.0), Rect2(849.0, 490.0, 245.0, 65.0)]
@@ -136,6 +141,7 @@ func open_room(index: int, override_variant: int = -1) -> void:
             queue_redraw()
             return
         if room_kind == "СОБЫТИЕ":
+            event_kind = event_override if NIGHT_EVENTS.CATALOG.has(event_override) else NIGHT_EVENTS.for_room(dungeon_seed, event_ordinal(room_index))
             shrine_open = true
             queue_redraw()
             return
@@ -363,26 +369,107 @@ func choose_relic(kind: String) -> bool:
     queue_redraw()
     return true
 
+## Position of this room among the floor's event rooms (0 = first).
+func event_ordinal(id: int) -> int:
+    var ordinal := 0
+    for room in floor_data.get("rooms", []):
+        if int(room["id"]) == id:
+            return ordinal
+        if str(room["kind"]) == "СОБЫТИЕ":
+            ordinal += 1
+    return 0
+
+## Whether an event option can be taken right now (shown greyed out if not).
+func event_option_available(choice: int) -> bool:
+    match event_kind:
+        "altar":
+            return choice != 1 or player_hp > 10
+        "fountain":
+            if choice == 0:
+                return player_hp > NIGHT_EVENTS.FOUNTAIN_DRINK_HP
+            if choice == 1:
+                return night_souls >= NIGHT_EVENTS.FOUNTAIN_BATHE_COST
+        "mirror":
+            return choice != 1 or player_hp > NIGHT_EVENTS.MIRROR_BREAK_HP
+    return true
+
 func choose_shrine_blessing(choice: int) -> bool:
-    if not shrine_open or choice < 0 or choice > 2:
+    if not shrine_open or choice < 0 or choice > 2 or not event_option_available(choice):
         return false
-    if choice == 0:
-        player_hp = mini(100, player_hp + 15)
-        route_boon = "АЛТАРЬ: +15 ЗДОРОВЬЯ"
-    elif choice == 1:
-        if player_hp <= 10:
-            return false
-        player_hp -= 10
-        attack_damage += 1
-        route_boon = "ТЁМНЫЙ ДОГОВОР: -10 ЗДОРОВЬЯ, +1 УРОН"
-    else:
-        route_boon = "АЛТАРЬ: ВЫ ОТКАЗАЛИСЬ"
+    var finish := true
+    match event_kind:
+        "grave":
+            if choice == 0:
+                night_souls += NIGHT_EVENTS.GRAVE_SOULS
+                for i in range(NIGHT_EVENTS.GRAVE_AMBUSH):
+                    spawn_enemy(Vector2(660 + i * 60, 220 + i * 110), 4, 82.0, i == 1, "flanker" if i == 2 else "regular")
+                route_boon = "МОГИЛА: +%d ДУШ — МЕРТВЕЦЫ ВОССТАЛИ!" % NIGHT_EVENTS.GRAVE_SOULS
+                finish = false  # the room clears like a fight (relic pick after the ambush)
+            elif choice == 1:
+                player_hp = mini(100, player_hp + 10)
+                route_boon = "МОГИЛА: МОЛИТВА, +10 ЗДОРОВЬЯ"
+            else:
+                route_boon = "МОГИЛА: ВЫ УШЛИ"
+        "fountain":
+            if choice == 0:
+                player_hp -= NIGHT_EVENTS.FOUNTAIN_DRINK_HP
+                night_souls += NIGHT_EVENTS.FOUNTAIN_DRINK_SOULS
+                route_boon = "ФОНТАН: −%d ЗДОРОВЬЯ, +%d ДУШ" % [NIGHT_EVENTS.FOUNTAIN_DRINK_HP, NIGHT_EVENTS.FOUNTAIN_DRINK_SOULS]
+            elif choice == 1:
+                night_souls -= NIGHT_EVENTS.FOUNTAIN_BATHE_COST
+                player_hp = mini(100, player_hp + NIGHT_EVENTS.FOUNTAIN_BATHE_HP)
+                route_boon = "ФОНТАН: +%d ЗДОРОВЬЯ" % NIGHT_EVENTS.FOUNTAIN_BATHE_HP
+            else:
+                route_boon = "ФОНТАН: ВЫ УШЛИ"
+        "mirror":
+            if choice == 0:
+                route_boon = gaze_into_mirror()
+            elif choice == 1:
+                player_hp -= NIGHT_EVENTS.MIRROR_BREAK_HP
+                attack_damage += NIGHT_EVENTS.MIRROR_BREAK_DAMAGE
+                route_boon = "ЗЕРКАЛО РАЗБИТО: +%d УРОНА, −%d ЗДОРОВЬЯ" % [NIGHT_EVENTS.MIRROR_BREAK_DAMAGE, NIGHT_EVENTS.MIRROR_BREAK_HP]
+            else:
+                route_boon = "ЗЕРКАЛО: ВЫ ОТВЕРНУЛИСЬ"
+        _:
+            if choice == 0:
+                player_hp = mini(100, player_hp + 15)
+                route_boon = "АЛТАРЬ: +15 ЗДОРОВЬЯ"
+            elif choice == 1:
+                player_hp -= 10
+                attack_damage += 1
+                route_boon = "ТЁМНЫЙ ДОГОВОР: -10 ЗДОРОВЬЯ, +1 УРОН"
+            else:
+                route_boon = "АЛТАРЬ: ВЫ ОТКАЗАЛИСЬ"
     shrine_open = false
-    cleared_rooms[room_index] = true
+    if finish:
+        cleared_rooms[room_index] = true
     reward_notice = route_boon
     reward_notice_time = 3.5
     queue_redraw()
     return true
+
+## Mirror of Shadows: a coin flip (fixed per floor) between an unowned
+## blessing and an unowned curse trophy; souls if the run owns everything.
+func gaze_into_mirror() -> String:
+    var offers: Array[String] = RUN_TROPHIES.offers(dungeon_seed * 71 + room_index * 5 + 9, trophies_owned + trophies_gained)
+    var blessings: Array[String] = []
+    var curses: Array[String] = []
+    for id in offers:
+        if RUN_TROPHIES.is_curse(id):
+            curses.append(id)
+        else:
+            blessings.append(id)
+    var rng := RandomNumberGenerator.new()
+    rng.seed = dungeon_seed * 131 + room_index
+    var lucky: bool = rng.randf() < 0.5
+    var pool: Array[String] = blessings if (lucky and not blessings.is_empty()) or curses.is_empty() else curses
+    if pool.is_empty():
+        night_souls += 3
+        return "ЗЕРКАЛО ПУСТО: +3 ДУШИ"
+    var id: String = pool[0]
+    trophies_gained.append(id)
+    sfx.play_effect("relic")
+    return ("ЗЕРКАЛО ПРОКЛЯЛО: %s" if RUN_TROPHIES.is_curse(id) else "ЗЕРКАЛО ОДАРИЛО: %s") % RUN_TROPHIES.title(id)
 
 func door_available() -> bool:
     if exploration_enabled:
@@ -820,6 +907,24 @@ func draw_merchant_deal(index: int, id: String, price_text: String, affordable: 
     draw_string(ThemeDB.fallback_font, card.position + Vector2(64, 48), price_text, HORIZONTAL_ALIGNMENT_LEFT, 186, 12, (Color("#ff8a8a") if curse else Color("#9fe0c8")) if affordable else Color("#77738a"))
     draw_multiline_string(ThemeDB.fallback_font, card.position + Vector2(8, 76), RUN_TROPHIES.effect(id), HORIZONTAL_ALIGNMENT_LEFT, 240, 12, 2, Color("#e8e2f0"))
 
+func draw_night_event() -> void:
+    var panel := Rect2(232.0, 182.0, 690.0, 230.0)
+    draw_rect(panel, Color("#191524", 0.97))
+    draw_rect(panel, Color("#b9a47c"), false, 2.0)
+    var frame: float = float(NIGHT_EVENTS.icon_index(event_kind) * NIGHT_EVENTS.ICON_SIZE)
+    draw_texture_rect_region(EVENT_ICONS, Rect2(panel.position + Vector2(16, 16), Vector2(96, 96)), Rect2(frame, 0, NIGHT_EVENTS.ICON_SIZE, NIGHT_EVENTS.ICON_SIZE))
+    draw_label(NIGHT_EVENTS.title(event_kind), panel.position + Vector2(130, 46), 24, Color("#f3d7ad"))
+    draw_string(ThemeDB.fallback_font, panel.position + Vector2(130, 80), NIGHT_EVENTS.text(event_kind), HORIZONTAL_ALIGNMENT_LEFT, 540, 15, Color("#cfc6e0"))
+    var labels: Array = NIGHT_EVENTS.options(event_kind)
+    var pointer := get_local_mouse_position()
+    for i in range(SHRINE_BUTTONS.size()):
+        var ready: bool = event_option_available(i)
+        var base := Color("#497568") if i == 0 else Color("#8a4e5e") if i == 1 else Color("#5d6074")
+        draw_rect(SHRINE_BUTTONS[i], base if ready else Color("#2c2a36"))
+        if ready and SHRINE_BUTTONS[i].has_point(pointer):
+            draw_rect(SHRINE_BUTTONS[i], Color("#fff2c5"), false, 2.0)
+        draw_multiline_string(ThemeDB.fallback_font, SHRINE_BUTTONS[i].position + Vector2(10, 26), str(labels[i]) if i < labels.size() else "", HORIZONTAL_ALIGNMENT_LEFT, SHRINE_BUTTONS[i].size.x - 16, 14, 2, Color.WHITE if ready else Color("#77738a"))
+
 func draw_relic_cards() -> void:
     draw_label("ВЫБЕРИТЕ РЕЛИКВИЮ", Vector2(480, 425), 23)
     var palette := [Color("#526d9b"), Color("#a16a36"), Color("#863c54")]
@@ -1053,14 +1158,7 @@ func _draw() -> void:
         else:
             draw_relic_cards()
     if shrine_open:
-        draw_rect(Rect2(260, 206, 635, 218), Color("#26313e"))
-        draw_rect(Rect2(260, 206, 635, 218), Color("#b9a47c"), false, 2.0)
-        draw_circle(Vector2(577, 285), 18.0, Color("#688f8b"))
-        draw_label("ДРЕВНИЙ АЛТАРЬ — ВЫБЕРИТЕ ДАР", Vector2(340, 255), 23, Color("#f3d7ad"))
-        var options := ["+15 ЗДОРОВЬЯ", "-10 ЗД / +1 УРОН", "ОТКАЗАТЬСЯ"]
-        for i in range(SHRINE_BUTTONS.size()):
-            draw_rect(SHRINE_BUTTONS[i], Color("#497568") if i == 0 else Color("#8a4e5e") if i == 1 else Color("#5d6074"))
-            draw_label(options[i], SHRINE_BUTTONS[i].position + Vector2(8, 35), 16)
+        draw_night_event()
     if shop_open:
         draw_merchant()
     if door_available() and not exploration_enabled:

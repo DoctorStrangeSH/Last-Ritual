@@ -154,6 +154,7 @@ func run_tests() -> void:
         check(events.night_souls == 2 and events.attack_damage == original_damage + 1, "Cache grants souls and damage")
         events.open_room(secret_id)
         check(events.night_souls == 2, "Cache cannot be farmed by revisits")
+        events.event_override = "altar"  # night_events_smoke covers the other events
         events.open_room(event_id)
         check(events.shrine_open and not events.door_available(), "Shrine blocks travel until choice")
         events.player_hp = 50
