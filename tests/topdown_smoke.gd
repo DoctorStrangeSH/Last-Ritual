@@ -175,8 +175,12 @@ func run_tests() -> void:
         if stash_id >= 0:
             var neighbor_id: int = int(hidden.floor_data["rooms"][stash_id]["neighbors"][0])
             hidden.open_room(neighbor_id)
+            # Finish whatever the neighbour is (fight, merchant or shrine) before searching.
             hidden.enemies.clear()
             hidden.reward_available = false
+            hidden.trophy_offers.clear()
+            hidden.shop_open = false
+            hidden.shrine_open = false
             var delta: Vector2i = hidden.floor_data["rooms"][stash_id]["grid"] - hidden.floor_data["rooms"][neighbor_id]["grid"]
             check(not hidden.door_neighbors().has(delta), "Secret doorway stays invisible before discovery")
             check(hidden.reveal_adjacent_secret(), "Player can discover secret next door")
