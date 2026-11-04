@@ -15,7 +15,7 @@ static func upgrade_cost(level: int, specialization: String) -> int:
 const SPECIALIZATION_LABELS := {
     "bone": ["БАЛЛИСТА: +2 УРОН", "РОЙ: СКОРОСТЬ"],
     "fire": ["ИНФЕРНО: ПЛАМЯ", "ИСКРЫ: 3 ЦЕЛИ"],
-    "necro": ["ЖНЕЦ: СИЛА ДУХОВ", "ЛЕГИОН: БОЛЬШЕ ДУХОВ"],
+    "necro": ["ЖНЕЦ: ЖАТВА ОДНОЙ ЦЕЛИ", "ЛЕГИОН: БОЛЬШЕ ДУХОВ"],
     "frost": ["МОРОЗ: СИЛЬНЕЕ", "МЕТЕЛЬ: БЫСТРЕЕ"]
 }
 
