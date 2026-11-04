@@ -98,6 +98,8 @@ jobs:
           python3 -m unittest discover -s tests -p 'test_trophy_icons.py' -v
           python tools/generate_night_merchant.py --verify
           python3 -m unittest discover -s tests -p 'test_night_merchant.py' -v
+          python tools/generate_night_events.py --verify
+          python3 -m unittest discover -s tests -p 'test_night_events_art.py' -v
           python3 -m unittest discover -s tests -p 'test_necro_base_readability.py' -v
           python3 -m unittest discover -s tests -p 'test_soul_altar_candidate_promotion_gate.py' -v
           python3 -m unittest discover -s tests -p 'test_necro_vfx_contact_sheet.py' -v
@@ -167,6 +169,8 @@ jobs:
         run: tools/run_godot_test.sh ./Godot_v4.4.1-stable_linux.x86_64 res://tests/td_day_scaling_smoke.gd
       - name: Night floor variety smoke
         run: tools/run_godot_test.sh ./Godot_v4.4.1-stable_linux.x86_64 res://tests/dungeon_floor_variety_smoke.gd
+      - name: Night events smoke
+        run: tools/run_godot_test.sh ./Godot_v4.4.1-stable_linux.x86_64 res://tests/night_events_smoke.gd
       - name: Night trophies smoke
         run: tools/run_godot_test.sh ./Godot_v4.4.1-stable_linux.x86_64 res://tests/run_trophies_smoke.gd
       - name: TD balance simulator (smoke config, deterministic)

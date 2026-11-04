@@ -163,3 +163,9 @@ Motion Preview: 1/2/3 — уровень; B/R/L — ветка; NumPad — ру�
 - `assets/night/dark_merchant_48.png` 48×48: фигура в фиолетовом капюшоне с золотой каймой, горящие глаза, посох с фонарём душ, мешок и череп на поясе. Рисуется 2× (nearest) в окне торговца.
 - Source: `tools/generate_night_merchant.py` (`--verify`), тест `tests/test_night_merchant.py`. Скриншот: `tools/capture_night_trophies.gd --room=merchant`.
 
+## События ночи — в игре
+
+- `assets/night/event_icons_4x48.png`: 4 иллюстрации 48×48 (алтарь с фиолетовым пламенем и свечами, могила с черепом и лопатой, кровавый фонтан, золотое зеркало с тенью), рисуются 2× в окне события.
+- Source: `tools/generate_night_events.py` (`--verify`), тест `tests/test_night_events_art.py`. Скриншот: `tools/capture_night_trophies.gd --room=event --event=...`.
+- Правило стиля: без религиозных символов (крестов) — черепа, руны, пламя.
+
